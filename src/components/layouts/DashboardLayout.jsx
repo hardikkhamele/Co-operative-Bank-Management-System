@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, Link, Outlet } from 'react-router-dom';
-import { LayoutDashboard, Users, UserCog, User, UserPlus, Map, MapPin, Bell, ChevronDown } from 'lucide-react';
+import { LayoutDashboard, Users, UserCog, User, UserPlus, Map, MapPin, Bell, ChevronDown, IdCard, List, Tags, Package, Box, Landmark, Store } from 'lucide-react';
 
 const DashboardLayout = () => {
 
@@ -59,6 +59,18 @@ const DashboardLayout = () => {
           </div>
 
           <div className="px-6 py-3">
+            <h3 className="text-xs font-semibold text-gray-800 uppercase tracking-wider mb-2">Partner Management</h3>
+            <div className="space-y-1">
+              <NavLink to="/co-operative-bank" className={({ isActive }) => `flex items-center gap-3 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${isActive ? 'text-[#1cabb1] bg-teal-50/50' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'}`}>
+                <Landmark size={18} /> Co-operative Bank
+              </NavLink>
+              <NavLink to="/merchant" className={({ isActive }) => `flex items-center gap-3 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${isActive ? 'text-[#1cabb1] bg-teal-50/50' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'}`}>
+                <Store size={18} /> Merchant
+              </NavLink>
+            </div>
+          </div>
+
+          <div className="px-6 py-3">
             <h3 className="text-xs font-semibold text-gray-800 uppercase tracking-wider mb-2">Region & Branch Management</h3>
             <div className="space-y-1">
               <NavLink to="/region" className={({ isActive }) => `flex items-center gap-3 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${isActive ? 'text-[#1cabb1] bg-teal-50/50' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'}`}>
@@ -66,6 +78,33 @@ const DashboardLayout = () => {
               </NavLink>
               <NavLink to="/branch" className={({ isActive }) => `flex items-center gap-3 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${isActive ? 'text-[#1cabb1] bg-teal-50/50' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'}`}>
                 <MapPin size={18} /> Branch
+              </NavLink>
+            </div>
+          </div>
+
+          <div className="px-6 py-3">
+            <h3 className="text-xs font-semibold text-gray-800 uppercase tracking-wider mb-2">Roles & Permissions</h3>
+            <div className="space-y-1">
+              <NavLink to="/roles-permissions" className={({ isActive }) => `flex items-center gap-3 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${isActive ? 'text-[#1cabb1] bg-teal-50/50' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'}`}>
+                <IdCard size={18} /> Roles & Permissions
+              </NavLink>
+            </div>
+          </div>
+
+          <div className="px-6 py-3">
+            <h3 className="text-xs font-semibold text-gray-800 uppercase tracking-wider mb-2">Product Management</h3>
+            <div className="space-y-1">
+              <NavLink to="/product-categories" className={({ isActive }) => `flex items-center gap-3 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${isActive ? 'text-[#1cabb1] bg-teal-50/50' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'}`}>
+                <List size={18} /> Categories
+              </NavLink>
+              <NavLink to="/product-brands" className={({ isActive }) => `flex items-center gap-3 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${isActive ? 'text-[#1cabb1] bg-teal-50/50' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'}`}>
+                <Tags size={18} /> Brands
+              </NavLink>
+              <NavLink to="/product-models" className={({ isActive }) => `flex items-center gap-3 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${isActive ? 'text-[#1cabb1] bg-teal-50/50' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'}`}>
+                <Box size={18} /> Models
+              </NavLink>
+              <NavLink to="/products" className={({ isActive }) => `flex items-center gap-3 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${isActive ? 'text-[#1cabb1] bg-teal-50/50' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'}`}>
+                <Package size={18} /> Products
               </NavLink>
             </div>
           </div>

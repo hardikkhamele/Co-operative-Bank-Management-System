@@ -161,9 +161,9 @@ const CustomerLoans = () => {
               
               <div className="flex flex-col items-end gap-3 self-end md:self-start">
                 {getStatusBadge(loan.status)}
-                <button className="text-[#1cabb1] font-semibold text-[15px] hover:text-[#159a9f] transition-colors">
+                <Link to={`/customers/1/loans/${loan.id}`} className="text-[#1cabb1] font-semibold text-[15px] hover:text-[#159a9f] transition-colors">
                   View Details
-                </button>
+                </Link>
               </div>
             </div>
 
