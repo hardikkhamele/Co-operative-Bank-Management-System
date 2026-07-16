@@ -32,6 +32,8 @@ const Leads = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [leadToDelete, setLeadToDelete] = useState(null);
   const [openFilterDropdown, setOpenFilterDropdown] = useState(null);
   const [filterStatus, setFilterStatus] = useState([]);
   const [filterRegion, setFilterRegion] = useState([]);
@@ -196,12 +198,12 @@ const Leads = () => {
 
         {/* Right Side: Add Lead Button */}
         <div className="flex items-center w-full md:w-auto justify-end">
-          <button 
-            onClick={() => setIsAddModalOpen(true)}
-            className="bg-[#1cabb1] hover:bg-[#159a9f] text-white py-2.5 px-6 rounded-full text-sm font-medium transition-colors shadow-sm whitespace-nowrap w-full md:w-auto"
+          <Link 
+            to="/leads/create"
+            className="bg-[#1cabb1] hover:bg-[#159a9f] text-white py-2.5 px-6 rounded-full text-sm font-medium transition-colors shadow-sm whitespace-nowrap w-full md:w-auto text-center"
           >
             + Create Leads
-          </button>
+          </Link>
         </div>
       </div>
 
@@ -244,13 +246,16 @@ const Leads = () => {
                   </td>
                   <td className="py-4 px-6 text-center">
                     <div className="flex justify-center items-center gap-3">
-                      <button className="text-gray-500 hover:text-gray-700 transition-colors">
+                      <Link to="/leads/view" state={lead} className="text-gray-500 hover:text-gray-700 transition-colors">
                         <Eye size={18} />
-                      </button>
-                      <button className="text-gray-500 hover:text-[#5a5ce5] transition-colors">
+                      </Link>
+                      <Link to="/leads/edit" state={lead} className="text-gray-500 hover:text-[#5a5ce5] transition-colors">
                         <Edit size={18} />
-                      </button>
-                      <button className="text-[#ff3d67] hover:text-[#e02e55] transition-colors">
+                      </Link>
+                      <button 
+                        onClick={() => { setLeadToDelete(lead); setIsDeleteModalOpen(true); }}
+                        className="text-[#ff3d67] hover:text-[#e02e55] transition-colors"
+                      >
                         <Trash2 size={18} />
                       </button>
                     </div>
@@ -377,10 +382,40 @@ const Leads = () => {
                 Cancel
               </button>
               <button 
+                type="button" 
                 onClick={() => setIsAddModalOpen(false)}
-                className="py-2 px-8 rounded-full bg-[#1cabb1] text-white font-semibold hover:bg-[#159a9f] transition-colors focus:outline-none text-sm shadow-sm"
+                className="flex-1 py-2.5 rounded-full bg-[#1cabb1] hover:bg-[#168f94] text-white font-medium transition-colors"
               >
-                Create
+                Send OTP
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {isDeleteModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 transition-opacity">
+          <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl p-6 text-center">
+            <div className="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Trash2 size={32} />
+            </div>
+            <h3 className="text-xl font-bold text-gray-800 mb-2">Delete Lead</h3>
+            <p className="text-gray-500 text-sm mb-6">
+              Are you sure you want to delete <span className="font-semibold text-gray-700">{leadToDelete?.name}</span>? This action cannot be undone.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => { setIsDeleteModalOpen(false); setLeadToDelete(null); }}
+                className="flex-1 py-2.5 rounded-full border-2 border-gray-200 text-gray-600 font-semibold hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => { setIsDeleteModalOpen(false); setLeadToDelete(null); }}
+                className="flex-1 py-2.5 rounded-full bg-red-500 text-white font-semibold hover:bg-red-600 transition-colors shadow-sm"
+              >
+                Delete
               </button>
             </div>
           </div>

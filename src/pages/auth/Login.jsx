@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import AuthLayout from '../../components/layouts/AuthLayout';
 import useAuthStore from '../../store/authStore';
 import loginIllustration from '../../assets/images/login.png';
+import { UserCog, User } from 'lucide-react';
 
 const Login = () => {
   const [formData, setFormData] = useState({ 
@@ -33,27 +34,38 @@ const Login = () => {
         <p className="text-sm text-gray-500">Sign in with your registered email and password.</p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-5">
-        <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-2">Role</label>
-          <div className="relative">
-            <select
-              name="role"
-              required
-              value={formData.role}
-              onChange={handleChange}
-              className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#5a5ce5] focus:border-transparent transition-all bg-white appearance-none"
-            >
-              <option value="" disabled>Select</option>
-              <option value="superadmin">Super Admin</option>
-              <option value="admin">Admin</option>
-            </select>
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-500">
-              <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
-              </svg>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Role Selection */}
+        <div className="flex justify-center gap-6 mb-6">
+          <button
+            type="button"
+            onClick={() => setFormData({ ...formData, role: 'superadmin' })}
+            className={`flex flex-col items-center justify-center w-32 h-32 rounded-xl transition-all shadow-sm ${
+              formData.role === 'superadmin'
+                ? 'bg-[#5a5ce5] text-white border-transparent'
+                : 'bg-white text-gray-800 border-2 border-green-100 hover:border-green-200'
+            }`}
+          >
+            <div className={`p-3 rounded-full mb-2 ${formData.role === 'superadmin' ? 'bg-white/20' : 'bg-gray-100'}`}>
+              <UserCog size={32} strokeWidth={1.5} />
             </div>
-          </div>
+            <span className="font-semibold text-sm">Super Admin</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setFormData({ ...formData, role: 'admin' })}
+            className={`flex flex-col items-center justify-center w-32 h-32 rounded-xl transition-all shadow-sm ${
+              formData.role === 'admin'
+                ? 'bg-[#5a5ce5] text-white border-transparent'
+                : 'bg-white text-gray-800 border-2 border-green-100 hover:border-green-200'
+            }`}
+          >
+            <div className={`p-3 rounded-full mb-2 ${formData.role === 'admin' ? 'bg-white/20' : 'bg-gray-100'}`}>
+              <User size={32} strokeWidth={1.5} />
+            </div>
+            <span className="font-semibold text-sm">Sub Admin</span>
+          </button>
         </div>
 
         <div>
