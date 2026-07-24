@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { NavLink, Link, Outlet, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, UserCog, User, UserPlus, Map, MapPin, Bell, ChevronDown, IdCard, List, Tags, Package, Box, Landmark, Store, ClipboardList, Image, LogOut } from 'lucide-react';
+import { LayoutDashboard, MapPin, IdCard, UserPlus, List, ClipboardList, Store, Box, ArrowDownRight, ArrowUpRight, ArrowRightLeft, RefreshCcw, UserCheck, UserCog, Tag, ChevronDown, Bell, User, LogOut, CreditCard, Headphones } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
 
 const DashboardLayout = () => {
@@ -37,108 +37,107 @@ const DashboardLayout = () => {
         </div>
 
         {/* Navigation */}
-        <div className="flex-1 overflow-y-auto py-4">
-          <NavLink
-            to="/dashboard"
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-6 py-3 text-sm font-medium border-l-4 transition-colors ${
-                isActive
-                  ? 'border-[#00bcd4] text-[#00bcd4] bg-teal-50/50'
-                  : 'border-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-              }`
-            }
-          >
-            <LayoutDashboard size={18} />
-            Dashboard
-          </NavLink>
+        <div className="flex-1 overflow-y-auto py-4 px-3 space-y-6">
+          <div>
+            <NavLink
+              to="/dashboard"
+              className={({ isActive }) =>
+                `flex items-center gap-3 px-4 py-3 text-[15px] font-medium rounded-xl transition-colors ${
+                  isActive
+                    ? 'text-[#1cabb1] bg-white shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-white/50'
+                }`
+              }
+            >
+              <LayoutDashboard size={20} />
+              Dashboard
+            </NavLink>
+          </div>
 
-          <div className="px-6 py-3 mt-4">
-            <h3 className="text-xs font-semibold text-gray-800 uppercase tracking-wider mb-2">Partner Management</h3>
+          <div>
+            <h3 className="text-[15px] font-bold text-gray-800 mb-2 px-1">Branch Management</h3>
             <div className="space-y-1">
-              <NavLink to="/co-operative-bank" className={({ isActive }) => `flex items-center gap-3 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${isActive ? 'text-[#1cabb1] bg-teal-50/50' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'}`}>
-                <Landmark size={18} /> Co-operative Bank
-              </NavLink>
-              <NavLink to="/merchant" className={({ isActive }) => `flex items-center gap-3 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${isActive ? 'text-[#1cabb1] bg-teal-50/50' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'}`}>
-                <Store size={18} /> Merchant
+              <NavLink to="/branch" className={({ isActive }) => `flex items-center gap-3 px-4 py-2.5 text-[15px] font-medium rounded-xl transition-colors ${isActive ? 'text-[#1cabb1] bg-white shadow-sm' : 'text-[#4b5563] hover:text-gray-900 hover:bg-white/50'}`}>
+                <MapPin size={20} className="text-gray-500" /> Branch
               </NavLink>
             </div>
           </div>
 
-          <div className="px-6 py-3">
-            <h3 className="text-xs font-semibold text-gray-800 uppercase tracking-wider mb-2">Lead Management</h3>
+          <div>
+            <h3 className="text-[15px] font-bold text-gray-800 mb-2 px-1">HR Management</h3>
             <div className="space-y-1">
-              <NavLink to="/customers" className={({ isActive }) => `flex items-center gap-3 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${isActive ? 'text-[#1cabb1] bg-teal-50/50' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'}`}>
-                <Users size={18} /> Customers
-              </NavLink>
-              <NavLink to="/leads" className={({ isActive }) => `flex items-center gap-3 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${isActive ? 'text-[#1cabb1] bg-teal-50/50' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'}`}>
-                <UserPlus size={18} /> Leads
+              <NavLink to="/employees" className={({ isActive }) => `flex items-center gap-3 px-4 py-2.5 text-[15px] font-medium rounded-xl transition-colors ${isActive ? 'text-[#1cabb1] bg-white shadow-sm' : 'text-[#4b5563] hover:text-gray-900 hover:bg-white/50'}`}>
+                <IdCard size={20} className="text-gray-500" /> Employees
               </NavLink>
             </div>
           </div>
 
-          <div className="px-6 py-3">
-            <h3 className="text-xs font-semibold text-gray-800 uppercase tracking-wider mb-2">Region & Branch Management</h3>
+          <div>
+            <h3 className="text-[15px] font-bold text-gray-800 mb-2 px-1">CRM Management</h3>
             <div className="space-y-1">
-              <NavLink to="/region" className={({ isActive }) => `flex items-center gap-3 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${isActive ? 'text-[#1cabb1] bg-teal-50/50' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'}`}>
-                <Map size={18} /> Region
+              <NavLink to="/leads" className={({ isActive }) => `flex items-center gap-3 px-4 py-2.5 text-[15px] font-medium rounded-xl transition-colors ${isActive ? 'text-[#1cabb1] bg-white shadow-sm' : 'text-[#4b5563] hover:text-gray-900 hover:bg-white/50'}`}>
+                <UserPlus size={20} className="text-gray-500" /> Leads
               </NavLink>
-              <NavLink to="/branch" className={({ isActive }) => `flex items-center gap-3 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${isActive ? 'text-[#1cabb1] bg-teal-50/50' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'}`}>
-                <MapPin size={18} /> Branch
+              <NavLink to="/inventory" className={({ isActive }) => `flex items-center gap-3 px-4 py-2.5 text-[15px] font-medium rounded-xl transition-colors ${isActive ? 'text-[#1cabb1] bg-white shadow-sm' : 'text-[#4b5563] hover:text-gray-900 hover:bg-white/50'}`}>
+                <List size={20} className="text-gray-500" /> Inventory
               </NavLink>
             </div>
           </div>
 
-          <div className="px-6 py-3">
-            <h3 className="text-xs font-semibold text-gray-800 uppercase tracking-wider mb-2">User Management</h3>
+          <div>
+            <h3 className="text-[15px] font-bold text-gray-800 mb-2 px-1">Verification</h3>
             <div className="space-y-1">
-              <NavLink to="/managers" className={({ isActive }) => `flex items-center gap-3 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${isActive ? 'text-[#1cabb1] bg-teal-50/50' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'}`}>
-                <UserCog size={18} /> Managers
+              <NavLink to="/cibil" className={({ isActive }) => `flex items-center gap-3 px-4 py-2.5 text-[15px] font-medium rounded-xl transition-colors ${isActive ? 'text-[#1cabb1] bg-white shadow-sm' : 'text-[#4b5563] hover:text-gray-900 hover:bg-white/50'}`}>
+                <ClipboardList size={20} className="text-gray-500" /> CIBIL Score & Report
               </NavLink>
-              <NavLink to="/employees" className={({ isActive }) => `flex items-center gap-3 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${isActive ? 'text-[#1cabb1] bg-teal-50/50' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'}`}>
-                <Users size={18} /> Employees
+              <NavLink to="/kyc" className={({ isActive }) => `flex items-center gap-3 px-4 py-2.5 text-[15px] font-medium rounded-xl transition-colors ${isActive ? 'text-[#1cabb1] bg-white shadow-sm' : 'text-[#4b5563] hover:text-gray-900 hover:bg-white/50'}`}>
+                <IdCard size={20} className="text-gray-500" /> KYC Verification
               </NavLink>
             </div>
           </div>
 
-          <div className="px-6 py-3">
-            <h3 className="text-xs font-semibold text-gray-800 uppercase tracking-wider mb-2">Roles & Permissions</h3>
+          <div>
+            <h3 className="text-[15px] font-bold text-gray-800 mb-2 px-1">Receipt Management</h3>
             <div className="space-y-1">
-              <NavLink to="/roles-permissions" className={({ isActive }) => `flex items-center gap-3 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${isActive ? 'text-[#1cabb1] bg-teal-50/50' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'}`}>
-                <IdCard size={18} /> Roles & Permissions
+              <NavLink to="/credit" className={({ isActive }) => `flex items-center gap-3 px-4 py-2.5 text-[15px] font-medium rounded-xl transition-colors ${isActive ? 'text-[#1cabb1] bg-white shadow-sm' : 'text-[#4b5563] hover:text-gray-900 hover:bg-white/50'}`}>
+                <ArrowDownRight size={20} className="text-gray-500" /> Credit Receipt
+              </NavLink>
+              <NavLink to="/debit" className={({ isActive }) => `flex items-center gap-3 px-4 py-2.5 text-[15px] font-medium rounded-xl transition-colors ${isActive ? 'text-[#1cabb1] bg-white shadow-sm' : 'text-[#4b5563] hover:text-gray-900 hover:bg-white/50'}`}>
+                <ArrowUpRight size={20} className="text-gray-500" /> Debit Receipt
+              </NavLink>
+              <NavLink to="/transfer" className={({ isActive }) => `flex items-center gap-3 px-4 py-2.5 text-[15px] font-medium rounded-xl transition-colors ${isActive ? 'text-[#1cabb1] bg-white shadow-sm' : 'text-[#4b5563] hover:text-gray-900 hover:bg-white/50'}`}>
+                <ArrowRightLeft size={20} className="text-gray-500" /> Transfer Receipt
+              </NavLink>
+              <NavLink to="/contra" className={({ isActive }) => `flex items-center gap-3 px-4 py-2.5 text-[15px] font-medium rounded-xl transition-colors ${isActive ? 'text-[#1cabb1] bg-white shadow-sm' : 'text-[#4b5563] hover:text-gray-900 hover:bg-white/50'}`}>
+                <RefreshCcw size={20} className="text-gray-500" /> Contra Receipt
               </NavLink>
             </div>
           </div>
 
-          <div className="px-6 py-3">
-            <h3 className="text-xs font-semibold text-gray-800 uppercase tracking-wider mb-2">Product Management</h3>
+          <div>
+            <h3 className="text-[15px] font-bold text-gray-800 mb-2 px-1">Attendance Report</h3>
             <div className="space-y-1">
-              <NavLink to="/product-categories" className={({ isActive }) => `flex items-center gap-3 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${isActive ? 'text-[#1cabb1] bg-teal-50/50' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'}`}>
-                <List size={18} /> Categories
-              </NavLink>
-              <NavLink to="/product-brands" className={({ isActive }) => `flex items-center gap-3 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${isActive ? 'text-[#1cabb1] bg-teal-50/50' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'}`}>
-                <Tags size={18} /> Brands
-              </NavLink>
-
-              <NavLink to="/products" className={({ isActive }) => `flex items-center gap-3 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${isActive ? 'text-[#1cabb1] bg-teal-50/50' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'}`}>
-                <Package size={18} /> Products
+              <NavLink to="/attendance" className={({ isActive }) => `flex items-center gap-3 px-4 py-2.5 text-[15px] font-medium rounded-xl transition-colors ${isActive ? 'text-[#1cabb1] bg-white shadow-sm' : 'text-[#4b5563] hover:text-gray-900 hover:bg-white/50'}`}>
+                <UserCheck size={20} className="text-gray-500" /> Attendance Report
               </NavLink>
             </div>
           </div>
 
-          <div className="px-6 py-3">
-            <h3 className="text-xs font-semibold text-gray-800 uppercase tracking-wider mb-2">Attendance Report</h3>
+          <div>
+            <h3 className="text-[15px] font-bold text-gray-800 mb-2 px-1">Roles & Permissions</h3>
             <div className="space-y-1">
-              <NavLink to="/attendance" className={({ isActive }) => `flex items-center gap-3 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${isActive ? 'text-[#1cabb1] bg-teal-50/50' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'}`}>
-                <ClipboardList size={18} /> Attendance Report
+              <NavLink to="/roles-permissions" className={({ isActive }) => `flex items-center gap-3 px-4 py-2.5 text-[15px] font-medium rounded-xl transition-colors ${isActive ? 'text-[#1cabb1] bg-white shadow-sm' : 'text-[#4b5563] hover:text-gray-900 hover:bg-white/50'}`}>
+                <UserCog size={20} className="text-gray-500" /> Roles & Permissions
               </NavLink>
             </div>
           </div>
 
-          <div className="px-6 py-3">
-            <h3 className="text-xs font-semibold text-gray-800 uppercase tracking-wider mb-2">App Management</h3>
+
+          <div>
+            <h3 className="text-[15px] font-bold text-gray-800 mb-2 px-1">Settings</h3>
             <div className="space-y-1">
-              <NavLink to="/banners" className={({ isActive }) => `flex items-center gap-3 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${isActive ? 'text-[#1cabb1] bg-teal-50/50' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'}`}>
-                <Image size={18} /> Banner Management
+              <NavLink to="/settings/help" className={({ isActive }) => `flex items-center gap-3 px-4 py-2.5 text-[15px] font-medium rounded-xl transition-colors ${isActive ? 'text-[#1cabb1] bg-white shadow-sm' : 'text-[#4b5563] hover:text-gray-900 hover:bg-white/50'}`}>
+                <Headphones size={20} className="text-gray-500" /> Help & Support
               </NavLink>
             </div>
           </div>
@@ -174,9 +173,17 @@ const DashboardLayout = () => {
 
               {isProfileOpen && (
                 <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                  <Link
+                    to="/profile"
+                    onClick={() => setIsProfileOpen(false)}
+                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors flex items-center gap-2 font-medium"
+                  >
+                    <User size={16} />
+                    My Profile
+                  </Link>
                   <button 
                     onClick={handleLogout}
-                    className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors flex items-center gap-2 font-medium"
+                    className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors flex items-center gap-2 font-medium border-t border-gray-100 mt-1 pt-2"
                   >
                     <LogOut size={16} />
                     Logout

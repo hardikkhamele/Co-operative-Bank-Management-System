@@ -25,49 +25,55 @@ const ResetPassword = () => {
   return (
     <>
       <AuthLayout illustration={<img src={resetIllustration} alt="Reset Password Illustration" className="w-full max-w-md object-contain drop-shadow-2xl" />}>
-        <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold text-gray-800 mb-3">Super Admin Portal</h2>
-          <h3 className="text-lg font-semibold text-gray-700 mb-2">Reset Password ?</h3>
-          <p className="text-sm text-gray-500">Please enter new password</p>
+        <div className="flex flex-col items-center mb-6 text-center">
+          <svg viewBox="0 0 200 180" className="w-16 h-16 mb-2">
+            <polygon points="30,100 80,100 110,160 60,160" fill="#ef3b3a" />
+            <polygon points="100,10 180,160 130,160 90,80" fill="#1b58a6" />
+          </svg>
+          <div className="flex flex-col text-center text-[#1b58a6] mb-4">
+              <span className="font-extrabold text-[15px] leading-tight tracking-wide">ADVITA CREDIT</span>
+          </div>
+          <h2 className="text-xl font-bold text-gray-800 mb-1">Reset Password ?</h2>
+          <p className="text-xs text-gray-500">Please enter new password</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">New Password</label>
+            <label className="block text-xs font-semibold text-gray-700 mb-1">New Password</label>
             <input
               type="password"
               name="newPassword"
               required
               value={passwords.newPassword}
               onChange={handleChange}
-              className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#5a5ce5] focus:border-transparent transition-all bg-white"
+              className="w-full px-4 py-2.5 text-sm rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1b58a6] focus:border-transparent transition-all bg-white"
               placeholder="*********"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Confirm Password</label>
+            <label className="block text-xs font-semibold text-gray-700 mb-1">Confirm Password</label>
             <input
               type="password"
               name="confirmPassword"
               required
               value={passwords.confirmPassword}
               onChange={handleChange}
-              className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#5a5ce5] focus:border-transparent transition-all bg-white"
+              className="w-full px-4 py-2.5 text-sm rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1b58a6] focus:border-transparent transition-all bg-white"
               placeholder="*********"
             />
           </div>
 
           <button
             type="submit"
-            className="w-full py-3 px-4 bg-[#5a5ce5] hover:bg-[#484ab9] text-white font-medium rounded-full transition-colors shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#5a5ce5] mt-6"
+            className="w-full py-3 px-4 mt-4 bg-[#1b58a6] hover:bg-[#154685] text-white font-medium rounded-full transition-colors shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#1b58a6] text-sm"
           >
             Set Password
           </button>
         </form>
 
         <div className="mt-8 text-center">
-          <p className="text-sm text-gray-500">
+          <p className="text-xs text-gray-500">
             Remember Password ?{' '}
             <Link to="/login" className="text-[#00bcd4] hover:text-[#00a0b5] font-semibold">
               Login
@@ -84,19 +90,17 @@ const ResetPassword = () => {
               <BadgeCheck className="w-24 h-24" strokeWidth={1.5} />
             </div>
             
-            <h2 className="text-2xl font-bold text-gray-800 mb-4 leading-tight">
+            <h2 className="text-xl font-bold text-gray-800 mb-3 leading-tight">
               Password Changed<br />Successfully!
             </h2>
             
-            <p className="text-sm text-gray-500 mb-8 px-2 leading-relaxed">
+            <p className="text-xs text-gray-500 mb-6 px-2 leading-relaxed">
               Your password has been successfully updated. You can now use your new credentials to log in to your account.
             </p>
 
-            <div className="w-full h-px bg-gray-100 mb-8"></div>
-
             <Link
               to="/login"
-              className="w-full inline-block py-3.5 px-4 bg-[#4549b8] hover:bg-[#383a99] text-white font-medium rounded-full transition-colors shadow-lg hover:shadow-xl focus:outline-none"
+              className="w-full inline-block py-3 px-4 bg-[#1b58a6] hover:bg-[#154685] text-white font-medium text-sm rounded-full transition-colors shadow-lg hover:shadow-xl focus:outline-none"
             >
               Login Now
             </Link>

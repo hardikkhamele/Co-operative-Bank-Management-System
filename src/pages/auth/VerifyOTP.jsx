@@ -26,26 +26,32 @@ const VerifyOTP = () => {
 
   return (
     <AuthLayout illustration={<img src={otpIllustration} alt="Verify OTP Illustration" className="w-full max-w-md object-contain drop-shadow-2xl" />}>
-      <div className="text-center mb-8">
-        <h2 className="text-3xl font-bold text-gray-800 mb-3">Super Admin Portal</h2>
-        <h3 className="text-lg font-semibold text-gray-700 mb-2">Verify OTP</h3>
-        <p className="text-sm text-gray-500">
+      <div className="flex flex-col items-center mb-6 text-center">
+        <svg viewBox="0 0 200 180" className="w-16 h-16 mb-2">
+          <polygon points="30,100 80,100 110,160 60,160" fill="#ef3b3a" />
+          <polygon points="100,10 180,160 130,160 90,80" fill="#1b58a6" />
+        </svg>
+        <div className="flex flex-col text-center text-[#1b58a6] mb-4">
+            <span className="font-extrabold text-[15px] leading-tight tracking-wide">ADVITA CREDIT</span>
+        </div>
+        <h2 className="text-xl font-bold text-gray-800 mb-1">Verify OTP</h2>
+        <p className="text-xs text-gray-500">
           A 6 digit OTP has been sent to
           <br />
-          <span className="text-[#5a5ce5] font-medium flex items-center justify-center gap-2 mt-1">
+          <span className="text-[#1b58a6] font-medium flex items-center justify-center gap-1.5 mt-1">
             example@mail.com
             <button className="text-[#00bcd4] hover:text-[#00a0b5]">
-              <Pencil size={14} />
+              <Pencil size={12} />
             </button>
           </span>
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6 flex flex-col items-center">
+      <form onSubmit={handleSubmit} className="space-y-4 flex flex-col items-center">
         <div className="flex justify-center gap-2 mb-2 w-full">
           {otp.map((data, index) => (
             <input
-              className="w-10 h-10 md:w-12 md:h-12 border border-gray-200 rounded-lg text-center text-lg font-semibold text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#5a5ce5] focus:border-transparent bg-white transition-all shadow-sm"
+              className="w-10 h-10 md:w-12 md:h-12 border border-gray-200 rounded-lg text-center text-lg font-semibold text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#1b58a6] focus:border-transparent bg-white transition-all shadow-sm"
               type="text"
               name="otp"
               maxLength="1"
@@ -57,7 +63,7 @@ const VerifyOTP = () => {
           ))}
         </div>
 
-        <p className="text-sm text-gray-500 mt-2 mb-4">
+        <p className="text-xs text-gray-500 mt-2 mb-2">
           Didn't received the code?{' '}
           <button type="button" className="text-[#00bcd4] hover:text-[#00a0b5] font-semibold">
             Resend Code
@@ -66,14 +72,14 @@ const VerifyOTP = () => {
 
         <button
           type="submit"
-          className="w-full py-3 px-4 bg-[#5a5ce5] hover:bg-[#484ab9] text-white font-medium rounded-full transition-colors shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#5a5ce5]"
+          className="w-full py-3 px-4 mt-2 bg-[#1b58a6] hover:bg-[#154685] text-white font-medium rounded-full transition-colors shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#1b58a6] text-sm"
         >
           Verify OTP
         </button>
       </form>
 
       <div className="mt-8 text-center">
-        <p className="text-sm text-gray-500">
+        <p className="text-xs text-gray-500">
           Remember Password ?{' '}
           <Link to="/login" className="text-[#00bcd4] hover:text-[#00a0b5] font-semibold">
             Login

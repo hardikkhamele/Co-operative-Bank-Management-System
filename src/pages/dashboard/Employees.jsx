@@ -3,14 +3,13 @@ import { Link } from 'react-router-dom';
 import { ChevronRight, Search, SlidersHorizontal, Eye, Edit, Trash2, ChevronLeft, X, ChevronDown, Camera, Calendar, Phone, Mail, Lock, Map, MapPin, User } from 'lucide-react';
 
 const mockEmployees = [
-  { id: 1, name: 'Clark Kent', initials: 'CK', avatar: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?auto=format&fit=crop&w=100&q=80', type: 'Loan Executive', region: 'Eastern Region', branch: 'Kolkata Branch', email: 'example@mail.com', hasImage: true },
-  { id: 2, name: 'Tony Stark', initials: 'TS', type: 'Tele-caller', region: 'Western Region', branch: 'Mumbai Branch', email: 'example@mail.com' },
-  { id: 3, name: 'Bruce Wayne', initials: 'BW', type: 'Credit Analyst', region: 'Northern Region', branch: 'Mumbai Branch', email: 'example@mail.com' },
-  { id: 4, name: 'Barry Allen', initials: 'BA', type: 'Field Verification Officer', region: 'Southern Region', branch: 'Nagpur Branch', email: 'example@mail.com' },
-  { id: 5, name: 'Steve Rogers', initials: 'SR', type: 'Operations Executive', region: 'Western Region', branch: 'Delhi Branch', email: 'example@mail.com' },
-  { id: 6, name: 'Clinton Barton', initials: 'CB', type: 'Disbursal Officer', region: 'Southern Region', branch: 'Nagpur Branch', email: 'example@mail.com' },
-  { id: 7, name: 'Scott Lang', initials: 'SL', type: 'Collection Agent', region: 'Eastern Region', branch: 'Delhi Branch', email: 'example@mail.com' },
-  { id: 8, name: 'Peter Parker', initials: 'PP', type: 'Customer Support Executive', region: 'Northern Region', branch: 'Kolkata Branch', email: 'example@mail.com' },
+  { id: 1, name: 'Clark Kent', initials: 'CK', avatar: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?auto=format&fit=crop&w=100&q=80', type: 'Branch Manager', state: 'Maharashtra', branch: 'Mumbai Branch', email: 'example@mail.com', hasImage: true },
+  { id: 2, name: 'Tony Stark', initials: 'TS', type: 'Senior Clerk', state: 'Maharashtra', branch: 'Mumbai Branch', email: 'example@mail.com' },
+  { id: 3, name: 'Bruce Wayne', initials: 'BW', type: 'Assistant Branch Manager', state: 'Rajasthan', branch: 'Jaipur Branch', email: 'example@mail.com' },
+  { id: 4, name: 'Barry Allen', initials: 'BA', type: 'Clerk', state: 'Karnataka', branch: 'Nagpur Branch', email: 'example@mail.com' },
+  { id: 5, name: 'Steve Rogers', initials: 'SR', type: 'Cashier', state: 'Delhi', branch: 'Delhi Branch', email: 'example@mail.com' },
+  { id: 6, name: 'Clinton Barton', initials: 'CB', type: 'Peon', state: 'Maharashtra', branch: 'Nagpur Branch', email: 'example@mail.com' },
+  { id: 7, name: 'Scott Lang', initials: 'SL', type: 'Clerk', state: 'Delhi', branch: 'Delhi Branch', email: 'example@mail.com' },
 ];
 
 const MultiSelectDropdown = ({ label, options, selectedValues, onChange }) => {
@@ -64,16 +63,18 @@ const Employees = () => {
 
 
   const [selectedTypes, setSelectedTypes] = useState([]);
-  const [selectedRegions, setSelectedRegions] = useState([]);
+  const [selectedStates, setSelectedStates] = useState([]);
   const [selectedBranches, setSelectedBranches] = useState([]);
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
 
   const filteredData = mockEmployees.filter(row => {
     const matchesSearch = row.name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesType = selectedTypes.length === 0 || selectedTypes.includes(row.type);
-    const matchesRegion = selectedRegions.length === 0 || selectedRegions.includes(row.region);
+    const matchesState = selectedStates.length === 0 || selectedStates.includes(row.state);
     const matchesBranch = selectedBranches.length === 0 || selectedBranches.includes(row.branch);
     
-    return matchesSearch && matchesType && matchesRegion && matchesBranch;
+    return matchesSearch && matchesType && matchesState && matchesBranch;
   });
 
   const handleDeleteClick = (employee) => {
@@ -94,14 +95,13 @@ const Employees = () => {
   return (
     <div className="h-full flex flex-col gap-6 w-full">
       {/* Header Card */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 shrink-0">
-        <h1 className="text-xl font-bold text-[#4285F4] mb-2">Employees</h1>
-        <div className="flex items-center text-sm text-gray-500">
-          <Link to="/dashboard" className="hover:text-gray-700">Dashboard</Link>
-          <ChevronRight size={14} className="mx-2" />
-          <span className="hover:text-gray-700">User Management</span>
-          <ChevronRight size={14} className="mx-2" />
-          <span className="text-[#5a5ce5]">Employees</span>
+      <div className="bg-white rounded-lg p-5 shadow-sm border border-gray-100 shrink-0">
+        <div className="flex items-center text-sm font-medium text-gray-600">
+          <Link to="/dashboard" className="hover:text-gray-900 transition-colors">Dashboard</Link>
+          <ChevronRight size={16} className="mx-1 text-gray-400" />
+          <span className="hover:text-gray-900 transition-colors">HR Management</span>
+          <ChevronRight size={16} className="mx-1 text-gray-400" />
+          <span className="text-[#1b58a6]">Employee</span>
         </div>
       </div>
 
@@ -124,9 +124,9 @@ const Employees = () => {
               className="p-2.5 bg-white border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors shadow-sm relative"
             >
               <SlidersHorizontal size={18} />
-              {(selectedTypes.length > 0 || selectedRegions.length > 0 || selectedBranches.length > 0) && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 bg-[#5a5ce5] rounded-full border border-white flex items-center justify-center text-[9px] font-bold text-white">
-                  {selectedTypes.length + selectedRegions.length + selectedBranches.length}
+              {(selectedTypes.length > 0 || selectedStates.length > 0 || selectedBranches.length > 0) && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-[#1b58a6] rounded-full border border-white flex items-center justify-center text-[9px] font-bold text-white">
+                  {selectedTypes.length + selectedStates.length + selectedBranches.length}
                 </span>
               )}
             </button>
@@ -141,33 +141,61 @@ const Employees = () => {
                   </button>
                 </div>
                 
-                <div className="p-5 pt-2 space-y-2">
+                <div className="p-5 pt-2 space-y-3">
                   <MultiSelectDropdown 
-                    label="Employee Type" 
-                    options={['Loan Executive', 'Tele-caller', 'Credit Analyst', 'Field Verification Officer', 'Operations Executive', 'Disbursal Officer', 'Collection Agent', 'Customer Support Executive']} 
+                    label="Designation" 
+                    options={['Branch Manager', 'Assistant Branch Manager', 'Senior Clerk', 'Clerk', 'Cashier', 'Peon']} 
                     selectedValues={selectedTypes} 
                     onChange={setSelectedTypes} 
                   />
                   <MultiSelectDropdown 
-                    label="Region" 
-                    options={['Eastern Region', 'Western Region', 'Northern Region', 'Southern Region']} 
-                    selectedValues={selectedRegions} 
-                    onChange={setSelectedRegions} 
+                    label="State/UT" 
+                    options={['Maharashtra', 'Rajasthan', 'Karnataka', 'Delhi']} 
+                    selectedValues={selectedStates} 
+                    onChange={setSelectedStates} 
                   />
                   <MultiSelectDropdown 
                     label="Branch" 
-                    options={['Mumbai Branch', 'Nagpur Branch', 'Kolkata Branch', 'Delhi Branch']} 
+                    options={['Mumbai Branch', 'Nagpur Branch', 'Jaipur Branch', 'Delhi Branch']} 
                     selectedValues={selectedBranches} 
                     onChange={setSelectedBranches} 
                   />
+                  <div className="flex gap-3">
+                    <div className="relative flex-1">
+                      <input 
+                        type={startDate ? "date" : "text"}
+                        placeholder="DD/MM/YYYY"
+                        onFocus={(e) => (e.target.type = "date")}
+                        onBlur={(e) => (!e.target.value ? (e.target.type = "text") : null)}
+                        value={startDate}
+                        onChange={(e) => setStartDate(e.target.value)}
+                        className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white text-sm text-gray-700" 
+                      />
+                      {!startDate && <Calendar size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />}
+                    </div>
+                    <div className="relative flex-1">
+                      <input 
+                        type={endDate ? "date" : "text"}
+                        placeholder="DD/MM/YYYY"
+                        onFocus={(e) => (e.target.type = "date")}
+                        onBlur={(e) => (!e.target.value ? (e.target.type = "text") : null)}
+                        value={endDate}
+                        onChange={(e) => setEndDate(e.target.value)}
+                        className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white text-sm text-gray-700" 
+                      />
+                      {!endDate && <Calendar size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />}
+                    </div>
+                  </div>
                 </div>
                 
                 <div className="p-5 pt-2 flex gap-3">
                   <button 
                     onClick={() => {
                       setSelectedTypes([]);
-                      setSelectedRegions([]);
+                      setSelectedStates([]);
                       setSelectedBranches([]);
+                      setStartDate('');
+                      setEndDate('');
                     }}
                     className="flex-1 py-2.5 px-4 rounded-full border-2 border-[#1cabb1] text-[#1cabb1] font-semibold hover:bg-teal-50 transition-colors bg-white text-sm"
                   >
@@ -198,22 +226,22 @@ const Employees = () => {
         <div className="flex-1 overflow-auto">
         <table className="w-full text-left border-collapse min-w-[800px]">
           <thead>
-            <tr className="bg-indigo-50/50 text-gray-700 text-sm font-semibold border-b border-gray-200">
-              <th className="py-4 px-6 text-center w-20">Sr.No.</th>
-              <th className="py-4 px-6">Employee Name</th>
-              <th className="py-4 px-6">Employee Type</th>
-              <th className="py-4 px-6">Region</th>
-              <th className="py-4 px-6">Branch</th>
-              <th className="py-4 px-6">Email</th>
-              <th className="py-4 px-6 text-center w-32">Action</th>
+            <tr className="bg-[#f4f3fb] text-[#4b5563] text-[15px] font-bold border-b border-gray-100">
+              <th className="py-4 px-6 text-left w-20">Sr.No.</th>
+              <th className="py-4 px-6 font-bold">Employee Name</th>
+              <th className="py-4 px-6 font-bold">Employee Type</th>
+              <th className="py-4 px-6 font-bold">Branch</th>
+              <th className="py-4 px-6 font-bold">State/UT</th>
+              <th className="py-4 px-6 font-bold">Email</th>
+              <th className="py-4 px-6 text-center w-32 font-bold">Action</th>
             </tr>
           </thead>
           <tbody>
             {filteredData.map((employee, idx) => (
-              <tr key={employee.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors text-sm text-gray-600">
-                <td className="py-4 px-6 text-center">{idx + 1}</td>
+              <tr key={employee.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors text-[15px] text-gray-700">
+                <td className="py-4 px-6 text-left">{idx + 1}</td>
                 <td className="py-4 px-6 font-medium text-gray-800 flex items-center gap-3">
-                  <div className={`w-8 h-8 rounded-full overflow-hidden flex items-center justify-center ${employee.hasImage ? '' : 'bg-[#f4f2ff] text-gray-800 font-bold text-[13px]'}`}>
+                  <div className={`w-9 h-9 rounded-full overflow-hidden flex items-center justify-center shrink-0 ${employee.hasImage ? '' : 'bg-[#f4f3fb] text-gray-800 font-bold text-[14px]'}`}>
                     {employee.hasImage ? (
                       <img src={employee.avatar} alt={employee.name} className="w-full h-full object-cover" />
                     ) : (
@@ -222,13 +250,13 @@ const Employees = () => {
                   </div>
                   <span className="font-semibold text-gray-800">{employee.name}</span>
                 </td>
-                <td className="py-4 px-6">
-                  <div className="max-w-[150px] leading-tight truncate">
+                <td className="py-4 px-6 text-gray-700">
+                  <div className="max-w-[150px] leading-tight break-words">
                     {employee.type}
                   </div>
                 </td>
-                <td className="py-4 px-6">{employee.region}</td>
-                <td className="py-4 px-6">{employee.branch}</td>
+                <td className="py-4 px-6 text-gray-700">{employee.branch}</td>
+                <td className="py-4 px-6 text-gray-700">{employee.state}</td>
                 <td className="py-4 px-6">{employee.email}</td>
                 <td className="py-4 px-6">
                   <div className="flex items-center justify-center gap-3">

@@ -9,6 +9,11 @@ import DashboardLayout from './components/layouts/DashboardLayout';
 import Dashboard from './pages/dashboard/Dashboard';
 import Notifications from './pages/dashboard/Notifications';
 import Managers from './pages/dashboard/Managers';
+import MyProfile from './pages/dashboard/MyProfile';
+import PriceSettings from './pages/dashboard/PriceSettings';
+import Inventory from './pages/dashboard/Inventory';
+import CreateInventory from './pages/dashboard/CreateInventory';
+import EditInventory from './pages/dashboard/EditInventory';
 
 import Employees from './pages/dashboard/Employees';
 import CreateEmployee from './pages/dashboard/CreateEmployee';
@@ -21,11 +26,13 @@ import Leads from './pages/dashboard/Leads';
 import CreateLead from './pages/dashboard/CreateLead';
 import EditLead from './pages/dashboard/EditLead';
 import ViewLead from './pages/dashboard/ViewLead';
+import SetupLoan from './pages/dashboard/SetupLoan';
 import Region from './pages/dashboard/Region';
 import Branch from './pages/dashboard/Branch';
 import LoanDetails from './pages/dashboard/LoanDetails';
 import RolesAndPermissions from './pages/dashboard/RolesAndPermissions';
 import CreateRole from './pages/dashboard/CreateRole';
+import EditRole from './pages/dashboard/EditRole';
 import ProductCategories from './pages/dashboard/ProductCategories';
 import ProductBrands from './pages/dashboard/ProductBrands';
 import Products from './pages/dashboard/Products';
@@ -37,10 +44,26 @@ import CooperativeBanks from './pages/dashboard/CooperativeBanks';
 import CreateCooperativeBank from './pages/dashboard/CreateCooperativeBank';
 import EditCooperativeBank from './pages/dashboard/EditCooperativeBank';
 import ViewCooperativeBank from './pages/dashboard/ViewCooperativeBank';
+import HelpSupport from './pages/dashboard/HelpSupport';
 import Merchants from './pages/dashboard/Merchants';
 import CreateMerchant from './pages/dashboard/CreateMerchant';
 import EditMerchant from './pages/dashboard/EditMerchant';
 import ViewMerchant from './pages/dashboard/ViewMerchant';
+import Credit from './pages/dashboard/Credit';
+import Debit from './pages/dashboard/Debit';
+import ViewDebitReceipt from './pages/dashboard/ViewDebitReceipt';
+import Transfer from './pages/dashboard/Transfer';
+import ViewTransferReceipt from './pages/dashboard/ViewTransferReceipt';
+import Contra from './pages/dashboard/Contra';
+import ViewContraReceipt from './pages/dashboard/ViewContraReceipt';
+import CheckCibilScore from './pages/dashboard/CheckCibilScore';
+import KycVerification from './pages/dashboard/KycVerification';
+import ViewCreditReceipt from './pages/dashboard/ViewCreditReceipt';
+
+// Bank Portal Imports
+import BankLogin from './pages/bank-auth/BankLogin';
+import BankDashboardLayout from './components/layouts/BankDashboardLayout';
+import BankDashboard from './pages/bank-dashboard/BankDashboard';
 
 function App() {
   console.log("App Router Loaded - v2");
@@ -53,9 +76,16 @@ function App() {
         <Route path="/verify-otp" element={<VerifyOTP />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/password-changed" element={<PasswordChanged />} />
-        
+
+        {/* Bank Portal Routes */}
+        <Route path="/bank/login" element={<BankLogin />} />
+        <Route path="/bank" element={<BankDashboardLayout />}>
+          <Route path="dashboard" element={<BankDashboard />} />
+        </Route>
+
         <Route path="/" element={<DashboardLayout />}>
           <Route path="dashboard" element={<Dashboard />} />
+          <Route path="profile" element={<MyProfile />} />
           <Route path="notifications" element={<Notifications />} />
           <Route path="managers" element={<Managers />} />
           <Route path="managers/create" element={<CreateManager />} />
@@ -73,10 +103,12 @@ function App() {
           <Route path="leads/create" element={<CreateLead />} />
           <Route path="leads/edit" element={<EditLead />} />
           <Route path="leads/view" element={<ViewLead />} />
+          <Route path="leads/setup-loan" element={<SetupLoan />} />
           <Route path="region" element={<Region />} />
           <Route path="branch" element={<Branch />} />
           <Route path="roles-permissions" element={<RolesAndPermissions />} />
           <Route path="roles-permissions/create" element={<CreateRole />} />
+          <Route path="roles-permissions/edit" element={<EditRole />} />
           <Route path="product-categories" element={<ProductCategories />} />
           <Route path="product-brands" element={<ProductBrands />} />
           <Route path="products" element={<Products />} />
@@ -85,10 +117,25 @@ function App() {
           <Route path="co-operative-bank/create" element={<CreateCooperativeBank />} />
           <Route path="co-operative-bank/edit" element={<EditCooperativeBank />} />
           <Route path="co-operative-bank/view" element={<ViewCooperativeBank />} />
+          <Route path="settings/help" element={<HelpSupport />} />
           <Route path="merchant" element={<Merchants />} />
           <Route path="merchant/create" element={<CreateMerchant />} />
           <Route path="merchant/edit" element={<EditMerchant />} />
           <Route path="merchant/view" element={<ViewMerchant />} />
+          <Route path="price-settings" element={<PriceSettings />} />
+          <Route path="inventory" element={<Inventory />} />
+          <Route path="inventory/create" element={<CreateInventory />} />
+          <Route path="inventory/edit" element={<EditInventory />} />
+          <Route path="credit" element={<Credit />} />
+          <Route path="credit/view/:id" element={<ViewCreditReceipt />} />
+          <Route path="debit" element={<Debit />} />
+          <Route path="debit/view/:id" element={<ViewDebitReceipt />} />
+          <Route path="transfer" element={<Transfer />} />
+          <Route path="transfer/view/:id" element={<ViewTransferReceipt />} />
+          <Route path="contra" element={<Contra />} />
+          <Route path="contra/view/:id" element={<ViewContraReceipt />} />
+          <Route path="cibil" element={<CheckCibilScore />} />
+          <Route path="kyc" element={<KycVerification />} />
           {/* Add other nested routes here in the future */}
         </Route>
       </Routes>

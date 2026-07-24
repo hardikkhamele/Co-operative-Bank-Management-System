@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronRight, Search, ChevronDown, Eye, Edit, Trash2, X, SlidersHorizontal } from 'lucide-react';
+import { ChevronRight, Search, ChevronDown, Eye, Edit, Trash2, X, SlidersHorizontal, Download } from 'lucide-react';
 
 const mockLeads = [
   { id: 1, appId: 'LN1234567890', name: 'Clark Kent', initials: 'CK', avatar: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?auto=format&fit=crop&w=100&q=80', phone: '9876543210', address: '1901 Thornridge Ci...', status: 'New' },
@@ -196,14 +196,14 @@ const Leads = () => {
           </div>
         </div>
 
-        {/* Right Side: Add Lead Button */}
+        {/* Right Side: Export Button */}
         <div className="flex items-center w-full md:w-auto justify-end">
-          <Link 
-            to="/leads/create"
-            className="bg-[#1cabb1] hover:bg-[#159a9f] text-white py-2.5 px-6 rounded-full text-sm font-medium transition-colors shadow-sm whitespace-nowrap w-full md:w-auto text-center"
+          <button 
+            className="flex items-center justify-center gap-2 bg-[#1cabb1] hover:bg-[#159a9f] text-white py-2.5 px-6 rounded-full text-sm font-medium transition-colors shadow-sm whitespace-nowrap w-full md:w-auto"
           >
-            + Create Leads
-          </Link>
+            <Download size={16} />
+            Export
+          </button>
         </div>
       </div>
 

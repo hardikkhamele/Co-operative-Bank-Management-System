@@ -1,29 +1,36 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronRight, Search, ChevronDown, Calendar, ChevronLeft } from 'lucide-react';
+import { ChevronRight, Search, ChevronDown, Calendar, ChevronLeft, Component } from 'lucide-react';
 
-const mockAttendance = [
-  { id: 1, name: 'Harleen Quinzel', designation: 'SS', punchIn: '9:07 AM', punchOut: '6:27 AM', totalHrs: '8 hrs', status: 'P', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop' },
-  { id: 2, name: 'Paula Irving', designation: 'SS', punchIn: '9:07 AM', punchOut: '6:27 AM', totalHrs: '8 hrs', status: 'L', avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop' },
-  { id: 3, name: 'Carol Danvers', designation: 'SS', punchIn: '9:07 AM', punchOut: '6:27 AM', totalHrs: '8 hrs', status: 'P', initials: 'CD', avatarColor: 'bg-[#f4f2ff] text-[#5a5ce5]' },
-  { id: 4, name: 'Lois Lane', designation: '—', punchIn: '—', punchOut: '—', totalHrs: '—', status: 'A', avatar: 'https://images.unsplash.com/photo-1531123897727-8f129e1baf8a?w=100&h=100&fit=crop' },
-  { id: 5, name: 'Karen Starr', designation: 'SS', punchIn: '9:07 AM', punchOut: '6:27 AM', totalHrs: '8 hrs', status: 'P', initials: 'KS', avatarColor: 'bg-[#f4f2ff] text-[#5a5ce5]' },
+const mockEmployees = [
+  { id: 1, name: 'Harleen Quinzel', designation: 'Branch Manager', punchIn: '9:07 AM', punchOut: '6:27 AM', totalHrs: '8 hrs', status: 'P', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop' },
+  { id: 2, name: 'Paula Irving', designation: 'Senior Clerk', punchIn: '—', punchOut: '—', totalHrs: '—', status: 'L', avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop' },
+  { id: 3, name: 'Carol Danvers', designation: 'Assistant Branch Manager', punchIn: '9:07 AM', punchOut: '6:27 AM', totalHrs: '8 hrs', status: 'P', initials: 'CD', avatarColor: 'bg-[#f4f2ff] text-[#5a5ce5]' },
+  { id: 4, name: 'Lois Lane', designation: 'Clerk', punchIn: '—', punchOut: '—', totalHrs: '—', status: 'A', avatar: 'https://images.unsplash.com/photo-1531123897727-8f129e1baf8a?w=100&h=100&fit=crop' },
+  { id: 5, name: 'Karen Starr', designation: 'Cashier', punchIn: '9:07 AM', punchOut: '6:27 AM', totalHrs: '8 hrs', status: 'P', initials: 'KS', avatarColor: 'bg-[#f4f2ff] text-[#5a5ce5]' },
+  { id: 6, name: 'Wanda Maximoff', designation: 'Peon', punchIn: '—', punchOut: '—', totalHrs: '—', status: 'A', avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop' },
+  { id: 7, name: 'Pepper Potts', designation: 'Clerk', punchIn: '9:07 AM', punchOut: '6:27 AM', totalHrs: '8 hrs', status: 'P', avatar: 'https://images.unsplash.com/photo-1554151228-14d9def656e4?w=100&h=100&fit=crop' },
+  { id: 8, name: 'Natasha Romanoff', designation: 'Human Resource', punchIn: '—', punchOut: '—', totalHrs: '—', status: 'A', initials: 'NR', avatarColor: 'bg-[#f4f2ff] text-[#5a5ce5]' }
 ];
 
 const mockMonthlyAttendance = [
-  { id: 1, month: 'June', days: { 1: 'P', 2: 'A', 3: 'P', 4: 'L', 5: 'P', 6: 'P', 7: 'WO', 8: 'P*', 9: 'P', 10: 'P' } },
-  { id: 2, month: 'May', days: { 1: 'P', 2: 'P', 3: 'L', 4: 'P', 5: 'A', 6: 'A', 7: 'WO', 8: 'P', 9: 'A', 10: 'P' } },
-  { id: 3, month: 'April', days: { 1: 'P', 2: 'COFF', 3: 'P', 4: 'P*', 5: 'P', 6: 'P', 7: 'WO', 8: 'P', 9: 'P', 10: 'L' } },
-  { id: 4, month: 'March', days: { 1: 'P', 2: 'L', 3: 'P', 4: 'P', 5: 'L', 6: 'A', 7: 'WO', 8: 'A', 9: 'COFF', 10: 'P' } },
-  { id: 5, month: 'February', days: { 1: 'p', 2: 'p', 3: 'p', 4: 'COFF', 5: 'p', 6: 'p', 7: 'WO', 8: 'p', 9: 'p', 10: 'A' } },
-  { id: 6, month: 'January', days: { 1: 'A', 2: 'P', 3: 'A', 4: 'P', 5: 'P', 6: 'A', 7: 'WO', 8: 'P', 9: 'A', 10: 'P' } }
+  { id: 1, emp: mockEmployees[0], days: { 1: 'P', 2: 'A', 3: 'P', 4: 'L', 5: 'P', 6: 'P', 7: 'WO', 8: 'P', 9: 'P', 10: 'P' } },
+  { id: 2, emp: mockEmployees[1], days: { 1: 'P', 2: 'P', 3: 'L', 4: 'P', 5: 'A', 6: 'A', 7: 'WO', 8: 'P', 9: 'P', 10: 'P' } },
+  { id: 3, emp: mockEmployees[2], days: { 1: 'P', 2: 'L', 3: 'P', 4: 'P*', 5: 'P', 6: 'P', 7: 'WO', 8: 'P', 9: 'P', 10: 'P' } },
+  { id: 4, emp: mockEmployees[3], days: { 1: 'P', 2: 'L', 3: 'P', 4: 'P', 5: 'L', 6: 'A', 7: 'WO', 8: 'P', 9: 'P', 10: 'P' } },
+  { id: 5, emp: mockEmployees[4], days: { 1: 'P', 2: 'P', 3: 'P', 4: 'L', 5: 'P', 6: 'P', 7: 'WO', 8: 'P', 9: 'P', 10: 'P' } },
+  { id: 6, emp: mockEmployees[5], days: { 1: 'P', 2: 'P', 3: 'A', 4: 'P', 5: 'P', 6: 'A', 7: 'WO', 8: 'P', 9: 'P', 10: 'P' } },
+  { id: 7, emp: mockEmployees[6], days: { 1: 'P', 2: 'L', 3: 'P', 4: 'P', 5: 'P', 6: 'P', 7: 'WO', 8: 'P', 9: 'P', 10: 'P' } },
+  { id: 8, emp: mockEmployees[7], days: { 1: 'A', 2: 'P', 3: 'A', 4: 'P', 5: 'P', 6: 'A', 7: 'WO', 8: 'A', 9: 'A', 10: 'A' } },
 ];
 
-const mockYearlyAttendance = [
-  { id: 1, year: '2026', present: 222, absent: 12, leave: 4, ot: 'NA', pay: 310, months: { 1: { p: 21, a: 2, l: 3 }, 2: { p: 21, a: 2, l: 3 }, 3: { p: 21, a: 2, l: 3 }, 4: { p: 21, a: 2, l: 3 }, 5: { p: 21, a: 2, l: 3 }, 6: { p: 21, a: 2, l: 3 }, 7: { p: 21, a: 2, l: 3 }, 8: { p: 21, a: 2, l: 3 }, 9: { p: 21, a: 2, l: 3 }, 10: { p: 21, a: 2, l: 3 }, 11: { p: 21, a: 2, l: 3 }, 12: { p: 21, a: 2, l: 3 } } },
-  { id: 2, year: '2025', present: 222, absent: 12, leave: 4, ot: 'NA', pay: 310, months: { 1: { p: 21, a: 2, l: 3 }, 2: { p: 21, a: 2, l: 3 }, 3: { p: 21, a: 2, l: 3 }, 4: { p: 21, a: 2, l: 3 }, 5: { p: 21, a: 2, l: 3 }, 6: { p: 21, a: 2, l: 3 }, 7: { p: 21, a: 2, l: 3 }, 8: { p: 21, a: 2, l: 3 }, 9: { p: 21, a: 2, l: 3 }, 10: { p: 21, a: 2, l: 3 }, 11: { p: 21, a: 2, l: 3 }, 12: { p: 21, a: 2, l: 3 } } },
-  { id: 3, year: '2024', present: 222, absent: 12, leave: 4, ot: 'NA', pay: 310, months: { 1: { p: 21, a: 2, l: 3 }, 2: { p: 21, a: 2, l: 3 }, 3: { p: 21, a: 2, l: 3 }, 4: { p: 21, a: 2, l: 3 }, 5: { p: 21, a: 2, l: 3 }, 6: { p: 21, a: 2, l: 3 }, 7: { p: 21, a: 2, l: 3 }, 8: { p: 21, a: 2, l: 3 }, 9: { p: 21, a: 2, l: 3 }, 10: { p: 21, a: 2, l: 3 }, 11: { p: 21, a: 2, l: 3 }, 12: { p: 21, a: 2, l: 3 } } }
-];
+const mockYearlyAttendance = mockEmployees.map(emp => ({
+  id: emp.id,
+  emp: emp,
+  months: Object.fromEntries(
+    [...Array(12)].map((_, i) => [i + 1, { p: 21, a: 2, l: 3 }])
+  )
+}));
 
 const MonthlyStatusBadge = ({ status }) => {
   let styles = '';
@@ -89,9 +96,15 @@ const AttendanceReport = () => {
 
   return (
     <div className="flex flex-col gap-6 w-full">
+      {/* Header Title */}
+      <div className="flex items-center gap-3 mb-2 text-[#8b5cf6]">
+        <Component size={28} className="fill-current" />
+        <h1 className="text-3xl font-bold">Bank Attendance</h1>
+      </div>
+
       {/* Header Card */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 shrink-0">
-        <h1 className="text-[22px] font-bold text-[#4285F4] mb-2">Attendance Report</h1>
+        <h2 className="text-[22px] font-bold text-[#4285F4] mb-2">Attendance Report</h2>
         <div className="flex items-center text-sm text-gray-500">
           <Link to="/dashboard" className="hover:text-gray-700">Dashboard</Link>
           <ChevronRight size={14} className="mx-2" />
@@ -187,9 +200,9 @@ const AttendanceReport = () => {
               
               <div className="relative">
                 <select className="pl-4 pr-10 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1cabb1] text-[15px] text-gray-600 appearance-none bg-white min-w-[120px]">
-                  <option value="2026">2026</option>
-                  <option value="2025">2025</option>
-                  <option value="2024">2024</option>
+                  <option value="July">July</option>
+                  <option value="August">August</option>
+                  <option value="September">September</option>
                 </select>
                 <ChevronDown size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
               </div>
@@ -199,6 +212,15 @@ const AttendanceReport = () => {
           {activeTab === 'yearly' && (
             <div className="flex justify-between items-center">
               <h2 className="text-xl font-bold text-gray-800">Yearly Attendance</h2>
+              
+              <div className="relative">
+                <select className="pl-4 pr-10 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1cabb1] text-[15px] text-gray-600 appearance-none bg-white min-w-[120px]">
+                  <option value="2025">2025</option>
+                  <option value="2024">2024</option>
+                  <option value="2023">2023</option>
+                </select>
+                <ChevronDown size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+              </div>
             </div>
           )}
         </div>
@@ -219,7 +241,7 @@ const AttendanceReport = () => {
               </tr>
             </thead>
             <tbody className="text-[15px] text-gray-600">
-              {mockAttendance.map((row) => (
+              {mockEmployees.map((row) => (
                 <tr key={row.id} className="border-b border-gray-100 hover:bg-gray-50/30 transition-colors">
                   <td className="py-4 px-6 text-center">{row.id}</td>
                   <td className="py-4 px-6">
@@ -257,7 +279,7 @@ const AttendanceReport = () => {
                 <thead>
                   <tr className="bg-gray-50/50 border-b border-gray-200 text-sm font-semibold text-gray-600">
                     <th className="py-4 px-6 border-r border-gray-200 whitespace-nowrap text-center">Sr.No.</th>
-                    <th className="py-4 px-6 border-r border-gray-200 whitespace-nowrap">Month</th>
+                    <th className="py-4 px-6 border-r border-gray-200 whitespace-nowrap">Name</th>
                     {[...Array(31)].map((_, i) => (
                       <th key={i} className="py-4 px-3 text-center border-r border-gray-200 last:border-r-0 min-w-[50px]">{i + 1}</th>
                     ))}
@@ -267,7 +289,18 @@ const AttendanceReport = () => {
                   {mockMonthlyAttendance.map((row) => (
                     <tr key={row.id} className="border-b border-gray-200 hover:bg-gray-50/30 transition-colors">
                       <td className="py-4 px-6 text-center border-r border-gray-200">{row.id}</td>
-                      <td className="py-4 px-6 border-r border-gray-200">{row.month}</td>
+                      <td className="py-4 px-6 border-r border-gray-200">
+                        <div className="flex items-center gap-3">
+                          {row.emp.avatar ? (
+                            <img src={row.emp.avatar} alt={row.emp.name} className="w-8 h-8 rounded-full object-cover" />
+                          ) : (
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[13px] font-bold ${row.emp.avatarColor || 'bg-gray-100 text-gray-600'}`}>
+                              {row.emp.initials}
+                            </div>
+                          )}
+                          <span className="font-medium text-gray-800 whitespace-nowrap">{row.emp.name}</span>
+                        </div>
+                      </td>
                       {[...Array(31)].map((_, i) => {
                         const dayStatus = row.days[i + 1] || 'P'; // default to P for mock
                         return (
@@ -281,33 +314,6 @@ const AttendanceReport = () => {
                 </tbody>
               </table>
             </div>
-
-            <div className="mt-6 flex flex-col gap-6">
-              <div className="flex items-center justify-between text-[13px] font-medium text-gray-500">
-                <span>Showing 1 to 6 of 6 Entries</span>
-                <div className="flex items-center gap-2">
-                  <button className="w-8 h-8 flex items-center justify-center rounded border border-gray-300 text-gray-400 hover:bg-gray-50 transition-colors">
-                    <ChevronLeft size={16} />
-                  </button>
-                  <button className="w-8 h-8 flex items-center justify-center rounded border border-gray-300 bg-white text-gray-700 font-bold shadow-sm">
-                    1
-                  </button>
-                  <button className="w-8 h-8 flex items-center justify-center rounded border border-gray-300 text-gray-400 hover:bg-gray-50 transition-colors">
-                    <ChevronRight size={16} />
-                  </button>
-                </div>
-              </div>
-
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 flex flex-wrap items-center gap-x-6 gap-y-4">
-                <LegendItem status="P" label="Present" />
-                <LegendItem status="P*" label="Present (Late)" />
-                <LegendItem status="A" label="Absent" />
-                <LegendItem status="WO" label="Weekly Off" />
-                <LegendItem status="COFF" label="Compensatory Off" />
-                <LegendItem status="L" label="Leave" />
-                <LegendItem status="-" label="Not Applicable" />
-              </div>
-            </div>
           </div>
         )}
 
@@ -318,22 +324,28 @@ const AttendanceReport = () => {
                 <thead>
                   <tr className="bg-gray-50/50 border-b border-gray-200 text-sm font-semibold text-gray-600">
                     <th className="py-4 px-6 border-r border-gray-200 whitespace-nowrap text-center">Sr.No.</th>
-                    <th className="py-4 px-6 border-r border-gray-200 whitespace-nowrap">Year</th>
+                    <th className="py-4 px-6 border-r border-gray-200 whitespace-nowrap">Name</th>
                     {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].map((month, i) => (
                       <th key={i} className="py-4 px-4 text-center border-r border-gray-200">{month}</th>
                     ))}
-                    <th className="py-4 px-4 text-center border-r border-gray-200">P</th>
-                    <th className="py-4 px-4 text-center border-r border-gray-200">A</th>
-                    <th className="py-4 px-4 text-center border-r border-gray-200">L</th>
-                    <th className="py-4 px-4 text-center border-r border-gray-200">OT</th>
-                    <th className="py-4 px-4 text-center">Pay</th>
                   </tr>
                 </thead>
                 <tbody className="text-[14px] text-gray-700 font-medium">
                   {mockYearlyAttendance.map((row) => (
                     <tr key={row.id} className="border-b border-gray-200 hover:bg-gray-50/30 transition-colors">
                       <td className="py-4 px-6 text-center border-r border-gray-200">{row.id}</td>
-                      <td className="py-4 px-6 border-r border-gray-200">{row.year}</td>
+                      <td className="py-4 px-6 border-r border-gray-200">
+                        <div className="flex items-center gap-3">
+                          {row.emp.avatar ? (
+                            <img src={row.emp.avatar} alt={row.emp.name} className="w-8 h-8 rounded-full object-cover" />
+                          ) : (
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[13px] font-bold ${row.emp.avatarColor || 'bg-gray-100 text-gray-600'}`}>
+                              {row.emp.initials}
+                            </div>
+                          )}
+                          <span className="font-medium text-gray-800 whitespace-nowrap">{row.emp.name}</span>
+                        </div>
+                      </td>
                       {[...Array(12)].map((_, i) => {
                         const monthData = row.months[i + 1] || { p: 0, a: 0, l: 0 };
                         return (
@@ -347,45 +359,47 @@ const AttendanceReport = () => {
                           </td>
                         )
                       })}
-                      <td className="py-4 px-4 text-center border-r border-gray-200 text-[#32c965] font-semibold">{row.present}</td>
-                      <td className="py-4 px-4 text-center border-r border-gray-200 text-[#ff3d67] font-semibold">{row.absent}</td>
-                      <td className="py-4 px-4 text-center border-r border-gray-200 text-[#4285F4] font-semibold">{row.leave}</td>
-                      <td className="py-4 px-4 text-center border-r border-gray-200 text-gray-700">{row.ot}</td>
-                      <td className="py-4 px-4 text-center text-gray-700">{row.pay}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-
-            <div className="mt-6 flex flex-col gap-6">
-              <div className="flex items-center justify-between text-[13px] font-medium text-gray-500">
-                <span>Showing 1 to 3 of 3 Entries</span>
-                <div className="flex items-center gap-2">
-                  <button className="w-8 h-8 flex items-center justify-center rounded border border-gray-300 text-gray-400 hover:bg-gray-50 transition-colors">
-                    <ChevronLeft size={16} />
-                  </button>
-                  <button className="w-8 h-8 flex items-center justify-center rounded border border-gray-300 bg-white text-gray-700 font-bold shadow-sm">
-                    1
-                  </button>
-                  <button className="w-8 h-8 flex items-center justify-center rounded border border-gray-300 text-gray-400 hover:bg-gray-50 transition-colors">
-                    <ChevronRight size={16} />
-                  </button>
-                </div>
-              </div>
-
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 flex flex-wrap items-center gap-x-6 gap-y-4">
-                <LegendItem status="P" label="Present" />
-                <LegendItem status="P*" label="Present (Late)" />
-                <LegendItem status="A" label="Absent" />
-                <LegendItem status="WO" label="Weekly Off" />
-                <LegendItem status="COFF" label="Compensatory Off" />
-                <LegendItem status="L" label="Leave" />
-                <LegendItem status="-" label="Not Applicable" />
-              </div>
-            </div>
           </div>
         )}
+
+        {/* Footer Pagination and Legends for all tabs */}
+        <div className="mt-6 flex flex-col gap-6">
+          <div className="flex items-center justify-between text-[13px] font-medium text-gray-500">
+            <span>Showing 1 to 8 of 30 Entries</span>
+            <div className="flex items-center gap-2">
+              <button className="w-8 h-8 flex items-center justify-center rounded border border-gray-300 text-gray-400 hover:bg-gray-50 transition-colors">
+                <ChevronLeft size={16} />
+              </button>
+              <button className="w-8 h-8 flex items-center justify-center rounded border border-[#1cabb1] bg-[#1cabb1] text-white font-bold shadow-sm">
+                1
+              </button>
+              <button className="w-8 h-8 flex items-center justify-center rounded border border-gray-300 bg-white text-gray-700 font-bold hover:bg-gray-50 transition-colors">
+                2
+              </button>
+              <button className="w-8 h-8 flex items-center justify-center rounded border border-gray-300 bg-white text-gray-700 font-bold hover:bg-gray-50 transition-colors">
+                3
+              </button>
+              <button className="w-8 h-8 flex items-center justify-center rounded border border-gray-300 text-gray-400 hover:bg-gray-50 transition-colors">
+                <ChevronRight size={16} />
+              </button>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 flex flex-wrap items-center gap-x-6 gap-y-4">
+            <LegendItem status="P" label="Present" />
+            <LegendItem status="P*" label="Present (Late)" />
+            <LegendItem status="A" label="Absent" />
+            <LegendItem status="WO" label="Weekly Off" />
+            <LegendItem status="COFF" label="Compensatory Off" />
+            <LegendItem status="L" label="Leave" />
+            <LegendItem status="-" label="Not Applicable" />
+          </div>
+        </div>
       </div>
     </div>
   );

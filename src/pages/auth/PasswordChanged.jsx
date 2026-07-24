@@ -11,19 +11,17 @@ const PasswordChanged = () => {
           <BadgeCheck className="w-24 h-24 text-[#00bcd4]" strokeWidth={1.5} />
         </div>
         
-        <h2 className="text-2xl font-bold text-gray-800 mb-4">
-          Password Changed Successfully!
+        <h2 className="text-xl font-bold text-gray-800 mb-3">
+          Password Changed<br />Successfully!
         </h2>
         
-        <p className="text-sm text-gray-600 mb-8 max-w-sm">
+        <p className="text-xs text-gray-500 mb-6 max-w-sm px-4">
           Your password has been successfully updated. You can now use your new credentials to log in to your account.
         </p>
 
-        <div className="w-full h-px bg-gray-200 mb-8"></div>
-
         <Link
           to="/login"
-          className="w-full inline-block py-3 px-4 bg-[#5a5ce5] hover:bg-[#484ab9] text-white font-medium rounded-full transition-colors shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#5a5ce5]"
+          className="w-full inline-block py-3 px-4 bg-[#1b58a6] hover:bg-[#154685] text-white font-medium text-sm rounded-full transition-colors shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#1b58a6]"
         >
           Login Now
         </Link>

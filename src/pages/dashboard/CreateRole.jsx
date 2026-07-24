@@ -5,7 +5,6 @@ import { ChevronRight } from 'lucide-react';
 const CreateRole = () => {
   const navigate = useNavigate();
   const [roleName, setRoleName] = useState('');
-  const [category, setCategory] = useState('');
 
   const modules = [
     'Dashboard',
@@ -58,34 +57,15 @@ const CreateRole = () => {
       {/* Form Section: Roles */}
       <div className="mb-8">
         <h2 className="text-xl font-semibold text-gray-800 mb-4">Roles</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Roles Name</label>
-            <input
-              type="text"
-              placeholder="Enter role name"
-              value={roleName}
-              onChange={(e) => setRoleName(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Category</label>
-            <div className="relative">
-              <select
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-200 rounded-lg appearance-none focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white text-gray-600"
-              >
-                <option value="" disabled>Select</option>
-                <option value="Manager">Manager</option>
-                <option value="Employee">Employee</option>
-              </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-500">
-                <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
-              </div>
-            </div>
-          </div>
+        <div className="max-w-md">
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">Role Name</label>
+          <input
+            type="text"
+            placeholder="Enter role name"
+            value={roleName}
+            onChange={(e) => setRoleName(e.target.value)}
+            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all"
+          />
         </div>
       </div>
 

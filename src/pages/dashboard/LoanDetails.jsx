@@ -177,6 +177,14 @@ const LoanDetails = () => {
             <span className="w-48 font-semibold text-gray-600">Phone Details:</span>
             <span className="font-bold text-gray-800">iPhone 17 - 256GB - Black</span>
           </div>
+          <div className="flex text-[15px] text-gray-800">
+            <span className="w-48 font-semibold text-gray-600">Guarantor Name:</span>
+            <span className="font-bold text-gray-800">Rohan Sharma</span>
+          </div>
+          <div className="flex text-[15px] text-gray-800">
+            <span className="w-48 font-semibold text-gray-600">Guarantor Phone:</span>
+            <span className="font-bold text-gray-800">+91 98765 43210</span>
+          </div>
           
           {(loanStatus === 'New' || loanStatus === 'Rejected') && (
             <div className="flex text-[15px] text-gray-800">
@@ -328,12 +336,12 @@ const LoanDetails = () => {
       {(loanStatus === 'New' || loanStatus === 'Active') && (
         <div className="flex justify-end">
           {loanStatus === 'New' ? (
-            <button 
-              onClick={() => setIsSetupModalOpen(true)}
-              className="bg-[#1cabb1] hover:bg-[#159a9f] text-white px-8 py-3 rounded-full font-semibold transition-colors shadow-sm"
+            <Link 
+              to="/leads/setup-loan"
+              className="inline-block bg-[#1cabb1] hover:bg-[#159a9f] text-white px-8 py-3 rounded-full font-semibold transition-colors shadow-sm"
             >
               Setup Loan
-            </button>
+            </Link>
           ) : (
             <button 
               onClick={() => setIsCollectModalOpen(true)}

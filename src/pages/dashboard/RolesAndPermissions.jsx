@@ -4,9 +4,9 @@ import { ChevronRight, Search, SlidersHorizontal, Eye, Edit, Trash2, ChevronLeft
 
 const RolesAndPermissions = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
-  const [selectedCategories, setSelectedCategories] = useState([]);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [selectedRoleForView, setSelectedRoleForView] = useState(null);
+
 
   const rolesData = [
     { id: 1, role: 'Regional Manager', category: 'Manager', totalPermissions: 50 },
@@ -20,9 +20,7 @@ const RolesAndPermissions = () => {
   ];
 
   const filteredData = rolesData.filter(row => {
-    const matchesSearch = row.role.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategories.length === 0 || selectedCategories.includes(row.category);
-    return matchesSearch && matchesCategory;
+    return row.role.toLowerCase().includes(searchTerm.toLowerCase());
   });
 
   return (
@@ -52,80 +50,6 @@ const RolesAndPermissions = () => {
               className="pl-10 pr-4 py-2 border border-gray-200 rounded-lg w-64 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all"
             />
           </div>
-          <div className="relative">
-            <button 
-              onClick={() => setIsFilterOpen(!isFilterOpen)}
-              className="p-2 border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-600 transition-colors relative"
-            >
-              <SlidersHorizontal size={18} />
-              {selectedCategories.length > 0 && (
-                <span className="absolute -top-2 -right-2 bg-[#5a5ce5] text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">
-                  {selectedCategories.length}
-                </span>
-              )}
-            </button>
-
-            {/* Filter Popup */}
-            {isFilterOpen && (
-              <div className="absolute top-full right-0 mt-2 w-72 bg-white rounded-xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] border border-gray-100 p-5 z-20">
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="font-semibold text-gray-800">Filter</h3>
-                  <button onClick={() => setIsFilterOpen(false)} className="text-gray-400 hover:text-gray-600">
-                    <X size={18} />
-                  </button>
-                </div>
-                
-                <div className="relative mb-6">
-                  <button 
-                    onClick={() => setIsCategoryDropdownOpen(!isCategoryDropdownOpen)}
-                    className="w-full flex justify-between items-center px-4 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-600 hover:border-gray-300 bg-white"
-                  >
-                    <span>Category</span>
-                    <ChevronDown size={16} className={`text-gray-400 transition-transform ${isCategoryDropdownOpen ? 'rotate-180' : ''}`} />
-                  </button>
-                  
-                  {isCategoryDropdownOpen && (
-                    <div className="absolute top-full left-0 mt-1 w-full bg-white border border-gray-100 rounded-lg shadow-md py-2 z-30">
-                      {['Manager', 'Employee'].map(cat => (
-                        <label key={cat} className="flex items-center px-4 py-2 hover:bg-gray-50 cursor-pointer">
-                          <div className="relative flex items-center mr-3">
-                            <input 
-                              type="checkbox" 
-                              className="peer appearance-none w-4 h-4 border border-gray-400 rounded-sm checked:bg-[#5a5ce5] checked:border-[#5a5ce5] transition-colors cursor-pointer"
-                              checked={selectedCategories.includes(cat)}
-                              onChange={(e) => {
-                                if (e.target.checked) setSelectedCategories([...selectedCategories, cat]);
-                                else setSelectedCategories(selectedCategories.filter(c => c !== cat));
-                              }}
-                            />
-                            <svg className="absolute inset-0 w-4 h-4 pointer-events-none opacity-0 peer-checked:opacity-100 text-white transition-opacity p-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                              <polyline points="20 6 9 17 4 12" />
-                            </svg>
-                          </div>
-                          <span className="text-sm text-gray-700">{cat}</span>
-                        </label>
-                      ))}
-                    </div>
-                  )}
-                </div>
-                
-                <div className="flex gap-3">
-                  <button 
-                    onClick={() => { setSelectedCategories([]); setIsCategoryDropdownOpen(false); }}
-                    className="flex-1 py-2.5 rounded-full border border-[#1cabb1] text-[#1cabb1] hover:bg-teal-50 text-sm font-medium transition-colors"
-                  >
-                    Reset Filter
-                  </button>
-                  <button 
-                    onClick={() => setIsFilterOpen(false)}
-                    className="flex-1 py-2.5 rounded-full bg-[#1cabb1] hover:bg-[#168f94] text-white text-sm font-medium transition-colors"
-                  >
-                    Set Filter
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
         </div>
         
         <Link 
@@ -141,9 +65,8 @@ const RolesAndPermissions = () => {
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-indigo-50/50 text-gray-700 text-sm font-semibold border-b border-gray-100">
-              <th className="py-4 px-6 text-center w-20">Sr.No.</th>
+              <th className="py-4 px-6 text-center w-20">Sr. No.</th>
               <th className="py-4 px-6">Roles</th>
-              <th className="py-4 px-6">Category</th>
               <th className="py-4 px-6">Total Permissions</th>
               <th className="py-4 px-6 text-center w-32">Action</th>
             </tr>
@@ -153,16 +76,21 @@ const RolesAndPermissions = () => {
               <tr key={row.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors text-sm text-gray-600">
                 <td className="py-4 px-6 text-center">{index + 1}</td>
                 <td className="py-4 px-6 font-medium text-gray-800">{row.role}</td>
-                <td className="py-4 px-6">{row.category}</td>
                 <td className="py-4 px-6">{row.totalPermissions}</td>
                 <td className="py-4 px-6">
                   <div className="flex items-center justify-center gap-3">
-                    <button className="text-gray-400 hover:text-gray-700 transition-colors">
+                    <button 
+                      onClick={() => {
+                        setSelectedRoleForView(row);
+                        setIsViewModalOpen(true);
+                      }}
+                      className="text-gray-400 hover:text-gray-700 transition-colors"
+                    >
                       <Eye size={18} />
                     </button>
-                    <button className="text-gray-400 hover:text-blue-500 transition-colors">
+                    <Link to="/roles-permissions/edit" className="text-gray-400 hover:text-blue-500 transition-colors">
                       <Edit size={18} />
-                    </button>
+                    </Link>
                     <button className="text-gray-400 hover:text-red-500 transition-colors">
                       <Trash2 size={18} />
                     </button>
@@ -189,6 +117,56 @@ const RolesAndPermissions = () => {
           </button>
         </div>
       </div>
+
+      {/* View Role Modal */}
+      {isViewModalOpen && selectedRoleForView && (
+        <div className="fixed inset-0 bg-black/20 backdrop-blur-[2px] z-50 flex items-center justify-center p-4">
+          <div className="bg-[#f4f6fa] rounded-xl shadow-2xl w-full max-w-2xl flex flex-col max-h-[85vh] animate-in fade-in zoom-in-95 duration-200">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200/60 bg-white rounded-t-xl">
+              <h2 className="text-[17px] font-bold text-[#1e293b]">Roles & Permissions Details</h2>
+              <button 
+                onClick={() => setIsViewModalOpen(false)}
+                className="text-gray-400 hover:text-gray-700 transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            
+            {/* Modal Content */}
+            <div className="p-6 overflow-y-auto custom-scrollbar flex-1">
+              <div className="mb-4 pb-4 border-b border-gray-200">
+                <h3 className="text-[17px] font-bold text-[#3b82f6]">{selectedRoleForView.role}</h3>
+              </div>
+              
+              <div className="text-[13px] font-medium text-gray-600 mb-3">Permissions</div>
+              
+              <div className="flex flex-col rounded-xl overflow-hidden border border-gray-100 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] bg-white">
+                <div className="flex border-b border-gray-100 p-5">
+                  <div className="w-1/3 font-bold text-gray-700 text-sm">Dashboard</div>
+                  <div className="w-2/3 text-[13px] text-gray-500 leading-relaxed">Regional Manager can view the dashboard</div>
+                </div>
+                <div className="flex border-b border-gray-100 p-5 bg-[#fafafa]">
+                  <div className="w-1/3 font-bold text-gray-700 text-sm">Module 1</div>
+                  <div className="w-2/3 text-[13px] text-gray-500 leading-relaxed">Regional Manager can edit, block/unblock</div>
+                </div>
+                <div className="flex border-b border-gray-100 p-5">
+                  <div className="w-1/3 font-bold text-gray-700 text-sm">Module 2</div>
+                  <div className="w-2/3 text-[13px] text-gray-500 leading-relaxed">Regional Manager can View block/unblock, Attendance add Staff View Sales, edit and Delete.</div>
+                </div>
+                <div className="flex border-b border-gray-100 p-5 bg-[#fafafa]">
+                  <div className="w-1/3 font-bold text-gray-700 text-sm">Module 3</div>
+                  <div className="w-2/3 text-[13px] text-gray-500 leading-relaxed">Regional Manager View, add, edit and Delete.</div>
+                </div>
+                <div className="flex p-5">
+                  <div className="w-1/3 font-bold text-gray-700 text-sm">Module 4</div>
+                  <div className="w-2/3 text-[13px] text-gray-500 leading-relaxed">Regional Manager can View block/unblock, Attendance add Staff View Sales, edit and Delete.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

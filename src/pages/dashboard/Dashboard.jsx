@@ -6,12 +6,12 @@ import {
 import { Users, Banknote, Landmark, CreditCard, Wallet, Eye } from 'lucide-react';
 
 const statsData = [
-  { title: 'Total Customer', value: '30,67,498', change: '+3.7 %', color: 'bg-[#00c5d5]', icon: <Users size={20} /> },
+  { title: 'Total Leads', value: '30,67,498', change: '+3.7 %', color: 'bg-[#00c5d5]', icon: <Users size={20} /> },
   { title: 'Total Loan Distributed', value: '₹102,50,98,764', change: '-1.7 %', color: 'bg-[#b68962]', icon: <Banknote size={20} /> },
   { title: 'Collection Pending', value: '₹50,98,764', change: '-1.7 %', color: 'bg-[#f48b29]', icon: <CreditCard size={20} /> },
   { title: 'Total Revenue', value: '₹12,98,764', change: '-1.7 %', color: 'bg-[#3bc454]', icon: <Wallet size={20} /> },
-  { title: 'Total Co-operative Bank', value: '510', change: '-1.7 %', color: 'bg-[#6154ff]', icon: <Landmark size={20} /> },
-  { title: 'Total Merchant', value: '8,764', change: '-1.7 %', color: 'bg-[#ff3c3c]', icon: <Banknote size={20} /> },
+  { title: 'Total Branch', value: '510', change: '-1.7 %', color: 'bg-[#6154ff]', icon: <Landmark size={20} /> },
+  { title: 'Total Staff', value: '8,764', change: '-1.7 %', color: 'bg-[#d926e9]', icon: <Users size={20} /> },
 ];
 
 const revenueData = [
@@ -76,6 +76,20 @@ const CustomTooltip = ({ active, payload }) => {
 const Dashboard = () => {
   return (
     <div className="space-y-6">
+      {/* Top Section - EMI Card / Verification Credit */}
+      <div className="flex justify-end mb-2">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 flex overflow-hidden">
+          <div className="px-6 py-4 border-r border-gray-100 text-center">
+            <div className="text-[13px] text-gray-500 font-medium mb-1">EMI Card</div>
+            <div className="text-xl font-bold text-gray-800">4,200</div>
+          </div>
+          <div className="px-6 py-4 text-center">
+            <div className="text-[13px] text-gray-500 font-medium mb-1">Verification Credit</div>
+            <div className="text-xl font-bold text-gray-800">8,400</div>
+          </div>
+        </div>
+      </div>
+
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {statsData.map((stat, idx) => (
