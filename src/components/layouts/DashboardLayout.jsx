@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { NavLink, Link, Outlet, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, MapPin, IdCard, UserPlus, List, ClipboardList, Store, Box, ArrowDownRight, ArrowUpRight, ArrowRightLeft, RefreshCcw, UserCheck, UserCog, Tag, ChevronDown, Bell, User, LogOut, CreditCard, Headphones } from 'lucide-react';
+import { LayoutDashboard, MapPin, IdCard, UserPlus, List, ClipboardList, Store, Box, ArrowDownRight, ArrowUpRight, ArrowRightLeft, RefreshCcw, UserCheck, UserCog, Tag, ChevronDown, Bell, User, LogOut, CreditCard, Headphones, FileText, BarChart2, TrendingUp, CalendarDays } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
 
 const DashboardLayout = () => {
@@ -67,7 +67,19 @@ const DashboardLayout = () => {
             <h3 className="text-[15px] font-bold text-gray-800 mb-2 px-1">HR Management</h3>
             <div className="space-y-1">
               <NavLink to="/employees" className={({ isActive }) => `flex items-center gap-3 px-4 py-2.5 text-[15px] font-medium rounded-xl transition-colors ${isActive ? 'text-[#1cabb1] bg-white shadow-sm' : 'text-[#4b5563] hover:text-gray-900 hover:bg-white/50'}`}>
-                <IdCard size={20} className="text-gray-500" /> Employees
+                <UserCheck size={20} className="text-gray-500" /> Employee
+              </NavLink>
+              <NavLink to="/letters-payroll" className={({ isActive }) => `flex items-center gap-3 px-4 py-2.5 text-[15px] font-medium rounded-xl transition-colors ${isActive ? 'text-[#1cabb1] bg-white shadow-sm' : 'text-[#4b5563] hover:text-gray-900 hover:bg-white/50'}`}>
+                <FileText size={20} className="text-gray-500" /> Letters & Payroll
+              </NavLink>
+              <NavLink to="/daily-work-report" className={({ isActive }) => `flex items-center gap-3 px-4 py-2.5 text-[15px] font-medium rounded-xl transition-colors ${isActive ? 'text-[#1cabb1] bg-white shadow-sm' : 'text-[#4b5563] hover:text-gray-900 hover:bg-white/50'}`}>
+                <BarChart2 size={20} className="text-gray-500" /> Daily Work Report
+              </NavLink>
+              <NavLink to="/kpa-report" className={({ isActive }) => `flex items-center gap-3 px-4 py-2.5 text-[15px] font-medium rounded-xl transition-colors ${isActive ? 'text-[#1cabb1] bg-white shadow-sm' : 'text-[#4b5563] hover:text-gray-900 hover:bg-white/50'}`}>
+                <TrendingUp size={20} className="text-gray-500" /> KPA Report
+              </NavLink>
+              <NavLink to="/important-dates" className={({ isActive }) => `flex items-center gap-3 px-4 py-2.5 text-[15px] font-medium rounded-xl transition-colors border ${isActive ? 'text-[#1cabb1] bg-white border-[#1cabb1] shadow-sm' : 'text-[#4b5563] border-transparent hover:text-gray-900 hover:bg-white/50'}`}>
+                <CalendarDays size={20} className="text-gray-500" /> Important Dates
               </NavLink>
             </div>
           </div>

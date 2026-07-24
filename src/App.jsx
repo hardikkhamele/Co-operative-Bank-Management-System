@@ -20,6 +20,12 @@ import CreateEmployee from './pages/dashboard/CreateEmployee';
 import EditEmployee from './pages/dashboard/EditEmployee';
 import ViewEmployee from './pages/dashboard/ViewEmployee';
 import AttendanceReport from './pages/dashboard/AttendanceReport';
+import LettersAndPayroll from './pages/dashboard/LettersAndPayroll';
+import DailyWorkReport from './pages/dashboard/DailyWorkReport';
+import KPAReport from './pages/dashboard/KPAReport';
+import ImportantDates from './pages/dashboard/ImportantDates';
+import ViewReport from './pages/dashboard/ViewReport';
+import AddKRA from './pages/dashboard/AddKRA';
 import Customers from './pages/dashboard/Customers';
 import CustomerLoans from './pages/dashboard/CustomerLoans';
 import Leads from './pages/dashboard/Leads';
@@ -96,6 +102,12 @@ function App() {
           <Route path="employees/edit" element={<EditEmployee />} />
           <Route path="employees/view" element={<ViewEmployee />} />
           <Route path="attendance" element={<AttendanceReport />} />
+          <Route path="letters-payroll" element={<LettersAndPayroll />} />
+          <Route path="daily-work-report" element={<DailyWorkReport />} />
+          <Route path="kpa-report" element={<KPAReport />} />
+          <Route path="kpa-report/view/:id" element={<ViewReport />} />
+          <Route path="kpa-report/view/:id/add-kra" element={<AddKRA />} />
+          <Route path="important-dates" element={<ImportantDates />} />
           <Route path="customers" element={<Customers />} />
           <Route path="customers/:id/loans" element={<CustomerLoans />} />
           <Route path="customers/:id/loans/:loanId" element={<LoanDetails />} />
