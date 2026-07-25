@@ -100,18 +100,6 @@ const ViewEmployee = () => {
           </div>
         </div>
 
-        <hr className="border-gray-100 my-8" />
-
-        {/* Bank Details */}
-        <div className="mb-10">
-          <h2 className="text-[20px] font-bold text-[#1b2559] mb-6">Bank Details</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <DetailCard icon={Building2} label="Bank Name" value={employeeData.bankName || 'State Bank Of India'} />
-            <DetailCard icon={CreditCard} label="Account Number" value={employeeData.accountNumber || '53697842882'} />
-            <DetailCard icon={Globe} label="IFSC" value={employeeData.ifsc || 'SBIN0001234'} />
-            <DetailCard icon={MapPin} label="Branch" value={employeeData.branch || 'Mumbai Branch'} />
-          </div>
-        </div>
 
         <hr className="border-gray-100 my-8" />
 

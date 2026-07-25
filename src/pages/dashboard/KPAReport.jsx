@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronRight, Search, Download, ChevronLeft, Eye } from 'lucide-react';
+import { ChevronRight, Search, Download, ChevronLeft, Eye, SlidersHorizontal, X } from 'lucide-react';
 
 const KPAReport = () => {
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+
   const tableData = [
     { id: 1, name: 'Clark Kent', designation: 'Branch Manager', branch: 'Mumbai Branch', phone: '98765 43210', email: 'example@gmail.com' },
     { id: 2, name: 'Tony Stark', designation: 'Collection Executive', branch: 'Mumbai Branch', phone: '98765 43210', email: 'example@gmail.com' },
@@ -34,13 +36,24 @@ const KPAReport = () => {
         
         {/* Toolbar */}
         <div className="p-6 flex flex-col sm:flex-row items-center justify-between gap-4 border-b border-gray-100">
-          <div className="relative w-full sm:w-[320px]">
-            <input 
-              type="text" 
-              placeholder="Search..." 
-              className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 text-[14px] focus:outline-none focus:border-[#1cabb1] bg-gray-50/50"
-            />
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+          <div className="flex items-center gap-4 w-full sm:w-auto">
+            <div className="relative w-full sm:w-[320px]">
+              <input 
+                type="text" 
+                placeholder="Search..." 
+                className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 text-[14px] focus:outline-none focus:border-[#1cabb1] bg-gray-50/50"
+              />
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+            </div>
+            <button 
+              onClick={() => setIsFilterOpen(true)}
+              className="relative w-11 h-11 flex items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors shadow-sm shrink-0 bg-white"
+            >
+              <SlidersHorizontal size={20} />
+              <span className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-[#1b58a6] text-white text-[11px] font-bold flex items-center justify-center shadow-sm">
+                2
+              </span>
+            </button>
           </div>
           
           <button className="w-full sm:w-auto flex items-center justify-center gap-2 bg-[#1cabb1] hover:bg-[#159a9f] text-white px-6 py-2.5 rounded-full text-[14px] font-semibold transition-colors shadow-sm">
@@ -125,6 +138,76 @@ const KPAReport = () => {
         </div>
 
       </div>
+
+      {/* Filter Modal */}
+      {isFilterOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl w-full max-w-md shadow-xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+            
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-6 py-5">
+              <h3 className="text-[18px] font-bold text-gray-800">Filter</h3>
+              <button 
+                onClick={() => setIsFilterOpen(false)}
+                className="text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="px-6 py-2 flex flex-col gap-4">
+              <div className="flex flex-col gap-2">
+                <select className="w-full px-4 py-3 rounded-xl border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#1cabb1] bg-white appearance-none">
+                  <option value="">Designation</option>
+                  <option value="manager">Manager</option>
+                  <option value="executive">Executive</option>
+                </select>
+              </div>
+              <div className="flex flex-col gap-2">
+                <select className="w-full px-4 py-3 rounded-xl border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#1cabb1] bg-white appearance-none">
+                  <option value="">State/UT</option>
+                  <option value="maharashtra">Maharashtra</option>
+                  <option value="delhi">Delhi</option>
+                </select>
+              </div>
+              <div className="flex flex-col gap-2">
+                <select className="w-full px-4 py-3 rounded-xl border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#1cabb1] bg-white appearance-none">
+                  <option value="">Branch</option>
+                  <option value="mumbai">Mumbai Branch</option>
+                  <option value="delhi">Delhi Branch</option>
+                </select>
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="flex-1">
+                  <input type="date" className="w-full px-4 py-3 rounded-xl border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#1cabb1]" />
+                </div>
+                <div className="flex-1">
+                  <input type="date" className="w-full px-4 py-3 rounded-xl border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#1cabb1]" />
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="px-6 py-6 mt-2 flex gap-4">
+              <button 
+                onClick={() => setIsFilterOpen(false)}
+                className="flex-1 px-4 py-3 rounded-full border-2 border-[#1cabb1] text-[#1cabb1] hover:bg-teal-50 text-[15px] font-bold transition-colors"
+              >
+                Reset Filter
+              </button>
+              <button 
+                onClick={() => setIsFilterOpen(false)}
+                className="flex-1 px-4 py-3 rounded-full bg-[#1cabb1] hover:bg-[#159a9f] text-white text-[15px] font-bold transition-colors shadow-sm"
+              >
+                Set Filter
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

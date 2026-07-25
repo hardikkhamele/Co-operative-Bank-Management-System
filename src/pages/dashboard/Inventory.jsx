@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronRight, Search, SlidersHorizontal, Edit, Trash2, ChevronDown, X } from 'lucide-react';
+import { ChevronRight, Search, SlidersHorizontal, Edit, Trash2, ChevronDown, X, ChevronLeft, RotateCcw } from 'lucide-react';
 
 const mockInventory = [
   { id: 1, asset: 'Computer', quantity: '1,800' },
@@ -198,6 +198,36 @@ const Inventory = () => {
               ))}
             </tbody>
           </table>
+        </div>
+
+        {/* Pagination Footer */}
+        <div className="p-6 bg-white flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="text-[14px] font-semibold text-gray-800">
+            Showing 1 to 8 of 30 Entries
+          </div>
+          
+          <div className="flex items-center gap-6">
+            
+            {/* Circular buttons */}
+            <div className="flex items-center gap-2">
+              <button className="w-10 h-10 flex items-center justify-center rounded-full border border-[#1cabb1] text-[#1cabb1] hover:bg-teal-50 transition-colors bg-white">
+                <ChevronLeft size={16} />
+              </button>
+              <button className="w-10 h-10 flex items-center justify-center rounded-full bg-[#1cabb1] text-white font-bold shadow-sm">
+                1
+              </button>
+              <button className="w-10 h-10 flex items-center justify-center rounded-full border border-[#1cabb1] text-[#1cabb1] hover:bg-teal-50 font-bold transition-colors bg-white">
+                2
+              </button>
+              <button className="w-10 h-10 flex items-center justify-center rounded-full border border-[#1cabb1] text-[#1cabb1] hover:bg-teal-50 font-bold transition-colors bg-white">
+                3
+              </button>
+              <button className="w-10 h-10 flex items-center justify-center rounded-full border border-[#1cabb1] text-[#1cabb1] hover:bg-teal-50 transition-colors bg-white">
+                <ChevronRight size={16} />
+              </button>
+            </div>
+            
+          </div>
         </div>
       </div>
 

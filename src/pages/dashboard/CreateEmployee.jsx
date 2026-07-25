@@ -292,6 +292,22 @@ const CreateEmployee = () => {
                     <span className="text-[15px] text-gray-700">As Per Shift</span>
                   </label>
                 </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-800 mb-2">Half Day (Mins)</label>
+                  <input type="number" defaultValue="240" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm mb-4" />
+                  <label className="flex items-center gap-3 cursor-pointer w-fit">
+                    <input type="checkbox" className="w-5 h-5 rounded-[4px] border-gray-300 accent-[#1cabb1] cursor-pointer" />
+                    <span className="text-[15px] text-gray-700">As Per Shift</span>
+                  </label>
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-800 mb-2">Full Day (Mins)</label>
+                  <input type="number" defaultValue="480" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm mb-4" />
+                  <label className="flex items-center gap-3 cursor-pointer w-fit">
+                    <input type="checkbox" defaultChecked className="w-5 h-5 rounded-[4px] border-gray-300 accent-[#1cabb1] cursor-pointer" />
+                    <span className="text-[15px] text-gray-700">As Per Shift</span>
+                  </label>
+                </div>
               </div>
             </div>
           </div>
@@ -463,42 +479,6 @@ const CreateEmployee = () => {
           </div>
         )}
 
-        {/* Bank Details - Shown in Job Details Tab */}
-        {activeTab === 'Job Details' && (
-        <div className="mb-4">
-          <h2 className="text-xl font-bold text-gray-800 mb-6">Bank Details</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-semibold text-gray-800 mb-2">Bank Name</label>
-              <div className="relative">
-                <select className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white appearance-none text-gray-500 shadow-sm">
-                  <option value="" disabled selected>Select</option>
-                  <option value="sbi">State Bank of India</option>
-                  <option value="hdfc">HDFC Bank</option>
-                  <option value="icici">ICICI Bank</option>
-                  <option value="axis">Axis Bank</option>
-                </select>
-                <ChevronDown size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-gray-800 mb-2">Account Number</label>
-              <input type="text" placeholder="Enter account number" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm" />
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-gray-800 mb-2">IFSC</label>
-              <input type="text" placeholder="Enter IFSC" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm" />
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-gray-800 mb-2">Branch</label>
-              <input type="text" placeholder="Enter Branch" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm" />
-            </div>
-          </div>
-        </div>
-        )}
 
         {/* WOFF / HOFF Tab */}
         {activeTab === 'WOFF & HOFF' && (

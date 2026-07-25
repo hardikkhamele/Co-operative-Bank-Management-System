@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { NavLink, Link, Outlet, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, MapPin, IdCard, UserPlus, List, ClipboardList, Store, Box, ArrowDownRight, ArrowUpRight, ArrowRightLeft, RefreshCcw, UserCheck, UserCog, Tag, ChevronDown, Bell, User, LogOut, CreditCard, Headphones, FileText, BarChart2, TrendingUp, CalendarDays } from 'lucide-react';
+import { LayoutDashboard, MapPin, IdCard, UserPlus, List, ClipboardList, Store, Box, ArrowDownRight, ArrowUpRight, ArrowRightLeft, RefreshCcw, UserCheck, UserCog, Tag, ChevronDown, Bell, User, LogOut, CreditCard, Headphones, FileText, BarChart2, TrendingUp, CalendarDays, Banknote } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
 
 const DashboardLayout = () => {
@@ -122,6 +122,24 @@ const DashboardLayout = () => {
               </NavLink>
               <NavLink to="/contra" className={({ isActive }) => `flex items-center gap-3 px-4 py-2.5 text-[15px] font-medium rounded-xl transition-colors ${isActive ? 'text-[#1cabb1] bg-white shadow-sm' : 'text-[#4b5563] hover:text-gray-900 hover:bg-white/50'}`}>
                 <RefreshCcw size={20} className="text-gray-500" /> Contra Receipt
+              </NavLink>
+            </div>
+          </div>
+
+          <div>
+            <h3 className="text-[15px] font-bold text-gray-800 mb-2 px-1">Cash Payment</h3>
+            <div className="space-y-1">
+              <NavLink to="/cash-payment" className={({ isActive }) => `flex items-center gap-3 px-4 py-2.5 text-[15px] font-medium rounded-xl transition-colors ${isActive ? 'text-[#1cabb1] bg-white shadow-sm' : 'text-[#4b5563] hover:text-gray-900 hover:bg-white/50'}`}>
+                <Banknote size={20} className="text-gray-500" /> Cash Payment
+              </NavLink>
+            </div>
+          </div>
+
+          <div>
+            <h3 className="text-[15px] font-bold text-gray-800 mb-2 px-1">EMI Cards & Verification Credits</h3>
+            <div className="space-y-1">
+              <NavLink to="/cards-credit" className={({ isActive }) => `flex items-center gap-3 px-4 py-2.5 text-[15px] font-medium rounded-xl transition-colors ${isActive ? 'text-[#1cabb1] bg-white shadow-sm' : 'text-[#4b5563] hover:text-gray-900 hover:bg-white/50'}`}>
+                <CreditCard size={20} className="text-gray-500" /> Cards & Credit
               </NavLink>
             </div>
           </div>

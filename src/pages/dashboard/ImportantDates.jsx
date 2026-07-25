@@ -36,21 +36,33 @@ const ImportantDates = () => {
         
         {/* Toolbar */}
         <div className="p-6 flex flex-col sm:flex-row items-center justify-between gap-4 border-b border-gray-100">
-          <div className="relative w-full sm:w-[320px]">
-            <input 
-              type="text" 
-              placeholder="Search..." 
-              className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 text-[14px] focus:outline-none focus:border-[#1cabb1] bg-gray-50/50"
-            />
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+          <div className="flex items-center gap-4 w-full sm:w-auto">
+            <div className="relative w-full sm:w-[320px]">
+              <input 
+                type="text" 
+                placeholder="Search..." 
+                className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 text-[14px] focus:outline-none focus:border-[#1cabb1] bg-gray-50/50"
+              />
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+            </div>
+            <button 
+              onClick={() => setIsFilterOpen(true)}
+              className="relative w-11 h-11 flex items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors shadow-sm shrink-0 bg-white"
+            >
+              <SlidersHorizontal size={20} />
+              <span className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-[#1b58a6] text-white text-[11px] font-bold flex items-center justify-center shadow-sm">
+                2
+              </span>
+            </button>
           </div>
           
-          <button 
-            onClick={() => setIsFilterOpen(true)}
-            className="w-full sm:w-auto flex items-center justify-center gap-2 bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 px-6 py-2.5 rounded-full text-[14px] font-semibold transition-colors shadow-sm"
-          >
-            <SlidersHorizontal size={18} /> Filters
-          </button>
+          <div className="w-full sm:w-auto">
+            <input 
+              type="date" 
+              defaultValue="2026-07-01"
+              className="w-full sm:w-[160px] px-4 py-2.5 rounded-lg border border-gray-200 text-[14px] text-gray-700 font-medium focus:outline-none focus:border-[#1cabb1] bg-white"
+            />
+          </div>
         </div>
 
         {/* Table */}

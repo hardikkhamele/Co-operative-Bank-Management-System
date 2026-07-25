@@ -179,40 +179,6 @@ const EditEmployee = () => {
           </div>
         </div>
 
-        {/* Bank Details */}
-        <div className="mb-10">
-          <h2 className="text-xl font-bold text-gray-800 mb-6">Bank Details</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-semibold text-gray-800 mb-2">Bank Name</label>
-              <div className="relative">
-                <select defaultValue="sbi" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white appearance-none text-gray-800 shadow-sm">
-                  <option value="" disabled>Select</option>
-                  <option value="sbi">State Bank of India</option>
-                  <option value="hdfc">HDFC Bank</option>
-                  <option value="icici">ICICI Bank</option>
-                  <option value="axis">Axis Bank</option>
-                </select>
-                <ChevronDown size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-gray-800 mb-2">Account Number</label>
-              <input type="text" defaultValue="53697842882" placeholder="Enter account number" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm text-gray-800" />
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-gray-800 mb-2">IFSC</label>
-              <input type="text" defaultValue="SBIN0001234" placeholder="Enter IFSC" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm text-gray-800" />
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-gray-800 mb-2">Branch</label>
-              <input type="text" defaultValue="Mumbai Branch" placeholder="Enter Branch" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm text-gray-800" />
-            </div>
-          </div>
-        </div>
 
         {/* Actions */}
         <div className="flex justify-end items-center gap-4 pt-6 mt-4">

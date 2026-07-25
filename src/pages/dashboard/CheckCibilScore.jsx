@@ -262,22 +262,62 @@ const CheckCibilScore = () => {
               <p className="mb-4">
                 To,<br/>
                 TransUnion CIBIL Limited<br/>
-                (Formerly known as Credit Information Bureau (India) Limited)<br/>
-                19th Floor, One World Centre, Tower 2A & 2B,<br/>
+                [Formerly known as Credit Information Bureau (India) Limited]<br/>
+                19th Floor, One World Centre Tower-2A-2B,<br/>
                 841 Senapati Bapat Marg,<br/>
                 Lower Parel,<br/>
-                Mumbai - 400 013
+                Mumbai – 400 013
               </p>
               <p className="font-semibold mb-4 text-gray-800">Sub: Grant of Consent</p>
               <p className="mb-4">Dear Sirs,</p>
-              <ol className="list-decimal pl-5 space-y-4">
-                <li>
-                  In connection with submission of the application for my credit information ("Consumer Credit Information") and other related credit products (Credit Products) offered by TUCIBIL through [Insert Name of the Company] (referred to as the "Company") and delivery of the Consumer Credit Information and Credit Products to the Company, I hereby acknowledge and agree to the following:
-                </li>
-                <li>
-                  The Company is my lawfully appointed agent and he / it has agreed to be my agent for the purposes, including, without limitation, to receive the Consumer Credit Information and Credit Products from TUCIBIL on my behalf.
-                </li>
-              </ol>
+              <p className="mb-4">
+                In connection with submission of the application for my credit information (“Consumer Credit Information”) and other related credit products (Credit Products) offered by TUCIBIL through [Insert: Name of the Company] (referred to as the “Company”) and delivery of the Consumer Credit Information and Credit Products to the Company, I hereby acknowledge and agree to the following:
+              </p>
+              <div className="space-y-4 mb-4">
+                <p>
+                  1. The Company is my lawfully appointed agent and he / it has agreed to be my agent for the purposes, including, without limitation, to receive the Consumer Credit Information and Credit Products from TUCIBIL on my behalf and use it and the Company has granted its consent for being appointed for the aforesaid purpose.
+                </p>
+                <p>
+                  2. I grant my unconditional consent to the Company to receive the Consumer Credit Information and Credit Products from TUCIBIL on my behalf and the Company has granted its consent for being appointed for the aforesaid purpose. I hereby represent and acknowledge that the Terms of Understanding in relation to the use of the Consumer Credit Information and Credit Products has been agreed between me and the Company.
+                </p>
+                <p>
+                  3. I hereby expressly grant unconditional consent to, and direct, TUCIBIL to deliver my Consumer Credit Information and Credit Products to the Company on my behalf.
+                </p>
+                <p>
+                  4. I shall not hold TUCIBIL responsible or liable for any loss, claim, liability, or damage of any kind resulting from, arising out of, or in any way related to: (a) delivery of my Consumer Credit Information and Credit Products to the Company ; (b) any use, modification or disclosure by the Company of the contents, in whole or in part, of my Consumer Credit Information or Credit Products , whether authorized or not; c) any breach of confidentiality or privacy in relation to delivery of my Consumer Credit Information to the Company.
+                </p>
+                <p>
+                  5. I acknowledge and accept that TUCIBIL has not made any promises or representations to me in order to induce me to provide my Consumer Credit Information or seek any consent or authorization in this regard.
+                </p>
+                <p>
+                  6. I agree that I may be required to record my consent / provide consent electronically and in all such cases I understand that by clicking on the "I Accept" button below, I am providing "written consent " to [COMPANY] authorizing [COMPANY] to obtain my Consumer Credit Information from my personal credit profile from TransUnion CIBIL LIMITED]. I further authorize [COMPANY] to obtain such information solely to confirm my identity and display my Consumer Credit Information to me. Further in all such cases “By checking this box and clicking on the ‘Authorize button, I agree to the terms and conditions, acknowledge receipt of TUCIBIL privacy policy and agree to its terms, and confirm my authorization for [COMPANY] to obtain my Consumer Credit Information and Credit Products.
+                </p>
+                <p>
+                  7. I understand that in order to deliver the product to me, I hereby authorize [COMPANY], to obtain my Consumer Credit Information and Credit Products from TUCIBIL.
+                </p>
+                <p>
+                  8. By submitting this registration form, I understand that I am providing express written consent for [COMPANY] to request and receive information about me from third parties, including but not limited to a copy of my consumer credit report and score from consumer reporting agencies, at any time for so long as I have an active [COMPANY] account. I further authorize [COMPANY] to retain a copy of my information for use in accordance with [COMPANY’S] Terms of Use and Privacy Policy.
+                </p>
+                <p className="uppercase font-semibold text-gray-800">
+                  9. I UNDERSTAND THAT THE PRODUCT IS PROVIDED ON AN “AS-IS”, “AS AVAILABLE” BASIS AND TUCIBIL EXPRESSLY DISCLAIMS ALL WARRANTIES, INCLUDING THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
+                </p>
+                <p>
+                  10. I shall not sue or otherwise make or present any demand or claim, and I irrevocably, unconditionally and entirely release, waive and forever discharge TUCIBIL , its officers, directors, employees, agents, licensees, affiliates, successors and assigns, jointly and individually (hereinafter “Releasee”), from any and all manner of liabilities, claims, demands, losses, claims, suits, costs and expenses (including court costs and reasonable attorney fees) (“Losses”), whatsoever, in law or equity, whether known or unknown, which I ever had, now have, or in the future may have against the Releasee with respect to the submission of my Consumer Credit Information or Credit Products and / or my decision to provide TUCIBIL with the authority to deliver my Consumer Credit Information and Credit Products to the Company . I agree to defend, indemnify, and hold harmless the Releasee from and against any and all Losses resulting from claims made against TUCIBIL L by third parties arising from and in connection with this letter.
+                </p>
+                <p>
+                  11. I agree that the terms of this confirmation letter shall be governed by the laws of India and shall be subject to the exclusive jurisdiction of the courts located in Mumbai in regard to any dispute arising hereof. TUCIBIL is entitled to assign its rights hereunder to any third person without taking my prior written consent.
+                </p>
+              </div>
+              <div className="mt-8 space-y-4">
+                <p>Yours faithfully,</p>
+                <p>Signature :_________________________</p>
+                <p>Name :_________________________</p>
+                <p>Address :_________________________</p>
+              </div>
+              <div className="mt-8 pt-4 border-t border-gray-100">
+                <p className="font-semibold text-gray-800">CC: [ADVITA CREDIT]</p>
+                <p>Address: National e-Governance Division, 4th Floor, Electronics Niketan, Ministry of Electronics &amp; IT, 6, CGO Complex, Lodhi Road, New Delhi: 110003</p>
+              </div>
             </div>
             
             <div className="px-6 py-4 border-t border-gray-100 flex justify-center bg-gray-50">

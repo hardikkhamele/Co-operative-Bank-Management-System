@@ -3,11 +3,13 @@ import { Search, Edit, Trash2, ChevronRight, SlidersHorizontal, ChevronDown, X, 
 import { Link, useNavigate } from 'react-router-dom';
 
 const mockReceipts = [
-  { id: 1, srNo: 1, receiptNo: 'CR-10254', date: '25/11/2023', bankName: 'SBI Branch', accountNo: '48243456', amount: 15000, status: 'New' },
-  { id: 2, srNo: 2, receiptNo: 'CR-10255', date: '25/11/2023', bankName: 'HDFC Bank', accountNo: '98765432', amount: 20000, status: 'Approved' },
-  { id: 3, srNo: 3, receiptNo: 'CR-10256', date: '26/11/2023', bankName: 'ICICI Bank', accountNo: '11223344', amount: 5500, status: 'Rejected' },
-  { id: 4, srNo: 4, receiptNo: 'CR-10257', date: '27/11/2023', bankName: 'Axis Bank', accountNo: '55667788', amount: 12000, status: 'New' },
-  { id: 5, srNo: 5, receiptNo: 'CR-10258', date: '28/11/2023', bankName: 'Bank of Baroda', accountNo: '99887766', amount: 8000, status: 'Approved' },
+  { id: 1, srNo: 1, receiptNo: 'CR-000123', name: 'Mamta Lodhi', glHead: '410105', glHeadName: 'Loan', acNo: '36489745148', date: '20/07/2026', status: 'New' },
+  { id: 2, srNo: 2, receiptNo: 'CR-000123', name: 'Hillery Moses', glHead: '410105', glHeadName: 'Loan', acNo: '36489745148', date: '20/07/2026', status: 'Approved' },
+  { id: 3, srNo: 3, receiptNo: 'CR-000123', name: 'Mohd Hadi', glHead: '410105', glHeadName: 'Loan', acNo: '36489745148', date: '20/07/2026', status: 'Rejected' },
+  { id: 4, srNo: 4, receiptNo: 'CR-000123', name: 'Navjot Kaur', glHead: '410105', glHeadName: 'Loan', acNo: '36489745148', date: '20/07/2026', status: 'New' },
+  { id: 5, srNo: 5, receiptNo: 'CR-000123', name: 'Vishwas Patel', glHead: '410105', glHeadName: 'Daily Deposit', acNo: '36489745148', date: '20/07/2026', status: 'New' },
+  { id: 6, srNo: 6, receiptNo: 'CR-000123', name: 'Vikas Tiwari', glHead: '410105', glHeadName: 'Daily Agent Collection', acNo: '36489745148', date: '20/07/2026', status: 'Approved' },
+  { id: 7, srNo: 7, receiptNo: 'CR-000123', name: 'Amardeep Singh', glHead: '410105', glHeadName: 'Monthly RD', acNo: '36489745148', date: '20/07/2026', status: 'Approved' },
 ];
 
 const Credit = () => {
@@ -196,11 +198,12 @@ const Credit = () => {
             <thead className="bg-[#f4f3fb] text-[#4b5563] font-bold border-b border-gray-100">
               <tr>
                 <th className="px-6 py-4">Sr.No.</th>
-                <th className="px-6 py-4">Receipt No.</th>
+                <th className="px-6 py-4">Receipt No</th>
+                <th className="px-6 py-4">Name</th>
+                <th className="px-6 py-4">GL Head</th>
+                <th className="px-6 py-4">GL Head Name</th>
+                <th className="px-6 py-4">A/C No.</th>
                 <th className="px-6 py-4">Date</th>
-                <th className="px-6 py-4">Bank Name</th>
-                <th className="px-6 py-4">Account No.</th>
-                <th className="px-6 py-4">Amount (Rs.)</th>
                 <th className="px-6 py-4">Status</th>
                 <th className="px-6 py-4 text-center">Action</th>
               </tr>
@@ -210,10 +213,11 @@ const Credit = () => {
                 <tr key={receipt.id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-6 py-4 text-gray-700">{receipt.srNo}</td>
                   <td className="px-6 py-4 text-[#1b2559] font-semibold">{receipt.receiptNo}</td>
+                  <td className="px-6 py-4 text-gray-700">{receipt.name}</td>
+                  <td className="px-6 py-4 text-gray-700">{receipt.glHead}</td>
+                  <td className="px-6 py-4 text-gray-700">{receipt.glHeadName}</td>
+                  <td className="px-6 py-4 text-gray-700">{receipt.acNo}</td>
                   <td className="px-6 py-4 text-gray-700">{receipt.date}</td>
-                  <td className="px-6 py-4 text-gray-700">{receipt.bankName}</td>
-                  <td className="px-6 py-4 text-gray-700">{receipt.accountNo}</td>
-                  <td className="px-6 py-4 text-gray-900 font-medium">₹ {receipt.amount.toLocaleString('en-IN')}</td>
                   <td className="px-6 py-4">
                     {getStatusBadge(receipt.status)}
                   </td>
