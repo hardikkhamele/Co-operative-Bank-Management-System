@@ -1,12 +1,16 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronRight, UploadCloud } from 'lucide-react';
+import { ChevronRight, UploadCloud, X, Smartphone, CreditCard, Landmark, Banknote } from 'lucide-react';
 
 const SetupLoan = () => {
   const [showEmis, setShowEmis] = useState(false);
   const [selectedEmi, setSelectedEmi] = useState(6); // Default 6 months
   const [showFinalAmount, setShowFinalAmount] = useState(false);
   const [showBankDetails, setShowBankDetails] = useState(false);
+  const [showOtpModal, setShowOtpModal] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [otp, setOtp] = useState(['', '', '', '']);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('');
 
   const emiOptions = [
     { months: 3, amount: '26,500' },
@@ -17,6 +21,32 @@ const SetupLoan = () => {
     { months: 18, amount: '5,146' },
     { months: 24, amount: '4,146' },
   ];
+
+  const handleOtpChange = (index, value) => {
+    if (isNaN(value)) return;
+    const newOtp = [...otp];
+    newOtp[index] = value;
+    setOtp(newOtp);
+    
+    // Auto focus next logic could go here
+    if (value && index < 3) {
+      const nextInput = document.getElementById(`otp-input-${index + 1}`);
+      if (nextInput) nextInput.focus();
+    }
+  };
+
+  const handleVerifyOtp = () => {
+    // Assuming OTP is verified
+    setShowOtpModal(false);
+    setShowPaymentModal(true);
+  };
+
+  const handleConfirmPayment = () => {
+    // Simulate payment success
+    alert("Payment Successful!");
+    setShowPaymentModal(false);
+  };
+
 
   return (
     <div className="flex flex-col gap-6 w-full max-w-6xl mx-auto pb-10">
@@ -236,10 +266,116 @@ const SetupLoan = () => {
 
       {/* Submit Button */}
       <div className="flex justify-end mt-4">
-        <button className="bg-[#1cabb1] hover:bg-[#159a9f] text-white px-8 py-3 rounded-full font-semibold transition-colors shadow-sm">
+        <button 
+          onClick={() => setShowOtpModal(true)}
+          className="bg-[#1cabb1] hover:bg-[#159a9f] text-white px-8 py-3 rounded-full font-semibold transition-colors shadow-sm"
+        >
           Submit & Collect Down Payment
         </button>
       </div>
+
+      {/* OTP Modal */}
+      {showOtpModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex justify-between items-center p-5 border-b border-gray-100">
+              <h3 className="font-bold text-gray-800 text-lg">Verify OTP</h3>
+              <button onClick={() => setShowOtpModal(false)} className="text-gray-400 hover:text-gray-600 transition-colors">
+                <X size={20} />
+              </button>
+            </div>
+            <div className="p-6 flex flex-col items-center">
+              <div className="w-12 h-12 bg-blue-50 text-[#1b58a6] rounded-full flex items-center justify-center mb-4">
+                <Smartphone size={24} />
+              </div>
+              <p className="text-sm text-gray-500 text-center mb-6">
+                Please enter the 4-digit verification code sent to customer's mobile number.
+              </p>
+              <div className="flex gap-3 mb-6">
+                {[0, 1, 2, 3].map((index) => (
+                  <input
+                    key={index}
+                    id={`otp-input-${index}`}
+                    type="text"
+                    maxLength={1}
+                    value={otp[index]}
+                    onChange={(e) => handleOtpChange(index, e.target.value)}
+                    className="w-12 h-14 text-center text-xl font-bold rounded-lg border border-gray-200 focus:outline-none focus:border-[#1b58a6] focus:ring-1 focus:ring-[#1b58a6]"
+                  />
+                ))}
+              </div>
+              <button onClick={handleVerifyOtp} className="w-full bg-[#1b58a6] hover:bg-[#154685] text-white py-3 rounded-lg font-semibold transition-colors shadow-sm">
+                Verify & Continue
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Payment Method Modal */}
+      {showPaymentModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex justify-between items-center p-5 border-b border-gray-100">
+              <div>
+                <h3 className="font-bold text-gray-800 text-lg">Collect Down Payment</h3>
+                <p className="text-xs text-gray-500 mt-0.5">Amount to collect: <span className="font-bold text-gray-800">₹16,000</span></p>
+              </div>
+              <button onClick={() => setShowPaymentModal(false)} className="text-gray-400 hover:text-gray-600 transition-colors">
+                <X size={20} />
+              </button>
+            </div>
+            <div className="p-6">
+              <h4 className="text-sm font-semibold text-gray-700 mb-4">Choose Payment Method</h4>
+              <div className="flex flex-col gap-3 mb-6">
+                {/* Method 1 */}
+                <label className={`flex items-center gap-4 p-4 border rounded-xl cursor-pointer transition-colors ${selectedPaymentMethod === 'upi' ? 'bg-blue-50/50 border-[#1b58a6]' : 'border-gray-200 hover:border-[#1b58a6] hover:bg-gray-50'}`}>
+                  <input type="radio" name="paymentMethod" className="w-4 h-4 text-[#1b58a6] focus:ring-[#1b58a6]" checked={selectedPaymentMethod === 'upi'} onChange={() => setSelectedPaymentMethod('upi')} />
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-blue-100 text-[#1b58a6] flex items-center justify-center"><Smartphone size={16} /></div>
+                    <span className="font-medium text-gray-700">UPI / QR Code</span>
+                  </div>
+                </label>
+
+                {/* Method 2 */}
+                <label className={`flex items-center gap-4 p-4 border rounded-xl cursor-pointer transition-colors ${selectedPaymentMethod === 'card' ? 'bg-blue-50/50 border-[#1b58a6]' : 'border-gray-200 hover:border-[#1b58a6] hover:bg-gray-50'}`}>
+                  <input type="radio" name="paymentMethod" className="w-4 h-4 text-[#1b58a6] focus:ring-[#1b58a6]" checked={selectedPaymentMethod === 'card'} onChange={() => setSelectedPaymentMethod('card')} />
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center"><CreditCard size={16} /></div>
+                    <span className="font-medium text-gray-700">Credit / Debit Card</span>
+                  </div>
+                </label>
+
+                {/* Method 3 */}
+                <label className={`flex items-center gap-4 p-4 border rounded-xl cursor-pointer transition-colors ${selectedPaymentMethod === 'netbanking' ? 'bg-blue-50/50 border-[#1b58a6]' : 'border-gray-200 hover:border-[#1b58a6] hover:bg-gray-50'}`}>
+                  <input type="radio" name="paymentMethod" className="w-4 h-4 text-[#1b58a6] focus:ring-[#1b58a6]" checked={selectedPaymentMethod === 'netbanking'} onChange={() => setSelectedPaymentMethod('netbanking')} />
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center"><Landmark size={16} /></div>
+                    <span className="font-medium text-gray-700">Net Banking</span>
+                  </div>
+                </label>
+
+                {/* Method 4 */}
+                <label className={`flex items-center gap-4 p-4 border rounded-xl cursor-pointer transition-colors ${selectedPaymentMethod === 'cash' ? 'bg-blue-50/50 border-[#1b58a6]' : 'border-gray-200 hover:border-[#1b58a6] hover:bg-gray-50'}`}>
+                  <input type="radio" name="paymentMethod" className="w-4 h-4 text-[#1b58a6] focus:ring-[#1b58a6]" checked={selectedPaymentMethod === 'cash'} onChange={() => setSelectedPaymentMethod('cash')} />
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-green-100 text-green-600 flex items-center justify-center"><Banknote size={16} /></div>
+                    <span className="font-medium text-gray-700">Cash</span>
+                  </div>
+                </label>
+              </div>
+              
+              <button 
+                disabled={!selectedPaymentMethod}
+                onClick={handleConfirmPayment} 
+                className={`w-full py-3 rounded-lg font-semibold transition-colors shadow-sm ${selectedPaymentMethod ? 'bg-[#1cabb1] hover:bg-[#159a9f] text-white' : 'bg-gray-200 text-gray-400 cursor-not-allowed'}`}
+              >
+                Confirm Payment
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );
