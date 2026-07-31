@@ -65,6 +65,11 @@ import ViewContraReceipt from './pages/dashboard/ViewContraReceipt';
 import CheckCibilScore from './pages/dashboard/CheckCibilScore';
 import KycVerification from './pages/dashboard/KycVerification';
 import ViewCreditReceipt from './pages/dashboard/ViewCreditReceipt';
+import CashPayment from './pages/dashboard/CashPayment';
+import ViewCashPayment from './pages/dashboard/ViewCashPayment';
+import CardsAndCredit from './pages/dashboard/CardsAndCredit';
+import ChoosePaymentMethod from './pages/dashboard/ChoosePaymentMethod';
+import PaymentSuccessful from './pages/dashboard/PaymentSuccessful';
 
 // Bank Portal Imports
 import BankLogin from './pages/bank-auth/BankLogin';
@@ -148,6 +153,11 @@ function App() {
           <Route path="contra/view/:id" element={<ViewContraReceipt />} />
           <Route path="cibil" element={<CheckCibilScore />} />
           <Route path="kyc" element={<KycVerification />} />
+          <Route path="cash-payment" element={<CashPayment />} />
+          <Route path="cash-payment/view/:id" element={<ViewCashPayment />} />
+          <Route path="cards-credit" element={<CardsAndCredit />} />
+          <Route path="cards-credit/payment" element={<ChoosePaymentMethod />} />
+          <Route path="cards-credit/payment/success" element={<PaymentSuccessful />} />
           {/* Add other nested routes here in the future */}
         </Route>
       </Routes>

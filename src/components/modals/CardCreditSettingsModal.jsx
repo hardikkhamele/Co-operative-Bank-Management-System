@@ -3,6 +3,7 @@ import { X, ChevronDown, ChevronUp } from 'lucide-react';
 
 const CardCreditSettingsModal = ({ isOpen, onClose }) => {
   const [selectedType, setSelectedType] = useState('add');
+  const [transferSelection, setTransferSelection] = useState('both');
 
   if (!isOpen) return null;
 
@@ -54,20 +55,22 @@ const CardCreditSettingsModal = ({ isOpen, onClose }) => {
 
           {/* Dropdowns */}
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-[15px] font-semibold text-gray-800 mb-2">State/UT</label>
-              <div className="relative">
-                <select className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1] focus:border-transparent bg-white text-[15px] text-gray-600 shadow-sm appearance-none cursor-pointer">
-                  <option>Maharashtra</option>
-                  <option>Gujarat</option>
-                  <option>Karnataka</option>
-                </select>
-                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-500">
-                  <ChevronDown size={20} />
+            {selectedType === 'add' && (
+              <div>
+                <label className="block text-[15px] font-semibold text-gray-800 mb-2">State/UT</label>
+                <div className="relative">
+                  <select className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1] focus:border-transparent bg-white text-[15px] text-gray-600 shadow-sm appearance-none cursor-pointer">
+                    <option>Maharashtra</option>
+                    <option>Gujarat</option>
+                    <option>Karnataka</option>
+                  </select>
+                  <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-500">
+                    <ChevronDown size={20} />
+                  </div>
                 </div>
               </div>
-            </div>
-            <div>
+            )}
+            <div className={selectedType === 'transfer' ? 'col-span-2' : ''}>
               <label className="block text-[15px] font-semibold text-gray-800 mb-2">Branch</label>
               <div className="relative">
                 <select className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1] focus:border-transparent bg-white text-[15px] text-gray-600 shadow-sm appearance-none cursor-pointer">
@@ -88,38 +91,82 @@ const CardCreditSettingsModal = ({ isOpen, onClose }) => {
             <div>Available Verification Credit: 123</div>
           </div>
 
+          {/* Transfer Type Selection (Only for transfer) */}
+          {selectedType === 'transfer' && (
+            <div className="pt-2">
+              <h4 className="text-[14px] font-semibold text-gray-800 mb-3">Transfer Type</h4>
+              <div className="flex items-center gap-6">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-colors ${transferSelection === 'emi' ? 'border-[#1cabb1]' : 'border-gray-400'}`}>
+                    {transferSelection === 'emi' && <div className="w-2 h-2 rounded-full bg-[#1cabb1]" />}
+                  </div>
+                  <span className="text-[14px] font-medium text-gray-700">EMI Card</span>
+                  <input 
+                    type="radio" 
+                    name="transfer_selection"
+                    checked={transferSelection === 'emi'}
+                    onChange={() => setTransferSelection('emi')}
+                    className="hidden"
+                  />
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-colors ${transferSelection === 'verification' ? 'border-[#1cabb1]' : 'border-gray-400'}`}>
+                    {transferSelection === 'verification' && <div className="w-2 h-2 rounded-full bg-[#1cabb1]" />}
+                  </div>
+                  <span className="text-[14px] font-medium text-gray-700">Verification Credit</span>
+                  <input 
+                    type="radio" 
+                    name="transfer_selection"
+                    checked={transferSelection === 'verification'}
+                    onChange={() => setTransferSelection('verification')}
+                    className="hidden"
+                  />
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-colors ${transferSelection === 'both' ? 'border-[#1cabb1]' : 'border-gray-400'}`}>
+                    {transferSelection === 'both' && <div className="w-2 h-2 rounded-full bg-[#1cabb1]" />}
+                  </div>
+                  <span className="text-[14px] font-medium text-gray-700">Both</span>
+                  <input 
+                    type="radio" 
+                    name="transfer_selection"
+                    checked={transferSelection === 'both'}
+                    onChange={() => setTransferSelection('both')}
+                    className="hidden"
+                  />
+                </label>
+              </div>
+            </div>
+          )}
+
           {/* Number Inputs */}
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-[15px] font-semibold text-gray-800 mb-2">EMI Card</label>
-              <div className="relative">
-                <input 
-                  type="number" 
-                  placeholder="Enter quantity" 
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1] focus:border-transparent bg-white text-[15px] shadow-sm appearance-none" 
-                  style={{ MozAppearance: 'textfield' }} // hides standard arrows in firefox
-                />
-                <div className="absolute inset-y-0 right-0 flex flex-col justify-center pr-3">
-                  <button className="text-gray-500 hover:text-gray-800 p-0.5"><ChevronUp size={14} /></button>
-                  <button className="text-gray-500 hover:text-gray-800 p-0.5"><ChevronDown size={14} /></button>
+            {(selectedType === 'add' || transferSelection === 'emi' || transferSelection === 'both') && (
+              <div className={selectedType === 'transfer' && transferSelection === 'emi' ? 'col-span-2' : ''}>
+                <label className="block text-[15px] font-semibold text-gray-800 mb-2">EMI Card</label>
+                <div className="relative">
+                  <input 
+                    type="number" 
+                    placeholder="Enter quantity" 
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1] focus:border-transparent bg-white text-[15px] shadow-sm appearance-none" 
+                    style={{ MozAppearance: 'textfield' }} // hides standard arrows in firefox
+                  />
                 </div>
               </div>
-            </div>
-            <div>
-              <label className="block text-[15px] font-semibold text-gray-800 mb-2">Verification Credit</label>
-              <div className="relative">
-                <input 
-                  type="number" 
-                  placeholder="Enter quantity" 
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1] focus:border-transparent bg-white text-[15px] shadow-sm appearance-none" 
-                  style={{ MozAppearance: 'textfield' }}
-                />
-                <div className="absolute inset-y-0 right-0 flex flex-col justify-center pr-3">
-                  <button className="text-gray-500 hover:text-gray-800 p-0.5"><ChevronUp size={14} /></button>
-                  <button className="text-gray-500 hover:text-gray-800 p-0.5"><ChevronDown size={14} /></button>
+            )}
+            {(selectedType === 'add' || transferSelection === 'verification' || transferSelection === 'both') && (
+              <div className={selectedType === 'transfer' && transferSelection === 'verification' ? 'col-span-2' : ''}>
+                <label className="block text-[15px] font-semibold text-gray-800 mb-2">Verification Credit</label>
+                <div className="relative">
+                  <input 
+                    type="number" 
+                    placeholder="Enter quantity" 
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1] focus:border-transparent bg-white text-[15px] shadow-sm appearance-none" 
+                    style={{ MozAppearance: 'textfield' }}
+                  />
                 </div>
               </div>
-            </div>
+            )}
           </div>
           
         </div>

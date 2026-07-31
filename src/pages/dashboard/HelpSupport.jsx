@@ -29,7 +29,7 @@ const HelpSupport = () => {
               <Phone size={24} />
             </div>
             <div className="text-gray-700 font-medium mb-4">
-              514-601-4598
+              8080494923
             </div>
             <h3 className="text-2xl font-bold text-[#1cabb1] mb-6">Call us</h3>
             <div className="text-gray-500 text-sm">
@@ -44,7 +44,7 @@ const HelpSupport = () => {
               <Mail size={24} />
             </div>
             <div className="text-gray-700 font-medium mb-4">
-              contact@advitacr.com
+              info@advitacredit.in
             </div>
             <h3 className="text-2xl font-bold text-[#1cabb1] mb-6">Email us</h3>
             <div className="text-gray-500 text-sm">

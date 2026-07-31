@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Edit, Trash2, ChevronRight, SlidersHorizontal, ChevronDown, X, Eye } from 'lucide-react';
+import { Search, Edit, Trash2, ChevronRight, SlidersHorizontal, ChevronDown, X, Eye, Download } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 
 const mockReceipts = [
@@ -182,6 +182,12 @@ const Credit = () => {
           </div>
         </div>
         <div className="flex items-center gap-3">
+          <button 
+            className="flex items-center gap-2 bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 px-4 py-2.5 rounded-full font-semibold transition-colors text-sm shadow-sm flex-shrink-0"
+          >
+            <Download size={18} />
+            Export
+          </button>
           <button 
             onClick={() => setIsCreateModalOpen(true)}
             className="bg-[#1cabb1] hover:bg-[#159a9f] text-white px-5 py-2.5 rounded-full font-semibold transition-colors text-sm shadow-sm flex-shrink-0"

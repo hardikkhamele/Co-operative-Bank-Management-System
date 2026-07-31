@@ -14,14 +14,14 @@ const mockEmployees = [
 ];
 
 const mockMonthlyAttendance = [
-  { id: 1, emp: mockEmployees[0], days: { 1: 'P', 2: 'A', 3: 'P', 4: 'L', 5: 'P', 6: 'P', 7: 'WO', 8: 'P', 9: 'P', 10: 'P' } },
-  { id: 2, emp: mockEmployees[1], days: { 1: 'P', 2: 'P', 3: 'L', 4: 'P', 5: 'A', 6: 'A', 7: 'WO', 8: 'P', 9: 'P', 10: 'P' } },
-  { id: 3, emp: mockEmployees[2], days: { 1: 'P', 2: 'L', 3: 'P', 4: 'P*', 5: 'P', 6: 'P', 7: 'WO', 8: 'P', 9: 'P', 10: 'P' } },
-  { id: 4, emp: mockEmployees[3], days: { 1: 'P', 2: 'L', 3: 'P', 4: 'P', 5: 'L', 6: 'A', 7: 'WO', 8: 'P', 9: 'P', 10: 'P' } },
-  { id: 5, emp: mockEmployees[4], days: { 1: 'P', 2: 'P', 3: 'P', 4: 'L', 5: 'P', 6: 'P', 7: 'WO', 8: 'P', 9: 'P', 10: 'P' } },
-  { id: 6, emp: mockEmployees[5], days: { 1: 'P', 2: 'P', 3: 'A', 4: 'P', 5: 'P', 6: 'A', 7: 'WO', 8: 'P', 9: 'P', 10: 'P' } },
-  { id: 7, emp: mockEmployees[6], days: { 1: 'P', 2: 'L', 3: 'P', 4: 'P', 5: 'P', 6: 'P', 7: 'WO', 8: 'P', 9: 'P', 10: 'P' } },
-  { id: 8, emp: mockEmployees[7], days: { 1: 'A', 2: 'P', 3: 'A', 4: 'P', 5: 'P', 6: 'A', 7: 'WO', 8: 'A', 9: 'A', 10: 'A' } },
+  { id: 1, emp: mockEmployees[0], days: { 1: 'P', 2: 'A', 3: 'P', 4: 'L', 5: 'P', 6: 'P', 7: 'WO', 8: 'P', 9: 'P', 10: 'P' }, summary: { ot: '—', payDays: 13 } },
+  { id: 2, emp: mockEmployees[1], days: { 1: 'P', 2: 'P', 3: 'L', 4: 'P', 5: 'A', 6: 'A', 7: 'WO', 8: 'P', 9: 'P', 10: 'P' }, summary: { ot: '—', payDays: 10 } },
+  { id: 3, emp: mockEmployees[2], days: { 1: 'P', 2: 'L', 3: 'P', 4: 'P*', 5: 'P', 6: 'P', 7: 'WO', 8: 'P', 9: 'P', 10: 'P' }, summary: { ot: '—', payDays: 12 } },
+  { id: 4, emp: mockEmployees[3], days: { 1: 'P', 2: 'L', 3: 'P', 4: 'P', 5: 'L', 6: 'A', 7: 'WO', 8: 'P', 9: 'P', 10: 'P' }, summary: { ot: '—', payDays: 10 } },
+  { id: 5, emp: mockEmployees[4], days: { 1: 'P', 2: 'P', 3: 'P', 4: 'L', 5: 'P', 6: 'P', 7: 'WO', 8: 'P', 9: 'P', 10: 'P' }, summary: { ot: '—', payDays: 13 } },
+  { id: 6, emp: mockEmployees[5], days: { 1: 'P', 2: 'P', 3: 'A', 4: 'P', 5: 'P', 6: 'A', 7: 'WO', 8: 'P', 9: 'P', 10: 'P' }, summary: { ot: '—', payDays: 12 } },
+  { id: 7, emp: mockEmployees[6], days: { 1: 'P', 2: 'L', 3: 'P', 4: 'P', 5: 'P', 6: 'P', 7: 'WO', 8: 'P', 9: 'P', 10: 'P' }, summary: { ot: '—', payDays: 10 } },
+  { id: 8, emp: mockEmployees[7], days: { 1: 'A', 2: 'P', 3: 'A', 4: 'P', 5: 'P', 6: 'A', 7: 'WO', 8: 'A', 9: 'A', 10: 'A' }, summary: { ot: '—', payDays: 11 } },
 ];
 
 const mockYearlyAttendance = mockEmployees.map(emp => ({
@@ -29,7 +29,8 @@ const mockYearlyAttendance = mockEmployees.map(emp => ({
   emp: emp,
   months: Object.fromEntries(
     [...Array(12)].map((_, i) => [i + 1, { p: 21, a: 2, l: 3 }])
-  )
+  ),
+  summary: { p: 222, a: 12, l: 4, ot: '—', payDays: 310 }
 }));
 
 const MonthlyStatusBadge = ({ status }) => {
@@ -278,18 +279,20 @@ const AttendanceReport = () => {
               <table className="w-full text-left border-collapse min-w-[max-content]">
                 <thead>
                   <tr className="bg-gray-50/50 border-b border-gray-200 text-sm font-semibold text-gray-600">
-                    <th className="py-4 px-6 border-r border-gray-200 whitespace-nowrap text-center">Sr.No.</th>
-                    <th className="py-4 px-6 border-r border-gray-200 whitespace-nowrap">Name</th>
+                    <th className="sticky left-0 z-20 bg-gray-50 py-4 px-6 w-20 border-r border-gray-200 whitespace-nowrap text-center">Sr.No.</th>
+                    <th className="sticky left-20 z-20 bg-gray-50 py-4 px-6 min-w-[200px] border-r border-gray-200 whitespace-nowrap">Name</th>
                     {[...Array(31)].map((_, i) => (
-                      <th key={i} className="py-4 px-3 text-center border-r border-gray-200 last:border-r-0 min-w-[50px]">{i + 1}</th>
+                      <th key={i} className="py-4 px-3 text-center border-r border-gray-200 min-w-[50px]">{i + 1}</th>
                     ))}
+                    <th className="py-4 px-4 text-center border-r border-gray-200">OT</th>
+                    <th className="py-4 px-4 text-center border-r border-gray-200">Pay Days</th>
                   </tr>
                 </thead>
                 <tbody className="text-[14px] text-gray-700 font-medium">
                   {mockMonthlyAttendance.map((row) => (
-                    <tr key={row.id} className="border-b border-gray-200 hover:bg-gray-50/30 transition-colors">
-                      <td className="py-4 px-6 text-center border-r border-gray-200">{row.id}</td>
-                      <td className="py-4 px-6 border-r border-gray-200">
+                    <tr key={row.id} className="group border-b border-gray-200 hover:bg-gray-50 transition-colors">
+                      <td className="sticky left-0 z-10 bg-white group-hover:bg-gray-50 py-4 px-6 text-center border-r border-gray-200">{row.id}</td>
+                      <td className="sticky left-20 z-10 bg-white group-hover:bg-gray-50 py-4 px-6 border-r border-gray-200">
                         <div className="flex items-center gap-3">
                           {row.emp.avatar ? (
                             <img src={row.emp.avatar} alt={row.emp.name} className="w-8 h-8 rounded-full object-cover" />
@@ -304,11 +307,13 @@ const AttendanceReport = () => {
                       {[...Array(31)].map((_, i) => {
                         const dayStatus = row.days[i + 1] || 'P'; // default to P for mock
                         return (
-                          <td key={i} className="py-3 px-2 text-center border-r border-gray-200 last:border-r-0">
+                          <td key={i} className="py-3 px-2 text-center border-r border-gray-200">
                             <MonthlyStatusBadge status={dayStatus} />
                           </td>
                         )
                       })}
+                      <td className="py-3 px-4 text-center border-r border-gray-200 font-medium">{row.summary.ot}</td>
+                      <td className="py-3 px-4 text-center border-r border-gray-200 font-medium text-gray-700">{row.summary.payDays}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -323,18 +328,23 @@ const AttendanceReport = () => {
               <table className="w-full text-left border-collapse min-w-[max-content]">
                 <thead>
                   <tr className="bg-gray-50/50 border-b border-gray-200 text-sm font-semibold text-gray-600">
-                    <th className="py-4 px-6 border-r border-gray-200 whitespace-nowrap text-center">Sr.No.</th>
-                    <th className="py-4 px-6 border-r border-gray-200 whitespace-nowrap">Name</th>
+                    <th className="sticky left-0 z-20 bg-gray-50 py-4 px-6 w-20 border-r border-gray-200 whitespace-nowrap text-center">Sr.No.</th>
+                    <th className="sticky left-20 z-20 bg-gray-50 py-4 px-6 min-w-[200px] border-r border-gray-200 whitespace-nowrap">Name</th>
                     {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].map((month, i) => (
                       <th key={i} className="py-4 px-4 text-center border-r border-gray-200">{month}</th>
                     ))}
+                    <th className="py-4 px-4 text-center border-r border-gray-200">P</th>
+                    <th className="py-4 px-4 text-center border-r border-gray-200">A</th>
+                    <th className="py-4 px-4 text-center border-r border-gray-200">L</th>
+                    <th className="py-4 px-4 text-center border-r border-gray-200">OT</th>
+                    <th className="py-4 px-4 text-center border-r border-gray-200">Pay Days</th>
                   </tr>
                 </thead>
                 <tbody className="text-[14px] text-gray-700 font-medium">
                   {mockYearlyAttendance.map((row) => (
-                    <tr key={row.id} className="border-b border-gray-200 hover:bg-gray-50/30 transition-colors">
-                      <td className="py-4 px-6 text-center border-r border-gray-200">{row.id}</td>
-                      <td className="py-4 px-6 border-r border-gray-200">
+                    <tr key={row.id} className="group border-b border-gray-200 hover:bg-gray-50 transition-colors">
+                      <td className="sticky left-0 z-10 bg-white group-hover:bg-gray-50 py-4 px-6 text-center border-r border-gray-200">{row.id}</td>
+                      <td className="sticky left-20 z-10 bg-white group-hover:bg-gray-50 py-4 px-6 border-r border-gray-200">
                         <div className="flex items-center gap-3">
                           {row.emp.avatar ? (
                             <img src={row.emp.avatar} alt={row.emp.name} className="w-8 h-8 rounded-full object-cover" />
@@ -359,6 +369,11 @@ const AttendanceReport = () => {
                           </td>
                         )
                       })}
+                      <td className="py-3 px-4 text-center border-r border-gray-200 text-[#32c965] font-medium">{row.summary.p}</td>
+                      <td className="py-3 px-4 text-center border-r border-gray-200 text-[#ff3d67] font-medium">{row.summary.a}</td>
+                      <td className="py-3 px-4 text-center border-r border-gray-200 text-[#4285F4] font-medium">{row.summary.l}</td>
+                      <td className="py-3 px-4 text-center border-r border-gray-200 font-medium">{row.summary.ot}</td>
+                      <td className="py-3 px-4 text-center border-r border-gray-200 font-medium text-gray-700">{row.summary.payDays}</td>
                     </tr>
                   ))}
                 </tbody>

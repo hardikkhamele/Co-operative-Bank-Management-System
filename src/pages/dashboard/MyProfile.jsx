@@ -1,9 +1,15 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronRight, Settings, Lock, Camera, Edit, Building2 } from 'lucide-react';
+import { ChevronRight, Settings, Lock, Camera, Edit, Building2, X } from 'lucide-react';
 
 const MyProfile = () => {
   const [activeTab, setActiveTab] = useState('general');
+  const [isEditing, setIsEditing] = useState(false);
+  const [profileData, setProfileData] = useState({
+    name: 'Chen Sophia',
+    phone: '9876543210',
+    email: 'staff@company.com'
+  });
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto w-full pb-10">
@@ -82,7 +88,7 @@ const MyProfile = () => {
                 <label className="block text-sm font-bold text-gray-800 mb-2">Name</label>
                 <input
                   type="text"
-                  defaultValue="Chen Sophia"
+                  value={profileData.name}
                   readOnly
                   className="w-full bg-gray-50 border border-gray-200 text-gray-600 rounded-lg px-4 py-2.5 focus:outline-none"
                 />
@@ -91,7 +97,7 @@ const MyProfile = () => {
                 <label className="block text-sm font-bold text-gray-800 mb-2">Phone</label>
                 <input
                   type="text"
-                  defaultValue="9876543210"
+                  value={profileData.phone}
                   readOnly
                   className="w-full bg-gray-50 border border-gray-200 text-gray-600 rounded-lg px-4 py-2.5 focus:outline-none"
                 />
@@ -100,7 +106,7 @@ const MyProfile = () => {
                 <label className="block text-sm font-bold text-gray-800 mb-2">Email</label>
                 <input
                   type="email"
-                  defaultValue="staff@company.com"
+                  value={profileData.email}
                   readOnly
                   className="w-full bg-gray-50 border border-gray-200 text-gray-600 rounded-lg px-4 py-2.5 focus:outline-none"
                 />
@@ -108,7 +114,10 @@ const MyProfile = () => {
             </div>
 
             <div className="flex justify-end pt-6 border-t border-gray-100">
-              <button className="flex items-center gap-2 bg-[#1cabb1] text-white px-6 py-2.5 rounded-full text-sm font-medium hover:bg-teal-600 transition-colors shadow-sm">
+              <button 
+                onClick={() => setIsEditing(true)}
+                className="flex items-center gap-2 bg-[#1cabb1] text-white px-6 py-2.5 rounded-full text-sm font-medium hover:bg-teal-600 transition-colors shadow-sm"
+              >
                 <Edit size={16} />
                 Edit
               </button>
@@ -154,6 +163,68 @@ const MyProfile = () => {
           </div>
         )}
       </div>
+
+      {/* Edit Profile Modal */}
+      {isEditing && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
+            <div className="flex items-center justify-between p-6 border-b border-gray-100">
+              <h3 className="text-lg font-bold text-gray-800">Edit Profile</h3>
+              <button 
+                onClick={() => setIsEditing(false)}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-bold text-gray-800 mb-2">Name</label>
+                <input
+                  type="text"
+                  value={profileData.name}
+                  onChange={(e) => setProfileData({...profileData, name: e.target.value})}
+                  className="w-full bg-white border border-gray-300 text-gray-800 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/50 focus:border-[#1cabb1] transition-colors"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-gray-800 mb-2">Phone</label>
+                <input
+                  type="text"
+                  value={profileData.phone}
+                  onChange={(e) => setProfileData({...profileData, phone: e.target.value})}
+                  className="w-full bg-white border border-gray-300 text-gray-800 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/50 focus:border-[#1cabb1] transition-colors"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-gray-800 mb-2">Email</label>
+                <input
+                  type="email"
+                  value={profileData.email}
+                  onChange={(e) => setProfileData({...profileData, email: e.target.value})}
+                  className="w-full bg-white border border-gray-300 text-gray-800 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/50 focus:border-[#1cabb1] transition-colors"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-100 bg-gray-50">
+              <button 
+                onClick={() => setIsEditing(false)}
+                className="px-5 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={() => setIsEditing(false)}
+                className="bg-[#1cabb1] text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-teal-600 transition-colors shadow-sm"
+              >
+                Save Changes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
