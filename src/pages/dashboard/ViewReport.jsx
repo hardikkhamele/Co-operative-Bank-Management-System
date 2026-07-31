@@ -1,7 +1,22 @@
 import React from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { ChevronRight, Phone, Mail, MapPin } from 'lucide-react';
+import { ChevronRight, Phone, Mail, MapPin, Target, ChevronDown } from 'lucide-react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
+const chartData = [
+  { name: 'Jan', target: 28, achievement: 18 },
+  { name: 'Feb', target: 20, achievement: 30 },
+  { name: 'Mar', target: 23, achievement: 28 },
+  { name: 'Apr', target: 35, achievement: 55 },
+  { name: 'May', target: 32, achievement: 22 },
+  { name: 'Jun', target: 85, achievement: 20 },
+  { name: 'Jul', target: 110, achievement: 45 },
+  { name: 'Aug', target: 60, achievement: 30 },
+  { name: 'Sep', target: 45, achievement: 80 },
+  { name: 'Oct', target: 70, achievement: 85 },
+  { name: 'Nov', target: 75, achievement: 110 },
+  { name: 'Dec', target: 80, achievement: 125 },
+];
 const ViewReport = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -159,6 +174,141 @@ const ViewReport = () => {
 
         </div>
       </div>
+
+      {/* Progress Section */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col overflow-hidden">
+        
+        <div className="p-6 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <h2 className="text-[20px] font-bold text-gray-800">Progress</h2>
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <select className="appearance-none pl-4 pr-10 py-2 rounded-lg border border-gray-200 text-[14px] text-gray-700 font-medium focus:outline-none focus:border-[#1cabb1] bg-white">
+                <option>Loan Disbursement</option>
+              </select>
+              <ChevronDown size={16} className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 pointer-events-none" />
+            </div>
+            <div className="relative">
+              <select className="appearance-none pl-4 pr-10 py-2 rounded-lg border border-gray-200 text-[14px] text-gray-700 font-medium focus:outline-none focus:border-[#1cabb1] bg-white">
+                <option>Yearly</option>
+              </select>
+              <ChevronDown size={16} className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 pointer-events-none" />
+            </div>
+          </div>
+        </div>
+
+        <div className="p-8 flex flex-col gap-8">
+          
+          {/* Yearly Target Inner */}
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-full bg-green-500 flex items-center justify-center shrink-0">
+                  <Target size={24} className="text-white" />
+                </div>
+                <div>
+                  <div className="text-[14px] font-medium text-gray-800">Yearly Target</div>
+                  <div className="text-[14px] font-bold text-gray-800 mt-1">₹14,40,000 <span className="text-gray-500 font-medium">/ ₹24,00,000</span></div>
+                </div>
+              </div>
+              <div className="text-[14px] font-bold text-green-500">60%</div>
+            </div>
+            <div className="w-full bg-gray-100 rounded-full h-2.5 mt-1">
+              <div className="bg-green-500 h-2.5 rounded-full" style={{ width: '60%' }}></div>
+            </div>
+          </div>
+
+          {/* Charts and Summary Row */}
+          <div className="flex flex-col lg:flex-row gap-6 mt-2">
+            
+            {/* Target Overview Chart */}
+            <div className="flex-1 border border-gray-200 rounded-xl p-5">
+              <div className="flex items-center gap-6 mb-6">
+                <h3 className="text-[15px] font-bold text-gray-800">Target Overview</h3>
+                <div className="h-4 w-px bg-gray-300"></div>
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-[#1cabb1]"></div>
+                    <span className="text-[13px] text-gray-600 font-medium">Target</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-gray-500"></div>
+                    <span className="text-[13px] text-gray-600 font-medium">Achievement</span>
+                  </div>
+                </div>
+              </div>
+              <div className="h-[250px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={chartData} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
+                    <XAxis 
+                      dataKey="name" 
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fill: '#6b7280', fontSize: 12 }}
+                      dy={10}
+                    />
+                    <YAxis 
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fill: '#6b7280', fontSize: 12 }}
+                      tickFormatter={(value) => value === 0 ? '₹0' : `₹${value}K`}
+                      ticks={[0, 10, 20, 30, 50, 100, 200]}
+                    />
+                    <Tooltip 
+                      contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)' }}
+                      formatter={(value) => [`₹${value}K`, '']}
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="achievement" 
+                      stroke="#6b7280" 
+                      strokeWidth={1.5}
+                      strokeDasharray="4 4"
+                      dot={false}
+                      activeDot={{ r: 6 }}
+                      name="Achievement"
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="target" 
+                      stroke="#1cabb1" 
+                      strokeWidth={2}
+                      dot={false}
+                      activeDot={{ r: 6 }}
+                      name="Target"
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* Target Summary */}
+            <div className="w-full lg:w-[320px] border border-gray-200 rounded-xl p-6 flex flex-col justify-center">
+              <h3 className="text-[15px] font-bold text-gray-800 mb-6">Target Summary</h3>
+              <div className="flex flex-col gap-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-[14px] text-gray-600 font-medium">Target</span>
+                  <span className="text-[14px] font-bold text-gray-800">₹24,00,000</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-[14px] text-gray-600 font-medium">Achieved</span>
+                  <span className="text-[14px] font-bold text-gray-800">₹14,40,000</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-[14px] text-gray-600 font-medium">Pending</span>
+                  <span className="text-[14px] font-bold text-gray-800">₹9,60,000</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-[14px] text-gray-600 font-medium">Days Left</span>
+                  <span className="text-[14px] font-bold text-gray-800">150 Days</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+      </div>
+
     </div>
   );
 };
