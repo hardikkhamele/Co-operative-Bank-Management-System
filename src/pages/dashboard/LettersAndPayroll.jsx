@@ -44,10 +44,10 @@ const LettersAndPayroll = () => {
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-6 py-3 rounded-lg text-[14px] font-semibold whitespace-nowrap transition-colors ${
+              className={`px-5 py-2.5 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
                 activeTab === tab
-                  ? 'bg-teal-50 text-[#1cabb1]'
-                  : 'text-gray-600 hover:bg-gray-50'
+                  ? 'bg-[#1cabb1] text-white shadow-sm'
+                  : 'text-gray-600 hover:bg-gray-200/50'
               }`}
             >
               {tab}

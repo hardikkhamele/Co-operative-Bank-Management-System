@@ -52,10 +52,10 @@ const KycVerification = () => {
           <div className="flex items-center gap-3">
             <button
               onClick={() => { setActiveTab('aadhaar'); handleReset(); }}
-              className={`flex items-center gap-2 px-6 py-2.5 rounded-lg font-semibold transition-all ${
+              className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-medium transition-all ${
                 activeTab === 'aadhaar'
-                  ? 'bg-[#e2e8f0] text-[#1b58a6]'
-                  : 'bg-white text-gray-500 hover:bg-gray-50 border border-gray-100 shadow-sm'
+                  ? 'bg-[#f0f2ff] text-gray-800'
+                  : 'text-gray-500 hover:bg-gray-50'
               }`}
             >
               <CreditCard size={18} />
@@ -63,10 +63,10 @@ const KycVerification = () => {
             </button>
             <button
               onClick={() => { setActiveTab('pan'); handleReset(); }}
-              className={`flex items-center gap-2 px-6 py-2.5 rounded-lg font-semibold transition-all ${
+              className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-medium transition-all ${
                 activeTab === 'pan'
-                  ? 'bg-[#e2e8f0] text-[#1b58a6]'
-                  : 'bg-white text-gray-500 hover:bg-gray-50 border border-gray-100 shadow-sm'
+                  ? 'bg-[#f0f2ff] text-gray-800'
+                  : 'text-gray-500 hover:bg-gray-50'
               }`}
             >
               <FileText size={18} />

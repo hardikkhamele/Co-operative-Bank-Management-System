@@ -1,16 +1,37 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import AuthLayout from '../../components/layouts/AuthLayout';
 import useAuthStore from '../../store/authStore';
 import loginIllustration from '../../assets/images/login.png';
-import { Building2, Users } from 'lucide-react';
+import { authService } from '../../api/authService';
+import { Building2, Users, AlertCircle, Eye, EyeOff } from 'lucide-react';
 
 const BankLogin = () => {
   const [formData, setFormData] = useState({ 
-    role: 'bank-admin', 
+    role: 'BRANCH_MANAGER', 
     email: 'admin@cooperativebank.com', 
     password: 'password123' 
   });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [roles, setRoles] = useState([]);
+  
+  useEffect(() => {
+    const fetchRoles = async () => {
+      try {
+        const response = await authService.getRoles();
+        if (response.success && response.data) {
+          // Use allRoles if available, otherwise combine system and custom roles
+          const availableRoles = response.data.allRoles || [...(response.data.systemRoles || []), ...(response.data.customRoles || [])];
+          setRoles(availableRoles);
+        }
+      } catch (err) {
+        console.error("Failed to fetch roles:", err);
+      }
+    };
+    fetchRoles();
+  }, []);
   const navigate = useNavigate();
   const login = useAuthStore((state) => state.login);
 
@@ -18,12 +39,32 @@ const BankLogin = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Simulate login
-    login({ email: formData.email, role: formData.role }, 'bank-token-123');
-    // Navigate to bank dashboard
-    navigate('/bank/dashboard');
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const response = await authService.login({
+        email: formData.email,
+        password: formData.password,
+        role: formData.role
+      });
+      
+      if (response.success && response.data) {
+        login(response.data); // pass full payload to Zustand
+        navigate('/bank/dashboard');
+      }
+    } catch (err) {
+      if (err.response?.data?.details && err.response.data.details.length > 0) {
+        setError(`Validation Error: ${err.response.data.details.map(d => d.message).join(', ')}`);
+      } else {
+        setError(err.response?.data?.message || 'Authentication failed. Please check your credentials.');
+      }
+      console.error('Login Error:', err.response?.data);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -34,38 +75,34 @@ const BankLogin = () => {
         <p className="text-sm text-gray-500">Sign in with your registered email and password.</p>
       </div>
 
+      {error && (
+        <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded-md flex items-center gap-3">
+          <AlertCircle className="text-red-500 w-5 h-5" />
+          <p className="text-sm text-red-700">{error}</p>
+        </div>
+      )}
+
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Role Selection */}
-        <div className="flex justify-center gap-6 mb-6">
-          <button
-            type="button"
-            onClick={() => setFormData({ ...formData, role: 'bank-admin' })}
-            className={`flex flex-col items-center justify-center w-32 h-32 rounded-xl transition-all shadow-sm ${
-              formData.role === 'bank-admin'
-                ? 'bg-[#5a5ce5] text-white border-transparent'
-                : 'bg-white text-gray-800 border-2 border-blue-100 hover:border-blue-200'
-            }`}
-          >
-            <div className={`p-3 rounded-full mb-2 ${formData.role === 'bank-admin' ? 'bg-white/20' : 'bg-gray-100'}`}>
-              <Building2 size={32} strokeWidth={1.5} />
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">Role</label>
+          <div className="relative">
+            <select
+              name="role"
+              required
+              value={formData.role}
+              onChange={handleChange}
+              className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#5a5ce5] focus:border-transparent transition-all bg-white appearance-none text-gray-700"
+            >
+              <option value="" disabled>Select Role...</option>
+              {roles.map(role => (
+                <option key={role.code} value={role.code}>{role.name}</option>
+              ))}
+            </select>
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-500">
+              <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
             </div>
-            <span className="font-semibold text-sm">Bank Admin</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setFormData({ ...formData, role: 'bank-employee' })}
-            className={`flex flex-col items-center justify-center w-32 h-32 rounded-xl transition-all shadow-sm ${
-              formData.role === 'bank-employee'
-                ? 'bg-[#5a5ce5] text-white border-transparent'
-                : 'bg-white text-gray-800 border-2 border-blue-100 hover:border-blue-200'
-            }`}
-          >
-            <div className={`p-3 rounded-full mb-2 ${formData.role === 'bank-employee' ? 'bg-white/20' : 'bg-gray-100'}`}>
-              <Users size={32} strokeWidth={1.5} />
-            </div>
-            <span className="font-semibold text-sm">Employee</span>
-          </button>
+          </div>
         </div>
 
         <div>
@@ -83,15 +120,24 @@ const BankLogin = () => {
 
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-2">Password</label>
-          <input
-            type="password"
-            name="password"
-            required
-            value={formData.password}
-            onChange={handleChange}
-            className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#5a5ce5] focus:border-transparent transition-all bg-white"
-            placeholder="Enter Password"
-          />
+          <div className="relative">
+            <input
+              type={showPassword ? "text" : "password"}
+              name="password"
+              required
+              value={formData.password}
+              onChange={handleChange}
+              className="w-full pl-4 pr-12 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#5a5ce5] focus:border-transparent transition-all bg-white"
+              placeholder="Enter Password"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute inset-y-0 right-0 flex items-center pr-4 text-gray-400 hover:text-gray-600 transition-colors focus:outline-none"
+            >
+              {showPassword ? <Eye size={20} /> : <EyeOff size={20} />}
+            </button>
+          </div>
         </div>
 
         <div className="flex justify-end mt-2 mb-6">
@@ -102,9 +148,17 @@ const BankLogin = () => {
 
         <button
           type="submit"
-          className="w-full py-3 px-4 bg-[#5a5ce5] hover:bg-[#484ab9] text-white font-medium rounded-full transition-colors shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#5a5ce5]"
+          disabled={loading}
+          className={`w-full py-3 px-4 bg-[#5a5ce5] text-white font-medium rounded-full transition-colors shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#5a5ce5] flex justify-center items-center ${loading ? 'opacity-70 cursor-not-allowed' : 'hover:bg-[#484ab9] hover:shadow-lg'}`}
         >
-          Login
+          {loading ? (
+            <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+          ) : (
+            'Login'
+          )}
         </button>
       </form>
     </AuthLayout>

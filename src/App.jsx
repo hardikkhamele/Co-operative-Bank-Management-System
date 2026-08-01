@@ -1,5 +1,7 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import ForgotPassword from './pages/auth/ForgotPassword';
 import VerifyOTP from './pages/auth/VerifyOTP';
 import ResetPassword from './pages/auth/ResetPassword';
@@ -80,6 +82,7 @@ function App() {
   console.log("App Router Loaded - v2");
   return (
     <BrowserRouter>
+      <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
       <Routes>
         <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="/login" element={<Login />} />
@@ -104,8 +107,8 @@ function App() {
           <Route path="managers/view" element={<ViewManager />} />
           <Route path="employees" element={<Employees />} />
           <Route path="employees/create" element={<CreateEmployee />} />
-          <Route path="employees/edit" element={<EditEmployee />} />
-          <Route path="employees/view" element={<ViewEmployee />} />
+          <Route path="employees/edit/:id" element={<EditEmployee />} />
+          <Route path="employees/view/:id" element={<ViewEmployee />} />
           <Route path="attendance" element={<AttendanceReport />} />
           <Route path="letters-payroll" element={<LettersAndPayroll />} />
           <Route path="daily-work-report" element={<DailyWorkReport />} />
@@ -125,7 +128,7 @@ function App() {
           <Route path="branch" element={<Branch />} />
           <Route path="roles-permissions" element={<RolesAndPermissions />} />
           <Route path="roles-permissions/create" element={<CreateRole />} />
-          <Route path="roles-permissions/edit" element={<EditRole />} />
+          <Route path="roles-permissions/edit/:id" element={<EditRole />} />
           <Route path="product-categories" element={<ProductCategories />} />
           <Route path="product-brands" element={<ProductBrands />} />
           <Route path="products" element={<Products />} />

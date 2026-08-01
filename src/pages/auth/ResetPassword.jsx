@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { toast } from 'react-toastify';
 import { Link, useNavigate } from 'react-router-dom';
 import { BadgeCheck } from 'lucide-react';
 import AuthLayout from '../../components/layouts/AuthLayout';
@@ -18,7 +19,7 @@ const ResetPassword = () => {
     if (passwords.newPassword === passwords.confirmPassword) {
       setShowModal(true);
     } else {
-      alert("Passwords don't match!");
+      toast.error("Passwords don't match!");
     }
   };
 

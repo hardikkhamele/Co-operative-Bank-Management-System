@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { toast } from 'react-toastify';
 import { Link } from 'react-router-dom';
 import { ChevronRight, UploadCloud, X, Smartphone, CreditCard, Landmark, Banknote } from 'lucide-react';
 
@@ -43,7 +44,7 @@ const SetupLoan = () => {
 
   const handleConfirmPayment = () => {
     // Simulate payment success
-    alert("Payment Successful!");
+    toast.success("Payment Successful!");
     setShowPaymentModal(false);
   };
 

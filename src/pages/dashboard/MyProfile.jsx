@@ -45,10 +45,10 @@ const MyProfile = () => {
       <div className="flex gap-3">
         <button
           onClick={() => setActiveTab('general')}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-bold transition-colors ${
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition-colors ${
             activeTab === 'general'
-              ? 'bg-[#e8f0fe] text-[#1b58a6]'
-              : 'text-gray-500 hover:bg-gray-50 bg-white border border-gray-200'
+              ? 'bg-[#f0f2ff] text-gray-800'
+              : 'text-gray-500 hover:bg-gray-50'
           }`}
         >
           <Settings size={18} />
@@ -56,10 +56,10 @@ const MyProfile = () => {
         </button>
         <button
           onClick={() => setActiveTab('security')}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-bold transition-colors ${
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition-colors ${
             activeTab === 'security'
-              ? 'bg-[#e8f0fe] text-[#1b58a6]'
-              : 'text-gray-500 hover:bg-gray-50 bg-white border border-gray-200'
+              ? 'bg-[#f0f2ff] text-gray-800'
+              : 'text-gray-500 hover:bg-gray-50'
           }`}
         >
           <Lock size={18} />

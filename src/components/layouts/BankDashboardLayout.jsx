@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Outlet, Link, useNavigate } from 'react-router-dom';
+import { Outlet, Link, NavLink, useNavigate } from 'react-router-dom';
 import { Home, Users, Building, FileText, Settings, Bell, ChevronDown, User, LogOut } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
 
@@ -32,12 +32,16 @@ const BankDashboardLayout = () => {
         <div className="p-6 border-b border-gray-100 flex items-center justify-center">
             <h1 className="text-xl font-bold text-[#5a5ce5]">Co-Op Bank</h1>
         </div>
-        <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
+        <nav className="flex-1 overflow-y-auto py-4 space-y-1">
             {bankNavItems.map((item) => (
-                <a key={item.name} href={item.path} className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-indigo-50 hover:text-[#5a5ce5] rounded-xl transition-colors font-medium">
+                <NavLink 
+                  key={item.name} 
+                  to={item.path} 
+                  className={({ isActive }) => `flex items-center gap-3 px-6 py-3 text-[15px] font-medium transition-colors border-l-4 ${isActive ? 'border-[#5a5ce5] bg-[#5a5ce5]/10 text-[#5a5ce5]' : 'border-transparent text-gray-700 hover:bg-gray-100/50 hover:text-gray-900'}`}
+                >
                     <item.icon size={20} className="shrink-0" />
                     <span>{item.name}</span>
-                </a>
+                </NavLink>
             ))}
         </nav>
         <div className="p-4 border-t border-gray-100">
