@@ -57,6 +57,8 @@ const Inventory = () => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [selectedTypes, setSelectedTypes] = useState(['Computer', 'Laptop']);
   const [selectedBranches, setSelectedBranches] = useState([]);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState(null);
 
   return (
     <div className="flex flex-col gap-6 w-full max-w-6xl mx-auto">
@@ -183,12 +185,12 @@ const Inventory = () => {
                   <td className="py-4 px-6 text-[15px] text-gray-600">{item.quantity}</td>
                   <td className="py-4 px-6">
                     <div className="flex items-center justify-end gap-3">
-                      <Link 
-                        to="/inventory/edit"
+                      <button 
+                        onClick={() => { setEditingItem(item); setIsEditModalOpen(true); }}
                         className="text-gray-800 hover:text-black transition-colors" title="Edit"
                       >
                         <Edit size={18} />
-                      </Link>
+                      </button>
                       <button className="text-red-500 hover:text-red-700 transition-colors" title="Delete">
                         <Trash2 size={18} />
                       </button>
@@ -230,6 +232,60 @@ const Inventory = () => {
           </div>
         </div>
       </div>
+
+      {/* Edit Inventory Modal */}
+      {isEditModalOpen && editingItem && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
+          <div className="bg-white rounded-xl shadow-lg w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-[#f4f3fb]">
+              <h2 className="text-[17px] font-bold text-gray-800">Edit Inventory Details</h2>
+              <button onClick={() => setIsEditModalOpen(false)} className="text-gray-500 hover:text-gray-700 transition-colors p-1 rounded-md hover:bg-gray-200/50">
+                <X size={20} />
+              </button>
+            </div>
+            <div className="p-6">
+              <form onSubmit={(e) => { e.preventDefault(); setIsEditModalOpen(false); }} className="flex flex-col gap-6">
+                <div className="flex flex-col gap-2">
+                  <label className="text-[15px] font-medium text-gray-700">Asset Name *</label>
+                  <input 
+                    type="text" 
+                    defaultValue={editingItem.asset}
+                    placeholder="Enter asset name" 
+                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1cabb1]"
+                    required
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <label className="text-[15px] font-medium text-gray-700">Quantity *</label>
+                  <input 
+                    type="text" 
+                    defaultValue={editingItem.quantity.replace(/,/g, '')}
+                    placeholder="Enter quantity" 
+                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1cabb1]"
+                    required
+                  />
+                </div>
+
+                <div className="flex items-center gap-4 mt-4">
+                  <button 
+                    type="submit" 
+                    className="bg-[#1cabb1] hover:bg-[#159a9f] text-white px-8 py-2.5 rounded-full text-[15px] font-semibold transition-colors shadow-sm"
+                  >
+                    Update
+                  </button>
+                  <button 
+                    type="button"
+                    onClick={() => setIsEditModalOpen(false)}
+                    className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-8 py-2.5 rounded-full text-[15px] font-semibold transition-colors shadow-sm"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

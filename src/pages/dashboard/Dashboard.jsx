@@ -132,10 +132,10 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Loan Sales Chart */}
+        {/* Loan Distributed Chart */}
         <div className="bg-[#fafafa] p-6 rounded-2xl shadow-sm border border-gray-100">
           <div className="flex justify-between items-center mb-6">
-            <h3 className="text-[17px] font-bold text-gray-800">Loan Sales Chart</h3>
+            <h3 className="text-[17px] font-bold text-gray-800">Loan Distributed</h3>
             <select className="bg-[#f3f4f6] border border-gray-200 text-gray-700 text-sm rounded-lg focus:ring-[#1cabb1] focus:border-[#1cabb1] block px-3 py-1.5 outline-none">
               <option>Today</option>
               <option>This Week</option>
