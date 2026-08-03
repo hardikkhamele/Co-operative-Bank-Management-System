@@ -52,8 +52,8 @@ const EditCooperativeBank = () => {
             </div>
             
             <div>
-              <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">Ultimate Beneficiary Owner (UBO)</label>
-              <input type="text" defaultValue="John Doe" placeholder="Enter UBO" className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm text-[15px]" />
+              <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">Authorized Person</label>
+              <input type="text" defaultValue="John Doe" placeholder="Enter authorized person name" className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm text-[15px]" />
             </div>
 
             <div>
@@ -79,6 +79,39 @@ const EditCooperativeBank = () => {
             <div>
               <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">Password</label>
               <input type="password" placeholder="Change password (leave empty to keep current)" className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm text-[15px]" />
+            </div>
+          </div>
+        </div>
+
+        {/* Bank Details */}
+        <div className="mb-10">
+          <h2 className="text-[22px] font-bold text-[#1b2559] mb-8">Bank Details</h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-8">
+            <div>
+              <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">Bank Name</label>
+              <input type="text" defaultValue="HDFC Bank" placeholder="Enter bank name" className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm text-[15px]" />
+            </div>
+
+            <div>
+              <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">Account number</label>
+              <input type="text" defaultValue="50100432890123" placeholder="Enter account number" className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm text-[15px]" />
+            </div>
+
+            <div>
+              <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">IFSC</label>
+              <input 
+                type="text" 
+                defaultValue="HDFC0000123" 
+                placeholder="Enter IFSC code" 
+                onInput={(e) => { e.target.value = e.target.value.toUpperCase(); }}
+                className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm text-[15px]" 
+              />
+            </div>
+
+            <div>
+              <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">Account Holder Name</label>
+              <input type="text" defaultValue="Mumbai District Central Co-op Bank" placeholder="Enter account holder name" className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm text-[15px]" />
             </div>
           </div>
         </div>

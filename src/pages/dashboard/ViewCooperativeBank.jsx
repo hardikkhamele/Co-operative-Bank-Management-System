@@ -58,12 +58,23 @@ const ViewCooperativeBank = () => {
           
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-y-8 gap-x-8">
             <ViewField label="Bank Name" value="Mumbai District Central Co-op Bank" />
-            <ViewField label="Ultimate Beneficiary Owner (UBO)" value="John Doe" />
+            <ViewField label="Authorized Person" value="John Doe" />
             <ViewField label="Email" value="contact@mdccb.com" />
             <ViewField label="Mail ID (Alternate/Contact)" value="support@mdccb.com" />
             <ViewField label="Phone Number" value="022-22610115" />
             <ViewField label="Mobile Number" value="9876543210" />
             <ViewField label="Password" value="••••••••" />
+          </div>
+        </div>
+
+        {/* Bank Details */}
+        <div className="mb-12">
+          <h2 className="text-[20px] font-bold text-[#1b2559] mb-6 pb-2 border-b border-gray-100">Bank Details</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-y-8 gap-x-8">
+            <ViewField label="Bank Name" value="HDFC Bank" />
+            <ViewField label="Account number" value="50100432890123" />
+            <ViewField label="IFSC" value="HDFC0000123" />
+            <ViewField label="Account Holder Name" value="Mumbai District Central Co-op Bank" />
           </div>
         </div>
 
