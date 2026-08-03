@@ -305,19 +305,24 @@ const Branch = () => {
                     <td className="px-6 py-4 text-gray-700">{branch.code}</td>
                     <td className="px-6 py-4 text-gray-700">{branch.state}</td>
                     <td className="px-6 py-4">
-                      {branch.manager ? (
-                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center w-full sm:w-auto gap-3">
-                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm shrink-0 bg-blue-100 text-blue-700 font-bold`}>
-                            {getInitials(branch.manager.fullName)}
+                      {(() => {
+                        const managerData = branch.branchManager || branch.manager;
+                        const mName = managerData?.fullName || managerData?.name || branch.managerName || managerData?.user?.name || managerData?.user?.fullName;
+                        const mEmail = managerData?.email || branch.managerEmail || managerData?.user?.email;
+                        return mName || mEmail ? (
+                          <div className="flex flex-col sm:flex-row items-stretch sm:items-center w-full sm:w-auto gap-3">
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm shrink-0 bg-blue-100 text-blue-700 font-bold`}>
+                              {getInitials(mName || mEmail)}
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="text-gray-700 font-medium">{mName || 'Unnamed Manager'}</span>
+                              <span className="text-xs text-gray-500">{mEmail || ''}</span>
+                            </div>
                           </div>
-                          <div className="flex flex-col">
-                            <span className="text-gray-700 font-medium">{branch.manager.fullName}</span>
-                            <span className="text-xs text-gray-500">{branch.manager.email}</span>
-                          </div>
-                        </div>
-                      ) : (
-                        <span className="text-gray-400 italic">No Manager</span>
-                      )}
+                        ) : (
+                          <span className="text-gray-400 italic">No Manager</span>
+                        );
+                      })()}
                     </td>
                     <td className="px-6 py-4 text-gray-700">{branch.cardStock || 0}</td>
                     <td className="px-6 py-4 text-gray-700">{branch.verificationCredits || 0}</td>
@@ -408,13 +413,17 @@ const Branch = () => {
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">Email</label>
+                      <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">Email *</label>
                       <input type="email" value={createForm.branch.email} onChange={e => handleCreateChange('branch', 'email', e.target.value)} placeholder="Branch Email" className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1cabb1] text-sm" />
                     </div>
                     <div>
                       <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">Phone Number</label>
                       <input type="text" value={createForm.branch.phoneNumber} onChange={e => handleCreateChange('branch', 'phoneNumber', e.target.value)} placeholder="Phone" className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1cabb1] text-sm" />
                     </div>
+                  </div>
+                  <div>
+                    <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">Branch Manager Name *</label>
+                    <input type="text" value={createForm.manager.fullName} onChange={e => handleCreateChange('manager', 'fullName', e.target.value)} placeholder="Manager Full Name" className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1cabb1] text-sm" />
                   </div>
                   <div>
                     <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">State/UT *</label>
@@ -457,10 +466,6 @@ const Branch = () => {
                     Every new branch must have an assigned Branch Manager. Please provide their login credentials and basic info. HR configuration can be completed later.
                   </div>
                   <div>
-                    <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">Manager Full Name *</label>
-                    <input type="text" value={createForm.manager.fullName} onChange={e => handleCreateChange('manager', 'fullName', e.target.value)} placeholder="Full Name" className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1cabb1] text-sm" />
-                  </div>
-                  <div>
                     <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">Email Address (Login ID) *</label>
                     <input type="email" value={createForm.manager.email} onChange={e => handleCreateChange('manager', 'email', e.target.value)} placeholder="Manager Email" className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1cabb1] text-sm" />
                   </div>
@@ -488,7 +493,7 @@ const Branch = () => {
                   <button onClick={() => setIsCreateModalOpen(false)} className="px-6 py-2 rounded-full border border-gray-300 text-gray-700 font-semibold hover:bg-gray-50 transition-colors text-sm">Cancel</button>
                   <button 
                     onClick={() => setCreateStep(2)} 
-                    disabled={!createForm.branch.name || !createForm.branch.code || !createForm.branch.state}
+                    disabled={!createForm.branch.name || !createForm.branch.code || !createForm.branch.state || !createForm.branch.email}
                     className="px-6 py-2 rounded-full bg-[#1cabb1] text-white font-semibold hover:bg-[#168f94] transition-colors shadow-sm text-sm flex items-center gap-2 disabled:opacity-50"
                   >
                     Next Step <ArrowRight size={16} />
@@ -519,49 +524,105 @@ const Branch = () => {
       {/* Edit Branch Modal */}
       {isEditModalOpen && selectedBranch && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 transition-opacity">
-          <div className="bg-[#f4f3fb] rounded-xl w-full max-w-[500px] shadow-2xl overflow-hidden flex flex-col">
-            <div className="flex justify-between items-center p-6 pb-2">
+          <div className="bg-[#f4f3fb] rounded-xl w-full max-w-[600px] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="flex justify-between items-center p-6 pb-4 border-b border-gray-200 bg-white">
               <h2 className="text-xl font-bold text-[#1b2559]">Edit Branch</h2>
               <button onClick={() => setIsEditModalOpen(false)} className="text-gray-500 hover:text-gray-800 transition-colors">
                 <X size={24} />
               </button>
             </div>
-            <div className="p-6 pt-4 space-y-5">
-              <div>
-                <label className="block text-[15px] font-semibold text-[#1b2559] mb-2">Branch Name</label>
-                <input type="text" defaultValue={selectedBranch.name} onChange={(e) => setSelectedBranch({...selectedBranch, name: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white text-[15px] text-[#4b5563]" />
+            
+            <div className="p-6 overflow-y-auto space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">Branch Name *</label>
+                  <input type="text" defaultValue={selectedBranch.name} onChange={(e) => setSelectedBranch({...selectedBranch, name: e.target.value})} className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1cabb1] text-sm" />
+                </div>
+                <div>
+                  <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">Branch Code *</label>
+                  <input type="text" defaultValue={selectedBranch.code} onChange={(e) => setSelectedBranch({...selectedBranch, code: e.target.value})} className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1cabb1] text-sm" />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">Email *</label>
+                  <input type="email" defaultValue={selectedBranch.email} onChange={(e) => setSelectedBranch({...selectedBranch, email: e.target.value})} className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1cabb1] text-sm" />
+                </div>
+                <div>
+                  <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">Phone Number</label>
+                  <input type="text" defaultValue={selectedBranch.phoneNumber} onChange={(e) => setSelectedBranch({...selectedBranch, phoneNumber: e.target.value})} className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1cabb1] text-sm" />
+                </div>
               </div>
               <div>
-                <label className="block text-[15px] font-semibold text-[#1b2559] mb-2">EMI Card</label>
-                <input type="number" defaultValue={selectedBranch.cardStock} onChange={(e) => setSelectedBranch({...selectedBranch, cardStock: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white text-[15px] text-[#4b5563]" />
+                <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">Branch Manager Name</label>
+                <input type="text" defaultValue={selectedBranch.branchManager?.fullName || selectedBranch.manager?.fullName || selectedBranch.manager?.name || selectedBranch.managerName || selectedBranch.manager?.user?.name || selectedBranch.manager?.user?.fullName || ''} onChange={(e) => setSelectedBranch({...selectedBranch, manager: { ...selectedBranch.manager, fullName: e.target.value }})} className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1cabb1] text-sm" />
               </div>
               <div>
-                <label className="block text-[15px] font-semibold text-[#1b2559] mb-2">Verification Credit</label>
-                <input type="number" defaultValue={selectedBranch.verificationCredits} onChange={(e) => setSelectedBranch({...selectedBranch, verificationCredits: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white text-[15px] text-[#4b5563]" />
+                <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">State/UT</label>
+                <select value={selectedBranch.state || ''} onChange={(e) => setSelectedBranch({...selectedBranch, state: e.target.value})} className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1cabb1] text-sm bg-white">
+                  <option value="" disabled>Select State</option>
+                  <option value="Maharashtra">Maharashtra</option>
+                  <option value="Rajasthan">Rajasthan</option>
+                  <option value="Karnataka">Karnataka</option>
+                  <option value="Delhi">Delhi</option>
+                </select>
               </div>
-              <div className="flex justify-end items-center gap-4 mt-6 pt-4">
-                <button onClick={() => setIsEditModalOpen(false)} className="px-8 py-2.5 rounded-full border-[1.5px] border-[#1cabb1] text-[#1cabb1] font-bold hover:bg-teal-50 transition-colors text-[15px] bg-white">
-                  Cancel
-                </button>
-                <button 
-                  onClick={async () => {
-                    try {
-                      await branchService.update(selectedBranch.id, {
-                        name: selectedBranch.name,
-                        cardStock: Number(selectedBranch.cardStock),
-                        verificationCredits: Number(selectedBranch.verificationCredits)
-                      });
-                      setIsEditModalOpen(false);
-                      fetchBranches();
-                    } catch(err) {
-                      console.error(err);
-                    }
-                  }} 
-                  className="px-8 py-2.5 rounded-full bg-[#1cabb1] text-white font-bold hover:bg-[#168f94] transition-colors shadow-sm text-[15px]"
-                >
-                  Save Changes
-                </button>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">City</label>
+                  <input type="text" defaultValue={selectedBranch.address?.city || ''} onChange={(e) => setSelectedBranch({...selectedBranch, address: { ...selectedBranch.address, city: e.target.value }})} className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1cabb1] text-sm" />
+                </div>
+                <div>
+                  <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">Pincode</label>
+                  <input type="text" defaultValue={selectedBranch.address?.pincode || ''} onChange={(e) => setSelectedBranch({...selectedBranch, address: { ...selectedBranch.address, pincode: e.target.value }})} className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1cabb1] text-sm" />
+                </div>
               </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">EMI Card</label>
+                  <input type="number" defaultValue={selectedBranch.cardStock} onChange={(e) => setSelectedBranch({...selectedBranch, cardStock: e.target.value})} className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1cabb1] text-sm" />
+                </div>
+                <div>
+                  <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">Verification Credit</label>
+                  <input type="number" defaultValue={selectedBranch.verificationCredits} onChange={(e) => setSelectedBranch({...selectedBranch, verificationCredits: e.target.value})} className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1cabb1] text-sm" />
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex justify-end items-center gap-3 p-6 pt-4 border-t border-gray-200 bg-white">
+              <button onClick={() => setIsEditModalOpen(false)} className="px-6 py-2 rounded-full border border-gray-300 text-gray-700 font-semibold hover:bg-gray-50 transition-colors text-sm">
+                Cancel
+              </button>
+              <button 
+                onClick={async () => {
+                  try {
+                    await branchService.update(selectedBranch.id, {
+                      name: selectedBranch.name,
+                      code: selectedBranch.code,
+                      email: selectedBranch.email,
+                      phoneNumber: selectedBranch.phoneNumber,
+                      state: selectedBranch.state,
+                      cardStock: Number(selectedBranch.cardStock),
+                      verificationCredits: Number(selectedBranch.verificationCredits),
+                      manager: {
+                        fullName: selectedBranch.manager?.fullName || ''
+                      },
+                      address: {
+                        city: selectedBranch.address?.city || '',
+                        pincode: selectedBranch.address?.pincode || ''
+                      }
+                    });
+                    setIsEditModalOpen(false);
+                    fetchBranches();
+                  } catch(err) {
+                    console.error(err);
+                    toast.error("Failed to update branch");
+                  }
+                }} 
+                className="px-6 py-2 rounded-full bg-[#1cabb1] text-white font-semibold hover:bg-[#168f94] transition-colors shadow-sm text-sm"
+              >
+                Save Changes
+              </button>
             </div>
           </div>
         </div>

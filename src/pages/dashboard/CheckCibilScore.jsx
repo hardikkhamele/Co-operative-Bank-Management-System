@@ -236,12 +236,16 @@ const CheckCibilScore = () => {
             <span className="text-6xl font-extrabold text-[#22c55e] mb-2 tracking-tight">780</span>
             <span className="text-[#22c55e] font-semibold bg-[#22c55e]/10 px-4 py-1 rounded-full text-sm">Excellent</span>
           </div>
-
-          <button className="flex items-center gap-2 px-8 py-3 rounded-lg bg-[#1cabb1] text-white font-bold hover:bg-[#159a9f] transition-all shadow-lg shadow-[#1cabb1]/30 transform hover:-translate-y-0.5 active:scale-95 z-10">
-            <Download size={20} />
+        </div>
+        
+        {/* Bottom Action Buttons */}
+        <div className="flex justify-end mt-4">
+          <button className="flex items-center gap-2 px-8 py-2.5 rounded-full bg-[#1cabb1] text-white font-bold hover:bg-[#159a9f] transition-all shadow-sm">
+            <Download size={18} />
             Download Report
           </button>
         </div>
+      </div>
       )}
 
       {/* Modal Overlay */}

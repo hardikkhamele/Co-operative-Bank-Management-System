@@ -307,7 +307,7 @@ const Employees = () => {
                       </span>
                     </td>
                     <td className="py-4 px-6">
-                      <div className="flex items-center justify-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex items-center justify-center gap-3">
                         <button 
                           onClick={() => navigate(`/employees/view/${row.id}`)}
                           className="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center hover:bg-blue-100 transition-colors"
