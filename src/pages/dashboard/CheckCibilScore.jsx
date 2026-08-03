@@ -200,52 +200,53 @@ const CheckCibilScore = () => {
           </div>
         </div>
       ) : (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 flex flex-col items-center max-w-4xl mx-auto w-full relative overflow-hidden">
-          {/* Confetti / background flair */}
-          <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-[#1cabb1]/5 to-transparent"></div>
-          
-          <h2 className="text-2xl font-bold text-gray-800 mb-12 z-10">CIBIL Score</h2>
-          
-          {/* Gauge Meter implementation using SVG */}
-          <div className="relative w-80 h-40 mb-10 z-10">
-            <svg viewBox="0 0 200 100" className="w-full h-full drop-shadow-md">
-              {/* Red Segment (300-500) */}
-              <path d="M 20 90 A 70 70 0 0 1 55 30" fill="none" stroke="#ef4444" strokeWidth="16" strokeLinecap="round" />
-              {/* Orange Segment (500-650) */}
-              <path d="M 55 30 A 70 70 0 0 1 100 20" fill="none" stroke="#f97316" strokeWidth="16" />
-              {/* Yellow Segment (650-750) */}
-              <path d="M 100 20 A 70 70 0 0 1 145 30" fill="none" stroke="#eab308" strokeWidth="16" />
-              {/* Green Segment (750-900) */}
-              <path d="M 145 30 A 70 70 0 0 1 180 90" fill="none" stroke="#22c55e" strokeWidth="16" strokeLinecap="round" />
-              
-              {/* Needle pivot */}
-              <circle cx="100" cy="90" r="8" fill="#374151" className="shadow-lg" />
-              
-              {/* Needle line (pointing to ~780 score, angle roughly 45 degrees from right) */}
-              <g transform="rotate(50 100 90)">
-                <line x1="100" y1="90" x2="100" y2="35" stroke="#374151" strokeWidth="4" strokeLinecap="round" />
-              </g>
-            </svg>
-            <div className="absolute bottom-0 left-0 -translate-x-1/2 text-sm font-bold text-gray-500">300</div>
-            <div className="absolute bottom-0 right-0 translate-x-1/2 text-sm font-bold text-gray-500">900</div>
-          </div>
+        <div className="flex flex-col gap-6 w-full">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 flex flex-col items-center max-w-4xl mx-auto w-full relative overflow-hidden">
+            {/* Confetti / background flair */}
+            <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-[#1cabb1]/5 to-transparent"></div>
+            
+            <h2 className="text-2xl font-bold text-gray-800 mb-12 z-10">CIBIL Score</h2>
+            
+            {/* Gauge Meter implementation using SVG */}
+            <div className="relative w-80 h-40 mb-10 z-10">
+              <svg viewBox="0 0 200 100" className="w-full h-full drop-shadow-md">
+                {/* Red Segment (300-500) */}
+                <path d="M 20 90 A 70 70 0 0 1 55 30" fill="none" stroke="#ef4444" strokeWidth="16" strokeLinecap="round" />
+                {/* Orange Segment (500-650) */}
+                <path d="M 55 30 A 70 70 0 0 1 100 20" fill="none" stroke="#f97316" strokeWidth="16" />
+                {/* Yellow Segment (650-750) */}
+                <path d="M 100 20 A 70 70 0 0 1 145 30" fill="none" stroke="#eab308" strokeWidth="16" />
+                {/* Green Segment (750-900) */}
+                <path d="M 145 30 A 70 70 0 0 1 180 90" fill="none" stroke="#22c55e" strokeWidth="16" strokeLinecap="round" />
+                
+                {/* Needle pivot */}
+                <circle cx="100" cy="90" r="8" fill="#374151" className="shadow-lg" />
+                
+                {/* Needle line (pointing to ~780 score, angle roughly 45 degrees from right) */}
+                <g transform="rotate(50 100 90)">
+                  <line x1="100" y1="90" x2="100" y2="35" stroke="#374151" strokeWidth="4" strokeLinecap="round" />
+                </g>
+              </svg>
+              <div className="absolute bottom-0 left-0 -translate-x-1/2 text-sm font-bold text-gray-500">300</div>
+              <div className="absolute bottom-0 right-0 translate-x-1/2 text-sm font-bold text-gray-500">900</div>
+            </div>
 
-          {/* Score Card */}
-          <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8 flex flex-col items-center w-72 mb-10 transform -translate-y-4 z-20">
-            <span className="text-gray-500 font-medium mb-2">Your Score</span>
-            <span className="text-6xl font-extrabold text-[#22c55e] mb-2 tracking-tight">780</span>
-            <span className="text-[#22c55e] font-semibold bg-[#22c55e]/10 px-4 py-1 rounded-full text-sm">Excellent</span>
+            {/* Score Card */}
+            <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8 flex flex-col items-center w-72 mb-10 transform -translate-y-4 z-20">
+              <span className="text-gray-500 font-medium mb-2">Your Score</span>
+              <span className="text-6xl font-extrabold text-[#22c55e] mb-2 tracking-tight">780</span>
+              <span className="text-[#22c55e] font-semibold bg-[#22c55e]/10 px-4 py-1 rounded-full text-sm">Excellent</span>
+            </div>
+          </div>
+          
+          {/* Bottom Action Buttons */}
+          <div className="flex justify-end mt-4">
+            <button className="flex items-center gap-2 px-8 py-2.5 rounded-full bg-[#1cabb1] text-white font-bold hover:bg-[#159a9f] transition-all shadow-sm">
+              <Download size={18} />
+              Download Report
+            </button>
           </div>
         </div>
-        
-        {/* Bottom Action Buttons */}
-        <div className="flex justify-end mt-4">
-          <button className="flex items-center gap-2 px-8 py-2.5 rounded-full bg-[#1cabb1] text-white font-bold hover:bg-[#159a9f] transition-all shadow-sm">
-            <Download size={18} />
-            Download Report
-          </button>
-        </div>
-      </div>
       )}
 
       {/* Modal Overlay */}
