@@ -21,13 +21,29 @@ const Login = () => {
     const fetchRoles = async () => {
       try {
         const response = await authService.getRoles();
-        if (response.success && response.data) {
-          // Use allRoles if available, otherwise combine system and custom roles
-          const availableRoles = response.data.allRoles || [...(response.data.systemRoles || []), ...(response.data.customRoles || [])];
+        let availableRoles = [];
+        
+        if (response?.success && response?.data) {
+          if (Array.isArray(response.data)) {
+            availableRoles = response.data;
+          } else {
+            availableRoles = response.data.allRoles || [...(response.data.systemRoles || []), ...(response.data.customRoles || [])];
+          }
+        } else if (Array.isArray(response)) {
+          availableRoles = response;
+        } else if (response?.data && Array.isArray(response.data.data)) {
+          availableRoles = response.data.data;
+        }
+        
+        if (availableRoles && availableRoles.length > 0) {
           setRoles(availableRoles);
+        } else {
+          setError("Failed to parse roles from API response.");
+          console.error("Unexpected API response:", response);
         }
       } catch (err) {
         console.error("Failed to fetch roles:", err);
+        setError("Failed to load roles: " + (err.message || "Network Error"));
       }
     };
     fetchRoles();
