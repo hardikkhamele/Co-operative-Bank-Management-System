@@ -1,3 +1,10 @@
+<<<<<<< HEAD
+import React, { useState, useEffect } from 'react';
+import { Search, Edit, Trash2, ChevronRight, SlidersHorizontal, ChevronDown, X, Eye, Download } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { creditReceiptService } from '../../api/receiptService';
+import { toast } from 'react-toastify';
+=======
 import React, { useState } from 'react';
 import { Search, Edit, Trash2, ChevronRight, SlidersHorizontal, ChevronDown, X, Eye, Download } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -12,6 +19,7 @@ const mockReceipts = [
   { id: 7, srNo: 7, receiptNo: 'CR-000123', name: 'Amardeep Singh', glHead: '410105', glHeadName: 'Monthly RD', acNo: '36489745148', date: '20/07/2026', status: 'Approved' },
 ];
 
+>>>>>>> origin/main
 const Credit = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
@@ -21,16 +29,122 @@ const Credit = () => {
   const [filterStatus, setFilterStatus] = useState([]);
   const [filterBranch, setFilterBranch] = useState([]);
   
+<<<<<<< HEAD
+  // API state
+  const [receipts, setReceipts] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalEntries, setTotalEntries] = useState(0);
+  const limit = 8;
+  
+=======
+>>>>>>> origin/main
   // Modals state
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedReceipt, setSelectedReceipt] = useState(null);
 
+<<<<<<< HEAD
+  // Form state
+  const [formData, setFormData] = useState({
+    name: '', glHead: '', glHeadName: '', accountNumber: '', date: '', status: 'NEW'
+  });
+
+=======
+>>>>>>> origin/main
   const toggleFilter = (setter, value) => {
     setter(prev => prev.includes(value) ? prev.filter(v => v !== value) : [...prev, value]);
   };
 
+<<<<<<< HEAD
+  const fetchReceipts = async () => {
+    setLoading(true);
+    try {
+      const statusParam = filterStatus.length > 0 ? filterStatus.join(',') : undefined;
+      const response = await creditReceiptService.getAll({ 
+        page, limit, search: searchTerm, status: statusParam 
+      });
+      if (response.success) {
+        setReceipts(response.data.docs || response.data);
+        setTotalPages(response.data.totalPages || 1);
+        setTotalEntries(response.data.totalDocs || response.data.length || 0);
+      }
+    } catch (error) {
+      console.error('Failed to fetch receipts', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchReceipts();
+  }, [page, searchTerm, filterStatus]);
+
+  const handleCreate = async () => {
+    try {
+      const res = await creditReceiptService.create(formData);
+      if (res.success) {
+        toast.success('Receipt created successfully');
+        setIsCreateModalOpen(false);
+        fetchReceipts();
+        setFormData({ name: '', glHead: '', glHeadName: '', accountNumber: '', date: '', status: 'NEW' });
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to create receipt');
+    }
+  };
+
+  const handleUpdate = async () => {
+    try {
+      const res = await creditReceiptService.update(selectedReceipt._id || selectedReceipt.id, formData);
+      if (res.success) {
+        toast.success('Receipt updated successfully');
+        setIsEditModalOpen(false);
+        fetchReceipts();
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to update receipt');
+    }
+  };
+
+  const handleDelete = async () => {
+    try {
+      const res = await creditReceiptService.delete(selectedReceipt._id || selectedReceipt.id);
+      if (res.success) {
+        toast.success('Receipt deleted successfully');
+        setIsDeleteModalOpen(false);
+        fetchReceipts();
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to delete receipt');
+    }
+  };
+
+  const handleExport = async () => {
+    try {
+      const statusParam = filterStatus.length > 0 ? filterStatus.join(',') : undefined;
+      const res = await creditReceiptService.export({ search: searchTerm, status: statusParam });
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'credit-receipts.csv');
+      document.body.appendChild(link);
+      link.click();
+    } catch (error) {
+      toast.error('Failed to export receipts');
+    }
+  };
+
+  const getStatusBadge = (status) => {
+    switch(status?.toUpperCase()) {
+      case 'NEW':
+        return <span className="inline-flex items-center justify-center px-3 py-1 text-[13px] font-semibold text-yellow-600 bg-yellow-100 rounded-full">New</span>;
+      case 'APPROVED':
+        return <span className="inline-flex items-center justify-center px-3 py-1 text-[13px] font-semibold text-[#1cabb1] bg-teal-50 rounded-full border border-teal-100">Approved</span>;
+      case 'REJECTED':
+=======
   const getStatusBadge = (status) => {
     switch(status) {
       case 'New':
@@ -38,6 +152,7 @@ const Credit = () => {
       case 'Approved':
         return <span className="inline-flex items-center justify-center px-3 py-1 text-[13px] font-semibold text-[#1cabb1] bg-teal-50 rounded-full border border-teal-100">Approved</span>;
       case 'Rejected':
+>>>>>>> origin/main
         return <span className="inline-flex items-center justify-center px-3 py-1 text-[13px] font-semibold text-red-500 bg-red-50 rounded-full">Rejected</span>;
       default:
         return null;
@@ -107,7 +222,11 @@ const Credit = () => {
                     </div>
                     {openFilterDropdown === 'status' && (
                       <div className="absolute z-30 top-full left-0 w-full mt-2 bg-white border border-gray-200 rounded-xl shadow-lg py-3 flex flex-col gap-2">
+<<<<<<< HEAD
+                        {['NEW', 'APPROVED', 'REJECTED'].map(opt => (
+=======
                         {['New', 'Approved', 'Rejected'].map(opt => (
+>>>>>>> origin/main
                           <label key={opt} className="flex items-center gap-3 px-4 py-1.5 hover:bg-gray-50 cursor-pointer">
                             <div className="relative flex items-center justify-center">
                               <input 
@@ -183,13 +302,21 @@ const Credit = () => {
         </div>
         <div className="flex items-center gap-3">
           <button 
+<<<<<<< HEAD
+            onClick={handleExport}
+=======
+>>>>>>> origin/main
             className="flex items-center gap-2 bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 px-4 py-2.5 rounded-full font-semibold transition-colors text-sm shadow-sm flex-shrink-0"
           >
             <Download size={18} />
             Export
           </button>
           <button 
+<<<<<<< HEAD
+            onClick={() => { setFormData({ name: '', glHead: '', glHeadName: '', accountNumber: '', date: '', status: 'NEW' }); setIsCreateModalOpen(true); }}
+=======
             onClick={() => setIsCreateModalOpen(true)}
+>>>>>>> origin/main
             className="bg-[#1cabb1] hover:bg-[#159a9f] text-white px-5 py-2.5 rounded-full font-semibold transition-colors text-sm shadow-sm flex-shrink-0"
           >
             + Create Receipt
@@ -215,6 +342,64 @@ const Credit = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
+<<<<<<< HEAD
+              {loading ? (
+                <tr><td colSpan="9" className="px-6 py-8 text-center text-gray-500">Loading...</td></tr>
+              ) : receipts.length === 0 ? (
+                <tr><td colSpan="9" className="px-6 py-8 text-center text-gray-500">No receipts found</td></tr>
+              ) : (
+                receipts.map((receipt, index) => (
+                  <tr key={receipt._id || receipt.id || index} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-6 py-4 text-gray-700">{(page - 1) * limit + index + 1}</td>
+                    <td className="px-6 py-4 text-[#1b2559] font-semibold">{receipt.receiptNumber || (receipt._id || receipt.id)?.substring(0,8)}</td>
+                    <td className="px-6 py-4 text-gray-700">{receipt.name}</td>
+                    <td className="px-6 py-4 text-gray-700">{receipt.glHead}</td>
+                    <td className="px-6 py-4 text-gray-700">{receipt.glHeadName}</td>
+                    <td className="px-6 py-4 text-gray-700">{receipt.accountNumber}</td>
+                    <td className="px-6 py-4 text-gray-700">{receipt.date ? new Date(receipt.date).toLocaleDateString() : ''}</td>
+                    <td className="px-6 py-4">
+                      {getStatusBadge(receipt.status)}
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center justify-center gap-3">
+                        <button 
+                          onClick={() => navigate(`/credit/view/${receipt._id || receipt.id}`)}
+                          className="w-8 h-8 flex items-center justify-center rounded bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors" 
+                          title="View"
+                        >
+                          <Eye size={16} />
+                        </button>
+                        <button 
+                          onClick={() => { 
+                            setSelectedReceipt(receipt); 
+                            setFormData({
+                              name: receipt.name || '',
+                              glHead: receipt.glHead || '',
+                              glHeadName: receipt.glHeadName || '',
+                              accountNumber: receipt.accountNumber || '',
+                              date: receipt.date ? new Date(receipt.date).toISOString().split('T')[0] : '',
+                              status: receipt.status || 'NEW'
+                            });
+                            setIsEditModalOpen(true); 
+                          }}
+                          className="w-8 h-8 flex items-center justify-center rounded bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors" 
+                          title="Edit"
+                        >
+                          <Edit size={16} />
+                        </button>
+                        <button 
+                          onClick={() => { setSelectedReceipt(receipt); setIsDeleteModalOpen(true); }}
+                          className="w-8 h-8 flex items-center justify-center rounded bg-red-50 text-red-500 hover:bg-red-100 transition-colors" 
+                          title="Delete"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+=======
               {mockReceipts.map((receipt) => (
                 <tr key={receipt.id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-6 py-4 text-gray-700">{receipt.srNo}</td>
@@ -254,6 +439,7 @@ const Credit = () => {
                   </td>
                 </tr>
               ))}
+>>>>>>> origin/main
             </tbody>
           </table>
         </div>
@@ -261,6 +447,24 @@ const Credit = () => {
         {/* Pagination */}
         <div className="px-6 py-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="text-sm text-gray-800 font-medium">
+<<<<<<< HEAD
+            Showing {(page - 1) * limit + 1} to {Math.min(page * limit, totalEntries)} of {totalEntries} Entries
+          </div>
+          <div className="flex items-center gap-2">
+            <button 
+              disabled={page === 1}
+              onClick={() => setPage(p => p - 1)}
+              className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors disabled:opacity-50">
+              <ChevronRight size={16} className="rotate-180" />
+            </button>
+            <button className="w-8 h-8 flex items-center justify-center rounded-full bg-[#1cabb1] text-white font-medium shadow-sm">
+              {page}
+            </button>
+            <button 
+              disabled={page >= totalPages}
+              onClick={() => setPage(p => p + 1)}
+              className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors disabled:opacity-50">
+=======
             Showing 1 to 5 of 5 Entries
           </div>
           <div className="flex items-center gap-2">
@@ -271,6 +475,7 @@ const Credit = () => {
               1
             </button>
             <button className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors">
+>>>>>>> origin/main
               <ChevronRight size={16} />
             </button>
           </div>
@@ -289,6 +494,19 @@ const Credit = () => {
             </div>
             <div className="p-6 pt-4 space-y-5">
               <div>
+<<<<<<< HEAD
+                <label className="block text-[15px] font-semibold text-[#1b2559] mb-2">Name</label>
+                <input type="text" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} placeholder="Enter Name" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white text-[15px] text-[#4b5563]" />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[15px] font-semibold text-[#1b2559] mb-2">GL Head</label>
+                  <input type="text" value={formData.glHead} onChange={(e) => setFormData({...formData, glHead: e.target.value})} placeholder="Enter GL Head" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white text-[15px] text-[#4b5563]" />
+                </div>
+                <div>
+                  <label className="block text-[15px] font-semibold text-[#1b2559] mb-2">GL Head Name</label>
+                  <input type="text" value={formData.glHeadName} onChange={(e) => setFormData({...formData, glHeadName: e.target.value})} placeholder="Enter GL Head Name" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white text-[15px] text-[#4b5563]" />
+=======
                 <label className="block text-[15px] font-semibold text-[#1b2559] mb-2">Bank Name</label>
                 <div className="relative">
                   <select className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white appearance-none text-[15px] text-[#4b5563]">
@@ -298,10 +516,26 @@ const Credit = () => {
                     <option value="ICICI Bank">ICICI Bank</option>
                   </select>
                   <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
+>>>>>>> origin/main
                 </div>
               </div>
               <div>
                 <label className="block text-[15px] font-semibold text-[#1b2559] mb-2">Account No.</label>
+<<<<<<< HEAD
+                <input type="text" value={formData.accountNumber} onChange={(e) => setFormData({...formData, accountNumber: e.target.value})} placeholder="Enter Account Number" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white text-[15px] text-[#4b5563]" />
+              </div>
+              <div>
+                <label className="block text-[15px] font-semibold text-[#1b2559] mb-2">Date</label>
+                <input type="date" value={formData.date} onChange={(e) => setFormData({...formData, date: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white text-[15px] text-[#4b5563]" />
+              </div>
+              <div>
+                <label className="block text-[15px] font-semibold text-[#1b2559] mb-2">Status</label>
+                <select value={formData.status} onChange={(e) => setFormData({...formData, status: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white text-[15px] text-[#4b5563]">
+                  <option value="NEW">New</option>
+                  <option value="APPROVED">Approved</option>
+                  <option value="REJECTED">Rejected</option>
+                </select>
+=======
                 <input type="text" placeholder="Enter Account Number" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white text-[15px] text-[#4b5563]" />
               </div>
               <div>
@@ -311,13 +545,18 @@ const Credit = () => {
               <div>
                 <label className="block text-[15px] font-semibold text-[#1b2559] mb-2">Note</label>
                 <textarea rows="3" placeholder="Add Note" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white text-[15px] text-[#4b5563] resize-none"></textarea>
+>>>>>>> origin/main
               </div>
               
               <div className="flex justify-end items-center gap-4 mt-6 pt-4">
                 <button onClick={() => setIsCreateModalOpen(false)} className="px-8 py-2.5 rounded-full border-[1.5px] border-[#1cabb1] text-[#1cabb1] font-bold hover:bg-teal-50 transition-colors text-[15px] bg-white">
                   Cancel
                 </button>
+<<<<<<< HEAD
+                <button onClick={handleCreate} className="px-8 py-2.5 rounded-full bg-[#1cabb1] text-white font-bold hover:bg-[#168f94] transition-colors shadow-sm text-[15px]">
+=======
                 <button onClick={() => setIsCreateModalOpen(false)} className="px-8 py-2.5 rounded-full bg-[#1cabb1] text-white font-bold hover:bg-[#168f94] transition-colors shadow-sm text-[15px]">
+>>>>>>> origin/main
                   Create Receipt
                 </button>
               </div>
@@ -338,6 +577,19 @@ const Credit = () => {
             </div>
             <div className="p-6 pt-4 space-y-5">
               <div>
+<<<<<<< HEAD
+                <label className="block text-[15px] font-semibold text-[#1b2559] mb-2">Name</label>
+                <input type="text" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} placeholder="Enter Name" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white text-[15px] text-[#4b5563]" />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[15px] font-semibold text-[#1b2559] mb-2">GL Head</label>
+                  <input type="text" value={formData.glHead} onChange={(e) => setFormData({...formData, glHead: e.target.value})} placeholder="Enter GL Head" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white text-[15px] text-[#4b5563]" />
+                </div>
+                <div>
+                  <label className="block text-[15px] font-semibold text-[#1b2559] mb-2">GL Head Name</label>
+                  <input type="text" value={formData.glHeadName} onChange={(e) => setFormData({...formData, glHeadName: e.target.value})} placeholder="Enter GL Head Name" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white text-[15px] text-[#4b5563]" />
+=======
                 <label className="block text-[15px] font-semibold text-[#1b2559] mb-2">Bank Name</label>
                 <div className="relative">
                   <select defaultValue={selectedReceipt.bankName} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white appearance-none text-[15px] text-[#4b5563]">
@@ -348,10 +600,26 @@ const Credit = () => {
                     <option value="Bank of Baroda">Bank of Baroda</option>
                   </select>
                   <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
+>>>>>>> origin/main
                 </div>
               </div>
               <div>
                 <label className="block text-[15px] font-semibold text-[#1b2559] mb-2">Account No.</label>
+<<<<<<< HEAD
+                <input type="text" value={formData.accountNumber} onChange={(e) => setFormData({...formData, accountNumber: e.target.value})} placeholder="Enter Account Number" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white text-[15px] text-[#4b5563]" />
+              </div>
+              <div>
+                <label className="block text-[15px] font-semibold text-[#1b2559] mb-2">Date</label>
+                <input type="date" value={formData.date} onChange={(e) => setFormData({...formData, date: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white text-[15px] text-[#4b5563]" />
+              </div>
+              <div>
+                <label className="block text-[15px] font-semibold text-[#1b2559] mb-2">Status</label>
+                <select value={formData.status} onChange={(e) => setFormData({...formData, status: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white text-[15px] text-[#4b5563]">
+                  <option value="NEW">New</option>
+                  <option value="APPROVED">Approved</option>
+                  <option value="REJECTED">Rejected</option>
+                </select>
+=======
                 <input type="text" defaultValue={selectedReceipt.accountNo} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white text-[15px] text-[#4b5563]" />
               </div>
               <div>
@@ -361,13 +629,18 @@ const Credit = () => {
               <div>
                 <label className="block text-[15px] font-semibold text-[#1b2559] mb-2">Note</label>
                 <textarea rows="3" placeholder="Add Note" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white text-[15px] text-[#4b5563] resize-none">Receipt modifications.</textarea>
+>>>>>>> origin/main
               </div>
               
               <div className="flex justify-end items-center gap-4 mt-6 pt-4">
                 <button onClick={() => setIsEditModalOpen(false)} className="px-8 py-2.5 rounded-full border-[1.5px] border-[#1cabb1] text-[#1cabb1] font-bold hover:bg-teal-50 transition-colors text-[15px] bg-white">
                   Cancel
                 </button>
+<<<<<<< HEAD
+                <button onClick={handleUpdate} className="px-8 py-2.5 rounded-full bg-[#1cabb1] text-white font-bold hover:bg-[#168f94] transition-colors shadow-sm text-[15px]">
+=======
                 <button onClick={() => setIsEditModalOpen(false)} className="px-8 py-2.5 rounded-full bg-[#1cabb1] text-white font-bold hover:bg-[#168f94] transition-colors shadow-sm text-[15px]">
+>>>>>>> origin/main
                   Update Receipt
                 </button>
               </div>
@@ -395,7 +668,11 @@ const Credit = () => {
                 Cancel
               </button>
               <button
+<<<<<<< HEAD
+                onClick={handleDelete}
+=======
                 onClick={() => { setIsDeleteModalOpen(false); setSelectedReceipt(null); }}
+>>>>>>> origin/main
                 className="flex-1 py-2.5 rounded-full bg-red-500 text-white font-semibold hover:bg-red-600 transition-colors shadow-sm"
               >
                 Delete
