@@ -2,8 +2,7 @@ import axios from 'axios';
 import useAuthStore from '../store/authStore';
 
 const axiosInstance = axios.create({
-  // Force relative path so Vite proxy (local) and Netlify proxy (production) handle CORS
-  baseURL: '/api',
+  baseURL: import.meta.env.VITE_API_URL || '/api',
   headers: {
     'Content-Type': 'application/json',
   },

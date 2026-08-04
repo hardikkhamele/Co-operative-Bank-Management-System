@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   BarChart, Bar, PieChart, Pie, Cell, LabelList
@@ -6,12 +7,12 @@ import {
 import { Users, Banknote, Landmark, CreditCard, Wallet, Eye } from 'lucide-react';
 
 const statsData = [
-  { title: 'Total Leads', value: '30,67,498', change: '+3.7 %', color: 'bg-[#00c5d5]', icon: <Users size={20} /> },
-  { title: 'Total Loan Distributed', value: '₹102,50,98,764', change: '-1.7 %', color: 'bg-[#b68962]', icon: <Banknote size={20} /> },
-  { title: 'Collection Pending', value: '₹50,98,764', change: '-1.7 %', color: 'bg-[#f48b29]', icon: <CreditCard size={20} /> },
-  { title: 'Total Revenue', value: '₹12,98,764', change: '-1.7 %', color: 'bg-[#3bc454]', icon: <Wallet size={20} /> },
-  { title: 'Total Branch', value: '510', change: '-1.7 %', color: 'bg-[#6154ff]', icon: <Landmark size={20} /> },
-  { title: 'Total Staff', value: '8,764', change: '-1.7 %', color: 'bg-[#d926e9]', icon: <Users size={20} /> },
+  { title: 'Total Leads', value: '30,67,498', change: '+3.7 %', color: 'bg-[#00c5d5]', icon: <Users size={20} />, path: '/leads' },
+  { title: 'Total Loan Distributed', value: '₹102,50,98,764', change: '-1.7 %', color: 'bg-[#b68962]', icon: <Banknote size={20} />, path: '/customers' },
+  { title: 'Collection Pending', value: '₹50,98,764', change: '-1.7 %', color: 'bg-[#f48b29]', icon: <CreditCard size={20} />, path: '/credit' },
+  { title: 'Total Revenue', value: '₹12,98,764', change: '-1.7 %', color: 'bg-[#3bc454]', icon: <Wallet size={20} />, path: '/credit' },
+  { title: 'Total Branch', value: '510', change: '-1.7 %', color: 'bg-[#6154ff]', icon: <Landmark size={20} />, path: '/branch' },
+  { title: 'Total Staff', value: '8,764', change: '-1.7 %', color: 'bg-[#d926e9]', icon: <Users size={20} />, path: '/employees' },
 ];
 
 const revenueData = [
@@ -93,7 +94,7 @@ const Dashboard = () => {
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {statsData.map((stat, idx) => (
-          <div key={idx} className={`${stat.color} rounded-xl p-5 text-white shadow-sm flex flex-col justify-between h-[130px]`}>
+          <Link key={idx} to={stat.path} className={`${stat.color} rounded-xl p-5 text-white shadow-sm flex flex-col justify-between h-[130px] hover:-translate-y-1 hover:shadow-md transition-all duration-200 block cursor-pointer`}>
             <div className="flex justify-between items-start">
               <span className="text-[15px] font-medium">{stat.title}</span>
               <div className="opacity-90">{stat.icon}</div>
@@ -104,7 +105,7 @@ const Dashboard = () => {
                 This Month <span className="ml-1">{stat.change}</span>
               </div>
             </div>
-          </div>
+          </Link>
         ))}
       </div>
 

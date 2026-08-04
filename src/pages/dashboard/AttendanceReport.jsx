@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronRight, Search, ChevronDown, Calendar, ChevronLeft, Component } from 'lucide-react';
+import { attendanceService } from '../../api/attendanceService';
 
 const mockEmployees = [
   { id: 1, name: 'Harleen Quinzel', designation: 'Branch Manager', punchIn: '9:07 AM', punchOut: '6:27 AM', totalHrs: '8 hrs', status: 'P', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop' },
@@ -85,6 +86,92 @@ const LegendItem = ({ status, label }) => (
 
 const AttendanceReport = () => {
   const [activeTab, setActiveTab] = useState('daily');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  // Filters State
+  const [statesList, setStatesList] = useState([]);
+  const [branchesList, setBranchesList] = useState([]);
+  const [selectedState, setSelectedState] = useState('');
+  const [selectedBranch, setSelectedBranch] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  
+  // Daily Date State
+  const [referenceDate, setReferenceDate] = useState('');
+  
+  // Data State
+  const [attendanceData, setAttendanceData] = useState([]);
+  
+  // Pagination State
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const [meta, setMeta] = useState({
+    totalRecords: 0,
+    totalPages: 1,
+    hasNextPage: false,
+    hasPrevPage: false
+  });
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+      setPage(1);
+    }, 500);
+    return () => clearTimeout(handler);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    const fetchFilters = async () => {
+      try {
+        const res = await attendanceService.getAttendanceFilters(selectedState);
+        if (res.success && res.data) {
+          if (!selectedState) setStatesList(res.data.states || []);
+          setBranchesList(res.data.branches || []);
+        }
+      } catch (err) {
+        console.error("Failed to fetch filters:", err);
+      }
+    };
+    fetchFilters();
+  }, [selectedState]);
+
+  const fetchReport = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const params = {
+        period: activeTab.toUpperCase(),
+        page,
+        limit
+      };
+      if (selectedState) params.state = selectedState;
+      if (selectedBranch) params.branchId = selectedBranch;
+      if (debouncedSearch) params.search = debouncedSearch;
+      if (referenceDate) params.date = referenceDate;
+
+      const res = await attendanceService.getAttendanceReport(params);
+      if (res.success) {
+        setAttendanceData(res.data || []);
+        if (res.meta) setMeta(res.meta);
+      }
+    } catch (err) {
+      console.error("Failed to fetch report:", err);
+      setError("Failed to fetch attendance report.");
+    } finally {
+      setLoading(false);
+    }
+  }, [activeTab, page, limit, selectedState, selectedBranch, debouncedSearch, referenceDate]);
+
+  useEffect(() => {
+    fetchReport();
+  }, [fetchReport]);
+
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= meta.totalPages) {
+      setPage(newPage);
+    }
+  };
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -119,12 +206,17 @@ const AttendanceReport = () => {
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 shrink-0">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div>
-            <label className="block text-sm font-semibold text-gray-800 mb-2">Region</label>
+            <label className="block text-sm font-semibold text-gray-800 mb-2">Region (State)</label>
             <div className="relative">
-              <select className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1cabb1] focus:border-[#1cabb1] appearance-none text-gray-500 text-[15px] bg-white">
-                <option value="">All Region</option>
-                <option value="eastern">Eastern Region</option>
-                <option value="western">Western Region</option>
+              <select 
+                value={selectedState}
+                onChange={(e) => { setSelectedState(e.target.value); setPage(1); setSelectedBranch(''); }}
+                className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1cabb1] focus:border-[#1cabb1] appearance-none text-gray-500 text-[15px] bg-white"
+              >
+                <option value="">All Regions</option>
+                {statesList.map((state, i) => (
+                  <option key={i} value={state}>{state}</option>
+                ))}
               </select>
               <ChevronDown size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
             </div>
@@ -132,10 +224,15 @@ const AttendanceReport = () => {
           <div>
             <label className="block text-sm font-semibold text-gray-800 mb-2">Branch</label>
             <div className="relative">
-              <select className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1cabb1] focus:border-[#1cabb1] appearance-none text-gray-500 text-[15px] bg-white">
+              <select 
+                value={selectedBranch}
+                onChange={(e) => { setSelectedBranch(e.target.value); setPage(1); }}
+                className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1cabb1] focus:border-[#1cabb1] appearance-none text-gray-500 text-[15px] bg-white"
+              >
                 <option value="">All Branches</option>
-                <option value="mumbai">Mumbai Branch</option>
-                <option value="delhi">Delhi Branch</option>
+                {branchesList.map((branch) => (
+                  <option key={branch.id} value={branch.id}>{branch.name}</option>
+                ))}
               </select>
               <ChevronDown size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
             </div>
@@ -146,7 +243,9 @@ const AttendanceReport = () => {
               <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <input 
                 type="text" 
-                placeholder="Search" 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search by name or designation" 
                 className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1cabb1] focus:border-[#1cabb1] text-[15px] text-gray-700 bg-white"
               />
             </div>
@@ -186,11 +285,11 @@ const AttendanceReport = () => {
               
               <div className="relative">
                 <input 
-                  type="text" 
-                  placeholder="DD/MM/YYYY" 
-                  className="pl-4 pr-10 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1cabb1] text-[15px] text-gray-500 w-[160px]"
+                  type="date" 
+                  value={referenceDate}
+                  onChange={(e) => { setReferenceDate(e.target.value); setPage(1); }}
+                  className="px-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1cabb1] text-[15px] text-gray-500 min-w-[160px]"
                 />
-                <Calendar size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
               </div>
             </div>
           )}
@@ -242,32 +341,38 @@ const AttendanceReport = () => {
               </tr>
             </thead>
             <tbody className="text-[15px] text-gray-600">
-              {mockEmployees.map((row) => (
-                <tr key={row.id} className="border-b border-gray-100 hover:bg-gray-50/30 transition-colors">
-                  <td className="py-4 px-6 text-center">{row.id}</td>
-                  <td className="py-4 px-6">
-                    <div className="flex items-center gap-3">
-                      {row.avatar ? (
-                        <img src={row.avatar} alt={row.name} className="w-8 h-8 rounded-full object-cover" />
-                      ) : (
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[13px] font-bold ${row.avatarColor || 'bg-gray-100 text-gray-600'}`}>
-                          {row.initials}
-                        </div>
-                      )}
-                      <span className="font-medium text-gray-800">{row.name}</span>
-                    </div>
-                  </td>
-                  <td className="py-4 px-6">{row.designation}</td>
-                  <td className="py-4 px-6">{row.punchIn}</td>
-                  <td className="py-4 px-6">{row.punchOut}</td>
-                  <td className="py-4 px-6">{row.totalHrs}</td>
-                  <td className="py-4 px-6 text-center">
-                    <div className={`inline-flex items-center justify-center w-8 h-8 rounded-full border text-[13px] font-medium ${getStatusColor(row.status)}`}>
-                      {row.status}
-                    </div>
-                  </td>
-                </tr>
-              ))}
+              {loading && activeTab === 'daily' ? (
+                <tr><td colSpan="7" className="text-center py-8 font-medium">Loading attendance data...</td></tr>
+              ) : attendanceData.length === 0 && activeTab === 'daily' ? (
+                <tr><td colSpan="7" className="text-center py-8 font-medium text-gray-500">No attendance records found.</td></tr>
+              ) : (
+                (activeTab === 'daily' ? attendanceData : mockEmployees).map((row) => (
+                  <tr key={row.id} className="border-b border-gray-100 hover:bg-gray-50/30 transition-colors">
+                    <td className="py-4 px-6 text-center">{row.srNo || row.id}</td>
+                    <td className="py-4 px-6">
+                      <div className="flex items-center gap-3">
+                        {row.profileImage || row.avatar ? (
+                          <img src={row.profileImage || row.avatar} alt={row.name} className="w-8 h-8 rounded-full object-cover" />
+                        ) : (
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[13px] font-bold ${row.avatarColor || 'bg-[#f4f2ff] text-[#5a5ce5]'}`}>
+                            {row.initials || (row.name ? row.name.substring(0, 2).toUpperCase() : 'NA')}
+                          </div>
+                        )}
+                        <span className="font-medium text-gray-800">{row.name}</span>
+                      </div>
+                    </td>
+                    <td className="py-4 px-6">{row.designation || '—'}</td>
+                    <td className="py-4 px-6">{row.punchIn || '—'}</td>
+                    <td className="py-4 px-6">{row.punchOut || '—'}</td>
+                    <td className="py-4 px-6">{row.totalHrs || '—'}</td>
+                    <td className="py-4 px-6 text-center">
+                      <div className={`inline-flex items-center justify-center w-8 h-8 rounded-full border text-[13px] font-medium ${getStatusColor(row.status)}`}>
+                        {row.status}
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
@@ -385,21 +490,43 @@ const AttendanceReport = () => {
         {/* Footer Pagination and Legends for all tabs */}
         <div className="mt-6 flex flex-col gap-6">
           <div className="flex items-center justify-between text-[13px] font-medium text-gray-500">
-            <span>Showing 1 to 8 of 30 Entries</span>
+            <span>Showing {attendanceData.length > 0 ? (page - 1) * limit + 1 : 0} to {Math.min(page * limit, meta.totalRecords)} of {meta.totalRecords} Entries</span>
             <div className="flex items-center gap-2">
-              <button className="w-8 h-8 flex items-center justify-center rounded border border-gray-300 text-gray-400 hover:bg-gray-50 transition-colors">
+              <button 
+                onClick={() => handlePageChange(page - 1)}
+                disabled={!meta.hasPrevPage}
+                className="w-8 h-8 flex items-center justify-center rounded border border-gray-300 text-gray-400 hover:bg-gray-50 transition-colors disabled:opacity-50"
+              >
                 <ChevronLeft size={16} />
               </button>
-              <button className="w-8 h-8 flex items-center justify-center rounded border border-[#1cabb1] bg-[#1cabb1] text-white font-bold shadow-sm">
-                1
-              </button>
-              <button className="w-8 h-8 flex items-center justify-center rounded border border-gray-300 bg-white text-gray-700 font-bold hover:bg-gray-50 transition-colors">
-                2
-              </button>
-              <button className="w-8 h-8 flex items-center justify-center rounded border border-gray-300 bg-white text-gray-700 font-bold hover:bg-gray-50 transition-colors">
-                3
-              </button>
-              <button className="w-8 h-8 flex items-center justify-center rounded border border-gray-300 text-gray-400 hover:bg-gray-50 transition-colors">
+              
+              {(() => {
+                let startPage = Math.max(1, page - 2);
+                let endPage = Math.min(meta.totalPages || 1, page + 2);
+                if (endPage - startPage < 4) {
+                  if (startPage === 1) endPage = Math.min(5, meta.totalPages || 1);
+                  else if (endPage === (meta.totalPages || 1)) startPage = Math.max(1, (meta.totalPages || 1) - 4);
+                }
+                const pages = [];
+                for (let i = startPage; i <= endPage; i++) {
+                  pages.push(
+                    <button 
+                      key={i}
+                      onClick={() => handlePageChange(i)}
+                      className={`w-8 h-8 flex items-center justify-center rounded border font-bold transition-colors ${page === i ? 'border-[#1cabb1] bg-[#1cabb1] text-white shadow-sm' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'}`}
+                    >
+                      {i}
+                    </button>
+                  );
+                }
+                return pages;
+              })()}
+              
+              <button 
+                onClick={() => handlePageChange(page + 1)}
+                disabled={!meta.hasNextPage}
+                className="w-8 h-8 flex items-center justify-center rounded border border-gray-300 text-gray-400 hover:bg-gray-50 transition-colors disabled:opacity-50"
+              >
                 <ChevronRight size={16} />
               </button>
             </div>
