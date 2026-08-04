@@ -12,20 +12,28 @@ const useAuthStore = create(
       refreshToken: null,
       isAuthenticated: false,
       
-      login: (data) => set({ 
-        user: data.user, 
-        context: data.context,
-        role: data.role,
-        permissions: data.permissions || [],
-        accessToken: data.tokens.accessToken,
-        refreshToken: data.tokens.refreshToken,
-        isAuthenticated: true 
-      }),
+      login: (data) => {
+        const accessToken = data?.tokens?.accessToken || data?.accessToken || data?.token || null;
+        const refreshToken = data?.tokens?.refreshToken || data?.refreshToken || null;
+        set({ 
+          user: data?.user || null, 
+          context: data?.context || null,
+          role: data?.role || null,
+          permissions: data?.permissions || [],
+          accessToken,
+          refreshToken,
+          isAuthenticated: !!accessToken 
+        });
+      },
       
-      setTokens: (tokens) => set({
-        accessToken: tokens.accessToken,
-        refreshToken: tokens.refreshToken
-      }),
+      setTokens: (tokens) => {
+        const accessToken = typeof tokens === 'string' ? tokens : (tokens?.accessToken || tokens?.tokens?.accessToken || tokens?.token);
+        const refreshToken = typeof tokens === 'object' ? (tokens?.refreshToken || tokens?.tokens?.refreshToken || null) : null;
+        set((state) => ({
+          accessToken,
+          refreshToken: refreshToken !== null ? refreshToken : state.refreshToken
+        }));
+      },
       
       logout: () => set({ 
         user: null, 

@@ -200,7 +200,7 @@ const CheckCibilScore = () => {
           </div>
         </div>
       ) : (
-        <div className="flex flex-col w-full">
+        <div className="flex flex-col gap-6 w-full">
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 flex flex-col items-center max-w-4xl mx-auto w-full relative overflow-hidden">
             {/* Confetti / background flair */}
             <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-[#1cabb1]/5 to-transparent"></div>

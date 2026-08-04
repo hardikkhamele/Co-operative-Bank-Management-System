@@ -3,9 +3,9 @@ import { Link } from 'react-router-dom';
 import { ChevronRight, Search, Eye, Edit, Trash2, X } from 'lucide-react';
 
 const mockBanks = [
-  { id: 1, name: 'Mumbai District Central Co-op Bank', email: 'contact@mdccb.com', phone: '022-22610115', mobile: '9876543210', ubo: 'John Doe' },
-  { id: 2, name: 'Pune District Central Co-op Bank', email: 'info@pdccb.com', phone: '020-24458911', mobile: '8765432109', ubo: 'Jane Smith' },
-  { id: 3, name: 'Thane District Central Co-op Bank', email: 'support@tdccb.com', phone: '022-25330364', mobile: '7654321098', ubo: 'Alice Johnson' },
+  { id: 1, name: 'Mumbai District Central Co-op Bank', email: 'contact@mdccb.com', phone: '022-22610115', mobile: '9876543210', authorizedPerson: 'John Doe', ubo: 'John Doe' },
+  { id: 2, name: 'Pune District Central Co-op Bank', email: 'info@pdccb.com', phone: '020-24458911', mobile: '8765432109', authorizedPerson: 'Jane Smith', ubo: 'Jane Smith' },
+  { id: 3, name: 'Thane District Central Co-op Bank', email: 'support@tdccb.com', phone: '022-25330364', mobile: '7654321098', authorizedPerson: 'Alice Johnson', ubo: 'Alice Johnson' },
 ];
 
 const CooperativeBanks = () => {
@@ -74,7 +74,7 @@ const CooperativeBanks = () => {
                 <th className="py-4 px-6 font-semibold text-gray-700 text-sm">Email</th>
                 <th className="py-4 px-6 font-semibold text-gray-700 text-sm">Phone Number</th>
                 <th className="py-4 px-6 font-semibold text-gray-700 text-sm">Mobile Number</th>
-                <th className="py-4 px-6 font-semibold text-gray-700 text-sm">UBO</th>
+                <th className="py-4 px-6 font-semibold text-gray-700 text-sm">Authorized Person</th>
                 <th className="py-4 px-6 font-semibold text-gray-700 text-sm text-center">Action</th>
               </tr>
             </thead>
@@ -94,7 +94,7 @@ const CooperativeBanks = () => {
                     <div className="text-sm text-gray-600">{row.mobile}</div>
                   </td>
                   <td className="py-4 px-6">
-                    <div className="text-sm text-gray-600">{row.ubo}</div>
+                    <div className="text-sm text-gray-600">{row.authorizedPerson || row.ubo}</div>
                   </td>
                   <td className="py-4 px-6">
                     <div className="flex items-center justify-center gap-3">

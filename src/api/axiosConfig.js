@@ -8,6 +8,21 @@ const axiosInstance = axios.create({
   },
 });
 
+// Mutex & Queue for token refresh to avoid race conditions with multiple requests
+let isRefreshing = false;
+let failedQueue = [];
+
+const processQueue = (error, token = null) => {
+  failedQueue.forEach((prom) => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token);
+    }
+  });
+  failedQueue = [];
+};
+
 // Request interceptor
 axiosInstance.interceptors.request.use(
   (config) => {
@@ -27,47 +42,74 @@ axiosInstance.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
-    
-    // Avoid infinite loop by only retrying once, and never retrying auth endpoints
-    if (
-      error.response && 
-      error.response.status === 401 && 
-      !originalRequest._retry &&
-      !originalRequest.url.includes('/auth/login') &&
-      !originalRequest.url.includes('/auth/refresh')
-    ) {
-      originalRequest._retry = true;
-      
-      try {
-        const refreshToken = useAuthStore.getState().refreshToken;
-        
-        if (!refreshToken) {
-          useAuthStore.getState().logout();
-          window.location.href = '/login';
-          return Promise.reject(error);
-        }
 
-        // Use standard axios to bypass interceptors and avoid loop
-        const response = await axios.post(`${axiosInstance.defaults.baseURL}/v1/society/auth/refresh`, {
-          refreshToken
+    if (!originalRequest) {
+      return Promise.reject(error);
+    }
+
+    // Check for 401 Unauthorized (exclude auth endpoints)
+    if (
+      error.response &&
+      error.response.status === 401 &&
+      !originalRequest._retry &&
+      !originalRequest.url?.includes('/auth/login') &&
+      !originalRequest.url?.includes('/auth/refresh')
+    ) {
+      if (isRefreshing) {
+        // If refresh is already in progress, enqueue this request
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        })
+          .then((token) => {
+            originalRequest.headers.Authorization = `Bearer ${token}`;
+            return axiosInstance(originalRequest);
+          })
+          .catch((err) => Promise.reject(err));
+      }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      const refreshToken = useAuthStore.getState().refreshToken;
+
+      if (!refreshToken) {
+        isRefreshing = false;
+        useAuthStore.getState().logout();
+        window.location.href = '/login';
+        return Promise.reject(error);
+      }
+
+      try {
+        const baseURL = axiosInstance.defaults.baseURL || '/api';
+        const response = await axios.post(`${baseURL}/v1/society/auth/refresh`, {
+          refreshToken,
         });
 
         if (response.data && response.data.success && response.data.data) {
-          // Update tokens in store
-          useAuthStore.getState().setTokens(response.data.data);
-          
-          // Retry original request with new token
-          originalRequest.headers.Authorization = `Bearer ${response.data.data.accessToken}`;
+          const newAccessToken = response.data.data.accessToken || response.data.data.tokens?.accessToken || response.data.data.token;
+          const newRefreshToken = response.data.data.refreshToken || response.data.data.tokens?.refreshToken || null;
+
+          useAuthStore.getState().setTokens({
+            accessToken: newAccessToken,
+            refreshToken: newRefreshToken,
+          });
+
+          processQueue(null, newAccessToken);
+          originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
           return axiosInstance(originalRequest);
+        } else {
+          throw new Error('Invalid refresh response payload');
         }
       } catch (refreshError) {
-        // Refresh token is expired or invalid
+        processQueue(refreshError, null);
         useAuthStore.getState().logout();
         window.location.href = '/login';
         return Promise.reject(refreshError);
+      } finally {
+        isRefreshing = false;
       }
     }
-    
+
     return Promise.reject(error);
   }
 );

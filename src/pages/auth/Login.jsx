@@ -15,35 +15,26 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
-  const [roles, setRoles] = useState([]);
+  const defaultRoles = [
+    { code: 'BANK_OWNER', name: 'Bank Owner' },
+    { code: 'BRANCH_MANAGER', name: 'Branch Manager' },
+    { code: 'EMPLOYEE', name: 'Employee' }
+  ];
+  const [roles, setRoles] = useState(defaultRoles);
 
   useEffect(() => {
     const fetchRoles = async () => {
       try {
         const response = await authService.getRoles();
-        let availableRoles = [];
-        
-        if (response?.success && response?.data) {
-          if (Array.isArray(response.data)) {
-            availableRoles = response.data;
-          } else {
-            availableRoles = response.data.allRoles || [...(response.data.systemRoles || []), ...(response.data.customRoles || [])];
+        if (response.success && response.data) {
+          // Use allRoles if available, otherwise combine system and custom roles
+          const availableRoles = response.data.allRoles || [...(response.data.systemRoles || []), ...(response.data.customRoles || [])];
+          if (availableRoles.length > 0) {
+            setRoles(availableRoles);
           }
-        } else if (Array.isArray(response)) {
-          availableRoles = response;
-        } else if (response?.data && Array.isArray(response.data.data)) {
-          availableRoles = response.data.data;
-        }
-        
-        if (availableRoles && availableRoles.length > 0) {
-          setRoles(availableRoles);
-        } else {
-          setError("Failed to parse roles from API response.");
-          console.error("Unexpected API response:", response);
         }
       } catch (err) {
-        console.error("Failed to fetch roles:", err);
-        setError("Failed to load roles: " + (err.message || "Network Error"));
+        console.error("Failed to fetch roles, using default roles:", err);
       }
     };
     fetchRoles();

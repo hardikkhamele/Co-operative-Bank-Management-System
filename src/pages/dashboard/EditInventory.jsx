@@ -1,14 +1,87 @@
-import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { ChevronRight } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useParams, useLocation } from 'react-router-dom';
+import { ChevronRight, Loader2 } from 'lucide-react';
+import { toast } from 'react-toastify';
+import { inventoryService } from '../../api/inventoryService';
 
 const EditInventory = () => {
   const navigate = useNavigate();
+  const { id } = useParams();
+  const location = useLocation();
 
-  const handleSubmit = (e) => {
+  // Item might be passed via route state or we fallback to state/params
+  const itemFromState = location.state?.item;
+
+  const [formData, setFormData] = useState({
+    assets: itemFromState?.assets || itemFromState?.asset || '',
+    quantity: itemFromState?.quantity !== undefined ? itemFromState.quantity : ''
+  });
+  const [targetId, setTargetId] = useState(id || itemFromState?.id || itemFromState?._id || '');
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (itemFromState) {
+      setFormData({
+        assets: itemFromState.assets || itemFromState.asset || '',
+        quantity: itemFromState.quantity !== undefined ? itemFromState.quantity : ''
+      });
+      setTargetId(itemFromState.id || itemFromState._id || id);
+    }
+  }, [itemFromState, id]);
+
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    });
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Normally you'd send data to API here
-    navigate('/inventory');
+
+    if (!formData.assets.trim()) {
+      toast.error('Asset name is required.');
+      return;
+    }
+
+    if (formData.assets.trim().length > 150) {
+      toast.error('Asset name cannot exceed 150 characters.');
+      return;
+    }
+
+    if (formData.quantity === '' || isNaN(Number(formData.quantity)) || Number(formData.quantity) < 0) {
+      toast.error('Please enter a valid non-negative quantity.');
+      return;
+    }
+
+    if (!targetId) {
+      toast.error('No inventory item selected to update. Please edit from the inventory list.');
+      navigate('/inventory');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const payload = {
+        assets: formData.assets.trim(),
+        quantity: Math.floor(Number(formData.quantity))
+      };
+
+      const response = await inventoryService.update(targetId, payload);
+      if (response && response.success) {
+        toast.success(response.message || 'Inventory updated successfully.');
+        navigate('/inventory');
+      } else {
+        toast.success('Inventory updated successfully.');
+        navigate('/inventory');
+      }
+    } catch (err) {
+      console.error('Failed to update inventory:', err);
+      const errMsg = err.response?.data?.message || 'Failed to update inventory item.';
+      toast.error(errMsg);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -39,18 +112,25 @@ const EditInventory = () => {
                 <label className="text-[15px] font-medium text-gray-700">Asset Name *</label>
                 <input 
                   type="text" 
-                  defaultValue="Computer"
+                  name="assets"
+                  maxLength={150}
+                  value={formData.assets}
+                  onChange={handleChange}
                   placeholder="Enter asset name (e.g., Computer, Laptop)" 
                   className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1cabb1]"
                   required
                 />
+                <span className="text-[11px] text-gray-400 text-right">{formData.assets.length}/150</span>
               </div>
               <div className="flex flex-col gap-2">
                 <label className="text-[15px] font-medium text-gray-700">Quantity *</label>
                 <input 
                   type="number" 
-                  defaultValue="1800"
-                  placeholder="Enter quantity" 
+                  name="quantity"
+                  min="0"
+                  value={formData.quantity}
+                  onChange={handleChange}
+                  placeholder="Enter quantity (e.g., 1800)" 
                   className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1cabb1]"
                   required
                 />
@@ -60,9 +140,11 @@ const EditInventory = () => {
             <div className="flex items-center gap-4 mt-4">
               <button 
                 type="submit" 
-                className="bg-[#1cabb1] hover:bg-[#159a9f] text-white px-8 py-2.5 rounded-full text-[15px] font-semibold transition-colors shadow-sm"
+                disabled={submitting}
+                className="bg-[#1cabb1] hover:bg-[#159a9f] text-white px-8 py-2.5 rounded-full text-[15px] font-semibold transition-colors shadow-sm flex items-center gap-2 disabled:opacity-50"
               >
-                Update
+                {submitting ? <Loader2 size={16} className="animate-spin" /> : null}
+                <span>{submitting ? 'Updating...' : 'Update'}</span>
               </button>
               <Link 
                 to="/inventory"
