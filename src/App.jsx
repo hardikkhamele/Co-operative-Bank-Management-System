@@ -146,6 +146,7 @@ function App() {
           <Route path="inventory" element={<Inventory />} />
           <Route path="inventory/create" element={<CreateInventory />} />
           <Route path="inventory/edit" element={<EditInventory />} />
+          <Route path="inventory/edit/:id" element={<EditInventory />} />
           <Route path="credit" element={<Credit />} />
           <Route path="credit/view/:id" element={<ViewCreditReceipt />} />
           <Route path="debit" element={<Debit />} />

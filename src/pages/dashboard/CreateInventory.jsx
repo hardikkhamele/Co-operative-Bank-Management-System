@@ -1,14 +1,65 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, Loader2 } from 'lucide-react';
+import { toast } from 'react-toastify';
+import { inventoryService } from '../../api/inventoryService';
 
 const CreateInventory = () => {
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const [formData, setFormData] = useState({
+    assets: '',
+    quantity: ''
+  });
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    });
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Normally you'd send data to API here
-    navigate('/inventory');
+
+    if (!formData.assets.trim()) {
+      toast.error('Asset name is required.');
+      return;
+    }
+
+    if (formData.assets.trim().length > 150) {
+      toast.error('Asset name cannot exceed 150 characters.');
+      return;
+    }
+
+    if (formData.quantity === '' || isNaN(Number(formData.quantity)) || Number(formData.quantity) < 0) {
+      toast.error('Please enter a valid non-negative quantity.');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const payload = {
+        assets: formData.assets.trim(),
+        quantity: Math.floor(Number(formData.quantity))
+      };
+
+      const response = await inventoryService.create(payload);
+      if (response && (response.success || response.statusCode === 201)) {
+        toast.success(response.message || 'Inventory added successfully.');
+        navigate('/inventory');
+      } else {
+        toast.success('Inventory added successfully.');
+        navigate('/inventory');
+      }
+    } catch (err) {
+      console.error('Failed to create inventory:', err);
+      const errMsg = err.response?.data?.message || 'Failed to add inventory item.';
+      toast.error(errMsg);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -39,16 +90,25 @@ const CreateInventory = () => {
                 <label className="text-[15px] font-medium text-gray-700">Asset Name *</label>
                 <input 
                   type="text" 
+                  name="assets"
+                  maxLength={150}
+                  value={formData.assets}
+                  onChange={handleChange}
                   placeholder="Enter asset name (e.g., Computer, Laptop)" 
                   className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1cabb1]"
                   required
                 />
+                <span className="text-[11px] text-gray-400 text-right">{formData.assets.length}/150</span>
               </div>
               <div className="flex flex-col gap-2">
                 <label className="text-[15px] font-medium text-gray-700">Quantity *</label>
                 <input 
                   type="number" 
-                  placeholder="Enter quantity" 
+                  name="quantity"
+                  min="0"
+                  value={formData.quantity}
+                  onChange={handleChange}
+                  placeholder="Enter quantity (e.g., 1800)" 
                   className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1cabb1]"
                   required
                 />
@@ -58,9 +118,11 @@ const CreateInventory = () => {
             <div className="flex items-center gap-4 mt-4">
               <button 
                 type="submit" 
-                className="bg-[#1cabb1] hover:bg-[#159a9f] text-white px-8 py-2.5 rounded-full text-[15px] font-semibold transition-colors shadow-sm"
+                disabled={submitting}
+                className="bg-[#1cabb1] hover:bg-[#159a9f] text-white px-8 py-2.5 rounded-full text-[15px] font-semibold transition-colors shadow-sm flex items-center gap-2 disabled:opacity-50"
               >
-                Save
+                {submitting ? <Loader2 size={16} className="animate-spin" /> : null}
+                <span>{submitting ? 'Saving...' : 'Save'}</span>
               </button>
               <Link 
                 to="/inventory"
