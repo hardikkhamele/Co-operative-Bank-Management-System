@@ -94,6 +94,10 @@ const Branch = () => {
   const submitCreateBranch = async () => {
     setCreateSubmitting(true);
     try {
+      const nameParts = createForm.manager.fullName.trim().split(' ');
+      const firstName = nameParts[0] || '';
+      const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
+
       const payload = {
         branch: {
           name: createForm.branch.name,
@@ -112,16 +116,34 @@ const Branch = () => {
         },
         manager: {
           fullName: createForm.manager.fullName,
+          firstName: firstName,
+          lastName: lastName,
           email: createForm.manager.email,
           phoneNumber: createForm.manager.phoneNumber,
           password: createForm.manager.password,
           employeeCode: createForm.manager.employeeCode,
-          personalDetails: {}, // required by spec but can be empty object initially
-          jobDetails: {}
+          personalDetails: {
+            fullName: createForm.manager.fullName,
+            firstName: firstName,
+            lastName: lastName,
+            email: createForm.manager.email,
+            phoneNumber: createForm.manager.phoneNumber
+          },
+          jobDetails: {
+            designation: "Branch Manager",
+            department: "Management"
+          },
+          shiftSettings: {},
+          attendanceSettings: {},
+          woffHoffSettings: {},
+          kraSettings: {}
         }
       };
       
-      await branchService.create(payload);
+      const response = await branchService.create(payload);
+      if (response && response.success) {
+        toast.success(response.message || "Branch and Branch Manager created successfully.");
+      }
       setIsCreateModalOpen(false);
       setCreateStep(1);
       setCreateForm({
@@ -131,7 +153,11 @@ const Branch = () => {
       fetchBranches();
     } catch (err) {
       console.error("Failed to create branch", err);
-      toast.error(err.response?.data?.message || "Failed to create branch");
+      if (err.response?.data?.details && err.response.data.details.length > 0) {
+        toast.error(err.response.data.details[0].message);
+      } else {
+        toast.error(err.response?.data?.message || "Failed to create branch");
+      }
     } finally {
       setCreateSubmitting(false);
     }
@@ -140,11 +166,15 @@ const Branch = () => {
   const submitDeleteBranch = async () => {
     if (!selectedBranch) return;
     try {
-      await branchService.delete(selectedBranch.id);
+      const response = await branchService.delete(selectedBranch.id);
+      if (response && response.success) {
+        toast.success(response.message || "Branch deactivated successfully.");
+      }
       setIsDeleteModalOpen(false);
       fetchBranches();
     } catch (err) {
       console.error("Failed to delete branch", err);
+      toast.error(err.response?.data?.message || "Failed to delete branch");
     }
   };
 
@@ -335,7 +365,19 @@ const Branch = () => {
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-center gap-4">
                         <button 
-                          onClick={() => { setSelectedBranch(branch); setEditStep(1); setIsEditModalOpen(true); }}
+                          onClick={async () => {
+                            try {
+                              const res = await branchService.getById(branch.id);
+                              if (res && res.success) {
+                                setSelectedBranch(res.data);
+                                setEditStep(1);
+                                setIsEditModalOpen(true);
+                              }
+                            } catch(err) {
+                              console.error(err);
+                              toast.error(err.response?.data?.message || "Failed to fetch branch details");
+                            }
+                          }}
                           className="text-gray-600 hover:text-gray-900 transition-colors" 
                           title="Edit"
                         >
@@ -472,7 +514,7 @@ const Branch = () => {
                   </div>
                   <div>
                     <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">Temporary Password *</label>
-                    <input type="password" value={createForm.manager.password} onChange={e => handleCreateChange('manager', 'password', e.target.value)} placeholder="Password" className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1cabb1] text-sm" />
+                    <input type="password" minLength={8} value={createForm.manager.password} onChange={e => handleCreateChange('manager', 'password', e.target.value)} placeholder="Password (Min 8 characters)" className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1cabb1] text-sm" />
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
@@ -605,7 +647,7 @@ const Branch = () => {
                   </div>
                   <div>
                     <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">Temporary Password *</label>
-                    <input type="password" value={selectedBranch.manager?.password || ''} placeholder="Leave blank to keep current" onChange={(e) => setSelectedBranch({...selectedBranch, manager: { ...selectedBranch.manager, password: e.target.value }})} className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1cabb1] text-sm" />
+                    <input type="password" minLength={8} value={selectedBranch.manager?.password || ''} placeholder="Leave blank to keep current (Min 8 characters)" onChange={(e) => setSelectedBranch({...selectedBranch, manager: { ...selectedBranch.manager, password: e.target.value }})} className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1cabb1] text-sm" />
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
@@ -643,7 +685,8 @@ const Branch = () => {
                     <button 
                       onClick={async () => {
                         try {
-                          await branchService.update(selectedBranch.id, {
+                          // Update branch
+                          const branchRes = await branchService.update(selectedBranch.id, {
                             name: selectedBranch.name,
                             code: selectedBranch.code,
                             email: selectedBranch.email,
@@ -651,13 +694,6 @@ const Branch = () => {
                             state: selectedBranch.state,
                             cardStock: Number(selectedBranch.cardStock),
                             verificationCredits: Number(selectedBranch.verificationCredits),
-                            manager: {
-                              fullName: selectedBranch.manager?.fullName || selectedBranch.branchManager?.fullName || '',
-                              email: selectedBranch.manager?.email || '',
-                              phoneNumber: selectedBranch.manager?.phoneNumber || '',
-                              employeeCode: selectedBranch.manager?.employeeCode || '',
-                              password: selectedBranch.manager?.password || undefined
-                            },
                             address: {
                               addressLine1: selectedBranch.address?.addressLine1 || '',
                               city: selectedBranch.address?.city || '',
@@ -665,12 +701,44 @@ const Branch = () => {
                               pincode: selectedBranch.address?.pincode || ''
                             }
                           });
+                          
+                          // Prepare Manager payload
+                          const mName = selectedBranch.manager?.fullName || selectedBranch.branchManager?.fullName || selectedBranch.manager?.name || selectedBranch.managerName || selectedBranch.manager?.user?.name || selectedBranch.manager?.user?.fullName || '';
+                          const nameParts = mName.trim().split(' ');
+                          const fName = nameParts[0] || '';
+                          const lName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
+                          
+                          const managerPayload = {
+                            fullName: mName,
+                            firstName: fName,
+                            lastName: lName,
+                            email: selectedBranch.manager?.email || '',
+                            phoneNumber: selectedBranch.manager?.phoneNumber || '',
+                            employeeCode: selectedBranch.manager?.employeeCode || '',
+                          };
+                          if (selectedBranch.manager?.password) {
+                            managerPayload.password = selectedBranch.manager.password;
+                          }
+                          
+                          // Update manager profile independently using endpoint 7
+                          const managerRes = await branchService.updateManagerProfile(selectedBranch.id, managerPayload);
+                          
+                          if (branchRes && branchRes.success && managerRes && managerRes.success) {
+                            toast.success("Branch and Manager updated successfully.");
+                          } else if (branchRes && branchRes.success) {
+                            toast.success(branchRes.message || "Branch details updated successfully.");
+                          }
+                          
                           setIsEditModalOpen(false);
                           setEditStep(1);
                           fetchBranches();
                         } catch(err) {
                           console.error(err);
-                          toast.error("Failed to update branch");
+                          if (err.response?.data?.details && err.response.data.details.length > 0) {
+                            toast.error(err.response.data.details[0].message);
+                          } else {
+                            toast.error(err.response?.data?.message || "Failed to update branch or manager");
+                          }
                         }
                       }} 
                       className="px-6 py-2 rounded-full bg-[#1cabb1] text-white font-semibold hover:bg-[#168f94] transition-colors shadow-sm text-sm"
