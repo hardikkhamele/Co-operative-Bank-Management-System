@@ -15,12 +15,7 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
-  const defaultRoles = [
-    { code: 'BANK_OWNER', name: 'Bank Owner' },
-    { code: 'BRANCH_MANAGER', name: 'Branch Manager' },
-    { code: 'EMPLOYEE', name: 'Employee' }
-  ];
-  const [roles, setRoles] = useState(defaultRoles);
+  const [roles, setRoles] = useState([]);
 
   useEffect(() => {
     const fetchRoles = async () => {
@@ -29,12 +24,16 @@ const Login = () => {
         if (response.success && response.data) {
           // Use allRoles if available, otherwise combine system and custom roles
           const availableRoles = response.data.allRoles || [...(response.data.systemRoles || []), ...(response.data.customRoles || [])];
-          if (availableRoles.length > 0) {
-            setRoles(availableRoles);
-          }
+          setRoles(availableRoles);
         }
       } catch (err) {
-        console.error("Failed to fetch roles, using default roles:", err);
+        console.error("Failed to fetch roles:", err);
+        // Fallback roles if the backend times out or is spinning up
+        setRoles([
+          { code: 'BANK_OWNER', name: 'Bank Owner' },
+          { code: 'BRANCH_MANAGER', name: 'Branch Manager' },
+          { code: 'CA', name: 'Chartered Accountant' }
+        ]);
       }
     };
     fetchRoles();

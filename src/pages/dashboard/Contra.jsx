@@ -314,6 +314,91 @@ const Contra = () => {
     }
   };
 
+  const fetchReceipts = async () => {
+    setLoading(true);
+    try {
+      const statusParam = filterStatus.length > 0 ? filterStatus.join(',') : undefined;
+      const response = await contraReceiptService.getAll({ 
+        page, limit, search: searchTerm, status: statusParam, 
+        dateFrom: dateFrom || undefined, 
+        dateTo: dateTo || undefined
+      });
+      if (response.success) {
+        setReceipts(response.data.docs || response.data);
+        setTotalPages(response.data.totalPages || 1);
+        setTotalEntries(response.data.totalDocs || response.data.length || 0);
+      }
+    } catch (error) {
+      console.error('Failed to fetch receipts', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchReceipts();
+  }, [page, searchTerm, filterStatus, dateFrom, dateTo]);
+
+  const handleCreate = async () => {
+    try {
+      const res = await contraReceiptService.create(formData);
+      if (res.success) {
+        toast.success('Receipt created successfully');
+        setIsCreateModalOpen(false);
+        fetchReceipts();
+        setFormData({ name: '', glHead: '', glHeadName: '', accountNumber: '', date: '', status: 'NEW' });
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to create receipt');
+    }
+  };
+
+  const handleUpdate = async () => {
+    try {
+      const res = await contraReceiptService.update(selectedReceipt._id || selectedReceipt.id, formData);
+      if (res.success) {
+        toast.success('Receipt updated successfully');
+        setIsEditModalOpen(false);
+        fetchReceipts();
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to update receipt');
+    }
+  };
+
+  const handleDelete = async () => {
+    try {
+      const res = await contraReceiptService.delete(selectedReceipt._id || selectedReceipt.id);
+      if (res.success) {
+        toast.success('Receipt deleted successfully');
+        setIsDeleteModalOpen(false);
+        fetchReceipts();
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to delete receipt');
+    }
+  };
+
+  const handleExport = async () => {
+    try {
+      const statusParam = filterStatus.length > 0 ? filterStatus.join(',') : undefined;
+      const res = await contraReceiptService.export({ 
+        search: searchTerm, 
+        status: statusParam, 
+        dateFrom: dateFrom || undefined, 
+        dateTo: dateTo || undefined 
+      });
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'contra-receipts.csv');
+      document.body.appendChild(link);
+      link.click();
+    } catch (error) {
+      toast.error('Failed to export receipts');
+    }
+  };
+
   const getStatusBadge = (status) => {
     const s = (status || '').toUpperCase();
     switch (s) {
@@ -449,7 +534,7 @@ const Contra = () => {
             {exporting ? 'Exporting...' : 'Export'}
           </button>
           <button 
-            onClick={() => setIsCreateModalOpen(true)}
+            onClick={() => { setFormData({ name: '', glHead: '', glHeadName: '', accountNumber: '', date: '', status: 'NEW' }); setIsCreateModalOpen(true); }}
             className="bg-[#1cabb1] hover:bg-[#159a9f] text-white px-5 py-2.5 rounded-full font-semibold transition-colors text-sm shadow-sm flex-shrink-0"
           >
             + Create Receipt
