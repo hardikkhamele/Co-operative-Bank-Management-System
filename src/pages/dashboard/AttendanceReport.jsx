@@ -1,17 +1,28 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronRight, Search, ChevronDown, Calendar, ChevronLeft, Component } from 'lucide-react';
-import { attendanceService } from '../../api/attendanceService';
+
+const mockBranches = [
+  { id: 'b1', name: 'Pune Main Branch', code: 'PUNE01', state: 'Maharashtra' },
+  { id: 'b2', name: 'Mumbai Central Branch', code: 'MUM01', state: 'Maharashtra' },
+  { id: 'b3', name: 'Nagpur Branch', code: 'NAG01', state: 'Maharashtra' },
+  { id: 'b4', name: 'Ahmedabad Branch', code: 'AHM01', state: 'Gujarat' },
+  { id: 'b5', name: 'Surat Branch', code: 'SUR01', state: 'Gujarat' },
+  { id: 'b6', name: 'Bengaluru Branch', code: 'BLR01', state: 'Karnataka' },
+  { id: 'b7', name: 'New Delhi Branch', code: 'DEL01', state: 'Delhi' }
+];
+
+const mockStates = ['Maharashtra', 'Gujarat', 'Karnataka', 'Delhi'];
 
 const mockEmployees = [
-  { id: 1, name: 'Harleen Quinzel', designation: 'Branch Manager', punchIn: '9:07 AM', punchOut: '6:27 AM', totalHrs: '8 hrs', status: 'P', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop' },
-  { id: 2, name: 'Paula Irving', designation: 'Senior Clerk', punchIn: '—', punchOut: '—', totalHrs: '—', status: 'L', avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop' },
-  { id: 3, name: 'Carol Danvers', designation: 'Assistant Branch Manager', punchIn: '9:07 AM', punchOut: '6:27 AM', totalHrs: '8 hrs', status: 'P', initials: 'CD', avatarColor: 'bg-[#f4f2ff] text-[#5a5ce5]' },
-  { id: 4, name: 'Lois Lane', designation: 'Clerk', punchIn: '—', punchOut: '—', totalHrs: '—', status: 'A', avatar: 'https://images.unsplash.com/photo-1531123897727-8f129e1baf8a?w=100&h=100&fit=crop' },
-  { id: 5, name: 'Karen Starr', designation: 'Cashier', punchIn: '9:07 AM', punchOut: '6:27 AM', totalHrs: '8 hrs', status: 'P', initials: 'KS', avatarColor: 'bg-[#f4f2ff] text-[#5a5ce5]' },
-  { id: 6, name: 'Wanda Maximoff', designation: 'Peon', punchIn: '—', punchOut: '—', totalHrs: '—', status: 'A', avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop' },
-  { id: 7, name: 'Pepper Potts', designation: 'Clerk', punchIn: '9:07 AM', punchOut: '6:27 AM', totalHrs: '8 hrs', status: 'P', avatar: 'https://images.unsplash.com/photo-1554151228-14d9def656e4?w=100&h=100&fit=crop' },
-  { id: 8, name: 'Natasha Romanoff', designation: 'Human Resource', punchIn: '—', punchOut: '—', totalHrs: '—', status: 'A', initials: 'NR', avatarColor: 'bg-[#f4f2ff] text-[#5a5ce5]' }
+  { id: 1, name: 'Harleen Quinzel', designation: 'Branch Manager', punchIn: '9:07 AM', punchOut: '5:07 PM', totalHrs: '8 hrs', status: 'P', state: 'Maharashtra', branchId: 'b1', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop' },
+  { id: 2, name: 'Paula Irving', designation: 'Senior Clerk', punchIn: '—', punchOut: '—', totalHrs: '—', status: 'L', state: 'Maharashtra', branchId: 'b1', avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop' },
+  { id: 3, name: 'Carol Danvers', designation: 'Assistant Branch Manager', punchIn: '9:07 AM', punchOut: '5:07 PM', totalHrs: '8 hrs', status: 'P', state: 'Maharashtra', branchId: 'b2', initials: 'CD', avatarColor: 'bg-[#f4f2ff] text-[#5a5ce5]' },
+  { id: 4, name: 'Lois Lane', designation: 'Clerk', punchIn: '—', punchOut: '—', totalHrs: '—', status: 'A', state: 'Gujarat', branchId: 'b4', avatar: 'https://images.unsplash.com/photo-1531123897727-8f129e1baf8a?w=100&h=100&fit=crop' },
+  { id: 5, name: 'Karen Starr', designation: 'Cashier', punchIn: '9:07 AM', punchOut: '5:07 PM', totalHrs: '8 hrs', status: 'P', state: 'Gujarat', branchId: 'b4', initials: 'KS', avatarColor: 'bg-[#f4f2ff] text-[#5a5ce5]' },
+  { id: 6, name: 'Wanda Maximoff', designation: 'Peon', punchIn: '—', punchOut: '—', totalHrs: '—', status: 'A', state: 'Karnataka', branchId: 'b6', avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop' },
+  { id: 7, name: 'Pepper Potts', designation: 'Clerk', punchIn: '9:07 AM', punchOut: '5:07 PM', totalHrs: '8 hrs', status: 'P', state: 'Delhi', branchId: 'b7', avatar: 'https://images.unsplash.com/photo-1554151228-14d9def656e4?w=100&h=100&fit=crop' },
+  { id: 8, name: 'Natasha Romanoff', designation: 'Human Resource', punchIn: '—', punchOut: '—', totalHrs: '—', status: 'A', state: 'Delhi', branchId: 'b7', initials: 'NR', avatarColor: 'bg-[#f4f2ff] text-[#5a5ce5]' }
 ];
 
 const mockMonthlyAttendance = [
@@ -37,7 +48,7 @@ const mockYearlyAttendance = mockEmployees.map(emp => ({
 const MonthlyStatusBadge = ({ status }) => {
   let styles = '';
   let isPill = false;
-  const upperStatus = status.toUpperCase();
+  const upperStatus = (status || '').toUpperCase();
 
   switch (upperStatus) {
     case 'P':
@@ -72,7 +83,7 @@ const MonthlyStatusBadge = ({ status }) => {
 
   return (
     <div className={`${baseStyles} ${shapeStyles} ${styles}`}>
-      {status}
+      {status || '—'}
     </div>
   );
 };
@@ -86,99 +97,62 @@ const LegendItem = ({ status, label }) => (
 
 const AttendanceReport = () => {
   const [activeTab, setActiveTab] = useState('daily');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
 
   // Filters State
-  const [statesList, setStatesList] = useState([]);
-  const [branchesList, setBranchesList] = useState([]);
   const [selectedState, setSelectedState] = useState('');
   const [selectedBranch, setSelectedBranch] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
   
-  // Daily Date State
-  const [referenceDate, setReferenceDate] = useState('');
+  // Date State
+  const todayISO = new Date().toISOString().split('T')[0];
+  const [referenceDate, setReferenceDate] = useState(todayISO);
   
-  // Data State
-  const [attendanceData, setAttendanceData] = useState([]);
+  // Month / Year Picker for Monthly / Yearly tabs
+  const [selectedMonth, setSelectedMonth] = useState('August');
+  const [selectedYear, setSelectedYear] = useState('2026');
   
   // Pagination State
   const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10);
-  const [meta, setMeta] = useState({
-    totalRecords: 0,
-    totalPages: 1,
-    hasNextPage: false,
-    hasPrevPage: false
-  });
+  const limit = 10;
 
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedSearch(searchQuery);
-      setPage(1);
-    }, 500);
-    return () => clearTimeout(handler);
-  }, [searchQuery]);
-
-  useEffect(() => {
-    const fetchFilters = async () => {
-      try {
-        const res = await attendanceService.getAttendanceFilters(selectedState);
-        if (res.success && res.data) {
-          if (!selectedState) setStatesList(res.data.states || []);
-          setBranchesList(res.data.branches || []);
-        }
-      } catch (err) {
-        console.error("Failed to fetch filters:", err);
-      }
-    };
-    fetchFilters();
+  // Filtered branches based on selected state
+  const availableBranches = useMemo(() => {
+    if (!selectedState) return mockBranches;
+    return mockBranches.filter(b => b.state === selectedState);
   }, [selectedState]);
 
-  const fetchReport = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const params = {
-        period: activeTab.toUpperCase(),
-        page,
-        limit
-      };
-      if (selectedState) params.state = selectedState;
-      if (selectedBranch) params.branchId = selectedBranch;
-      if (debouncedSearch) params.search = debouncedSearch;
-      if (referenceDate) params.date = referenceDate;
-
-      const res = await attendanceService.getAttendanceReport(params);
-      if (res.success) {
-        setAttendanceData(res.data || []);
-        if (res.meta) setMeta(res.meta);
+  // Filtered employee data
+  const filteredDailyData = useMemo(() => {
+    return mockEmployees.filter(emp => {
+      if (selectedState && emp.state !== selectedState) return false;
+      if (selectedBranch && emp.branchId !== selectedBranch) return false;
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase().trim();
+        const matchesName = emp.name.toLowerCase().includes(q);
+        const matchesDesig = (emp.designation || '').toLowerCase().includes(q);
+        if (!matchesName && !matchesDesig) return false;
       }
-    } catch (err) {
-      console.error("Failed to fetch report:", err);
-      setError("Failed to fetch attendance report.");
-    } finally {
-      setLoading(false);
-    }
-  }, [activeTab, page, limit, selectedState, selectedBranch, debouncedSearch, referenceDate]);
+      return true;
+    });
+  }, [selectedState, selectedBranch, searchQuery]);
 
-  useEffect(() => {
-    fetchReport();
-  }, [fetchReport]);
+  const totalRecords = filteredDailyData.length;
+  const totalPages = Math.ceil(totalRecords / limit) || 1;
+  const paginatedDailyData = filteredDailyData.slice((page - 1) * limit, page * limit);
 
   const handlePageChange = (newPage) => {
-    if (newPage >= 1 && newPage <= meta.totalPages) {
+    if (newPage >= 1 && newPage <= totalPages) {
       setPage(newPage);
     }
   };
 
-  const getStatusColor = (status) => {
+  const getStatusBadgeStyle = (status) => {
     switch (status) {
       case 'P': return 'text-[#32c965] border-[#32c965] bg-white';
+      case 'P*': return 'text-[#f59e0b] border-[#f59e0b] bg-white';
       case 'L': return 'text-[#4285F4] border-[#4285F4] bg-white';
       case 'A': return 'text-[#ff3d67] border-[#ff3d67] bg-white';
-      default: return 'text-gray-500 border-gray-500 bg-white';
+      default: return 'text-gray-500 border-gray-400 bg-white';
     }
   };
 
@@ -190,7 +164,7 @@ const AttendanceReport = () => {
         <h1 className="text-3xl font-bold">Bank Attendance</h1>
       </div>
 
-      {/* Header Card */}
+      {/* Breadcrumb Header Card */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 shrink-0">
         <h2 className="text-[22px] font-bold text-[#4285F4] mb-2">Attendance Report</h2>
         <div className="flex items-center text-sm text-gray-500">
@@ -205,38 +179,52 @@ const AttendanceReport = () => {
       {/* Filter Card */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 shrink-0">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Region Filter */}
           <div>
             <label className="block text-sm font-semibold text-gray-800 mb-2">Region (State)</label>
             <div className="relative">
               <select 
                 value={selectedState}
-                onChange={(e) => { setSelectedState(e.target.value); setPage(1); setSelectedBranch(''); }}
-                className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1cabb1] focus:border-[#1cabb1] appearance-none text-gray-500 text-[15px] bg-white"
+                onChange={(e) => { 
+                  setSelectedState(e.target.value); 
+                  setSelectedBranch('');
+                  setPage(1); 
+                }}
+                className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1cabb1] focus:border-[#1cabb1] appearance-none text-gray-700 text-[15px] bg-white"
               >
                 <option value="">All Regions</option>
-                {statesList.map((state, i) => (
+                {mockStates.map((state, i) => (
                   <option key={i} value={state}>{state}</option>
                 ))}
               </select>
               <ChevronDown size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
             </div>
           </div>
+
+          {/* Branch Filter */}
           <div>
             <label className="block text-sm font-semibold text-gray-800 mb-2">Branch</label>
             <div className="relative">
               <select 
                 value={selectedBranch}
-                onChange={(e) => { setSelectedBranch(e.target.value); setPage(1); }}
-                className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1cabb1] focus:border-[#1cabb1] appearance-none text-gray-500 text-[15px] bg-white"
+                onChange={(e) => { 
+                  setSelectedBranch(e.target.value); 
+                  setPage(1); 
+                }}
+                className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1cabb1] focus:border-[#1cabb1] appearance-none text-gray-700 text-[15px] bg-white"
               >
                 <option value="">All Branches</option>
-                {branchesList.map((branch) => (
-                  <option key={branch.id} value={branch.id}>{branch.name}</option>
+                {availableBranches.map((branch) => (
+                  <option key={branch.id} value={branch.id}>
+                    {branch.name} {branch.code ? `(${branch.code})` : ''}
+                  </option>
                 ))}
               </select>
               <ChevronDown size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
             </div>
           </div>
+
+          {/* Search Input */}
           <div>
             <label className="block text-sm font-semibold text-gray-800 mb-2">Search</label>
             <div className="relative">
@@ -244,7 +232,10 @@ const AttendanceReport = () => {
               <input 
                 type="text" 
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setPage(1);
+                }}
                 placeholder="Search by name or designation" 
                 className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1cabb1] focus:border-[#1cabb1] text-[15px] text-gray-700 bg-white"
               />
@@ -255,30 +246,30 @@ const AttendanceReport = () => {
 
       {/* Main Table Card */}
       <div className="bg-transparent flex flex-col w-full">
-        
         <div className="pb-6 flex flex-col gap-6">
           {/* Toggle Tabs */}
           <div className="inline-flex bg-gray-200/60 rounded-xl p-1 self-start">
             <button 
-              onClick={() => setActiveTab('daily')}
+              onClick={() => { setActiveTab('daily'); setPage(1); }}
               className={`flex items-center gap-2 px-6 py-2 rounded-md text-[15px] font-medium transition-colors ${activeTab === 'daily' ? 'bg-white shadow-sm text-gray-800' : 'text-gray-500 hover:text-gray-700'}`}
             >
               <Calendar size={18} /> Daily
             </button>
             <button 
-              onClick={() => setActiveTab('monthly')}
+              onClick={() => { setActiveTab('monthly'); setPage(1); }}
               className={`flex items-center gap-2 px-6 py-2 rounded-md text-[15px] font-medium transition-colors ${activeTab === 'monthly' ? 'bg-white shadow-sm text-gray-800' : 'text-gray-500 hover:text-gray-700'}`}
             >
               <Calendar size={18} /> Monthly
             </button>
             <button 
-              onClick={() => setActiveTab('yearly')}
+              onClick={() => { setActiveTab('yearly'); setPage(1); }}
               className={`flex items-center gap-2 px-6 py-2 rounded-md text-[15px] font-medium transition-colors ${activeTab === 'yearly' ? 'bg-white shadow-sm text-gray-800' : 'text-gray-500 hover:text-gray-700'}`}
             >
               <Calendar size={18} /> Yearly
             </button>
           </div>
 
+          {/* Daily Toolbar */}
           {activeTab === 'daily' && (
             <div className="flex justify-between items-center">
               <h2 className="text-xl font-bold text-gray-800">Daily Attendance</h2>
@@ -288,33 +279,53 @@ const AttendanceReport = () => {
                   type="date" 
                   value={referenceDate}
                   onChange={(e) => { setReferenceDate(e.target.value); setPage(1); }}
-                  className="px-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1cabb1] text-[15px] text-gray-500 min-w-[160px]"
+                  className="px-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1cabb1] text-[15px] text-gray-600 min-w-[160px] bg-white cursor-pointer"
                 />
               </div>
             </div>
           )}
 
+          {/* Monthly Toolbar */}
           {activeTab === 'monthly' && (
             <div className="flex justify-between items-center">
               <h2 className="text-xl font-bold text-gray-800">Monthly Attendance</h2>
               
               <div className="relative">
-                <select className="pl-4 pr-10 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1cabb1] text-[15px] text-gray-600 appearance-none bg-white min-w-[120px]">
+                <select 
+                  value={selectedMonth} 
+                  onChange={(e) => setSelectedMonth(e.target.value)}
+                  className="pl-4 pr-10 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1cabb1] text-[15px] text-gray-600 appearance-none bg-white min-w-[130px] cursor-pointer"
+                >
+                  <option value="January">January</option>
+                  <option value="February">February</option>
+                  <option value="March">March</option>
+                  <option value="April">April</option>
+                  <option value="May">May</option>
+                  <option value="June">June</option>
                   <option value="July">July</option>
                   <option value="August">August</option>
                   <option value="September">September</option>
+                  <option value="October">October</option>
+                  <option value="November">November</option>
+                  <option value="December">December</option>
                 </select>
                 <ChevronDown size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
               </div>
             </div>
           )}
 
+          {/* Yearly Toolbar */}
           {activeTab === 'yearly' && (
             <div className="flex justify-between items-center">
               <h2 className="text-xl font-bold text-gray-800">Yearly Attendance</h2>
               
               <div className="relative">
-                <select className="pl-4 pr-10 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1cabb1] text-[15px] text-gray-600 appearance-none bg-white min-w-[120px]">
+                <select 
+                  value={selectedYear}
+                  onChange={(e) => setSelectedYear(e.target.value)}
+                  className="pl-4 pr-10 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1cabb1] text-[15px] text-gray-600 appearance-none bg-white min-w-[120px] cursor-pointer"
+                >
+                  <option value="2026">2026</option>
                   <option value="2025">2025</option>
                   <option value="2024">2024</option>
                   <option value="2023">2023</option>
@@ -325,59 +336,66 @@ const AttendanceReport = () => {
           )}
         </div>
 
-        {/* Table */}
+        {/* Daily Table */}
         {activeTab === 'daily' && (
-        <div className="w-full overflow-x-auto bg-white rounded-xl shadow-sm border border-gray-200">
-          <table className="w-full min-w-[800px] text-left border-collapse">
-            <thead>
-              <tr className="bg-gray-50/50 border-b border-gray-100 text-sm font-semibold text-gray-700">
-                <th className="py-4 px-6 w-20 text-center">Sr.No.</th>
-                <th className="py-4 px-6">Name</th>
-                <th className="py-4 px-6">Designation</th>
-                <th className="py-4 px-6">Punch In</th>
-                <th className="py-4 px-6">Punch Out</th>
-                <th className="py-4 px-6">Total Hrs</th>
-                <th className="py-4 px-6 text-center">Status</th>
-              </tr>
-            </thead>
-            <tbody className="text-[15px] text-gray-600">
-              {loading && activeTab === 'daily' ? (
-                <tr><td colSpan="7" className="text-center py-8 font-medium">Loading attendance data...</td></tr>
-              ) : attendanceData.length === 0 && activeTab === 'daily' ? (
-                <tr><td colSpan="7" className="text-center py-8 font-medium text-gray-500">No attendance records found.</td></tr>
-              ) : (
-                (activeTab === 'daily' ? attendanceData : mockEmployees).map((row) => (
-                  <tr key={row.id} className="border-b border-gray-100 hover:bg-gray-50/30 transition-colors">
-                    <td className="py-4 px-6 text-center">{row.srNo || row.id}</td>
-                    <td className="py-4 px-6">
-                      <div className="flex items-center gap-3">
-                        {row.profileImage || row.avatar ? (
-                          <img src={row.profileImage || row.avatar} alt={row.name} className="w-8 h-8 rounded-full object-cover" />
-                        ) : (
-                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[13px] font-bold ${row.avatarColor || 'bg-[#f4f2ff] text-[#5a5ce5]'}`}>
-                            {row.initials || (row.name ? row.name.substring(0, 2).toUpperCase() : 'NA')}
-                          </div>
-                        )}
-                        <span className="font-medium text-gray-800">{row.name}</span>
-                      </div>
-                    </td>
-                    <td className="py-4 px-6">{row.designation || '—'}</td>
-                    <td className="py-4 px-6">{row.punchIn || '—'}</td>
-                    <td className="py-4 px-6">{row.punchOut || '—'}</td>
-                    <td className="py-4 px-6">{row.totalHrs || '—'}</td>
-                    <td className="py-4 px-6 text-center">
-                      <div className={`inline-flex items-center justify-center w-8 h-8 rounded-full border text-[13px] font-medium ${getStatusColor(row.status)}`}>
-                        {row.status}
-                      </div>
+          <div className="w-full overflow-x-auto bg-white rounded-xl shadow-sm border border-gray-200">
+            <table className="w-full min-w-[800px] text-left border-collapse">
+              <thead>
+                <tr className="bg-gray-50/50 border-b border-gray-100 text-sm font-semibold text-gray-700">
+                  <th className="py-4 px-6 w-20 text-center">Sr.No.</th>
+                  <th className="py-4 px-6">Name</th>
+                  <th className="py-4 px-6">Designation</th>
+                  <th className="py-4 px-6">Punch In</th>
+                  <th className="py-4 px-6">Punch Out</th>
+                  <th className="py-4 px-6">Total Hrs</th>
+                  <th className="py-4 px-6 text-center">Status</th>
+                </tr>
+              </thead>
+              <tbody className="text-[15px] text-gray-600">
+                {paginatedDailyData.length === 0 ? (
+                  <tr>
+                    <td colSpan="7" className="text-center py-10 font-medium text-gray-500">
+                      No attendance records found.
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                ) : (
+                  paginatedDailyData.map((row, index) => (
+                    <tr key={row.id || index} className="border-b border-gray-100 hover:bg-gray-50/40 transition-colors">
+                      <td className="py-4 px-6 text-center font-medium">{(page - 1) * limit + index + 1}</td>
+                      <td className="py-4 px-6">
+                        <div className="flex items-center gap-3">
+                          {row.avatar ? (
+                            <img 
+                              src={row.avatar} 
+                              alt={row.name} 
+                              className="w-8 h-8 rounded-full object-cover border border-gray-100" 
+                            />
+                          ) : (
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[13px] font-bold ${row.avatarColor || 'bg-[#f4f2ff] text-[#5a5ce5]'}`}>
+                              {row.initials || (row.name ? row.name.substring(0, 2).toUpperCase() : 'NA')}
+                            </div>
+                          )}
+                          <span className="font-medium text-gray-800">{row.name}</span>
+                        </div>
+                      </td>
+                      <td className="py-4 px-6">{row.designation || '—'}</td>
+                      <td className="py-4 px-6">{row.punchIn || '—'}</td>
+                      <td className="py-4 px-6">{row.punchOut || '—'}</td>
+                      <td className="py-4 px-6">{row.totalHrs || '—'}</td>
+                      <td className="py-4 px-6 text-center">
+                        <div className={`inline-flex items-center justify-center w-8 h-8 rounded-full border text-[13px] font-medium ${getStatusBadgeStyle(row.status || 'A')}`}>
+                          {row.status || 'A'}
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         )}
 
+        {/* Monthly Table */}
         {activeTab === 'monthly' && (
           <div className="flex flex-col w-full">
             <div className="w-full overflow-x-auto bg-white rounded-xl shadow-sm border border-gray-200">
@@ -410,12 +428,12 @@ const AttendanceReport = () => {
                         </div>
                       </td>
                       {[...Array(31)].map((_, i) => {
-                        const dayStatus = row.days[i + 1] || 'P'; // default to P for mock
+                        const dayStatus = row.days[i + 1] || 'P';
                         return (
                           <td key={i} className="py-3 px-2 text-center border-r border-gray-200">
                             <MonthlyStatusBadge status={dayStatus} />
                           </td>
-                        )
+                        );
                       })}
                       <td className="py-3 px-4 text-center border-r border-gray-200 font-medium">{row.summary.ot}</td>
                       <td className="py-3 px-4 text-center border-r border-gray-200 font-medium text-gray-700">{row.summary.payDays}</td>
@@ -427,6 +445,7 @@ const AttendanceReport = () => {
           </div>
         )}
 
+        {/* Yearly Table */}
         {activeTab === 'yearly' && (
           <div className="flex flex-col w-full">
             <div className="w-full overflow-x-auto bg-white rounded-xl shadow-sm border border-gray-200">
@@ -472,7 +491,7 @@ const AttendanceReport = () => {
                                </span>
                             </div>
                           </td>
-                        )
+                        );
                       })}
                       <td className="py-3 px-4 text-center border-r border-gray-200 text-[#32c965] font-medium">{row.summary.p}</td>
                       <td className="py-3 px-4 text-center border-r border-gray-200 text-[#ff3d67] font-medium">{row.summary.a}</td>
@@ -487,14 +506,16 @@ const AttendanceReport = () => {
           </div>
         )}
 
-        {/* Footer Pagination and Legends for all tabs */}
+        {/* Footer Pagination and Legends */}
         <div className="mt-6 flex flex-col gap-6">
           <div className="flex items-center justify-between text-[13px] font-medium text-gray-500">
-            <span>Showing {attendanceData.length > 0 ? (page - 1) * limit + 1 : 0} to {Math.min(page * limit, meta.totalRecords)} of {meta.totalRecords} Entries</span>
+            <span>
+              Showing {totalRecords > 0 ? (page - 1) * limit + 1 : 0} to {Math.min(page * limit, totalRecords)} of {totalRecords} Entries
+            </span>
             <div className="flex items-center gap-2">
               <button 
                 onClick={() => handlePageChange(page - 1)}
-                disabled={!meta.hasPrevPage}
+                disabled={page <= 1}
                 className="w-8 h-8 flex items-center justify-center rounded border border-gray-300 text-gray-400 hover:bg-gray-50 transition-colors disabled:opacity-50"
               >
                 <ChevronLeft size={16} />
@@ -502,10 +523,10 @@ const AttendanceReport = () => {
               
               {(() => {
                 let startPage = Math.max(1, page - 2);
-                let endPage = Math.min(meta.totalPages || 1, page + 2);
+                let endPage = Math.min(totalPages, page + 2);
                 if (endPage - startPage < 4) {
-                  if (startPage === 1) endPage = Math.min(5, meta.totalPages || 1);
-                  else if (endPage === (meta.totalPages || 1)) startPage = Math.max(1, (meta.totalPages || 1) - 4);
+                  if (startPage === 1) endPage = Math.min(5, totalPages);
+                  else if (endPage === totalPages) startPage = Math.max(1, totalPages - 4);
                 }
                 const pages = [];
                 for (let i = startPage; i <= endPage; i++) {
@@ -524,7 +545,7 @@ const AttendanceReport = () => {
               
               <button 
                 onClick={() => handlePageChange(page + 1)}
-                disabled={!meta.hasNextPage}
+                disabled={page >= totalPages}
                 className="w-8 h-8 flex items-center justify-center rounded border border-gray-300 text-gray-400 hover:bg-gray-50 transition-colors disabled:opacity-50"
               >
                 <ChevronRight size={16} />
@@ -532,6 +553,7 @@ const AttendanceReport = () => {
             </div>
           </div>
 
+          {/* Status Legends */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 flex flex-wrap items-center gap-x-6 gap-y-4">
             <LegendItem status="P" label="Present" />
             <LegendItem status="P*" label="Present (Late)" />
