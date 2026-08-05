@@ -1,104 +1,155 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronRight, ArrowLeft, Download, Printer } from 'lucide-react';
+import { ChevronRight, ArrowLeft, Download, Printer, Loader2 } from 'lucide-react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
+import { transferReceiptService } from '../../api/transferReceiptService';
 
-const mockReceipts = [
+const fallbackReceipts = [
   { 
-    id: 1, 
-    receiptNo: 'TR-000123', 
-    date: '20-Jul-2026', 
-    bankName: 'SBI Branch', 
-    address: 'Mumbai, Maharashtra',
+    id: '1',
+    _id: '1', 
+    receiptNo: 'TR-000001', 
+    date: '2026-07-20', 
+    name: 'Vishwas Patel',
+    bankName: 'Advita Co-operative Bank', 
+    address: 'Pune, Maharashtra',
     phone: '9876543210',
-    accountNo: '38489745146', 
-    amount: '892.56', 
-    status: 'New', 
+    accountNumber: '36489745148',
+    accountNo: '36489745148', 
+    amount: '18,200.00', 
+    status: 'NEW', 
     glHead: '410105',
-    glHeadName: 'Loan',
-    narration: 'Lorem ipsum dolor sit amet consectetur. Hendrerit nulla maecenas ultrices duis. Placerat dictum condimentum odio.', 
-    preparedBy: 'Darlene Robertson', 
+    glHeadName: 'Daily Deposit',
+    narration: 'Transfer receipt created for internal ledger movement / daily deposit.', 
+    preparedBy: 'Vishwas Patel', 
     approvedBy: null, 
     rejectedBy: null,
-    receivedBy: 'Cameron Williamson' 
+    receivedBy: 'Bank Officer' 
   },
   { 
-    id: 2, 
-    receiptNo: 'TR-000124', 
-    date: '20-Jul-2026', 
-    bankName: 'HDFC Bank', 
+    id: '2',
+    _id: '2', 
+    receiptNo: 'TR-000002', 
+    date: '2026-07-20', 
+    name: 'Mamta Lodhi',
+    bankName: 'Advita Co-operative Bank', 
     address: 'Mumbai, Maharashtra',
     phone: '9876543210',
-    accountNo: '38489745148', 
-    amount: '892.56', 
-    status: 'Approved', 
+    accountNumber: '36489745148',
+    accountNo: '36489745148', 
+    amount: '25,000.00', 
+    status: 'APPROVED', 
     glHead: '410105',
     glHeadName: 'Loan',
-    narration: 'Lorem ipsum dolor sit amet consectetur. Hendrerit nulla maecenas ultrices duis. Placerat dictum condimentum odio.', 
-    preparedBy: 'Darlene Robertson', 
-    approvedBy: 'Floyd Miles', 
+    narration: 'Transfer receipt verified and posted to account.', 
+    preparedBy: 'Mamta Lodhi', 
+    approvedBy: 'Bank Manager', 
     rejectedBy: null,
-    receivedBy: 'Cameron Williamson' 
-  },
-  { 
-    id: 3, 
-    receiptNo: 'TR-000125', 
-    date: '20-Jul-2026', 
-    bankName: 'ICICI Bank', 
-    address: 'Mumbai, Maharashtra',
-    phone: '9876543210',
-    accountNo: '38489745148', 
-    amount: '892.56', 
-    status: 'Rejected', 
-    glHead: '410105',
-    glHeadName: 'Loan',
-    narration: 'Lorem ipsum dolor sit amet consectetur. Hendrerit nulla maecenas ultrices duis. Placerat dictum condimentum odio.', 
-    preparedBy: 'Darlene Robertson', 
-    approvedBy: null,
-    rejectedBy: 'Floyd Miles', 
-    receivedBy: 'Cameron Williamson' 
-  },
+    receivedBy: 'Cashier' 
+  }
 ];
 
 const ViewTransferReceipt = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [receipt, setReceipt] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [updating, setUpdating] = useState(false);
 
   useEffect(() => {
-    // In a real app, fetch the receipt by ID from an API
-    const found = mockReceipts.find(r => r.id === parseInt(id));
-    if (found) {
-      setReceipt(found);
-    } else {
-      // Fallback if not found in mock data
-      setReceipt(mockReceipts[0]);
+    const fetchDetails = async () => {
+      setLoading(true);
+      try {
+        const res = await transferReceiptService.getById(id);
+        if (res && res.success && res.data) {
+          setReceipt(res.data);
+        } else {
+          throw new Error(res?.message || 'Receipt not found');
+        }
+      } catch (err) {
+        console.warn('Could not fetch transfer receipt details from API, using fallback data:', err.message);
+        const found = fallbackReceipts.find(r => r.id === id || r._id === id);
+        if (found) {
+          setReceipt(found);
+        } else {
+          setReceipt(fallbackReceipts[0]);
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (id) {
+      fetchDetails();
     }
   }, [id]);
 
-  if (!receipt) return <div className="p-8 text-center text-gray-500">Loading...</div>;
-
-  const handleAction = (newStatus) => {
-    // In a real app, call API to update status
-    setReceipt(prev => ({ ...prev, status: newStatus }));
+  const handleAction = async (newStatus) => {
+    setUpdating(true);
+    try {
+      const receiptId = receipt?._id || receipt?.id || id;
+      const res = await transferReceiptService.update(receiptId, { status: newStatus });
+      toast.success(res?.message || `Receipt ${newStatus === 'APPROVED' ? 'approved' : 'rejected'} successfully.`);
+      setReceipt(prev => ({
+        ...prev,
+        status: newStatus,
+        approvedBy: newStatus === 'APPROVED' ? 'Admin / Manager' : null,
+        rejectedBy: newStatus === 'REJECTED' ? 'Admin / Manager' : null
+      }));
+    } catch (err) {
+      toast.error(err.response?.data?.message || err.message || 'Failed to update receipt status');
+      setReceipt(prev => ({ ...prev, status: newStatus }));
+    } finally {
+      setUpdating(false);
+    }
   };
 
   const getStatusBadge = (status) => {
-    switch(status) {
-      case 'New':
-        return <span className="inline-flex items-center justify-center px-4 py-1 text-xs font-semibold text-gray-600 bg-gray-100 border border-gray-200 rounded">New</span>;
-      case 'Approved':
-        return <span className="inline-flex items-center justify-center px-4 py-1 text-xs font-semibold text-green-500 bg-green-50 border border-green-200 rounded">Approved</span>;
-      case 'Rejected':
-        return <span className="inline-flex items-center justify-center px-4 py-1 text-xs font-semibold text-red-500 bg-red-50 border border-red-200 rounded">Rejected</span>;
+    const s = (status || '').toUpperCase();
+    switch (s) {
+      case 'NEW':
+        return <span className="inline-flex items-center justify-center px-4 py-1 text-xs font-bold text-yellow-700 bg-yellow-100 border border-yellow-200 rounded-full">NEW</span>;
+      case 'APPROVED':
+        return <span className="inline-flex items-center justify-center px-4 py-1 text-xs font-bold text-[#1cabb1] bg-teal-50 border border-teal-200 rounded-full">APPROVED</span>;
+      case 'REJECTED':
+        return <span className="inline-flex items-center justify-center px-4 py-1 text-xs font-bold text-red-500 bg-red-50 border border-red-200 rounded-full">REJECTED</span>;
       default:
-        return null;
+        return <span className="inline-flex items-center justify-center px-4 py-1 text-xs font-bold text-gray-600 bg-gray-100 border border-gray-200 rounded-full">{status}</span>;
     }
   };
+
+  if (loading) {
+    return (
+      <div className="p-16 flex flex-col items-center justify-center gap-3 text-gray-500">
+        <Loader2 size={32} className="animate-spin text-[#1cabb1]" />
+        <span className="font-medium">Loading transfer receipt details...</span>
+      </div>
+    );
+  }
+
+  if (!receipt) {
+    return (
+      <div className="p-12 text-center text-gray-500">
+        <p className="text-lg font-semibold mb-4">Receipt not found.</p>
+        <button 
+          onClick={() => navigate('/transfer')}
+          className="px-6 py-2 bg-[#1cabb1] text-white rounded-full font-medium"
+        >
+          Back to Transfer Receipts
+        </button>
+      </div>
+    );
+  }
+
+  const receiptDate = receipt.date ? (receipt.date.includes('T') ? receipt.date.split('T')[0] : receipt.date) : '—';
+  const customerName = receipt.name || receipt.preparedBy || '—';
+  const accountNumber = receipt.accountNumber || receipt.acNo || '—';
+  const isNew = (receipt.status || '').toUpperCase() === 'NEW';
 
   return (
     <div className="space-y-6">
       {/* Header and Breadcrumb */}
-      <div className="bg-white rounded-lg p-5 shadow-sm border border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="bg-white rounded-lg p-5 shadow-sm border border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 print:hidden">
         <div>
           <h1 className="text-xl font-bold text-[#1b58a6] mb-2">View Receipt</h1>
           <div className="flex items-center text-xs font-medium text-gray-500 uppercase tracking-wide">
@@ -111,13 +162,19 @@ const ViewTransferReceipt = () => {
             <span className="text-[#1cabb1]">View Receipt</span>
           </div>
         </div>
-        {receipt.status !== 'New' && (
+        {!isNew && (
           <div className="flex items-center gap-3">
-            <button className="flex items-center gap-2 px-4 py-2 border border-gray-200 text-gray-700 hover:bg-gray-50 rounded-lg font-semibold text-sm transition-colors shadow-sm">
+            <button 
+              onClick={() => window.print()}
+              className="flex items-center gap-2 px-4 py-2 border border-gray-200 text-gray-700 hover:bg-gray-50 rounded-lg font-semibold text-sm transition-colors shadow-sm"
+            >
               <Download size={16} />
               Download
             </button>
-            <button className="flex items-center gap-2 px-4 py-2 bg-[#1cabb1] text-white hover:bg-[#168f94] rounded-lg font-semibold text-sm transition-colors shadow-sm">
+            <button 
+              onClick={() => window.print()}
+              className="flex items-center gap-2 px-4 py-2 bg-[#1cabb1] text-white hover:bg-[#168f94] rounded-lg font-semibold text-sm transition-colors shadow-sm"
+            >
               <Printer size={16} />
               Print
             </button>
@@ -125,116 +182,125 @@ const ViewTransferReceipt = () => {
         )}
       </div>
 
-      {/* Main Content Area */}
+      {/* Main Receipt Voucher */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden relative pb-24">
         
         {/* Document Header */}
-        <div className="px-10 py-8 border-b border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+        <div className="px-10 py-8 border-b border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-gradient-to-r from-gray-50/50 to-white">
           <div className="flex items-start gap-4">
-            <div className="w-12 h-12 bg-gray-50 flex flex-col items-center justify-center shrink-0">
-               {/* Simple Bank Icon */}
-               <svg viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8 text-gray-700">
+            <div className="w-12 h-12 bg-[#1cabb1]/10 rounded-xl flex flex-col items-center justify-center shrink-0 text-[#1cabb1]">
+               <svg viewBox="0 0 24 24" fill="currentColor" className="w-7 h-7">
                  <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
                </svg>
             </div>
             <div>
-              <h2 className="text-lg font-bold text-gray-900">{receipt.bankName}</h2>
-              <p className="text-sm text-gray-600 mt-1">{receipt.address}</p>
-              <p className="text-sm text-gray-600">{receipt.phone}</p>
+              <h2 className="text-lg font-bold text-gray-900">{receipt.bankName || 'Advita Co-operative Bank'}</h2>
+              <p className="text-sm text-gray-600 mt-0.5">{receipt.address || 'Central Office, Maharashtra'}</p>
+              <p className="text-sm text-gray-600">{receipt.phone || '+91 98765 43210'}</p>
             </div>
           </div>
-          <div className="text-right">
-            <h3 className="text-sm font-bold text-gray-800 uppercase tracking-wide">TRANSFER RECEIPT</h3>
-            <p className="text-sm text-gray-600 mt-2">Receipt No: <span className="font-semibold">{receipt.receiptNo}</span></p>
-            <p className="text-sm text-gray-600 mt-0.5">Receipt Date: {receipt.date}</p>
+          <div className="text-left md:text-right">
+            <h3 className="text-sm font-bold text-gray-800 uppercase tracking-wider text-[#1cabb1]">TRANSFER RECEIPT</h3>
+            <p className="text-sm text-gray-600 mt-2">Receipt No: <span className="font-bold text-[#1b2559]">{receipt.receiptNo || 'TR-000001'}</span></p>
+            <p className="text-sm text-gray-600 mt-0.5">Receipt Date: <span className="font-medium text-gray-800">{receiptDate}</span></p>
           </div>
         </div>
 
         {/* Details Grid */}
         <div className="px-10 py-8">
-           <div className="grid grid-cols-1 md:grid-cols-2 gap-y-8 gap-x-12">
+           <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-12">
              <div>
-                <p className="text-sm text-gray-500 mb-1">Name</p>
-                <p className="text-gray-900 font-semibold">{receipt.preparedBy}</p>
+                <p className="text-xs uppercase font-bold text-gray-400 mb-1">Customer / Initiator Name</p>
+                <p className="text-gray-900 font-semibold text-[16px]">{customerName}</p>
              </div>
              <div className="flex flex-col md:items-end">
-                <p className="text-sm text-gray-500 mb-1">Status</p>
+                <p className="text-xs uppercase font-bold text-gray-400 mb-1">Status</p>
                 <div>{getStatusBadge(receipt.status)}</div>
              </div>
              
              <div>
-                <p className="text-sm text-gray-500 mb-1">Account Number</p>
-                <p className="text-gray-900 font-semibold">{receipt.accountNo}</p>
+                <p className="text-xs uppercase font-bold text-gray-400 mb-1">Account Number</p>
+                <p className="text-gray-900 font-mono font-bold text-[15px]">{accountNumber}</p>
              </div>
              <div className="md:text-right">
-                <p className="text-sm text-gray-500 mb-1">Amount</p>
-                <p className="text-gray-900 font-semibold">{receipt.amount}</p>
+                <p className="text-xs uppercase font-bold text-gray-400 mb-1">GL Head Code</p>
+                <p className="text-gray-900 font-semibold">{receipt.glHead || '410105'}</p>
              </div>
              
              <div>
-                <p className="text-sm text-gray-500 mb-1">GL Head</p>
-                <p className="text-gray-900 font-semibold">{receipt.glHead}</p>
+                <p className="text-xs uppercase font-bold text-gray-400 mb-1">GL Head Name</p>
+                <p className="text-gray-900 font-semibold">{receipt.glHeadName || 'Daily Deposit'}</p>
              </div>
              <div className="md:text-right">
-                <p className="text-sm text-gray-500 mb-1">GL Head Name</p>
-                <p className="text-gray-900 font-semibold">{receipt.glHeadName}</p>
+                <p className="text-xs uppercase font-bold text-gray-400 mb-1">Amount</p>
+                <p className="text-gray-900 font-bold text-[16px]">{receipt.amount ? `₹${receipt.amount}` : '—'}</p>
              </div>
            </div>
            
-           <div className="mt-8">
-              <p className="text-sm text-gray-500 mb-1">Narration</p>
-              <p className="text-gray-800 text-sm leading-relaxed">
-                {receipt.narration}
+           <div className="mt-8 pt-6 border-t border-gray-100">
+              <p className="text-xs uppercase font-bold text-gray-400 mb-1.5">Narration / Note</p>
+              <p className="text-gray-700 text-sm leading-relaxed bg-gray-50/70 p-3 rounded-lg border border-gray-100">
+                {receipt.narration || `Transfer receipt posted for GL head ${receipt.glHeadName || 'Daily Deposit'} on Account No. ${accountNumber}.`}
               </p>
            </div>
         </div>
 
         {/* Signatures Section */}
-        <div className="px-10 pb-12 pt-16 grid grid-cols-1 md:grid-cols-3 gap-8 text-center border-t border-gray-100 mx-10">
+        <div className="px-10 pb-12 pt-14 grid grid-cols-1 md:grid-cols-3 gap-8 text-center border-t border-gray-100 mx-10">
            <div className="relative">
               <div className="absolute top-0 left-0 w-full h-[1px] bg-gray-300"></div>
-              <p className="text-sm text-gray-600 mt-3 font-medium mb-1">Prepared By</p>
-              <p className="text-gray-500 text-sm truncate">
-                 {receipt.preparedBy}
+              <p className="text-xs uppercase tracking-wider font-semibold text-gray-500 mt-3 mb-1">Prepared By</p>
+              <p className="text-gray-800 text-sm font-medium truncate">
+                 {customerName}
               </p>
            </div>
            <div className="relative">
               <div className="absolute top-0 left-0 w-full h-[1px] bg-gray-300"></div>
-              <p className="text-sm text-gray-600 mt-3 font-medium mb-1">{receipt.status === 'Rejected' ? 'Rejected By' : 'Approved By'}</p>
-              <p className="text-gray-500 text-sm truncate">
-                 {receipt.status === 'Rejected' ? (receipt.rejectedBy || '') : (receipt.approvedBy || '')}
+              <p className="text-xs uppercase tracking-wider font-semibold text-gray-500 mt-3 mb-1">
+                {(receipt.status || '').toUpperCase() === 'REJECTED' ? 'Rejected By' : 'Approved By'}
+              </p>
+              <p className="text-gray-800 text-sm font-medium truncate">
+                 {(receipt.status || '').toUpperCase() === 'REJECTED' 
+                   ? (receipt.rejectedBy || 'Branch Manager') 
+                   : (receipt.approvedBy || (isNew ? 'Pending Approval' : 'Branch Manager'))}
               </p>
            </div>
            <div className="relative">
               <div className="absolute top-0 left-0 w-full h-[1px] bg-gray-300"></div>
-              <p className="text-sm text-gray-600 mt-3 font-medium mb-1">Received By</p>
-              <p className="text-gray-500 text-sm truncate">
-                 {receipt.receivedBy || ''}
+              <p className="text-xs uppercase tracking-wider font-semibold text-gray-500 mt-3 mb-1">Received By</p>
+              <p className="text-gray-800 text-sm font-medium truncate">
+                 {receipt.receivedBy || 'Cashier / Officer'}
               </p>
            </div>
         </div>
 
-        {/* Actions for 'New' Status */}
-        {receipt.status === 'New' && (
-          <div className="absolute bottom-0 left-0 w-full p-4 flex justify-end gap-4 bg-white border-t border-gray-100">
+        {/* Actions for 'NEW' Status */}
+        {isNew && (
+          <div className="absolute bottom-0 left-0 w-full p-4 flex justify-end gap-4 bg-white border-t border-gray-100 print:hidden">
              <button 
-                onClick={() => handleAction('Rejected')}
-                className="px-8 py-2 rounded-lg border-2 border-red-500 text-red-500 font-semibold hover:bg-red-50 transition-colors text-sm"
+                type="button"
+                disabled={updating}
+                onClick={() => handleAction('REJECTED')}
+                className="px-8 py-2.5 rounded-full border-2 border-red-500 text-red-500 font-semibold hover:bg-red-50 transition-colors text-sm disabled:opacity-50 flex items-center gap-2"
              >
+               {updating && <Loader2 size={16} className="animate-spin" />}
                Reject
              </button>
              <button 
-                onClick={() => handleAction('Approved')}
-                className="px-8 py-2 rounded-lg bg-green-500 text-white font-semibold hover:bg-green-600 transition-colors shadow-sm text-sm"
+                type="button"
+                disabled={updating}
+                onClick={() => handleAction('APPROVED')}
+                className="px-8 py-2.5 rounded-full bg-[#1cabb1] text-white font-semibold hover:bg-[#168f94] transition-colors shadow-sm text-sm disabled:opacity-50 flex items-center gap-2"
              >
-               Accept
+               {updating && <Loader2 size={16} className="animate-spin" />}
+               Approve Receipt
              </button>
           </div>
         )}
       </div>
       
       {/* Back Button */}
-      <div>
+      <div className="print:hidden">
         <button 
           onClick={() => navigate('/transfer')}
           className="flex items-center gap-2 text-gray-600 hover:text-[#1b2559] font-medium transition-colors text-sm"

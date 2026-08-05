@@ -10,8 +10,10 @@ export default defineConfig({
       '/api': {
         target: 'https://advita-backend.onrender.com',
         changeOrigin: true,
-        headers: {
-          Origin: 'http://localhost:3000'
+        configure: (proxy) => {
+          proxy.on('proxyReq', (proxyReq) => {
+            proxyReq.removeHeader('origin');
+          });
         }
       }
     }

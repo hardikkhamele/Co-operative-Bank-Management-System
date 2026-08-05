@@ -1,29 +1,140 @@
-import React, { useState } from 'react';
-import { Search, Edit, Trash2, ChevronRight, SlidersHorizontal, ChevronDown, X, Eye, Download } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Search, ChevronRight, SlidersHorizontal, ChevronDown, X, Eye, Download, Loader2 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
-
-const mockCashPayments = [
-  { id: 1, srNo: 1, employeeName: 'Clark Kent', avatar: 'https://ui-avatars.com/api/?name=Clark+Kent&background=random', designation: 'Collection Executive', branch: 'Mumbai Branch', totalCollection: '42,000', totalSubmitted: '42,000', totalPending: '42,000' },
-  { id: 2, srNo: 2, employeeName: 'Tony Stark', avatar: 'https://ui-avatars.com/api/?name=Tony+Stark&background=random', designation: 'Collection Executive', branch: 'Mumbai Branch', totalCollection: '42,000', totalSubmitted: '42,000', totalPending: '42,000' },
-  { id: 3, srNo: 3, employeeName: 'Bruce Wayne', avatar: 'https://ui-avatars.com/api/?name=Bruce+Wayne&background=random', designation: 'Collection Executive', branch: 'Jaipur Branch', totalCollection: '42,000', totalSubmitted: '42,000', totalPending: '42,000' },
-  { id: 4, srNo: 4, employeeName: 'Barry Allen', avatar: 'https://ui-avatars.com/api/?name=Barry+Allen&background=random', designation: 'Collection Executive', branch: 'Nagpur Branch', totalCollection: '42,000', totalSubmitted: '42,000', totalPending: '42,000' },
-  { id: 5, srNo: 5, employeeName: 'Steve Rogers', avatar: 'https://ui-avatars.com/api/?name=Steve+Rogers&background=random', designation: 'Collection Executive', branch: 'Delhi Branch', totalCollection: '42,000', totalSubmitted: '42,000', totalPending: '42,000' },
-  { id: 6, srNo: 6, employeeName: 'Clint Barton', avatar: 'https://ui-avatars.com/api/?name=Clint+Barton&background=random', designation: 'Collection Executive', branch: 'Nagpur Branch', totalCollection: '41,000', totalSubmitted: '42,000', totalPending: '42,000' },
-  { id: 7, srNo: 7, employeeName: 'Scott Lang', avatar: 'https://ui-avatars.com/api/?name=Scott+Lang&background=random', designation: 'Collection Executive', branch: 'Delhi Branch', totalCollection: '42,000', totalSubmitted: '42,000', totalPending: '42,000' },
-  { id: 8, srNo: 8, employeeName: 'Peter Parker', avatar: 'https://ui-avatars.com/api/?name=Peter+Parker&background=random', designation: 'Collection Executive', branch: 'Nagpur Branch', totalCollection: '42,000', totalSubmitted: '42,000', totalPending: '42,000' },
-];
+import { toast } from 'react-toastify';
+import { cashPaymentService } from '../../api/cashPaymentService';
 
 const CashPayment = () => {
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [items, setItems] = useState([]);
+  
+  // Search & Filter State
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [openFilterDropdown, setOpenFilterDropdown] = useState(null);
-  
   const [filterDesignation, setFilterDesignation] = useState([]);
   const [filterBranch, setFilterBranch] = useState([]);
   
+  // Pagination State
+  const [page, setPage] = useState(1);
+  const limit = 10;
+  const [meta, setMeta] = useState({
+    page: 1,
+    limit: 10,
+    totalRecords: 0,
+    totalPages: 1
+  });
+
   const toggleFilter = (setter, value) => {
     setter(prev => prev.includes(value) ? prev.filter(v => v !== value) : [...prev, value]);
+  };
+
+  // Debounce search input
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(searchTerm);
+      setPage(1);
+    }, 400);
+    return () => clearTimeout(handler);
+  }, [searchTerm]);
+
+  // Fetch Cash Payments from API
+  const fetchCashPayments = useCallback(async () => {
+    setLoading(true);
+    try {
+      const params = {
+        page,
+        limit
+      };
+      if (debouncedSearch.trim()) {
+        params.search = debouncedSearch.trim();
+      }
+
+      const res = await cashPaymentService.list(params);
+      if (res && (res.success || res.statusCode === 200)) {
+        const dataPayload = res.data || {};
+        const itemsList = Array.isArray(dataPayload.items)
+          ? dataPayload.items
+          : Array.isArray(dataPayload)
+          ? dataPayload
+          : [];
+        setItems(itemsList);
+        if (dataPayload.meta) {
+          setMeta(dataPayload.meta);
+        } else {
+          setMeta({
+            page,
+            limit,
+            totalRecords: itemsList.length,
+            totalPages: Math.ceil(itemsList.length / limit) || 1
+          });
+        }
+      } else {
+        throw new Error(res?.message || 'Failed to fetch cash payments');
+      }
+    } catch (err) {
+      console.error('Error fetching cash payments:', err);
+      toast.error(err.response?.data?.message || err.message || 'Failed to load cash payments');
+      setItems([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [page, limit, debouncedSearch]);
+
+  useEffect(() => {
+    fetchCashPayments();
+  }, [fetchCashPayments]);
+
+  // Client-side filtering for designation and branch if selected
+  const displayedItems = items.filter(item => {
+    if (filterDesignation.length > 0 && item.designation) {
+      if (!filterDesignation.includes(item.designation)) return false;
+    }
+    if (filterBranch.length > 0 && item.branch) {
+      if (!filterBranch.includes(item.branch)) return false;
+    }
+    return true;
+  });
+
+  // Export to CSV
+  const handleExport = () => {
+    setExporting(true);
+    try {
+      const headers = ['Sr.No.', 'Employee ID', 'Employee Name', 'Designation', 'Total Cash Collection', 'Total Cash Submitted', 'Total Cash Pending'];
+      const rows = displayedItems.map((item, idx) => [
+        (page - 1) * limit + idx + 1,
+        `"${item.employeeId || item._id || ''}"`,
+        `"${item.employeeName || item.name || ''}"`,
+        `"${item.designation || 'Onboarding Team'}"`,
+        item.totalCashCollection || 0,
+        item.totalCashSubmitted || 0,
+        item.totalCashPending || 0
+      ]);
+
+      const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement('a');
+      link.setAttribute('href', encodedUri);
+      link.setAttribute('download', `cash-payments-page-${page}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      toast.success('Cash payment records exported successfully!');
+    } catch (err) {
+      console.error('Export error:', err);
+      toast.error('Failed to export CSV');
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const formatCurrency = (val) => {
+    const num = Number(val) || 0;
+    return num.toLocaleString('en-IN');
   };
 
   return (
@@ -34,7 +145,7 @@ const CashPayment = () => {
         <div className="flex items-center text-sm font-medium text-gray-500">
           <Link to="/dashboard" className="hover:text-[#1b2559] transition-colors">Dashboard</Link>
           <ChevronRight size={16} className="mx-1" />
-          <span>Cash Payment</span>
+          <span>Payment Management</span>
           <ChevronRight size={16} className="mx-1" />
           <span className="text-[#1b2559]">Cash Payment</span>
         </div>
@@ -49,16 +160,18 @@ const CashPayment = () => {
             </div>
             <input
               type="text"
-              className="block w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#1cabb1] focus:border-[#1cabb1] text-sm"
-              placeholder="Search"
+              className="block w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#1cabb1] focus:border-[#1cabb1] text-sm bg-white text-gray-800"
+              placeholder="Search employee by name"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
+          
           <div className="relative">
             <button 
               onClick={() => setIsFilterOpen(!isFilterOpen)}
               className="flex items-center justify-center p-2.5 border border-gray-200 rounded-lg text-gray-500 hover:bg-gray-50 transition-colors relative focus:outline-none bg-white"
+              title="Filters"
             >
               <SlidersHorizontal size={18} />
               {(filterDesignation.length > 0 || filterBranch.length > 0) && (
@@ -89,7 +202,7 @@ const CashPayment = () => {
                     </div>
                     {openFilterDropdown === 'designation' && (
                       <div className="absolute z-30 top-full left-0 w-full mt-2 bg-white border border-gray-200 rounded-xl shadow-lg py-3 flex flex-col gap-2">
-                        {['Human Resource', 'Branch Manager', 'Assistant Branch Manager'].map(opt => (
+                        {['Onboarding Team', 'Collection Executive', 'Branch Manager', 'Assistant Branch Manager'].map(opt => (
                           <label key={opt} className="flex items-center gap-3 px-4 py-1.5 hover:bg-gray-50 cursor-pointer">
                             <div className="relative flex items-center justify-center">
                               <input 
@@ -99,39 +212,6 @@ const CashPayment = () => {
                                 onChange={() => toggleFilter(setFilterDesignation, opt)}
                               />
                               {filterDesignation.includes(opt) && (
-                                <svg className="absolute w-3.5 h-3.5 text-white pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                                  <polyline points="20 6 9 17 4 12"></polyline>
-                                </svg>
-                              )}
-                            </div>
-                            <span className="text-[15px] font-medium text-gray-700">{opt}</span>
-                          </label>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  
-                  {/* Branch Dropdown */}
-                  <div className="relative">
-                    <div 
-                      className="w-full px-4 py-3 rounded-xl border border-gray-200 flex justify-between items-center cursor-pointer bg-white"
-                      onClick={() => setOpenFilterDropdown(openFilterDropdown === 'branch' ? null : 'branch')}
-                    >
-                      <span className="text-gray-500 text-[14px] font-medium">Branch</span>
-                      <ChevronDown size={18} className={`text-gray-400 transition-transform ${openFilterDropdown === 'branch' ? 'rotate-180' : ''}`} />
-                    </div>
-                    {openFilterDropdown === 'branch' && (
-                      <div className="absolute z-30 top-full left-0 w-full mt-2 bg-white border border-gray-200 rounded-xl shadow-lg py-3 flex flex-col gap-2">
-                        {['Mumbai Branch', 'Nagpur Branch', 'Kolkata Branch'].map(opt => (
-                          <label key={opt} className="flex items-center gap-3 px-4 py-1.5 hover:bg-gray-50 cursor-pointer">
-                            <div className="relative flex items-center justify-center">
-                              <input 
-                                type="checkbox" 
-                                className="w-5 h-5 rounded-[4px] border-2 border-gray-400 appearance-none checked:bg-[#1cabb1] checked:border-[#1cabb1] transition-colors cursor-pointer"
-                                checked={filterBranch.includes(opt)}
-                                onChange={() => toggleFilter(setFilterBranch, opt)}
-                              />
-                              {filterBranch.includes(opt) && (
                                 <svg className="absolute w-3.5 h-3.5 text-white pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                                   <polyline points="20 6 9 17 4 12"></polyline>
                                 </svg>
@@ -163,12 +243,15 @@ const CashPayment = () => {
             )}
           </div>
         </div>
+
         <div className="flex items-center gap-3">
           <button 
-            className="flex items-center gap-2 bg-[#1cabb1] hover:bg-[#159a9f] text-white px-5 py-2.5 rounded-full font-semibold transition-colors text-sm shadow-sm flex-shrink-0"
+            onClick={handleExport}
+            disabled={exporting || displayedItems.length === 0}
+            className="flex items-center gap-2 bg-[#1cabb1] hover:bg-[#159a9f] text-white px-5 py-2.5 rounded-full font-semibold transition-colors text-sm shadow-sm flex-shrink-0 disabled:opacity-50"
           >
-            <Download size={18} />
-            Export
+            {exporting ? <Loader2 size={18} className="animate-spin" /> : <Download size={18} />}
+            {exporting ? 'Exporting...' : 'Export'}
           </button>
         </div>
       </div>
@@ -182,7 +265,6 @@ const CashPayment = () => {
                 <th className="px-6 py-4">Sr.No.</th>
                 <th className="px-6 py-4">Employee Name</th>
                 <th className="px-6 py-4">Designation</th>
-                <th className="px-6 py-4">Branch</th>
                 <th className="px-6 py-4">Total Cash<br/>Collection</th>
                 <th className="px-6 py-4">Total Cash<br/>Submitted</th>
                 <th className="px-6 py-4">Total Cash<br/>Pending</th>
@@ -190,35 +272,64 @@ const CashPayment = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {mockCashPayments.map((payment) => (
-                <tr key={payment.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-6 py-4 text-gray-700">{payment.srNo}</td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full overflow-hidden">
-                        <img src={payment.avatar} alt={payment.employeeName} className="w-full h-full object-cover" />
-                      </div>
-                      <span className="text-[#1b2559] font-semibold">{payment.employeeName}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-gray-700">{payment.designation}</td>
-                  <td className="px-6 py-4 text-gray-700">{payment.branch}</td>
-                  <td className="px-6 py-4 text-gray-700">₹{payment.totalCollection}</td>
-                  <td className="px-6 py-4 text-gray-700">₹{payment.totalSubmitted}</td>
-                  <td className="px-6 py-4 text-gray-700">₹{payment.totalPending}</td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center justify-center gap-3">
-                      <button 
-                        onClick={() => navigate(`/cash-payment/view/${payment.id}`)}
-                        className="w-8 h-8 flex items-center justify-center rounded bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors" 
-                        title="View"
-                      >
-                        <Eye size={16} />
-                      </button>
+              {loading ? (
+                <tr>
+                  <td colSpan="7" className="text-center py-12">
+                    <div className="flex items-center justify-center gap-2 text-gray-500">
+                      <Loader2 size={20} className="animate-spin text-[#1cabb1]" />
+                      <span>Loading cash payment records...</span>
                     </div>
                   </td>
                 </tr>
-              ))}
+              ) : displayedItems.length === 0 ? (
+                <tr>
+                  <td colSpan="7" className="text-center py-12 text-gray-500 font-medium">
+                    No cash payment records found.
+                  </td>
+                </tr>
+              ) : (
+                displayedItems.map((payment, index) => {
+                  const empId = payment.employeeId || payment._id || payment.id;
+                  const empName = payment.employeeName || payment.name || 'Unnamed Employee';
+                  const designation = payment.designation || 'Onboarding Team';
+                  const avatarUrl = payment.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(empName)}&background=random`;
+
+                  return (
+                    <tr key={empId || index} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-6 py-4 text-gray-700 font-medium">
+                        {(page - 1) * limit + index + 1}
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 border border-gray-100">
+                            <img src={avatarUrl} alt={empName} className="w-full h-full object-cover" />
+                          </div>
+                          <span className="text-[#1b2559] font-semibold">{empName}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-gray-700">{designation}</td>
+                      <td className="px-6 py-4 text-gray-700 font-medium">₹{formatCurrency(payment.totalCashCollection)}</td>
+                      <td className="px-6 py-4 text-gray-700 font-medium">₹{formatCurrency(payment.totalCashSubmitted)}</td>
+                      <td className="px-6 py-4 text-gray-700 font-medium">
+                        <span className={`font-semibold ${Number(payment.totalCashPending) > 0 ? 'text-amber-600' : 'text-gray-700'}`}>
+                          ₹{formatCurrency(payment.totalCashPending)}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center justify-center gap-3">
+                          <button 
+                            onClick={() => navigate(`/cash-payment/view/${empId}`)}
+                            className="w-8 h-8 flex items-center justify-center rounded bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors" 
+                            title="View Employee Cash Details"
+                          >
+                            <Eye size={16} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
             </tbody>
           </table>
         </div>
@@ -226,22 +337,45 @@ const CashPayment = () => {
         {/* Pagination */}
         <div className="px-6 py-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="text-sm text-gray-800 font-medium">
-            Showing 1 to 8 of 30 Entries
+            Showing {displayedItems.length > 0 ? (page - 1) * limit + 1 : 0} to {Math.min(page * limit, meta.totalRecords || displayedItems.length)} of {meta.totalRecords || displayedItems.length} Entries
           </div>
           <div className="flex items-center gap-2">
-            <button className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors">
+            <button 
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              disabled={page <= 1}
+              className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors disabled:opacity-50"
+            >
               <ChevronRight size={16} className="rotate-180" />
             </button>
-            <button className="w-8 h-8 flex items-center justify-center rounded-full bg-[#1cabb1] text-white font-medium shadow-sm">
-              1
-            </button>
-            <button className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors">
-              2
-            </button>
-            <button className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors">
-              3
-            </button>
-            <button className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors">
+
+            {(() => {
+              const totalPages = meta.totalPages || 1;
+              let startPage = Math.max(1, page - 2);
+              let endPage = Math.min(totalPages, page + 2);
+              if (endPage - startPage < 4) {
+                if (startPage === 1) endPage = Math.min(5, totalPages);
+                else if (endPage === totalPages) startPage = Math.max(1, totalPages - 4);
+              }
+              const pageButtons = [];
+              for (let i = startPage; i <= endPage; i++) {
+                pageButtons.push(
+                  <button 
+                    key={i}
+                    onClick={() => setPage(i)}
+                    className={`w-8 h-8 flex items-center justify-center rounded-full font-medium transition-colors ${page === i ? 'bg-[#1cabb1] text-white shadow-sm' : 'border border-gray-200 text-gray-700 hover:bg-gray-50'}`}
+                  >
+                    {i}
+                  </button>
+                );
+              }
+              return pageButtons;
+            })()}
+
+            <button 
+              onClick={() => setPage(p => Math.min(meta.totalPages || 1, p + 1))}
+              disabled={page >= (meta.totalPages || 1)}
+              className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors disabled:opacity-50"
+            >
               <ChevronRight size={16} />
             </button>
           </div>

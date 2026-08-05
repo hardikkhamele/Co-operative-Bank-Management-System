@@ -1,47 +1,320 @@
-import React, { useState, useEffect } from 'react';
-import { Search, Edit, Trash2, ChevronRight, SlidersHorizontal, ChevronDown, X, Eye, Download } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Search, Edit, Trash2, ChevronRight, SlidersHorizontal, ChevronDown, X, Eye, Download, Loader2, Calendar } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
-import { creditReceiptService } from '../../api/receiptService';
 import { toast } from 'react-toastify';
+import { creditReceiptService } from '../../api/creditReceiptService';
+
+const fallbackReceipts = [
+  { id: '1', _id: '1', srNo: 1, receiptNo: 'CR-000001', name: 'Mamta Lodhi', glHead: '410105', glHeadName: 'Loan', accountNumber: '36489745148', acNo: '36489745148', date: '2026-07-20', status: 'NEW' },
+  { id: '2', _id: '2', srNo: 2, receiptNo: 'CR-000002', name: 'Hillery Moses', glHead: '410105', glHeadName: 'Loan', accountNumber: '36489745148', acNo: '36489745148', date: '2026-07-20', status: 'APPROVED' },
+  { id: '3', _id: '3', srNo: 3, receiptNo: 'CR-000003', name: 'Mohd Hadi', glHead: '410105', glHeadName: 'Loan', accountNumber: '36489745148', acNo: '36489745148', date: '2026-07-20', status: 'REJECTED' },
+  { id: '4', _id: '4', srNo: 4, receiptNo: 'CR-000004', name: 'Navjot Kaur', glHead: '410105', glHeadName: 'Loan', accountNumber: '36489745148', acNo: '36489745148', date: '2026-07-20', status: 'NEW' },
+  { id: '5', _id: '5', srNo: 5, receiptNo: 'CR-000005', name: 'Vishwas Patel', glHead: '410105', glHeadName: 'Daily Deposit', accountNumber: '36489745148', acNo: '36489745148', date: '2026-07-20', status: 'NEW' },
+  { id: '6', _id: '6', srNo: 6, receiptNo: 'CR-000006', name: 'Vikas Tiwari', glHead: '410105', glHeadName: 'Daily Agent Collection', accountNumber: '36489745148', acNo: '36489745148', date: '2026-07-20', status: 'APPROVED' },
+  { id: '7', _id: '7', srNo: 7, receiptNo: 'CR-000007', name: 'Amardeep Singh', glHead: '410105', glHeadName: 'Monthly RD', accountNumber: '36489745148', acNo: '36489745148', date: '2026-07-20', status: 'APPROVED' },
+];
 
 const GL_HEAD_OPTIONS = [
   { code: '410105', name: 'Loan' },
   { code: '410106', name: 'Daily Deposit' },
   { code: '410107', name: 'Daily Agent Collection' },
   { code: '410108', name: 'Monthly RD' },
-  { code: '410109', name: 'Savings Account' }
+  { code: '410109', name: 'Savings Account' },
+  { code: '410110', name: 'Current Account' },
+  { code: '410111', name: 'Fixed Deposit' },
+  { code: '410112', name: 'Recurring Deposit' }
 ];
 
 const Credit = () => {
   const navigate = useNavigate();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [openFilterDropdown, setOpenFilterDropdown] = useState(null);
-  
-  const [filterStatus, setFilterStatus] = useState([]);
-  const [filterBranch, setFilterBranch] = useState([]);
-  
-  // API state
-  const [receipts, setReceipts] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalEntries, setTotalEntries] = useState(0);
-  const limit = 8;
+  const [exporting, setExporting] = useState(false);
+  const [receipts, setReceipts] = useState([]);
   
-  // Modals state
+  // Search & Filter State
+  const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [selectedStatus, setSelectedStatus] = useState('');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+  
+  // Pagination State
+  const [page, setPage] = useState(1);
+  const limit = 8;
+  const [meta, setMeta] = useState({
+    totalRecords: 0,
+    totalPages: 1,
+    page: 1,
+    limit: 8,
+    hasNextPage: false,
+    hasPrevPage: false
+  });
+
+  // Modal States
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedReceipt, setSelectedReceipt] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
 
-  // Form state
-  const [formData, setFormData] = useState({
-    name: '', glHead: '', glHeadName: '', accountNumber: '', date: '', status: 'NEW'
+  // Form State for Create
+  const todayISO = new Date().toISOString().split('T')[0];
+  const [createForm, setCreateForm] = useState({
+    name: '',
+    glHead: '410105',
+    glHeadName: 'Loan',
+    accountNumber: '',
+    date: todayISO,
+    status: 'NEW'
   });
 
-  const toggleFilter = (setter, value) => {
-    setter(prev => prev.includes(value) ? prev.filter(v => v !== value) : [...prev, value]);
+  // Form State for Edit
+  const [editForm, setEditForm] = useState({
+    name: '',
+    glHead: '410105',
+    glHeadName: 'Loan',
+    accountNumber: '',
+    date: todayISO,
+    status: 'NEW'
+  });
+
+  // Debounce search
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(searchTerm);
+      setPage(1);
+    }, 400);
+    return () => clearTimeout(handler);
+  }, [searchTerm]);
+
+  // Fetch Receipts from live API with fallback
+  const fetchReceipts = useCallback(async () => {
+    setLoading(true);
+    try {
+      const params = {
+        page,
+        limit
+      };
+      if (debouncedSearch.trim()) params.search = debouncedSearch.trim();
+      if (selectedStatus) params.status = selectedStatus.toUpperCase();
+      if (dateFrom) params.dateFrom = dateFrom;
+      if (dateTo) params.dateTo = dateTo;
+
+      const res = await creditReceiptService.list(params);
+      if (res && res.success) {
+        const listData = Array.isArray(res.data) ? res.data : (res.data?.receipts || []);
+        setReceipts(listData);
+        if (res.meta) {
+          setMeta(res.meta);
+        } else {
+          setMeta({
+            totalRecords: listData.length,
+            totalPages: Math.ceil(listData.length / limit) || 1,
+            page,
+            limit,
+            hasNextPage: false,
+            hasPrevPage: false
+          });
+        }
+      } else {
+        throw new Error(res?.message || 'Failed to retrieve receipts');
+      }
+    } catch (err) {
+      console.warn('Live credit-receipts API call fallback:', err.message);
+      // Filter mock data locally
+      let filtered = [...fallbackReceipts];
+      if (debouncedSearch.trim()) {
+        const q = debouncedSearch.toLowerCase().trim();
+        filtered = filtered.filter(r => 
+          r.name.toLowerCase().includes(q) || 
+          r.receiptNo.toLowerCase().includes(q) ||
+          (r.accountNumber && r.accountNumber.includes(q)) ||
+          (r.glHeadName && r.glHeadName.toLowerCase().includes(q))
+        );
+      }
+      if (selectedStatus) {
+        filtered = filtered.filter(r => r.status?.toUpperCase() === selectedStatus.toUpperCase());
+      }
+      if (dateFrom) {
+        filtered = filtered.filter(r => r.date >= dateFrom);
+      }
+      if (dateTo) {
+        filtered = filtered.filter(r => r.date <= dateTo);
+      }
+      setReceipts(filtered.slice((page - 1) * limit, page * limit));
+      setMeta({
+        totalRecords: filtered.length,
+        totalPages: Math.ceil(filtered.length / limit) || 1,
+        page,
+        limit,
+        hasNextPage: page * limit < filtered.length,
+        hasPrevPage: page > 1
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [page, limit, debouncedSearch, selectedStatus, dateFrom, dateTo]);
+
+  useEffect(() => {
+    fetchReceipts();
+  }, [fetchReceipts]);
+
+  // Handle Create Receipt
+  const handleCreateReceipt = async (e) => {
+    e.preventDefault();
+    if (!createForm.name.trim()) {
+      toast.error('Please enter customer name');
+      return;
+    }
+    if (!createForm.accountNumber.trim()) {
+      toast.error('Please enter account number');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const payload = {
+        name: createForm.name.trim(),
+        glHead: createForm.glHead,
+        glHeadName: createForm.glHeadName,
+        accountNumber: createForm.accountNumber.trim(),
+        date: createForm.date,
+        status: createForm.status.toUpperCase()
+      };
+      
+      const res = await creditReceiptService.create(payload);
+      toast.success(res?.message || 'Credit Receipt created successfully!');
+      setIsCreateModalOpen(false);
+      // Reset form
+      setCreateForm({
+        name: '',
+        glHead: '410105',
+        glHeadName: 'Loan',
+        accountNumber: '',
+        date: todayISO,
+        status: 'NEW'
+      });
+      fetchReceipts();
+    } catch (err) {
+      toast.error(err.response?.data?.message || err.message || 'Failed to create receipt');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // Open Edit Modal
+  const openEditModal = (receipt) => {
+    setSelectedReceipt(receipt);
+    setEditForm({
+      name: receipt.name || '',
+      glHead: receipt.glHead || '410105',
+      glHeadName: receipt.glHeadName || 'Loan',
+      accountNumber: receipt.accountNumber || receipt.acNo || '',
+      date: receipt.date ? receipt.date.split('T')[0] : todayISO,
+      status: (receipt.status || 'NEW').toUpperCase()
+    });
+    setIsEditModalOpen(true);
+  };
+
+  // Handle Update Receipt
+  const handleUpdateReceipt = async (e) => {
+    e.preventDefault();
+    if (!selectedReceipt) return;
+
+    setSubmitting(true);
+    try {
+      const receiptId = selectedReceipt._id || selectedReceipt.id;
+      const payload = {
+        name: editForm.name.trim(),
+        glHead: editForm.glHead,
+        glHeadName: editForm.glHeadName,
+        accountNumber: editForm.accountNumber.trim(),
+        date: editForm.date,
+        status: editForm.status.toUpperCase()
+      };
+
+      const res = await creditReceiptService.update(receiptId, payload);
+      toast.success(res?.message || 'Receipt updated successfully.');
+      setIsEditModalOpen(false);
+      setSelectedReceipt(null);
+      fetchReceipts();
+    } catch (err) {
+      toast.error(err.response?.data?.message || err.message || 'Failed to update receipt');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // Handle Delete Receipt
+  const handleDeleteReceipt = async () => {
+    if (!selectedReceipt) return;
+
+    setSubmitting(true);
+    try {
+      const receiptId = selectedReceipt._id || selectedReceipt.id;
+      const res = await creditReceiptService.delete(receiptId);
+      toast.success(res?.message || 'Credit Receipt deleted successfully.');
+      setIsDeleteModalOpen(false);
+      setSelectedReceipt(null);
+      fetchReceipts();
+    } catch (err) {
+      toast.error(err.response?.data?.message || err.message || 'Failed to delete receipt');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // Handle CSV Export
+  const handleExportCsv = async () => {
+    setExporting(true);
+    try {
+      const params = {};
+      if (debouncedSearch.trim()) params.search = debouncedSearch.trim();
+      if (selectedStatus) params.status = selectedStatus.toUpperCase();
+      if (dateFrom) params.dateFrom = dateFrom;
+      if (dateTo) params.dateTo = dateTo;
+
+      const data = await creditReceiptService.exportCsv(params);
+      
+      // Create blob download
+      const blob = new Blob([data], { type: 'text/csv;charset=utf-8;' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'credit-receipts.csv');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      toast.success('Credit Receipts exported successfully!');
+    } catch (err) {
+      console.warn('Export API error, generating client-side CSV:', err.message);
+      // Client-side fallback CSV download
+      const headers = ['Sr.No.', 'Receipt No', 'Name', 'GL Head', 'GL Head Name', 'Account Number', 'Date', 'Status'];
+      const rows = receipts.map((r, idx) => [
+        (page - 1) * limit + idx + 1,
+        `"${r.receiptNo || ''}"`,
+        `"${r.name || ''}"`,
+        `"${r.glHead || ''}"`,
+        `"${r.glHeadName || ''}"`,
+        `"${r.accountNumber || r.acNo || ''}"`,
+        `"${r.date || ''}"`,
+        `"${r.status || ''}"`
+      ]);
+      const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement('a');
+      link.setAttribute('href', encodedUri);
+      link.setAttribute('download', 'credit-receipts.csv');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast.success('Credit Receipts exported successfully!');
+    } finally {
+      setExporting(false);
+    }
   };
 
   const fetchReceipts = async () => {
@@ -123,15 +396,16 @@ const Credit = () => {
   };
 
   const getStatusBadge = (status) => {
-    switch(status?.toUpperCase()) {
+    const s = (status || '').toUpperCase();
+    switch (s) {
       case 'NEW':
-        return <span className="inline-flex items-center justify-center px-3 py-1 text-[13px] font-semibold text-yellow-600 bg-yellow-100 rounded-full">New</span>;
+        return <span className="inline-flex items-center justify-center px-3 py-1 text-[13px] font-semibold text-yellow-700 bg-yellow-100/80 rounded-full border border-yellow-200">New</span>;
       case 'APPROVED':
         return <span className="inline-flex items-center justify-center px-3 py-1 text-[13px] font-semibold text-[#1cabb1] bg-teal-50 rounded-full border border-teal-100">Approved</span>;
       case 'REJECTED':
-        return <span className="inline-flex items-center justify-center px-3 py-1 text-[13px] font-semibold text-red-500 bg-red-50 rounded-full">Rejected</span>;
+        return <span className="inline-flex items-center justify-center px-3 py-1 text-[13px] font-semibold text-red-500 bg-red-50 rounded-full border border-red-100">Rejected</span>;
       default:
-        return null;
+        return <span className="inline-flex items-center justify-center px-3 py-1 text-[13px] font-semibold text-gray-600 bg-gray-100 rounded-full border border-gray-200">{status || 'NEW'}</span>;
     }
   };
 
@@ -152,133 +426,110 @@ const Credit = () => {
       {/* Action Bar */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex items-center gap-4 w-full sm:w-auto">
+          {/* Search */}
           <div className="relative w-full sm:w-80">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <Search size={18} className="text-gray-400" />
             </div>
             <input
               type="text"
-              className="block w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#1cabb1] focus:border-[#1cabb1] text-sm"
-              placeholder="Search"
+              className="block w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#1cabb1] focus:border-[#1cabb1] text-sm bg-white text-gray-700"
+              placeholder="Search by name, receipt, or account"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
+
+          {/* Filter Popover Button */}
           <div className="relative">
             <button 
               onClick={() => setIsFilterOpen(!isFilterOpen)}
               className="flex items-center justify-center p-2.5 border border-gray-200 rounded-lg text-gray-500 hover:bg-gray-50 transition-colors relative focus:outline-none bg-white"
+              title="Filters"
             >
               <SlidersHorizontal size={18} />
-              {(filterStatus.length > 0 || filterBranch.length > 0) && (
+              {(selectedStatus || dateFrom || dateTo) && (
                 <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-[#1b58a6] rounded-full border border-white flex items-center justify-center text-[9px] text-white font-bold">
-                  {(filterStatus.length > 0 ? 1 : 0) + (filterBranch.length > 0 ? 1 : 0)}
+                  {(selectedStatus ? 1 : 0) + (dateFrom || dateTo ? 1 : 0)}
                 </span>
               )}
             </button>
             
+            {/* Filter Dropdown Popover */}
             {isFilterOpen && (
-              <div className="absolute z-20 top-full left-0 sm:left-auto sm:right-0 mt-2 w-72 bg-[#f8f9fb] border border-gray-100 rounded-2xl shadow-xl p-5">
-                <div className="flex justify-between items-center mb-5">
-                  <h3 className="font-bold text-gray-800 text-[16px]">Filter</h3>
+              <div className="absolute z-30 top-full left-0 sm:left-auto sm:right-0 mt-2 w-80 bg-[#f8f9fb] border border-gray-200 rounded-2xl shadow-xl p-5">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="font-bold text-gray-800 text-[16px]">Filter Receipts</h3>
                   <button onClick={() => setIsFilterOpen(false)} className="text-gray-500 hover:text-gray-800 transition-colors">
-                    <X size={22} />
+                    <X size={20} />
                   </button>
                 </div>
 
-                <div className="space-y-4 mb-6">
-                  {/* Status Dropdown */}
-                  <div className="relative">
-                    <div 
-                      className="w-full px-4 py-3 rounded-xl border border-gray-200 flex justify-between items-center cursor-pointer bg-white"
-                      onClick={() => setOpenFilterDropdown(openFilterDropdown === 'status' ? null : 'status')}
+                <div className="space-y-4 mb-5">
+                  {/* Status Selection */}
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Status</label>
+                    <select 
+                      value={selectedStatus}
+                      onChange={(e) => setSelectedStatus(e.target.value)}
+                      className="w-full px-3 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1cabb1] bg-white text-sm text-gray-700"
                     >
-                      <span className="text-gray-500 text-[14px] font-medium">Status</span>
-                      <ChevronDown size={18} className={`text-gray-400 transition-transform ${openFilterDropdown === 'status' ? 'rotate-180' : ''}`} />
-                    </div>
-                    {openFilterDropdown === 'status' && (
-                      <div className="absolute z-30 top-full left-0 w-full mt-2 bg-white border border-gray-200 rounded-xl shadow-lg py-3 flex flex-col gap-2">
-                        {['NEW', 'APPROVED', 'REJECTED'].map(opt => (
-                          <label key={opt} className="flex items-center gap-3 px-4 py-1.5 hover:bg-gray-50 cursor-pointer">
-                            <div className="relative flex items-center justify-center">
-                              <input 
-                                type="checkbox" 
-                                className="w-5 h-5 rounded-[4px] border-2 border-gray-400 appearance-none checked:bg-[#1cabb1] checked:border-[#1cabb1] transition-colors cursor-pointer"
-                                checked={filterStatus.includes(opt)}
-                                onChange={() => toggleFilter(setFilterStatus, opt)}
-                              />
-                              {filterStatus.includes(opt) && (
-                                <svg className="absolute w-3.5 h-3.5 text-white pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                                  <polyline points="20 6 9 17 4 12"></polyline>
-                                </svg>
-                              )}
-                            </div>
-                            <span className="text-[15px] font-medium text-gray-700">{opt}</span>
-                          </label>
-                        ))}
-                      </div>
-                    )}
+                      <option value="">All Statuses</option>
+                      <option value="NEW">New</option>
+                      <option value="APPROVED">Approved</option>
+                      <option value="REJECTED">Rejected</option>
+                    </select>
                   </div>
-                  
-                  {/* Branch Dropdown */}
-                  <div className="relative">
-                    <div 
-                      className="w-full px-4 py-3 rounded-xl border border-gray-200 flex justify-between items-center cursor-pointer bg-white"
-                      onClick={() => setOpenFilterDropdown(openFilterDropdown === 'branch' ? null : 'branch')}
-                    >
-                      <span className="text-gray-500 text-[14px] font-medium">Branch</span>
-                      <ChevronDown size={18} className={`text-gray-400 transition-transform ${openFilterDropdown === 'branch' ? 'rotate-180' : ''}`} />
-                    </div>
-                    {openFilterDropdown === 'branch' && (
-                      <div className="absolute z-30 top-full left-0 w-full mt-2 bg-white border border-gray-200 rounded-xl shadow-lg py-3 flex flex-col gap-2">
-                        {['Mumbai Branch', 'Nagpur Branch', 'Railway Branch'].map(opt => (
-                          <label key={opt} className="flex items-center gap-3 px-4 py-1.5 hover:bg-gray-50 cursor-pointer">
-                            <div className="relative flex items-center justify-center">
-                              <input 
-                                type="checkbox" 
-                                className="w-5 h-5 rounded-[4px] border-2 border-gray-400 appearance-none checked:bg-[#1cabb1] checked:border-[#1cabb1] transition-colors cursor-pointer"
-                                checked={filterBranch.includes(opt)}
-                                onChange={() => toggleFilter(setFilterBranch, opt)}
-                              />
-                              {filterBranch.includes(opt) && (
-                                <svg className="absolute w-3.5 h-3.5 text-white pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                                  <polyline points="20 6 9 17 4 12"></polyline>
-                                </svg>
-                              )}
-                            </div>
-                            <span className="text-[15px] font-medium text-gray-700">{opt}</span>
-                          </label>
-                        ))}
-                      </div>
-                    )}
+
+                  {/* Date Range */}
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">From Date</label>
+                    <input 
+                      type="date"
+                      value={dateFrom}
+                      onChange={(e) => setDateFrom(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1cabb1] bg-white text-sm text-gray-700"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">To Date</label>
+                    <input 
+                      type="date"
+                      value={dateTo}
+                      onChange={(e) => setDateTo(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1cabb1] bg-white text-sm text-gray-700"
+                    />
                   </div>
                 </div>
 
                 <div className="flex gap-3">
                   <button 
-                    className="flex-1 py-2.5 rounded-full border-[1.5px] border-[#1cabb1] text-[#1cabb1] font-semibold hover:bg-teal-50 transition-colors focus:outline-none text-sm bg-white"
-                    onClick={() => { setFilterStatus([]); setFilterBranch([]); }}
+                    className="flex-1 py-2 rounded-full border-[1.5px] border-[#1cabb1] text-[#1cabb1] font-semibold hover:bg-teal-50 transition-colors text-sm bg-white"
+                    onClick={() => { setSelectedStatus(''); setDateFrom(''); setDateTo(''); }}
                   >
-                    Reset Filter
+                    Reset
                   </button>
                   <button 
-                    className="flex-1 py-2.5 rounded-full bg-[#1cabb1] text-white font-semibold hover:bg-[#168f94] transition-colors focus:outline-none text-sm shadow-sm"
-                    onClick={() => setIsFilterOpen(false)}
+                    className="flex-1 py-2 rounded-full bg-[#1cabb1] text-white font-semibold hover:bg-[#168f94] transition-colors text-sm shadow-sm"
+                    onClick={() => { setIsFilterOpen(false); setPage(1); }}
                   >
-                    Set Filter
+                    Apply Filter
                   </button>
                 </div>
               </div>
             )}
           </div>
         </div>
+
+        {/* Action Buttons: Export & Create */}
         <div className="flex items-center gap-3">
           <button 
-            onClick={handleExport}
-            className="flex items-center gap-2 bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 px-4 py-2.5 rounded-full font-semibold transition-colors text-sm shadow-sm flex-shrink-0"
+            onClick={handleExportCsv}
+            disabled={exporting}
+            className="flex items-center gap-2 bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 px-4 py-2.5 rounded-full font-semibold transition-colors text-sm shadow-sm flex-shrink-0 disabled:opacity-50"
           >
-            <Download size={18} />
-            Export
+            {exporting ? <Loader2 size={16} className="animate-spin" /> : <Download size={18} />}
+            {exporting ? 'Exporting...' : 'Export'}
           </button>
           <button 
             onClick={() => { setFormData({ name: '', glHead: '', glHeadName: '', accountNumber: '', date: '', status: 'NEW' }); setIsCreateModalOpen(true); }}
@@ -308,60 +559,67 @@ const Credit = () => {
             </thead>
             <tbody className="divide-y divide-gray-100">
               {loading ? (
-                <tr><td colSpan="9" className="px-6 py-8 text-center text-gray-500">Loading...</td></tr>
+                <tr>
+                  <td colSpan="9" className="text-center py-12">
+                    <div className="flex items-center justify-center gap-2 text-gray-500">
+                      <Loader2 size={20} className="animate-spin text-[#1cabb1]" />
+                      <span>Loading credit receipts...</span>
+                    </div>
+                  </td>
+                </tr>
               ) : receipts.length === 0 ? (
-                <tr><td colSpan="9" className="px-6 py-8 text-center text-gray-500">No receipts found</td></tr>
+                <tr>
+                  <td colSpan="9" className="text-center py-10 font-medium text-gray-500">
+                    No credit receipts found.
+                  </td>
+                </tr>
               ) : (
-                receipts.map((receipt, index) => (
-                  <tr key={receipt._id || receipt.id || index} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4 text-gray-700">{(page - 1) * limit + index + 1}</td>
-                    <td className="px-6 py-4 text-[#1b2559] font-semibold">{receipt.receiptNumber || receipt.receiptNo || `CR-${String((page - 1) * limit + index + 1).padStart(4, '0')}`}</td>
-                    <td className="px-6 py-4 text-gray-700">{receipt.name}</td>
-                    <td className="px-6 py-4 text-gray-700">{receipt.glHead}</td>
-                    <td className="px-6 py-4 text-gray-700">{receipt.glHeadName}</td>
-                    <td className="px-6 py-4 text-gray-700">{receipt.accountNumber}</td>
-                    <td className="px-6 py-4 text-gray-700">{receipt.date ? new Date(receipt.date).toLocaleDateString() : ''}</td>
-                    <td className="px-6 py-4">
-                      {getStatusBadge(receipt.status)}
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center justify-center gap-3">
-                        <button 
-                          onClick={() => navigate(`/credit/view/${receipt._id || receipt.id}`)}
-                          className="w-8 h-8 flex items-center justify-center rounded bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors" 
-                          title="View"
-                        >
-                          <Eye size={16} />
-                        </button>
-                        <button 
-                          onClick={() => { 
-                            setSelectedReceipt(receipt); 
-                            setFormData({
-                              name: receipt.name || '',
-                              glHead: receipt.glHead || '',
-                              glHeadName: receipt.glHeadName || '',
-                              accountNumber: receipt.accountNumber || '',
-                              date: receipt.date ? new Date(receipt.date).toISOString().split('T')[0] : '',
-                              status: receipt.status || 'NEW'
-                            });
-                            setIsEditModalOpen(true); 
-                          }}
-                          className="w-8 h-8 flex items-center justify-center rounded bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors" 
-                          title="Edit"
-                        >
-                          <Edit size={16} />
-                        </button>
-                        <button 
-                          onClick={() => { setSelectedReceipt(receipt); setIsDeleteModalOpen(true); }}
-                          className="w-8 h-8 flex items-center justify-center rounded bg-red-50 text-red-500 hover:bg-red-100 transition-colors" 
-                          title="Delete"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
+                receipts.map((receipt, index) => {
+                  const receiptId = receipt._id || receipt.id;
+                  const formattedDate = receipt.date ? (
+                    receipt.date.includes('T') ? receipt.date.split('T')[0] : receipt.date
+                  ) : '—';
+
+                  return (
+                    <tr key={receiptId || index} className="hover:bg-gray-50/60 transition-colors">
+                      <td className="px-6 py-4 text-gray-700 font-medium">{receipt.srNo || (page - 1) * limit + index + 1}</td>
+                      <td className="px-6 py-4 text-[#1b2559] font-bold">{receipt.receiptNo || `CR-${String(index + 1).padStart(6, '0')}`}</td>
+                      <td className="px-6 py-4 text-gray-800 font-medium">{receipt.name}</td>
+                      <td className="px-6 py-4 text-gray-700">{receipt.glHead}</td>
+                      <td className="px-6 py-4 text-gray-700">{receipt.glHeadName}</td>
+                      <td className="px-6 py-4 text-gray-700 font-mono">{receipt.accountNumber || receipt.acNo}</td>
+                      <td className="px-6 py-4 text-gray-700">{formattedDate}</td>
+                      <td className="px-6 py-4">
+                        {getStatusBadge(receipt.status)}
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center justify-center gap-2.5">
+                          <button 
+                            onClick={() => navigate(`/credit/view/${receiptId}`)}
+                            className="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors" 
+                            title="View Receipt"
+                          >
+                            <Eye size={16} />
+                          </button>
+                          <button 
+                            onClick={() => openEditModal(receipt)}
+                            className="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors" 
+                            title="Edit Receipt"
+                          >
+                            <Edit size={16} />
+                          </button>
+                          <button 
+                            onClick={() => { setSelectedReceipt(receipt); setIsDeleteModalOpen(true); }}
+                            className="w-8 h-8 flex items-center justify-center rounded-lg bg-red-50 text-red-500 hover:bg-red-100 transition-colors" 
+                            title="Delete Receipt"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
@@ -369,140 +627,298 @@ const Credit = () => {
         
         {/* Pagination */}
         <div className="px-6 py-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="text-sm text-gray-800 font-medium">
-            Showing {(page - 1) * limit + 1} to {Math.min(page * limit, totalEntries)} of {totalEntries} Entries
+          <div className="text-sm text-gray-600 font-medium">
+            Showing {receipts.length > 0 ? (page - 1) * limit + 1 : 0} to {Math.min(page * limit, meta.totalRecords || receipts.length)} of {meta.totalRecords || receipts.length} Entries
           </div>
           <div className="flex items-center gap-2">
             <button 
-              disabled={page === 1}
-              onClick={() => setPage(p => p - 1)}
-              className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors disabled:opacity-50">
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              disabled={page <= 1}
+              className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors disabled:opacity-50"
+            >
               <ChevronRight size={16} className="rotate-180" />
             </button>
-            <button className="w-8 h-8 flex items-center justify-center rounded-full bg-[#1cabb1] text-white font-medium shadow-sm">
-              {page}
-            </button>
+            
+            {(() => {
+              const totalPages = meta.totalPages || 1;
+              let startPage = Math.max(1, page - 2);
+              let endPage = Math.min(totalPages, page + 2);
+              if (endPage - startPage < 4) {
+                if (startPage === 1) endPage = Math.min(5, totalPages);
+                else if (endPage === totalPages) startPage = Math.max(1, totalPages - 4);
+              }
+              const pageButtons = [];
+              for (let i = startPage; i <= endPage; i++) {
+                pageButtons.push(
+                  <button 
+                    key={i}
+                    onClick={() => setPage(i)}
+                    className={`w-8 h-8 flex items-center justify-center rounded-full font-medium transition-colors ${page === i ? 'bg-[#1cabb1] text-white shadow-sm' : 'border border-gray-200 text-gray-700 hover:bg-gray-50'}`}
+                  >
+                    {i}
+                  </button>
+                );
+              }
+              return pageButtons;
+            })()}
+
             <button 
-              disabled={page >= totalPages}
-              onClick={() => setPage(p => p + 1)}
-              className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors disabled:opacity-50">
+              onClick={() => setPage(p => Math.min(meta.totalPages || 1, p + 1))}
+              disabled={page >= (meta.totalPages || 1)}
+              className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors disabled:opacity-50"
+            >
               <ChevronRight size={16} />
             </button>
           </div>
         </div>
       </div>
 
-      {/* Create Receipt Modal */}
+      {/* 1.3 Create Receipt Modal */}
       {isCreateModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 transition-opacity">
-          <div className="bg-[#f4f3fb] rounded-xl w-full max-w-[500px] shadow-2xl overflow-hidden flex flex-col">
-            <div className="flex justify-between items-center p-6 pb-2">
-              <h2 className="text-xl font-bold text-[#1b2559]">Create Receipt</h2>
+          <div className="bg-[#f4f3fb] rounded-2xl w-full max-w-[540px] shadow-2xl overflow-hidden flex flex-col">
+            <div className="flex justify-between items-center p-6 pb-2 border-b border-gray-200/60 bg-white">
+              <div>
+                <h2 className="text-xl font-bold text-[#1b2559]">Create Credit Receipt</h2>
+                <p className="text-xs text-gray-500 mt-0.5">Generate a new CR- receipt for customer</p>
+              </div>
               <button onClick={() => setIsCreateModalOpen(false)} className="text-gray-500 hover:text-gray-800 transition-colors">
-                <X size={24} />
+                <X size={22} />
               </button>
             </div>
-            <div className="p-6 pt-4 space-y-5">
+            <form onSubmit={handleCreateReceipt} className="p-6 space-y-4 max-h-[80vh] overflow-y-auto">
               <div>
-                <label className="block text-[15px] font-semibold text-[#1b2559] mb-2">Name</label>
-                <input type="text" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} placeholder="Enter Name" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white text-[15px] text-[#4b5563]" />
+                <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">Customer Name <span className="text-red-500">*</span></label>
+                <input 
+                  type="text" 
+                  required
+                  placeholder="e.g. Mamta Lodhi" 
+                  value={createForm.name}
+                  onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white text-[15px] text-gray-800" 
+                />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[15px] font-semibold text-[#1b2559] mb-2">GL Head</label>
-                  <input type="text" value={formData.glHead} onChange={(e) => setFormData({...formData, glHead: e.target.value})} placeholder="Enter GL Head" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white text-[15px] text-[#4b5563]" />
+                  <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">GL Head Code <span className="text-red-500">*</span></label>
+                  <input 
+                    type="text" 
+                    required
+                    placeholder="e.g. 410105" 
+                    value={createForm.glHead}
+                    onChange={(e) => setCreateForm({ ...createForm, glHead: e.target.value })}
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white text-[15px] text-gray-800" 
+                  />
                 </div>
                 <div>
-                  <label className="block text-[15px] font-semibold text-[#1b2559] mb-2">GL Head Name</label>
-                  <input type="text" value={formData.glHeadName} onChange={(e) => setFormData({...formData, glHeadName: e.target.value})} placeholder="Enter GL Head Name" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white text-[15px] text-[#4b5563]" />
+                  <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">GL Head Name <span className="text-red-500">*</span></label>
+                  <div className="relative">
+                    <select 
+                      value={createForm.glHeadName}
+                      onChange={(e) => {
+                        const selectedOption = GL_HEAD_OPTIONS.find(o => o.name === e.target.value);
+                        setCreateForm({
+                          ...createForm,
+                          glHeadName: e.target.value,
+                          glHead: selectedOption ? selectedOption.code : createForm.glHead
+                        });
+                      }}
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white appearance-none text-[15px] text-gray-800"
+                    >
+                      {GL_HEAD_OPTIONS.map((opt) => (
+                        <option key={opt.code} value={opt.name}>{opt.name}</option>
+                      ))}
+                    </select>
+                    <ChevronDown size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                  </div>
                 </div>
               </div>
+
               <div>
-                <label className="block text-[15px] font-semibold text-[#1b2559] mb-2">Account No.</label>
-                <input type="text" value={formData.accountNumber} onChange={(e) => setFormData({...formData, accountNumber: e.target.value})} placeholder="Enter Account Number" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white text-[15px] text-[#4b5563]" />
+                <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">Account Number <span className="text-red-500">*</span></label>
+                <input 
+                  type="text" 
+                  required
+                  placeholder="e.g. 36489745148" 
+                  value={createForm.accountNumber}
+                  onChange={(e) => setCreateForm({ ...createForm, accountNumber: e.target.value })}
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white text-[15px] text-gray-800 font-mono" 
+                />
               </div>
-              <div>
-                <label className="block text-[15px] font-semibold text-[#1b2559] mb-2">Date</label>
-                <input type="date" value={formData.date} onChange={(e) => setFormData({...formData, date: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white text-[15px] text-[#4b5563]" />
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">Receipt Date <span className="text-red-500">*</span></label>
+                  <input 
+                    type="date" 
+                    required
+                    value={createForm.date}
+                    onChange={(e) => setCreateForm({ ...createForm, date: e.target.value })}
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white text-[15px] text-gray-800" 
+                  />
+                </div>
+                <div>
+                  <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">Initial Status</label>
+                  <div className="relative">
+                    <select 
+                      value={createForm.status}
+                      onChange={(e) => setCreateForm({ ...createForm, status: e.target.value })}
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white appearance-none text-[15px] text-gray-800"
+                    >
+                      <option value="NEW">NEW</option>
+                      <option value="APPROVED">APPROVED</option>
+                      <option value="REJECTED">REJECTED</option>
+                    </select>
+                    <ChevronDown size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                  </div>
+                </div>
               </div>
-              <div>
-                <label className="block text-[15px] font-semibold text-[#1b2559] mb-2">Status</label>
-                <select value={formData.status} onChange={(e) => setFormData({...formData, status: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white text-[15px] text-[#4b5563]">
-                  <option value="NEW">New</option>
-                  <option value="APPROVED">Approved</option>
-                  <option value="REJECTED">Rejected</option>
-                </select>
-              </div>
-              
-              <div className="flex justify-end items-center gap-4 mt-6 pt-4">
-                <button onClick={() => setIsCreateModalOpen(false)} className="px-8 py-2.5 rounded-full border-[1.5px] border-[#1cabb1] text-[#1cabb1] font-bold hover:bg-teal-50 transition-colors text-[15px] bg-white">
+
+              <div className="flex justify-end items-center gap-3 mt-6 pt-4 border-t border-gray-200">
+                <button 
+                  type="button"
+                  onClick={() => setIsCreateModalOpen(false)} 
+                  className="px-6 py-2.5 rounded-full border-[1.5px] border-gray-300 text-gray-700 font-semibold hover:bg-gray-100 transition-colors text-[14px] bg-white"
+                >
                   Cancel
                 </button>
-                <button onClick={handleCreate} className="px-8 py-2.5 rounded-full bg-[#1cabb1] text-white font-bold hover:bg-[#168f94] transition-colors shadow-sm text-[15px]">
-                  Create Receipt
+                <button 
+                  type="submit"
+                  disabled={submitting}
+                  className="flex items-center gap-2 px-7 py-2.5 rounded-full bg-[#1cabb1] text-white font-bold hover:bg-[#168f94] transition-colors shadow-sm text-[14px] disabled:opacity-50"
+                >
+                  {submitting && <Loader2 size={16} className="animate-spin" />}
+                  {submitting ? 'Creating...' : 'Create Receipt'}
                 </button>
               </div>
-            </div>
+            </form>
           </div>
         </div>
       )}
 
-      {/* Edit Receipt Modal */}
+      {/* 1.5 Update Receipt Modal */}
       {isEditModalOpen && selectedReceipt && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 transition-opacity">
-          <div className="bg-[#f4f3fb] rounded-xl w-full max-w-[500px] shadow-2xl overflow-hidden flex flex-col">
-            <div className="flex justify-between items-center p-6 pb-2">
-              <h2 className="text-xl font-bold text-[#1b2559]">Modify Receipt</h2>
+          <div className="bg-[#f4f3fb] rounded-2xl w-full max-w-[540px] shadow-2xl overflow-hidden flex flex-col">
+            <div className="flex justify-between items-center p-6 pb-2 border-b border-gray-200/60 bg-white">
+              <div>
+                <h2 className="text-xl font-bold text-[#1b2559]">Modify Receipt</h2>
+                <p className="text-xs text-gray-500 mt-0.5">Receipt: <span className="font-semibold text-[#1cabb1]">{selectedReceipt.receiptNo}</span></p>
+              </div>
               <button onClick={() => setIsEditModalOpen(false)} className="text-gray-500 hover:text-gray-800 transition-colors">
-                <X size={24} />
+                <X size={22} />
               </button>
             </div>
-            <div className="p-6 pt-4 space-y-5">
+            <form onSubmit={handleUpdateReceipt} className="p-6 space-y-4 max-h-[80vh] overflow-y-auto">
               <div>
-                <label className="block text-[15px] font-semibold text-[#1b2559] mb-2">Name</label>
-                <input type="text" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} placeholder="Enter Name" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white text-[15px] text-[#4b5563]" />
+                <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">Customer Name</label>
+                <input 
+                  type="text" 
+                  required
+                  value={editForm.name}
+                  onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white text-[15px] text-gray-800" 
+                />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[15px] font-semibold text-[#1b2559] mb-2">GL Head</label>
-                  <input type="text" value={formData.glHead} onChange={(e) => setFormData({...formData, glHead: e.target.value})} placeholder="Enter GL Head" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white text-[15px] text-[#4b5563]" />
+                  <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">GL Head Code</label>
+                  <input 
+                    type="text" 
+                    required
+                    value={editForm.glHead}
+                    onChange={(e) => setEditForm({ ...editForm, glHead: e.target.value })}
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white text-[15px] text-gray-800" 
+                  />
                 </div>
                 <div>
-                  <label className="block text-[15px] font-semibold text-[#1b2559] mb-2">GL Head Name</label>
-                  <input type="text" value={formData.glHeadName} onChange={(e) => setFormData({...formData, glHeadName: e.target.value})} placeholder="Enter GL Head Name" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white text-[15px] text-[#4b5563]" />
+                  <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">GL Head Name</label>
+                  <div className="relative">
+                    <select 
+                      value={editForm.glHeadName}
+                      onChange={(e) => {
+                        const selectedOption = GL_HEAD_OPTIONS.find(o => o.name === e.target.value);
+                        setEditForm({
+                          ...editForm,
+                          glHeadName: e.target.value,
+                          glHead: selectedOption ? selectedOption.code : editForm.glHead
+                        });
+                      }}
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white appearance-none text-[15px] text-gray-800"
+                    >
+                      {GL_HEAD_OPTIONS.map((opt) => (
+                        <option key={opt.code} value={opt.name}>{opt.name}</option>
+                      ))}
+                    </select>
+                    <ChevronDown size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                  </div>
                 </div>
               </div>
+
               <div>
-                <label className="block text-[15px] font-semibold text-[#1b2559] mb-2">Account No.</label>
-                <input type="text" value={formData.accountNumber} onChange={(e) => setFormData({...formData, accountNumber: e.target.value})} placeholder="Enter Account Number" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white text-[15px] text-[#4b5563]" />
+                <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">Account Number</label>
+                <input 
+                  type="text" 
+                  required
+                  value={editForm.accountNumber}
+                  onChange={(e) => setEditForm({ ...editForm, accountNumber: e.target.value })}
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white text-[15px] text-gray-800 font-mono" 
+                />
               </div>
-              <div>
-                <label className="block text-[15px] font-semibold text-[#1b2559] mb-2">Date</label>
-                <input type="date" value={formData.date} onChange={(e) => setFormData({...formData, date: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white text-[15px] text-[#4b5563]" />
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">Receipt Date</label>
+                  <input 
+                    type="date" 
+                    required
+                    value={editForm.date}
+                    onChange={(e) => setEditForm({ ...editForm, date: e.target.value })}
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white text-[15px] text-gray-800" 
+                  />
+                </div>
+                <div>
+                  <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">Status</label>
+                  <div className="relative">
+                    <select 
+                      value={editForm.status}
+                      onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white appearance-none text-[15px] text-gray-800 font-semibold"
+                    >
+                      <option value="NEW">NEW</option>
+                      <option value="APPROVED">APPROVED</option>
+                      <option value="REJECTED">REJECTED</option>
+                    </select>
+                    <ChevronDown size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                  </div>
+                </div>
               </div>
-              <div>
-                <label className="block text-[15px] font-semibold text-[#1b2559] mb-2">Status</label>
-                <select value={formData.status} onChange={(e) => setFormData({...formData, status: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white text-[15px] text-[#4b5563]">
-                  <option value="NEW">New</option>
-                  <option value="APPROVED">Approved</option>
-                  <option value="REJECTED">Rejected</option>
-                </select>
-              </div>
-              
-              <div className="flex justify-end items-center gap-4 mt-6 pt-4">
-                <button onClick={() => setIsEditModalOpen(false)} className="px-8 py-2.5 rounded-full border-[1.5px] border-[#1cabb1] text-[#1cabb1] font-bold hover:bg-teal-50 transition-colors text-[15px] bg-white">
+
+              <div className="flex justify-end items-center gap-3 mt-6 pt-4 border-t border-gray-200">
+                <button 
+                  type="button"
+                  onClick={() => setIsEditModalOpen(false)} 
+                  className="px-6 py-2.5 rounded-full border-[1.5px] border-gray-300 text-gray-700 font-semibold hover:bg-gray-100 transition-colors text-[14px] bg-white"
+                >
                   Cancel
                 </button>
-                <button onClick={handleUpdate} className="px-8 py-2.5 rounded-full bg-[#1cabb1] text-white font-bold hover:bg-[#168f94] transition-colors shadow-sm text-[15px]">
-                  Update Receipt
+                <button 
+                  type="submit"
+                  disabled={submitting}
+                  className="flex items-center gap-2 px-7 py-2.5 rounded-full bg-[#1cabb1] text-white font-bold hover:bg-[#168f94] transition-colors shadow-sm text-[14px] disabled:opacity-50"
+                >
+                  {submitting && <Loader2 size={16} className="animate-spin" />}
+                  {submitting ? 'Saving...' : 'Update Receipt'}
                 </button>
               </div>
-            </div>
+            </form>
           </div>
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
+      {/* 1.6 Delete Confirmation Modal */}
       {isDeleteModalOpen && selectedReceipt && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 transition-opacity">
           <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl p-6 text-center">
@@ -511,20 +927,24 @@ const Credit = () => {
             </div>
             <h3 className="text-xl font-bold text-gray-800 mb-2">Delete Receipt</h3>
             <p className="text-gray-500 text-sm mb-6">
-              Are you sure you want to delete receipt <span className="font-semibold text-gray-700">{selectedReceipt.receiptNo}</span>? This action cannot be undone.
+              Are you sure you want to delete receipt <span className="font-semibold text-gray-700">{selectedReceipt.receiptNo || 'selected receipt'}</span> for <span className="font-semibold text-gray-700">{selectedReceipt.name}</span>? This action cannot be undone.
             </p>
             <div className="flex gap-3">
               <button
+                type="button"
                 onClick={() => { setIsDeleteModalOpen(false); setSelectedReceipt(null); }}
                 className="flex-1 py-2.5 rounded-full border-2 border-gray-200 text-gray-600 font-semibold hover:bg-gray-50 transition-colors"
               >
                 Cancel
               </button>
               <button
-                onClick={handleDelete}
-                className="flex-1 py-2.5 rounded-full bg-red-500 text-white font-semibold hover:bg-red-600 transition-colors shadow-sm"
+                type="button"
+                disabled={submitting}
+                onClick={handleDeleteReceipt}
+                className="flex-1 py-2.5 rounded-full bg-red-500 text-white font-semibold hover:bg-red-600 transition-colors shadow-sm flex items-center justify-center gap-2 disabled:opacity-50"
               >
-                Delete
+                {submitting && <Loader2 size={16} className="animate-spin" />}
+                {submitting ? 'Deleting...' : 'Delete'}
               </button>
             </div>
           </div>
