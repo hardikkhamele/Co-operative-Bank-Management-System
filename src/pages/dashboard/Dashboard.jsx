@@ -4,7 +4,7 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   BarChart, Bar, PieChart, Pie, Cell, LabelList
 } from 'recharts';
-import { Users, Banknote, Landmark, CreditCard, Wallet, Eye } from 'lucide-react';
+import { Users, Banknote, Landmark, CreditCard, Wallet } from 'lucide-react';
 
 const statsData = [
   { title: 'Total Leads', value: '30,67,498', change: '+3.7 %', color: 'bg-[#00c5d5]', icon: <Users size={20} />, path: '/leads' },
@@ -260,21 +260,15 @@ const Dashboard = () => {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr>
-                  <th className="py-3 px-2 font-semibold text-gray-800 text-[15px] border-b border-gray-200">Time</th>
-                  <th className="py-3 px-2 font-semibold text-gray-800 text-[15px] border-b border-gray-200">Actions</th>
-                  <th className="py-3 px-2 font-semibold text-gray-800 text-[15px] text-right border-b border-gray-200">View</th>
+                  <th className="py-3 px-3 font-semibold text-gray-800 text-[15px] border-b border-gray-200 w-1/3">Time</th>
+                  <th className="py-3 px-3 font-semibold text-gray-800 text-[15px] border-b border-gray-200 w-2/3">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {actionsData.map((item, idx) => (
                   <tr key={idx} className="hover:bg-gray-50 transition-colors border-b last:border-b-0 border-gray-100">
-                    <td className="py-4 px-2 text-sm text-gray-700 whitespace-nowrap">{item.time}</td>
-                    <td className="py-4 px-2 text-sm text-gray-700">{item.action}</td>
-                    <td className="py-4 px-2 text-right">
-                      <button className="text-[#1c3f94] hover:text-blue-900 border border-[#1c3f94] p-1 rounded-full transition-colors inline-flex">
-                        <Eye size={16} />
-                      </button>
-                    </td>
+                    <td className="py-4 px-3 text-sm text-gray-700 whitespace-nowrap font-medium">{item.time}</td>
+                    <td className="py-4 px-3 text-sm text-gray-700">{item.action}</td>
                   </tr>
                 ))}
               </tbody>
