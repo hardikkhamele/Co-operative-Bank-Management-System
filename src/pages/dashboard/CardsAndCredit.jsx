@@ -1,323 +1,1327 @@
-import React, { useState } from 'react';
-import { ChevronRight, CreditCard, X, ChevronDown, ArrowDownRight, ArrowUpRight, ChevronLeft, RefreshCcw, Layers, PlusSquare, Plus } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { 
+  CreditCard, 
+  X, 
+  ChevronDown, 
+  ArrowDownRight, 
+  ArrowUpRight, 
+  ChevronLeft, 
+  ChevronRight, 
+  RefreshCcw, 
+  Plus, 
+  Send, 
+  ShoppingCart, 
+  CheckCircle2, 
+  AlertCircle, 
+  Search, 
+  FileText, 
+  ExternalLink, 
+  Clock, 
+  Building2, 
+  ShieldCheck,
+  TrendingUp,
+  Receipt
+} from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
+import cardCreditService from '../../api/cardCreditService';
+import branchService from '../../api/branchService';
 
-const mockEmiHistory = [
-  { id: 1, text: '100 EMI card transferred to <Branch Name> from <Branch Name>', date: '20/07/2026', type: 'transferred' },
-  { id: 2, text: '100 EMI card distributed to <Branch Name>', date: '20/07/2026', type: 'distributed' },
-  { id: 3, text: '100 EMI card transferred to <Branch Name> from <Branch Name>', date: '20/07/2026', type: 'transferred' },
-  { id: 4, text: '100 EMI card distributed to <Branch Name>', date: '20/07/2026', type: 'distributed' },
-  { id: 5, text: '100 EMI card transferred to <Branch Name> from <Branch Name>', date: '20/07/2026', type: 'transferred' },
-  { id: 6, text: '1000 EMI card purchased', date: '20/07/2026', type: 'purchased' },
-];
+const HistoryIcon = ({ type, action }) => {
+  const normAction = (action || '').toUpperCase();
+  const normType = (type || '').toLowerCase();
 
-const mockVerificationHistory = [
-  { id: 1, text: '100 Verification credit transferred to <Branch Name> from <Branch Name>', date: '20/07/2026', type: 'transferred' },
-  { id: 2, text: '50 Verification credit distributed to <Branch Name>', date: '20/07/2026', type: 'distributed' },
-  { id: 3, text: '50 Verification credit distributed to <Branch Name>', date: '20/07/2026', type: 'distributed' },
-  { id: 4, text: '100 Verification credit transferred to <Branch Name> from <Branch Name>', date: '20/07/2026', type: 'transferred' },
-  { id: 5, text: '50 Verification credit distributed to <Branch Name>', date: '20/07/2026', type: 'distributed' },
-  { id: 6, text: '1000 Verification credit purchased', date: '20/07/2026', type: 'purchased' },
-];
-
-const HistoryIcon = ({ type }) => {
-  if (type === 'transferred') {
+  if (normAction === 'ALLOCATION' || normType === 'transferred' || normType === 'distributed') {
     return (
-      <div className="w-10 h-10 shrink-0 rounded-lg bg-blue-50 text-[#1b84ff] flex items-center justify-center relative">
-        <CreditCard size={22} strokeWidth={1.5} />
-        <div className="absolute -bottom-1 -right-1 bg-blue-50 rounded-full p-0.5">
-          <RefreshCcw size={12} strokeWidth={3} />
+      <div className="w-10 h-10 shrink-0 rounded-xl bg-orange-50 text-[#ff8f00] flex items-center justify-center relative shadow-sm border border-orange-100/60">
+        <CreditCard size={20} strokeWidth={1.7} />
+        <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 shadow">
+          <ArrowUpRight size={13} className="text-[#ff8f00]" strokeWidth={2.5} />
         </div>
       </div>
     );
-  } else if (type === 'distributed') {
+  } else if (normAction === 'PURCHASE' || normType === 'purchased') {
     return (
-      <div className="w-10 h-10 shrink-0 rounded-lg bg-orange-50 text-[#ff8f00] flex items-center justify-center relative">
-        <CreditCard size={22} strokeWidth={1.5} />
-        <div className="absolute -bottom-1 -right-1 bg-orange-50 rounded-full p-0.5">
-          <ArrowUpRight size={14} strokeWidth={3} />
+      <div className="w-10 h-10 shrink-0 rounded-xl bg-emerald-50 text-[#10b981] flex items-center justify-center relative shadow-sm border border-emerald-100/60">
+        <CreditCard size={20} strokeWidth={1.7} />
+        <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 shadow">
+          <Plus size={13} className="text-[#10b981]" strokeWidth={2.5} />
         </div>
       </div>
     );
-  } else if (type === 'purchased') {
+  } else if (normAction === 'DEDUCTION' || normType === 'deducted' || normType === 'used') {
     return (
-      <div className="w-10 h-10 shrink-0 rounded-lg bg-green-50 text-[#32c965] flex items-center justify-center relative">
-        <CreditCard size={22} strokeWidth={1.5} />
-        <div className="absolute -bottom-1 -right-1 bg-green-50 rounded-full p-0.5">
-          <Plus size={14} strokeWidth={3} />
+      <div className="w-10 h-10 shrink-0 rounded-xl bg-purple-50 text-[#8b5cf6] flex items-center justify-center relative shadow-sm border border-purple-100/60">
+        <CreditCard size={20} strokeWidth={1.7} />
+        <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 shadow">
+          <ArrowDownRight size={13} className="text-[#8b5cf6]" strokeWidth={2.5} />
         </div>
       </div>
     );
   }
+
   return (
-    <div className="w-10 h-10 shrink-0 rounded-lg bg-gray-50 text-gray-500 flex items-center justify-center">
-      <CreditCard size={22} strokeWidth={1.5} />
+    <div className="w-10 h-10 shrink-0 rounded-xl bg-blue-50 text-[#1cabb1] flex items-center justify-center relative shadow-sm border border-blue-100/60">
+      <CreditCard size={20} strokeWidth={1.7} />
+      <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 shadow">
+        <RefreshCcw size={11} className="text-[#1cabb1]" strokeWidth={2.5} />
+      </div>
     </div>
   );
 };
 
 const CardsAndCredit = () => {
   const navigate = useNavigate();
+
+  // Loading States
+  const [dashboardLoading, setDashboardLoading] = useState(true);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [submittingPurchase, setSubmittingPurchase] = useState(false);
+  const [submittingTransfer, setSubmittingTransfer] = useState(false);
+
+  // Active Tab for Main View
+  const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'purchases' | 'transfers' | 'branchWallet'
+
+  // Dashboard Data
+  const [walletMetrics, setWalletMetrics] = useState({
+    emiCards: { purchased: 0, available: 0, used: 0 },
+    verificationCredits: { purchased: 0, available: 0, used: 0 }
+  });
+  const [recentPurchases, setRecentPurchases] = useState([]);
+  const [recentTransfers, setRecentTransfers] = useState([]);
+
+  // Branches list for distribution
+  const [branches, setBranches] = useState([]);
+  const [selectedBranchForInspection, setSelectedBranchForInspection] = useState('');
+  const [branchWalletData, setBranchWalletData] = useState(null);
+  const [branchWalletLoading, setBranchWalletLoading] = useState(false);
+
+  // Credit Movement History Data
+  const [emiHistoryList, setEmiHistoryList] = useState([]);
+  const [verificationHistoryList, setVerificationHistoryList] = useState([]);
+  const [emiPage, setEmiPage] = useState(1);
+  const [verificationPage, setVerificationPage] = useState(1);
+  const [emiTotalPages, setEmiTotalPages] = useState(1);
+  const [verificationTotalPages, setVerificationTotalPages] = useState(1);
+  const [emiTotalRecords, setEmiTotalRecords] = useState(0);
+  const [verificationTotalRecords, setVerificationTotalRecords] = useState(0);
+
+  // Purchase History Data (Tab 2)
+  const [purchaseHistoryList, setPurchaseHistoryList] = useState([]);
+  const [purchaseHistoryPage, setPurchaseHistoryPage] = useState(1);
+  const [purchaseHistoryTotalPages, setPurchaseHistoryTotalPages] = useState(1);
+  const [purchaseHistoryTotal, setPurchaseHistoryTotal] = useState(0);
+  const [purchaseSearch, setPurchaseSearch] = useState('');
+  const [purchaseStatusFilter, setPurchaseStatusFilter] = useState('ALL');
+
+  // Transfer History Data (Tab 3)
+  const [transferHistoryList, setTransferHistoryList] = useState([]);
+  const [transferHistoryPage, setTransferHistoryPage] = useState(1);
+  const [transferHistoryTotalPages, setTransferHistoryTotalPages] = useState(1);
+  const [transferHistoryTotal, setTransferHistoryTotal] = useState(0);
+  const [transferSearch, setTransferSearch] = useState('');
+
+  // Modals
   const [isPurchaseModalOpen, setIsPurchaseModalOpen] = useState(false);
   const [isDistributeModalOpen, setIsDistributeModalOpen] = useState(false);
-  const [distributeType, setDistributeType] = useState('add');
-  const [transferSelection, setTransferSelection] = useState('both');
-  
+  const [selectedOrderDetails, setSelectedOrderDetails] = useState(null);
+
+  // Purchase Form State
   const [purchaseEmi, setPurchaseEmi] = useState(true);
   const [purchaseVerification, setPurchaseVerification] = useState(true);
-  
-  const [emiQty, setEmiQty] = useState(150);
-  const [verificationQty, setVerificationQty] = useState(250);
+  const [emiQty, setEmiQty] = useState(100);
+  const [verificationQty, setVerificationQty] = useState(200);
+  const [emiRateEst] = useState(499); // standard dynamic estimate rate
+  const [verificationRateEst] = useState(50); // standard dynamic estimate rate
 
-  const emiPrice = 1000;
-  const verificationPrice = 22000;
-  
-  // Calculate total amounts based on active checkboxes (mocking the UI's static numbers for demo)
-  const totalAmount = (purchaseEmi ? emiPrice : 0) + (purchaseVerification ? verificationPrice : 0);
-  const cgst = 4700;
-  const sgst = 4700;
-  const totalPayable = totalAmount + cgst + sgst;
+  // Distribute / Transfer Form State
+  const [distributeType, setDistributeType] = useState('add'); // 'add' (Bank->Branch) | 'transfer' (Branch->Branch)
+  const [targetBranchId, setTargetBranchId] = useState('');
+  const [sourceBranchId, setSourceBranchId] = useState('');
+  const [transferSelection, setTransferSelection] = useState('both'); // 'emi' | 'verification' | 'both'
+  const [distributeEmiQty, setDistributeEmiQty] = useState('');
+  const [distributeVerificationQty, setDistributeVerificationQty] = useState('');
+  const [transferRemarks, setTransferRemarks] = useState('');
 
-  const handlePay = () => {
-    setIsPurchaseModalOpen(false);
-    navigate('/cards-credit/payment');
+  // Calculated estimates for Purchase Modal
+  const calculatedEmiSubtotal = purchaseEmi ? (Number(emiQty) || 0) * emiRateEst : 0;
+  const calculatedVerificationSubtotal = purchaseVerification ? (Number(verificationQty) || 0) * verificationRateEst : 0;
+  const calculatedSubtotal = calculatedEmiSubtotal + calculatedVerificationSubtotal;
+  const calculatedCgst = Math.round(calculatedSubtotal * 0.09);
+  const calculatedSgst = Math.round(calculatedSubtotal * 0.09);
+  const calculatedTotalPayable = calculatedSubtotal + calculatedCgst + calculatedSgst;
+
+  // 1. Fetch Bank Wallet Dashboard
+  const fetchDashboardData = useCallback(async () => {
+    try {
+      setDashboardLoading(true);
+      const res = await cardCreditService.getDashboard();
+      if (res && res.success && res.data) {
+        const data = res.data;
+        if (data.wallet) {
+          setWalletMetrics(data.wallet);
+        }
+        if (Array.isArray(data.recentPurchases)) {
+          setRecentPurchases(data.recentPurchases);
+        }
+        if (Array.isArray(data.recentTransfers)) {
+          setRecentTransfers(data.recentTransfers);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching cards/credit dashboard:', error);
+      toast.error(error.response?.data?.message || 'Failed to load wallet metrics');
+    } finally {
+      setDashboardLoading(false);
+    }
+  }, []);
+
+  // 2. Fetch Branches for Allocation Dropdowns
+  const fetchBranches = useCallback(async () => {
+    try {
+      const res = await branchService.list({ limit: 100 });
+      let branchList = [];
+      if (res && res.data) {
+        if (Array.isArray(res.data)) {
+          branchList = res.data;
+        } else if (Array.isArray(res.data.branches)) {
+          branchList = res.data.branches;
+        } else if (Array.isArray(res.data.data)) {
+          branchList = res.data.data;
+        }
+      }
+      setBranches(branchList);
+      if (branchList.length > 0 && !targetBranchId) {
+        setTargetBranchId(branchList[0]._id || branchList[0].id);
+      }
+    } catch (error) {
+      console.error('Error fetching branches for card distribution:', error);
+    }
+  }, [targetBranchId]);
+
+  // 3. Fetch EMI Card Movement History
+  const fetchEmiHistory = useCallback(async (page = 1) => {
+    try {
+      const res = await cardCreditService.getCreditHistory({
+        page,
+        limit: 6,
+        type: 'EMI_CARD'
+      });
+      if (res && res.success) {
+        const items = Array.isArray(res.data) ? res.data : [];
+        setEmiHistoryList(items);
+        if (res.pagination) {
+          setEmiTotalPages(res.pagination.totalPages || 1);
+          setEmiTotalRecords(res.pagination.totalRecords || items.length);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching EMI credit history:', error);
+    }
+  }, []);
+
+  // 4. Fetch Verification Credit Movement History
+  const fetchVerificationHistory = useCallback(async (page = 1) => {
+    try {
+      const res = await cardCreditService.getCreditHistory({
+        page,
+        limit: 6,
+        type: 'VERIFICATION_CREDIT'
+      });
+      if (res && res.success) {
+        const items = Array.isArray(res.data) ? res.data : [];
+        setVerificationHistoryList(items);
+        if (res.pagination) {
+          setVerificationTotalPages(res.pagination.totalPages || 1);
+          setVerificationTotalRecords(res.pagination.totalRecords || items.length);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching verification credit history:', error);
+    }
+  }, []);
+
+  // 5. Fetch Purchase Orders History (Tab 2)
+  const fetchPurchaseHistory = useCallback(async (page = 1) => {
+    try {
+      setHistoryLoading(true);
+      const params = {
+        page,
+        limit: 10,
+        sortBy: 'createdAt',
+        sortOrder: 'desc'
+      };
+      if (purchaseSearch) params.search = purchaseSearch;
+      if (purchaseStatusFilter !== 'ALL') params.status = purchaseStatusFilter;
+
+      const res = await cardCreditService.getPurchaseHistory(params);
+      if (res && res.success) {
+        const items = Array.isArray(res.data) ? res.data : [];
+        setPurchaseHistoryList(items);
+        if (res.pagination) {
+          setPurchaseHistoryTotalPages(res.pagination.totalPages || 1);
+          setPurchaseHistoryTotal(res.pagination.totalRecords || items.length);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching purchase history:', error);
+      toast.error(error.response?.data?.message || 'Failed to load purchase history');
+    } finally {
+      setHistoryLoading(false);
+    }
+  }, [purchaseSearch, purchaseStatusFilter]);
+
+  // 6. Fetch Transfer History (Tab 3)
+  const fetchTransferHistory = useCallback(async (page = 1) => {
+    try {
+      setHistoryLoading(true);
+      const params = {
+        page,
+        limit: 10,
+        sortBy: 'createdAt',
+        sortOrder: 'desc'
+      };
+      if (transferSearch) params.search = transferSearch;
+
+      const res = await cardCreditService.getTransferHistory(params);
+      if (res && res.success) {
+        const items = Array.isArray(res.data) ? res.data : [];
+        setTransferHistoryList(items);
+        if (res.pagination) {
+          setTransferHistoryTotalPages(res.pagination.totalPages || 1);
+          setTransferHistoryTotal(res.pagination.totalRecords || items.length);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching transfer history:', error);
+      toast.error(error.response?.data?.message || 'Failed to load transfer history');
+    } finally {
+      setHistoryLoading(false);
+    }
+  }, [transferSearch]);
+
+  // 7. Fetch Branch Wallet Details (Tab 4)
+  const fetchBranchWalletDetails = async (bId) => {
+    if (!bId) return;
+    try {
+      setBranchWalletLoading(true);
+      const res = await cardCreditService.getBranchWallet(bId);
+      if (res && res.success) {
+        setBranchWalletData(res.data);
+      }
+    } catch (error) {
+      console.error('Error fetching branch wallet:', error);
+      toast.error(error.response?.data?.message || 'Failed to load branch wallet');
+    } finally {
+      setBranchWalletLoading(false);
+    }
+  };
+
+  // Initial Load
+  useEffect(() => {
+    fetchDashboardData();
+    fetchBranches();
+    fetchEmiHistory(1);
+    fetchVerificationHistory(1);
+  }, [fetchDashboardData, fetchBranches, fetchEmiHistory, fetchVerificationHistory]);
+
+  // Tab change triggers
+  useEffect(() => {
+    if (activeTab === 'purchases') {
+      fetchPurchaseHistory(purchaseHistoryPage);
+    } else if (activeTab === 'transfers') {
+      fetchTransferHistory(transferHistoryPage);
+    } else if (activeTab === 'branchWallet' && selectedBranchForInspection) {
+      fetchBranchWalletDetails(selectedBranchForInspection);
+    }
+  }, [activeTab, purchaseHistoryPage, transferHistoryPage, fetchPurchaseHistory, fetchTransferHistory]);
+
+  // Handle Purchase Submit
+  const handleInitiatePurchase = async () => {
+    if (!purchaseEmi && !purchaseVerification) {
+      toast.warning('Please select at least one item (EMI Card or Verification Credit) to purchase.');
+      return;
+    }
+
+    const emiQ = purchaseEmi ? Number(emiQty) : 0;
+    const verQ = purchaseVerification ? Number(verificationQty) : 0;
+
+    if (purchaseEmi && emiQ <= 0) {
+      toast.warning('Please enter a valid EMI Card quantity.');
+      return;
+    }
+    if (purchaseVerification && verQ <= 0) {
+      toast.warning('Please enter a valid Verification Credit quantity.');
+      return;
+    }
+
+    let purchaseType = 'BOTH';
+    if (purchaseEmi && !purchaseVerification) purchaseType = 'EMI_CARD';
+    if (!purchaseEmi && purchaseVerification) purchaseType = 'VERIFICATION_CREDIT';
+
+    try {
+      setSubmittingPurchase(true);
+      const payload = {
+        purchaseType,
+        emiQuantity: emiQ,
+        verificationQuantity: verQ
+      };
+
+      const res = await cardCreditService.initiatePurchase(payload);
+
+      if (res && res.success && res.data) {
+        toast.success(res.message || 'Purchase initiated successfully!');
+        setIsPurchaseModalOpen(false);
+
+        // Navigate to payment page with checkout / order details
+        navigate('/cards-credit/payment', {
+          state: {
+            orderData: res.data,
+            priceBreakdown: res.data.priceBreakdown,
+            checkoutUrl: res.data.checkoutUrl || res.data.paymentLink,
+            orderId: res.data.orderId,
+            purchaseId: res.data.purchaseId
+          }
+        });
+      } else {
+        toast.error(res?.message || 'Failed to initiate purchase');
+      }
+    } catch (error) {
+      console.error('Error initiating purchase:', error);
+      toast.error(error.response?.data?.message || 'Error occurred while initiating purchase');
+    } finally {
+      setSubmittingPurchase(false);
+    }
+  };
+
+  // Handle Stock Transfer Submit
+  const handleTransferStock = async () => {
+    if (!targetBranchId) {
+      toast.warning('Please select a target branch.');
+      return;
+    }
+
+    const emiQ = Number(distributeEmiQty) || 0;
+    const verQ = Number(distributeVerificationQty) || 0;
+
+    if (emiQ <= 0 && verQ <= 0) {
+      toast.warning('Please specify at least one quantity for EMI Cards or Verification Credits.');
+      return;
+    }
+
+    const availableEmi = walletMetrics?.emiCards?.available || 0;
+    const availableVer = walletMetrics?.verificationCredits?.available || 0;
+
+    if (emiQ > availableEmi) {
+      toast.error(`Cannot transfer ${emiQ} EMI Cards. Only ${availableEmi} available in bank inventory.`);
+      return;
+    }
+    if (verQ > availableVer) {
+      toast.error(`Cannot transfer ${verQ} Verification Credits. Only ${availableVer} available in bank inventory.`);
+      return;
+    }
+
+    try {
+      setSubmittingTransfer(true);
+      const payload = {
+        branchId: targetBranchId,
+        emiQuantity: emiQ,
+        verificationQuantity: verQ,
+        remarks: transferRemarks.trim() || 'Branch stock allocation'
+      };
+
+      const res = await cardCreditService.transferStock(payload);
+
+      if (res && res.success) {
+        toast.success(res.message || 'Credit stock transferred to branch successfully!');
+        setIsDistributeModalOpen(false);
+        setDistributeEmiQty('');
+        setDistributeVerificationQty('');
+        setTransferRemarks('');
+        // Refresh dashboard and history
+        fetchDashboardData();
+        fetchEmiHistory(1);
+        fetchVerificationHistory(1);
+      } else {
+        toast.error(res?.message || 'Failed to transfer stock to branch');
+      }
+    } catch (error) {
+      console.error('Error transferring stock:', error);
+      toast.error(error.response?.data?.message || 'Failed to transfer stock to branch');
+    } finally {
+      setSubmittingTransfer(false);
+    }
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-7xl mx-auto pb-12">
       {/* Header and Breadcrumb */}
-      <div className="bg-white rounded-lg p-5 shadow-sm border border-gray-100">
-        <h1 className="text-2xl font-semibold text-[#1b2559] mb-2">EMI Cards & Verification Credits</h1>
-        <div className="flex items-center text-sm font-medium text-gray-500">
-          <Link to="/dashboard" className="hover:text-[#1b2559] transition-colors">Dashboard</Link>
-          <ChevronRight size={16} className="mx-1" />
-          <span>EMI Cards & Verification Credits</span>
-          <ChevronRight size={16} className="mx-1" />
-          <span className="text-[#1b2559]">Cards & Credit</span>
+      <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100/80 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-[#1b2559] tracking-tight mb-1">
+            EMI Cards & Verification Credits
+          </h1>
+          <div className="flex items-center text-sm font-medium text-gray-500">
+            <Link to="/dashboard" className="hover:text-[#1cabb1] transition-colors">Dashboard</Link>
+            <ChevronRight size={15} className="mx-1 text-gray-400" />
+            <span>EMI Cards & Verification Credits</span>
+            <ChevronRight size={15} className="mx-1 text-gray-400" />
+            <span className="text-[#1cabb1] font-semibold">Cards & Credit</span>
+          </div>
+        </div>
+
+        {/* Top Action Buttons */}
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            onClick={fetchDashboardData}
+            title="Refresh Metrics"
+            className="p-2.5 rounded-xl border border-gray-200 text-gray-600 hover:text-[#1cabb1] hover:bg-teal-50/50 transition-colors shadow-sm"
+          >
+            <RefreshCcw size={18} className={dashboardLoading ? 'animate-spin text-[#1cabb1]' : ''} />
+          </button>
+          <button 
+            onClick={() => setIsDistributeModalOpen(true)}
+            className="px-5 py-2.5 rounded-xl border-[1.5px] border-[#1cabb1] text-[#1cabb1] font-semibold hover:bg-[#1cabb1]/10 transition-all text-sm bg-white shadow-sm flex items-center gap-2 active:scale-98 cursor-pointer"
+          >
+            <Send size={16} />
+            <span>Distribute / Transfer Stock</span>
+          </button>
+          <button 
+            onClick={() => setIsPurchaseModalOpen(true)}
+            className="px-5 py-2.5 rounded-xl bg-[#1cabb1] hover:bg-[#159a9f] text-white font-semibold transition-all text-sm shadow-sm flex items-center gap-2 active:scale-98 cursor-pointer"
+          >
+            <ShoppingCart size={16} />
+            <span>Purchase Card & Credit</span>
+          </button>
         </div>
       </div>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col relative">
-          <div className="flex justify-between items-start mb-4">
-            <span className="text-[16px] font-semibold text-gray-700">EMI Card</span>
-            <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center">
-              <CreditCard size={20} />
-            </div>
-          </div>
-          <span className="text-3xl font-bold text-[#1b2559] mb-2">4,200</span>
-          <div className="flex items-center text-sm text-gray-500">
-            <span>This Month Usage</span>
-            <span className="ml-2 text-red-500 font-medium flex items-center">
-              -1.7%
-            </span>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col relative">
-          <div className="flex justify-between items-start mb-4">
-            <span className="text-[16px] font-semibold text-gray-700">Verification Credit</span>
-            <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center">
-              <CreditCard size={20} />
-            </div>
-          </div>
-          <span className="text-3xl font-bold text-[#1b2559] mb-2">8,400</span>
-          <div className="flex items-center text-sm text-gray-500">
-            <span>This Month Usage</span>
-            <span className="ml-2 text-red-500 font-medium flex items-center">
-              -1.7%
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* Actions */}
-      <div className="flex justify-end gap-4">
-        <button 
-          onClick={() => setIsDistributeModalOpen(true)}
-          className="px-6 py-2.5 rounded-full border-[1.5px] border-[#1cabb1] text-[#1cabb1] font-semibold hover:bg-teal-50 transition-colors text-[14px] bg-white shadow-sm"
-        >
-          Distribute Card & Credit
-        </button>
-        <button 
-          onClick={() => setIsPurchaseModalOpen(true)}
-          className="px-6 py-2.5 rounded-full bg-[#1cabb1] hover:bg-[#159a9f] text-white font-semibold transition-colors text-[14px] shadow-sm"
-        >
-          Purchase Card & Credit
-        </button>
-      </div>
-
-      {/* History Lists */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* EMI Card History */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-          <h3 className="text-lg font-bold text-[#1b2559] mb-6">EMI Card History</h3>
-          <div className="space-y-6">
-            {mockEmiHistory.map((item) => (
-              <div key={item.id} className="flex gap-4">
-                <HistoryIcon type={item.type} />
-                <div className="flex flex-col justify-center">
-                  <p className="text-[14px] text-[#1b2559] font-medium leading-tight mb-1">{item.text}</p>
-                  <span className="text-[12px] text-gray-400 font-medium">{item.date}</span>
-                </div>
+        {/* EMI Card Metric Card */}
+        <div className="bg-gradient-to-br from-white to-blue-50/30 rounded-2xl p-6 shadow-sm border border-blue-100/80 flex flex-col justify-between relative overflow-hidden group hover:shadow-md transition-shadow">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none"></div>
+          
+          <div>
+            <div className="flex justify-between items-start mb-4">
+              <div>
+                <span className="text-xs font-bold tracking-wider uppercase text-blue-600 bg-blue-100/60 px-2.5 py-1 rounded-md">
+                  Inventory
+                </span>
+                <h3 className="text-lg font-bold text-gray-800 mt-2">EMI Card Stock</h3>
               </div>
-            ))}
+              <div className="w-12 h-12 rounded-2xl bg-blue-600 text-white flex items-center justify-center shadow-lg shadow-blue-500/20">
+                <CreditCard size={24} />
+              </div>
+            </div>
+
+            <div className="flex items-baseline gap-3 mb-4">
+              <span className="text-4xl font-extrabold text-[#1b2559] tracking-tight">
+                {dashboardLoading ? '...' : (walletMetrics?.emiCards?.available || 0).toLocaleString()}
+              </span>
+              <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full flex items-center gap-1">
+                <TrendingUp size={12} /> Available
+              </span>
+            </div>
           </div>
-          {/* Pagination */}
-          <div className="flex items-center justify-between pt-6 mt-6 border-t border-gray-100">
-            <span className="text-[14px] font-semibold text-[#1b2559]">Showing 1 to 6 of 18 Entries</span>
+
+          <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-100 text-sm">
+            <div className="bg-white/80 rounded-xl p-3 border border-gray-100">
+              <span className="text-xs text-gray-500 block">Total Purchased</span>
+              <span className="font-bold text-gray-800 text-base">
+                {dashboardLoading ? '...' : (walletMetrics?.emiCards?.purchased || 0).toLocaleString()}
+              </span>
+            </div>
+            <div className="bg-white/80 rounded-xl p-3 border border-gray-100">
+              <span className="text-xs text-gray-500 block">Allocated / Used</span>
+              <span className="font-bold text-gray-800 text-base">
+                {dashboardLoading ? '...' : (walletMetrics?.emiCards?.used || 0).toLocaleString()}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Verification Credit Metric Card */}
+        <div className="bg-gradient-to-br from-white to-teal-50/30 rounded-2xl p-6 shadow-sm border border-teal-100/80 flex flex-col justify-between relative overflow-hidden group hover:shadow-md transition-shadow">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-teal-500/5 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none"></div>
+
+          <div>
+            <div className="flex justify-between items-start mb-4">
+              <div>
+                <span className="text-xs font-bold tracking-wider uppercase text-teal-600 bg-teal-100/60 px-2.5 py-1 rounded-md">
+                  Verification
+                </span>
+                <h3 className="text-lg font-bold text-gray-800 mt-2">Verification Credits</h3>
+              </div>
+              <div className="w-12 h-12 rounded-2xl bg-[#1cabb1] text-white flex items-center justify-center shadow-lg shadow-teal-500/20">
+                <ShieldCheck size={24} />
+              </div>
+            </div>
+
+            <div className="flex items-baseline gap-3 mb-4">
+              <span className="text-4xl font-extrabold text-[#1b2559] tracking-tight">
+                {dashboardLoading ? '...' : (walletMetrics?.verificationCredits?.available || 0).toLocaleString()}
+              </span>
+              <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full flex items-center gap-1">
+                <TrendingUp size={12} /> Available
+              </span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-100 text-sm">
+            <div className="bg-white/80 rounded-xl p-3 border border-gray-100">
+              <span className="text-xs text-gray-500 block">Total Purchased</span>
+              <span className="font-bold text-gray-800 text-base">
+                {dashboardLoading ? '...' : (walletMetrics?.verificationCredits?.purchased || 0).toLocaleString()}
+              </span>
+            </div>
+            <div className="bg-white/80 rounded-xl p-3 border border-gray-100">
+              <span className="text-xs text-gray-500 block">Consumed / Used</span>
+              <span className="font-bold text-gray-800 text-base">
+                {dashboardLoading ? '...' : (walletMetrics?.verificationCredits?.used || 0).toLocaleString()}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Navigation Tabs for Views */}
+      <div className="flex items-center gap-2 border-b border-gray-200 pb-2">
+        <button
+          onClick={() => setActiveTab('overview')}
+          className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all cursor-pointer ${
+            activeTab === 'overview'
+              ? 'bg-[#1cabb1] text-white shadow-sm'
+              : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+          }`}
+        >
+          Activity & Live History
+        </button>
+        <button
+          onClick={() => setActiveTab('purchases')}
+          className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all cursor-pointer ${
+            activeTab === 'purchases'
+              ? 'bg-[#1cabb1] text-white shadow-sm'
+              : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+          }`}
+        >
+          Purchase Orders
+        </button>
+        <button
+          onClick={() => setActiveTab('transfers')}
+          className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all cursor-pointer ${
+            activeTab === 'transfers'
+              ? 'bg-[#1cabb1] text-white shadow-sm'
+              : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+          }`}
+        >
+          Branch Allocations
+        </button>
+        <button
+          onClick={() => setActiveTab('branchWallet')}
+          className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all cursor-pointer ${
+            activeTab === 'branchWallet'
+              ? 'bg-[#1cabb1] text-white shadow-sm'
+              : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+          }`}
+        >
+          Branch Wallet Inspector
+        </button>
+      </div>
+
+      {/* TAB 1: OVERVIEW & SPLIT HISTORY */}
+      {activeTab === 'overview' && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* EMI Card History */}
+          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h3 className="text-lg font-bold text-[#1b2559]">EMI Card Activity</h3>
+                  <p className="text-xs text-gray-400 font-medium">Recent stock movements & purchase logs</p>
+                </div>
+                <button
+                  onClick={() => fetchEmiHistory(emiPage)}
+                  className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  <RefreshCcw size={15} />
+                </button>
+              </div>
+
+              <div className="space-y-4 min-h-[300px]">
+                {emiHistoryList.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center h-48 text-gray-400">
+                    <CreditCard size={36} className="text-gray-300 mb-2" />
+                    <p className="text-sm">No EMI card activity found yet</p>
+                  </div>
+                ) : (
+                  emiHistoryList.map((item, idx) => (
+                    <div key={item.id || item._id || idx} className="flex gap-3.5 p-2.5 rounded-xl hover:bg-gray-50/80 transition-colors border border-transparent hover:border-gray-100">
+                      <HistoryIcon type={item.type} action={item.action} />
+                      <div className="flex flex-col justify-center flex-1 min-w-0">
+                        <p className="text-[13px] text-[#1b2559] font-medium leading-snug mb-1 truncate">
+                          {item.description || `${item.amount || item.quantity} EMI Cards ${item.action || 'updated'}`}
+                        </p>
+                        <div className="flex items-center gap-2 text-[11px] text-gray-400 font-medium">
+                          <Clock size={12} />
+                          <span>{item.createdAt ? new Date(item.createdAt).toLocaleDateString('en-GB') : 'Recent'}</span>
+                          {item.branch && (
+                            <span className="text-[#1cabb1] font-semibold truncate">• {item.branch.name || item.branch}</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            {/* Pagination */}
+            <div className="flex items-center justify-between pt-4 mt-6 border-t border-gray-100">
+              <span className="text-xs font-semibold text-gray-500">
+                Page {emiPage} of {emiTotalPages} ({emiTotalRecords} total)
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  disabled={emiPage <= 1}
+                  onClick={() => {
+                    const newP = emiPage - 1;
+                    setEmiPage(newP);
+                    fetchEmiHistory(newP);
+                  }}
+                  className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:border-[#1cabb1] hover:text-[#1cabb1] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronLeft size={16} />
+                </button>
+                <span className="text-xs font-bold text-[#1cabb1] px-2">{emiPage}</span>
+                <button
+                  disabled={emiPage >= emiTotalPages}
+                  onClick={() => {
+                    const newP = emiPage + 1;
+                    setEmiPage(newP);
+                    fetchEmiHistory(newP);
+                  }}
+                  className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:border-[#1cabb1] hover:text-[#1cabb1] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Verification Credit History */}
+          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h3 className="text-lg font-bold text-[#1b2559]">Verification Credit Activity</h3>
+                  <p className="text-xs text-gray-400 font-medium">Recent credit deductions & transfers</p>
+                </div>
+                <button
+                  onClick={() => fetchVerificationHistory(verificationPage)}
+                  className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  <RefreshCcw size={15} />
+                </button>
+              </div>
+
+              <div className="space-y-4 min-h-[300px]">
+                {verificationHistoryList.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center h-48 text-gray-400">
+                    <ShieldCheck size={36} className="text-gray-300 mb-2" />
+                    <p className="text-sm">No verification credit activity found yet</p>
+                  </div>
+                ) : (
+                  verificationHistoryList.map((item, idx) => (
+                    <div key={item.id || item._id || idx} className="flex gap-3.5 p-2.5 rounded-xl hover:bg-gray-50/80 transition-colors border border-transparent hover:border-gray-100">
+                      <HistoryIcon type={item.type} action={item.action} />
+                      <div className="flex flex-col justify-center flex-1 min-w-0">
+                        <p className="text-[13px] text-[#1b2559] font-medium leading-snug mb-1 truncate">
+                          {item.description || `${item.amount || item.quantity} Credits ${item.action || 'updated'}`}
+                        </p>
+                        <div className="flex items-center gap-2 text-[11px] text-gray-400 font-medium">
+                          <Clock size={12} />
+                          <span>{item.createdAt ? new Date(item.createdAt).toLocaleDateString('en-GB') : 'Recent'}</span>
+                          {item.branch && (
+                            <span className="text-[#1cabb1] font-semibold truncate">• {item.branch.name || item.branch}</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            {/* Pagination */}
+            <div className="flex items-center justify-between pt-4 mt-6 border-t border-gray-100">
+              <span className="text-xs font-semibold text-gray-500">
+                Page {verificationPage} of {verificationTotalPages} ({verificationTotalRecords} total)
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  disabled={verificationPage <= 1}
+                  onClick={() => {
+                    const newP = verificationPage - 1;
+                    setVerificationPage(newP);
+                    fetchVerificationHistory(newP);
+                  }}
+                  className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:border-[#1cabb1] hover:text-[#1cabb1] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronLeft size={16} />
+                </button>
+                <span className="text-xs font-bold text-[#1cabb1] px-2">{verificationPage}</span>
+                <button
+                  disabled={verificationPage >= verificationTotalPages}
+                  onClick={() => {
+                    const newP = verificationPage + 1;
+                    setVerificationPage(newP);
+                    fetchVerificationHistory(newP);
+                  }}
+                  className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:border-[#1cabb1] hover:text-[#1cabb1] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TAB 2: PURCHASE ORDERS HISTORY */}
+      {activeTab === 'purchases' && (
+        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+            <div>
+              <h3 className="text-lg font-bold text-[#1b2559]">Card & Credit Purchase Orders</h3>
+              <p className="text-xs text-gray-400">View Easebuzz orders, tax invoices, and payment statuses</p>
+            </div>
+            
             <div className="flex items-center gap-3">
-              <button className="w-8 h-8 flex items-center justify-center rounded-full border border-[#1cabb1] text-[#1cabb1] hover:bg-teal-50 transition-colors">
+              <div className="relative w-64">
+                <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Order ID / Invoice..."
+                  value={purchaseSearch}
+                  onChange={(e) => setPurchaseSearch(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && fetchPurchaseHistory(1)}
+                  className="w-full pl-9 pr-4 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1]"
+                />
+              </div>
+
+              <select
+                value={purchaseStatusFilter}
+                onChange={(e) => {
+                  setPurchaseStatusFilter(e.target.value);
+                  setPurchaseHistoryPage(1);
+                }}
+                className="px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#1cabb1] bg-white text-gray-700 font-medium"
+              >
+                <option value="ALL">All Statuses</option>
+                <option value="SUCCESS">Success</option>
+                <option value="PENDING">Pending</option>
+                <option value="FAILED">Failed</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Table */}
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-gray-200/80 text-[12px] font-semibold text-gray-500 uppercase tracking-wider bg-gray-50/50">
+                  <th className="py-3.5 px-4 rounded-l-xl">Order ID</th>
+                  <th className="py-3.5 px-4">Type / Units</th>
+                  <th className="py-3.5 px-4">Subtotal</th>
+                  <th className="py-3.5 px-4">GST (18%)</th>
+                  <th className="py-3.5 px-4">Total Amount</th>
+                  <th className="py-3.5 px-4">Status</th>
+                  <th className="py-3.5 px-4">Date</th>
+                  <th className="py-3.5 px-4 rounded-r-xl text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100 text-sm">
+                {historyLoading ? (
+                  <tr>
+                    <td colSpan={8} className="py-8 text-center text-gray-400">
+                      <RefreshCcw size={20} className="animate-spin mx-auto mb-2 text-[#1cabb1]" />
+                      Loading purchase history...
+                    </td>
+                  </tr>
+                ) : purchaseHistoryList.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} className="py-8 text-center text-gray-400">
+                      No purchase orders found matching the filter.
+                    </td>
+                  </tr>
+                ) : (
+                  purchaseHistoryList.map((po, idx) => {
+                    const status = (po.paymentStatus || 'PENDING').toUpperCase();
+                    return (
+                      <tr key={po.id || po._id || idx} className="hover:bg-gray-50/60 transition-colors">
+                        <td className="py-3.5 px-4 font-mono font-medium text-gray-800 text-xs">
+                          {po.orderId || po.id}
+                        </td>
+                        <td className="py-3.5 px-4">
+                          <div className="font-semibold text-gray-800 text-xs">
+                            {po.purchaseType || 'PURCHASE'}
+                          </div>
+                          <div className="text-[11px] text-gray-500">
+                            {po.emiQuantity > 0 && `${po.emiQuantity} Cards`}
+                            {po.emiQuantity > 0 && po.verificationQuantity > 0 && ' | '}
+                            {po.verificationQuantity > 0 && `${po.verificationQuantity} Credits`}
+                          </div>
+                        </td>
+                        <td className="py-3.5 px-4 font-medium text-gray-700">
+                          ₹{(po.subtotal || 0).toLocaleString()}
+                        </td>
+                        <td className="py-3.5 px-4 text-xs text-gray-500">
+                          ₹{((po.cgst || 0) + (po.sgst || 0)).toLocaleString()}
+                        </td>
+                        <td className="py-3.5 px-4 font-bold text-[#1b2559]">
+                          ₹{(po.total || po.totalAmount || 0).toLocaleString()}
+                        </td>
+                        <td className="py-3.5 px-4">
+                          <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold ${
+                            status === 'SUCCESS' 
+                              ? 'bg-emerald-50 text-emerald-600' 
+                              : status === 'PENDING'
+                              ? 'bg-amber-50 text-amber-600'
+                              : 'bg-red-50 text-red-600'
+                          }`}>
+                            {status === 'SUCCESS' && <CheckCircle2 size={12} />}
+                            {status === 'PENDING' && <Clock size={12} />}
+                            {status === 'FAILED' && <AlertCircle size={12} />}
+                            {status}
+                          </span>
+                        </td>
+                        <td className="py-3.5 px-4 text-xs text-gray-500">
+                          {po.createdAt ? new Date(po.createdAt).toLocaleDateString('en-GB') : '-'}
+                        </td>
+                        <td className="py-3.5 px-4 text-right">
+                          <button
+                            onClick={() => setSelectedOrderDetails(po)}
+                            className="px-3 py-1 rounded-lg border border-gray-200 text-xs font-semibold text-gray-600 hover:border-[#1cabb1] hover:text-[#1cabb1] transition-colors"
+                          >
+                            View Invoice
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Pagination */}
+          <div className="flex items-center justify-between pt-4 mt-6 border-t border-gray-100">
+            <span className="text-xs font-semibold text-gray-500">
+              Showing page {purchaseHistoryPage} of {purchaseHistoryTotalPages} ({purchaseHistoryTotal} total orders)
+            </span>
+            <div className="flex items-center gap-2">
+              <button
+                disabled={purchaseHistoryPage <= 1}
+                onClick={() => {
+                  const newP = purchaseHistoryPage - 1;
+                  setPurchaseHistoryPage(newP);
+                  fetchPurchaseHistory(newP);
+                }}
+                className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:border-[#1cabb1] hover:text-[#1cabb1] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
                 <ChevronLeft size={16} />
               </button>
-              <button className="w-8 h-8 flex items-center justify-center rounded-full border border-[#1cabb1] bg-[#1cabb1] text-white font-bold shadow-sm">
-                1
-              </button>
-              <button className="w-8 h-8 flex items-center justify-center rounded-full border border-[#1cabb1] text-[#1cabb1] hover:bg-teal-50 transition-colors">
+              <span className="text-xs font-bold text-[#1cabb1] px-2">{purchaseHistoryPage}</span>
+              <button
+                disabled={purchaseHistoryPage >= purchaseHistoryTotalPages}
+                onClick={() => {
+                  const newP = purchaseHistoryPage + 1;
+                  setPurchaseHistoryPage(newP);
+                  fetchPurchaseHistory(newP);
+                }}
+                className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:border-[#1cabb1] hover:text-[#1cabb1] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
                 <ChevronRight size={16} />
               </button>
             </div>
           </div>
         </div>
+      )}
 
-        {/* Verification Credit History */}
+      {/* TAB 3: TRANSFER HISTORY */}
+      {activeTab === 'transfers' && (
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-          <h3 className="text-lg font-bold text-[#1b2559] mb-6">Verification Credit History</h3>
-          <div className="space-y-6">
-            {mockVerificationHistory.map((item) => (
-              <div key={item.id} className="flex gap-4">
-                <HistoryIcon type={item.type} />
-                <div className="flex flex-col justify-center">
-                  <p className="text-[14px] text-[#1b2559] font-medium leading-tight mb-1">{item.text}</p>
-                  <span className="text-[12px] text-gray-400 font-medium">{item.date}</span>
-                </div>
-              </div>
-            ))}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+            <div>
+              <h3 className="text-lg font-bold text-[#1b2559]">Branch Stock Transfer Log</h3>
+              <p className="text-xs text-gray-400">Audit trail of cards and credits transferred to branches</p>
+            </div>
+            
+            <div className="relative w-72">
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search branch name or code..."
+                value={transferSearch}
+                onChange={(e) => setTransferSearch(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && fetchTransferHistory(1)}
+                className="w-full pl-9 pr-4 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1]"
+              />
+            </div>
           </div>
+
+          {/* Table */}
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-gray-200/80 text-[12px] font-semibold text-gray-500 uppercase tracking-wider bg-gray-50/50">
+                  <th className="py-3.5 px-4 rounded-l-xl">Branch</th>
+                  <th className="py-3.5 px-4">EMI Cards</th>
+                  <th className="py-3.5 px-4">Verification Credits</th>
+                  <th className="py-3.5 px-4">Branch Balance (After)</th>
+                  <th className="py-3.5 px-4">Remarks</th>
+                  <th className="py-3.5 px-4">Allocated By</th>
+                  <th className="py-3.5 px-4 rounded-r-xl">Date</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100 text-sm">
+                {historyLoading ? (
+                  <tr>
+                    <td colSpan={7} className="py-8 text-center text-gray-400">
+                      <RefreshCcw size={20} className="animate-spin mx-auto mb-2 text-[#1cabb1]" />
+                      Loading transfer history...
+                    </td>
+                  </tr>
+                ) : transferHistoryList.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="py-8 text-center text-gray-400">
+                      No stock transfers found.
+                    </td>
+                  </tr>
+                ) : (
+                  transferHistoryList.map((tr, idx) => (
+                    <tr key={tr.id || tr._id || idx} className="hover:bg-gray-50/60 transition-colors">
+                      <td className="py-3.5 px-4">
+                        <div className="font-semibold text-gray-800">
+                          {tr.branch?.name || tr.branch || 'Branch'}
+                        </div>
+                        {tr.branch?.code && (
+                          <div className="text-[11px] text-gray-400 font-mono">
+                            {tr.branch.code}
+                          </div>
+                        )}
+                      </td>
+                      <td className="py-3.5 px-4 font-bold text-blue-600">
+                        +{tr.emiQuantity || 0}
+                      </td>
+                      <td className="py-3.5 px-4 font-bold text-teal-600">
+                        +{tr.verificationQuantity || 0}
+                      </td>
+                      <td className="py-3.5 px-4 text-xs text-gray-600">
+                        <div>EMI: {tr.balanceAfter?.availableEmiCards ?? '-'}</div>
+                        <div>Credits: {tr.balanceAfter?.availableVerificationCredits ?? '-'}</div>
+                      </td>
+                      <td className="py-3.5 px-4 text-xs text-gray-500 max-w-[200px] truncate">
+                        {tr.remarks || '-'}
+                      </td>
+                      <td className="py-3.5 px-4 text-xs text-gray-600">
+                        {tr.createdBy?.fullName || tr.createdBy?.email || 'Bank Admin'}
+                      </td>
+                      <td className="py-3.5 px-4 text-xs text-gray-500">
+                        {tr.createdAt ? new Date(tr.createdAt).toLocaleDateString('en-GB') : '-'}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+
           {/* Pagination */}
-          <div className="flex items-center justify-between pt-6 mt-6 border-t border-gray-100">
-            <span className="text-[14px] font-semibold text-[#1b2559]">Showing 1 to 6 of 18 Entries</span>
-            <div className="flex items-center gap-3">
-              <button className="w-8 h-8 flex items-center justify-center rounded-full border border-[#1cabb1] text-[#1cabb1] hover:bg-teal-50 transition-colors">
+          <div className="flex items-center justify-between pt-4 mt-6 border-t border-gray-100">
+            <span className="text-xs font-semibold text-gray-500">
+              Showing page {transferHistoryPage} of {transferHistoryTotalPages} ({transferHistoryTotal} total transfers)
+            </span>
+            <div className="flex items-center gap-2">
+              <button
+                disabled={transferHistoryPage <= 1}
+                onClick={() => {
+                  const newP = transferHistoryPage - 1;
+                  setTransferHistoryPage(newP);
+                  fetchTransferHistory(newP);
+                }}
+                className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:border-[#1cabb1] hover:text-[#1cabb1] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
                 <ChevronLeft size={16} />
               </button>
-              <button className="w-8 h-8 flex items-center justify-center rounded-full border border-[#1cabb1] bg-[#1cabb1] text-white font-bold shadow-sm">
-                1
-              </button>
-              <button className="w-8 h-8 flex items-center justify-center rounded-full border border-[#1cabb1] text-[#1cabb1] hover:bg-teal-50 transition-colors">
+              <span className="text-xs font-bold text-[#1cabb1] px-2">{transferHistoryPage}</span>
+              <button
+                disabled={transferHistoryPage >= transferHistoryTotalPages}
+                onClick={() => {
+                  const newP = transferHistoryPage + 1;
+                  setTransferHistoryPage(newP);
+                  fetchTransferHistory(newP);
+                }}
+                className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:border-[#1cabb1] hover:text-[#1cabb1] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
                 <ChevronRight size={16} />
               </button>
             </div>
           </div>
         </div>
-      </div>
-      {/* Purchase Modal */}
+      )}
+
+      {/* TAB 4: BRANCH WALLET INSPECTOR */}
+      {activeTab === 'branchWallet' && (
+        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 space-y-6">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <h3 className="text-lg font-bold text-[#1b2559]">Branch Wallet Inspector</h3>
+              <p className="text-xs text-gray-400">View real-time branch balances, card consumptions, and logs</p>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <label className="text-sm font-semibold text-gray-700">Select Branch:</label>
+              <div className="relative w-64">
+                <select
+                  value={selectedBranchForInspection}
+                  onChange={(e) => {
+                    setSelectedBranchForInspection(e.target.value);
+                    fetchBranchWalletDetails(e.target.value);
+                  }}
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] appearance-none"
+                >
+                  <option value="">-- Choose a branch --</option>
+                  {branches.map((b) => (
+                    <option key={b._id || b.id} value={b._id || b.id}>
+                      {b.name} ({b.branchCode || b.code || 'BR'})
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+              </div>
+            </div>
+          </div>
+
+          {branchWalletLoading ? (
+            <div className="py-12 text-center text-gray-400">
+              <RefreshCcw size={24} className="animate-spin mx-auto mb-2 text-[#1cabb1]" />
+              Loading branch wallet metrics...
+            </div>
+          ) : !branchWalletData ? (
+            <div className="py-12 text-center text-gray-400 border border-dashed border-gray-200 rounded-xl">
+              <Building2 size={36} className="mx-auto mb-2 text-gray-300" />
+              <p className="text-sm">Select a branch above to inspect its live cards & credits wallet.</p>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {/* Branch metrics */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="bg-blue-50/50 rounded-xl p-4 border border-blue-100">
+                  <span className="text-xs font-semibold text-blue-600 block mb-1">Available EMI Cards</span>
+                  <span className="text-2xl font-bold text-gray-800">
+                    {branchWalletData.wallet?.availableEmiCards ?? 0}
+                  </span>
+                  <span className="text-[11px] text-gray-400 block mt-1">
+                    Total Allocated: {branchWalletData.wallet?.totalEmiCards ?? 0}
+                  </span>
+                </div>
+
+                <div className="bg-teal-50/50 rounded-xl p-4 border border-teal-100">
+                  <span className="text-xs font-semibold text-teal-600 block mb-1">Available Verification Credits</span>
+                  <span className="text-2xl font-bold text-gray-800">
+                    {branchWalletData.wallet?.availableVerificationCredits ?? 0}
+                  </span>
+                  <span className="text-[11px] text-gray-400 block mt-1">
+                    Total Allocated: {branchWalletData.wallet?.totalVerificationCredits ?? 0}
+                  </span>
+                </div>
+
+                <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+                  <span className="text-xs font-semibold text-gray-600 block mb-1">Branch Code</span>
+                  <span className="text-xl font-bold text-gray-800 font-mono">
+                    {branchWalletData.branch?.code || 'N/A'}
+                  </span>
+                  <span className="text-[11px] text-gray-400 block mt-1">
+                    Status: {branchWalletData.branch?.status || 'ACTIVE'}
+                  </span>
+                </div>
+
+                <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+                  <span className="text-xs font-semibold text-gray-600 block mb-1">Branch Name</span>
+                  <span className="text-lg font-bold text-gray-800 truncate block">
+                    {branchWalletData.branch?.name || 'N/A'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Recent Usages */}
+              <div className="border border-gray-100 rounded-xl p-4">
+                <h4 className="text-sm font-bold text-[#1b2559] mb-3">Recent Usages & Consumptions at Branch</h4>
+                {(!branchWalletData.recentUsages || branchWalletData.recentUsages.length === 0) ? (
+                  <p className="text-xs text-gray-400 py-4">No recent consumption logs for this branch.</p>
+                ) : (
+                  <div className="divide-y divide-gray-100 text-xs">
+                    {branchWalletData.recentUsages.map((u, i) => (
+                      <div key={u.id || i} className="py-2.5 flex items-center justify-between">
+                        <div>
+                          <span className="font-semibold text-gray-800">{u.type} consumed ({u.quantity} unit)</span>
+                          <div className="text-gray-400 text-[11px]">
+                            By: {u.createdBy?.fullName || 'Branch Officer'} • {new Date(u.createdAt).toLocaleString('en-GB')}
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <span className="font-mono text-gray-600">Balance: {u.balanceBefore} → {u.balanceAfter}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* PURCHASE MODAL */}
       {isPurchaseModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 transition-opacity">
-          <div className="bg-[#f4f3fb] rounded-xl w-full max-w-md shadow-2xl overflow-hidden flex flex-col">
-            <div className="flex justify-between items-center p-6 pb-4">
-              <h2 className="text-xl font-bold text-[#1b2559]">Purchase</h2>
-              <button onClick={() => setIsPurchaseModalOpen(false)} className="text-gray-500 hover:text-gray-800 transition-colors">
-                <X size={24} />
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 transition-opacity animate-in fade-in duration-200">
+          <div className="bg-[#f8f9fc] rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden flex flex-col border border-gray-100">
+            <div className="flex justify-between items-center p-6 pb-4 bg-white border-b border-gray-100">
+              <div>
+                <h2 className="text-xl font-bold text-[#1b2559]">Purchase Cards & Credits</h2>
+                <p className="text-xs text-gray-500 mt-0.5">Order official inventory through Easebuzz Gateway</p>
+              </div>
+              <button 
+                onClick={() => setIsPurchaseModalOpen(false)} 
+                className="text-gray-400 hover:text-gray-700 p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
+              >
+                <X size={20} />
               </button>
             </div>
             
-            <div className="p-6 pt-0 space-y-6">
-              <div className="flex items-center gap-6">
-                <label className="flex items-center gap-2 cursor-pointer">
+            <div className="p-6 space-y-6 max-h-[80vh] overflow-y-auto">
+              <div className="flex items-center gap-6 bg-white p-4 rounded-xl border border-gray-200/80">
+                <label className="flex items-center gap-2.5 cursor-pointer">
                   <input 
                     type="checkbox" 
                     checked={purchaseEmi}
                     onChange={(e) => setPurchaseEmi(e.target.checked)}
                     className="w-4 h-4 rounded border-gray-300 text-[#1cabb1] focus:ring-[#1cabb1]"
                   />
-                  <span className="text-sm font-semibold text-gray-700">Purchase EMI Card</span>
+                  <span className="text-sm font-semibold text-gray-700">EMI Cards</span>
                 </label>
-                <label className="flex items-center gap-2 cursor-pointer">
+                <label className="flex items-center gap-2.5 cursor-pointer">
                   <input 
                     type="checkbox" 
                     checked={purchaseVerification}
                     onChange={(e) => setPurchaseVerification(e.target.checked)}
                     className="w-4 h-4 rounded border-gray-300 text-[#1cabb1] focus:ring-[#1cabb1]"
                   />
-                  <span className="text-sm font-semibold text-gray-700">Purchase Verification Credit</span>
+                  <span className="text-sm font-semibold text-gray-700">Verification Credits</span>
                 </label>
               </div>
 
-              <div className="flex gap-4">
-                <div className="flex-1">
-                  <label className="block text-xs font-semibold text-gray-600 mb-1">EMI Card (Rs 10/-)</label>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1.5">
+                    EMI Card Quantity
+                  </label>
                   <input 
                     type="number" 
+                    min="0"
                     value={emiQty}
                     onChange={(e) => setEmiQty(e.target.value)}
                     disabled={!purchaseEmi}
-                    className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white text-sm" 
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white text-sm disabled:bg-gray-100 disabled:text-gray-400" 
                   />
+                  <span className="text-[11px] text-gray-400 block mt-1">Estimated @ ₹{emiRateEst}/card</span>
                 </div>
-                <div className="flex-1">
-                  <label className="block text-xs font-semibold text-gray-600 mb-1">Verification Credit (Rs 20/-)</label>
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1.5">
+                    Verification Credit Qty
+                  </label>
                   <input 
                     type="number" 
+                    min="0"
                     value={verificationQty}
                     onChange={(e) => setVerificationQty(e.target.value)}
                     disabled={!purchaseVerification}
-                    className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white text-sm" 
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white text-sm disabled:bg-gray-100 disabled:text-gray-400" 
                   />
+                  <span className="text-[11px] text-gray-400 block mt-1">Estimated @ ₹{verificationRateEst}/credit</span>
                 </div>
               </div>
 
-              {/* Price Breakdown */}
-              <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm space-y-2">
-                <h3 className="font-bold text-[#1b2559] mb-3">Price</h3>
+              {/* Price Breakdown Calculation Card */}
+              <div className="bg-white rounded-xl p-5 border border-gray-200 shadow-sm space-y-2.5">
+                <div className="flex items-center justify-between border-b border-gray-100 pb-2 mb-1">
+                  <h3 className="font-bold text-[#1b2559] text-sm flex items-center gap-1.5">
+                    <Receipt size={16} className="text-[#1cabb1]" />
+                    Estimated Price Breakdown
+                  </h3>
+                  <span className="text-[11px] bg-teal-50 text-[#1cabb1] font-semibold px-2 py-0.5 rounded">
+                    18% GST (9% CGST + 9% SGST)
+                  </span>
+                </div>
                 
                 {purchaseEmi && (
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-500">EMI Card ({emiQty} Qty.)</span>
-                    <span className="font-medium text-gray-700">₹{emiPrice.toLocaleString()}</span>
+                  <div className="flex justify-between text-xs">
+                    <span className="text-gray-500">EMI Cards ({emiQty || 0} Qty @ ₹{emiRateEst})</span>
+                    <span className="font-medium text-gray-800">₹{calculatedEmiSubtotal.toLocaleString()}</span>
                   </div>
                 )}
                 {purchaseVerification && (
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-500">Verification Credit ({verificationQty} Qty.)</span>
-                    <span className="font-medium text-gray-700">₹{verificationPrice.toLocaleString()}</span>
+                  <div className="flex justify-between text-xs">
+                    <span className="text-gray-500">Verification Credits ({verificationQty || 0} Qty @ ₹{verificationRateEst})</span>
+                    <span className="font-medium text-gray-800">₹{calculatedVerificationSubtotal.toLocaleString()}</span>
                   </div>
                 )}
                 
-                <div className="flex justify-between text-sm pt-1">
-                  <span className="text-gray-500 font-medium">Total Amount</span>
-                  <span className="font-semibold text-gray-800">₹{totalAmount.toLocaleString()}</span>
+                <div className="flex justify-between text-xs pt-1 border-t border-gray-100">
+                  <span className="text-gray-600 font-semibold">Subtotal</span>
+                  <span className="font-semibold text-gray-800">₹{calculatedSubtotal.toLocaleString()}</span>
                 </div>
                 
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">CGST</span>
-                  <span className="font-medium text-gray-700">+ ₹{cgst.toLocaleString()}</span>
+                <div className="flex justify-between text-xs">
+                  <span className="text-gray-500">CGST (9%)</span>
+                  <span className="font-medium text-gray-700">+ ₹{calculatedCgst.toLocaleString()}</span>
                 </div>
                 
-                <div className="flex justify-between text-sm border-b border-gray-100 pb-2">
-                  <span className="text-gray-500">SGST</span>
-                  <span className="font-medium text-gray-700">+ ₹{sgst.toLocaleString()}</span>
+                <div className="flex justify-between text-xs border-b border-gray-100 pb-2">
+                  <span className="text-gray-500">SGST (9%)</span>
+                  <span className="font-medium text-gray-700">+ ₹{calculatedSgst.toLocaleString()}</span>
                 </div>
                 
-                <div className="flex justify-between pt-1">
-                  <span className="font-bold text-gray-800 text-sm">Total Payable Amount</span>
-                  <span className="font-bold text-[#1b2559] text-lg">₹{totalPayable.toLocaleString()}</span>
+                <div className="flex justify-between items-baseline pt-1">
+                  <span className="font-bold text-gray-800 text-sm">Estimated Total Payable</span>
+                  <span className="font-bold text-[#1b2559] text-xl">₹{calculatedTotalPayable.toLocaleString()}</span>
                 </div>
               </div>
 
               <div className="flex justify-end gap-3 pt-2">
                 <button 
+                  type="button"
                   onClick={() => setIsPurchaseModalOpen(false)} 
-                  className="px-6 py-2.5 rounded-full border-[1.5px] border-[#1cabb1] text-[#1cabb1] font-semibold hover:bg-teal-50 transition-colors text-[14px] bg-white"
+                  className="px-5 py-2.5 rounded-xl border border-gray-200 text-gray-600 font-semibold hover:bg-gray-100 transition-colors text-sm"
                 >
                   Cancel
                 </button>
                 <button 
-                  onClick={handlePay} 
-                  className="px-6 py-2.5 rounded-full bg-[#1cabb1] text-white font-semibold hover:bg-[#168f94] transition-colors shadow-sm text-[14px]"
+                  type="button"
+                  disabled={submittingPurchase || (!purchaseEmi && !purchaseVerification)}
+                  onClick={handleInitiatePurchase} 
+                  className="px-6 py-2.5 rounded-xl bg-[#1cabb1] text-white font-semibold hover:bg-[#168f94] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm text-sm flex items-center gap-2"
                 >
-                  Pay ₹{totalPayable.toLocaleString()}
+                  {submittingPurchase ? (
+                    <>
+                      <RefreshCcw size={16} className="animate-spin" />
+                      <span>Initiating Purchase...</span>
+                    </>
+                  ) : (
+                    <span>Proceed to Pay ₹{calculatedTotalPayable.toLocaleString()}</span>
+                  )}
                 </button>
               </div>
             </div>
@@ -325,208 +1329,126 @@ const CardsAndCredit = () => {
         </div>
       )}
 
-      {/* Distribute Modal */}
+      {/* DISTRIBUTE / TRANSFER MODAL */}
       {isDistributeModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 transition-opacity">
-          <div className="bg-[#f4f3fb] rounded-xl w-full max-w-[550px] shadow-2xl overflow-hidden flex flex-col">
-            <div className="flex justify-between items-center p-6 pb-4">
-              <h2 className="text-xl font-bold text-[#1b2559]">Card & Credit Settings</h2>
-              <button onClick={() => setIsDistributeModalOpen(false)} className="text-gray-500 hover:text-gray-800 transition-colors">
-                <X size={24} />
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 transition-opacity animate-in fade-in duration-200">
+          <div className="bg-[#f8f9fc] rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden flex flex-col border border-gray-100">
+            <div className="flex justify-between items-center p-6 pb-4 bg-white border-b border-gray-100">
+              <div>
+                <h2 className="text-xl font-bold text-[#1b2559]">Distribute / Allocate Stock</h2>
+                <p className="text-xs text-gray-500 mt-0.5">Transfer cards & credits from Bank inventory to branch</p>
+              </div>
+              <button 
+                onClick={() => setIsDistributeModalOpen(false)} 
+                className="text-gray-400 hover:text-gray-700 p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
+              >
+                <X size={20} />
               </button>
             </div>
             
-            <div className="p-6 pt-0 space-y-6">
-              <div className="flex items-center gap-6">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <div className="relative flex items-center justify-center">
-                    <input 
-                      type="radio" 
-                      name="distribute_type"
-                      checked={distributeType === 'add'}
-                      onChange={() => setDistributeType('add')}
-                      className="w-5 h-5 rounded-full border-2 border-gray-400 appearance-none checked:border-[#1cabb1] transition-colors"
-                    />
-                    {distributeType === 'add' && <div className="absolute w-2.5 h-2.5 bg-[#1cabb1] rounded-full"></div>}
+            <div className="p-6 space-y-5 max-h-[80vh] overflow-y-auto">
+              {/* Bank Inventory Reference Card */}
+              <div className="bg-teal-50/70 border border-teal-100 rounded-xl p-3.5 flex items-center justify-between text-xs">
+                <div>
+                  <span className="font-semibold text-gray-700 block">Bank Available Inventory</span>
+                  <div className="text-teal-800 font-bold mt-0.5 flex gap-3">
+                    <span>EMI Cards: {walletMetrics?.emiCards?.available ?? 0}</span>
+                    <span>Credits: {walletMetrics?.verificationCredits?.available ?? 0}</span>
                   </div>
-                  <span className="text-[15px] font-medium text-gray-700">Add Card & Credit</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <div className="relative flex items-center justify-center">
-                    <input 
-                      type="radio" 
-                      name="distribute_type"
-                      checked={distributeType === 'transfer'}
-                      onChange={() => setDistributeType('transfer')}
-                      className="w-5 h-5 rounded-full border-2 border-gray-400 appearance-none checked:border-[#1cabb1] transition-colors"
-                    />
-                    {distributeType === 'transfer' && <div className="absolute w-2.5 h-2.5 bg-[#1cabb1] rounded-full"></div>}
-                  </div>
-                  <span className="text-[15px] font-medium text-gray-700">Transfer Card & Credit</span>
-                </label>
+                </div>
+                <Building2 size={24} className="text-[#1cabb1]" />
               </div>
 
-              {distributeType === 'add' ? (
-                <div className="space-y-4">
-                  <div className="flex gap-4">
-                    <div className="flex-1">
-                      <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">State/UT</label>
-                      <div className="relative">
-                        <select className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white text-[15px] text-gray-600 appearance-none">
-                          <option>Maharashtra</option>
-                        </select>
-                        <ChevronDown size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
-                      </div>
-                    </div>
-                    <div className="flex-1">
-                      <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">Branch</label>
-                      <div className="relative">
-                        <select className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white text-[15px] text-gray-600 appearance-none">
-                          <option>Mumbai</option>
-                        </select>
-                        <ChevronDown size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-1 py-1">
-                    <div className="text-[13px] text-[#1b58a6] font-medium">Available EMI Card: 123</div>
-                    <div className="text-[13px] text-[#1b58a6] font-medium">Available Verification Credit: 123</div>
-                  </div>
-
-                  <div className="flex gap-4">
-                    <div className="flex-1">
-                      <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">EMI Card</label>
-                      <input 
-                        type="number" 
-                        placeholder="Enter quantity"
-                        className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white text-[15px]" 
-                      />
-                    </div>
-                    <div className="flex-1">
-                      <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">Verification Credit</label>
-                      <input 
-                        type="number" 
-                        placeholder="Enter quantity"
-                        className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white text-[15px]" 
-                      />
-                    </div>
-                  </div>
+              {/* Target Branch Selection */}
+              <div>
+                <label className="block text-xs font-bold text-[#1b2559] mb-1.5">
+                  Target Branch <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <select 
+                    value={targetBranchId}
+                    onChange={(e) => setTargetBranchId(e.target.value)}
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white text-sm text-gray-700 appearance-none font-medium"
+                  >
+                    <option value="">-- Select Target Branch --</option>
+                    {branches.map((b) => (
+                      <option key={b._id || b.id} value={b._id || b.id}>
+                        {b.name} ({b.branchCode || b.code || 'BR'})
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
                 </div>
-              ) : (
-                <div className="space-y-4">
-                  <div>
-                    <h4 className="text-[14px] font-semibold text-[#1b2559] mb-2">From</h4>
-                    <div className="flex gap-4">
-                      <div className="flex-1">
-                        <label className="block text-[13px] font-medium text-gray-600 mb-1.5">Branch</label>
-                        <div className="relative">
-                          <select className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white text-[15px] text-gray-600 appearance-none">
-                            <option>Mumbai</option>
-                          </select>
-                          <ChevronDown size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="pt-2">
-                    <h4 className="text-[14px] font-semibold text-[#1b2559] mb-2">To</h4>
-                    <div className="flex gap-4">
-                      <div className="flex-1">
-                        <label className="block text-[13px] font-medium text-[#1b2559] mb-1.5">Branch</label>
-                        <div className="relative">
-                          <select className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white text-[15px] text-gray-600 appearance-none">
-                            <option>Mumbai</option>
-                          </select>
-                          <ChevronDown size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+              </div>
 
-                  <div className="pt-2">
-                    <h4 className="text-[14px] font-semibold text-[#1b2559] mb-3">Transfer Type</h4>
-                    <div className="flex items-center gap-6">
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <div className="relative flex items-center justify-center">
-                          <input 
-                            type="radio" 
-                            name="transfer_selection"
-                            checked={transferSelection === 'emi'}
-                            onChange={() => setTransferSelection('emi')}
-                            className="w-4 h-4 rounded-full border-2 border-gray-400 appearance-none checked:border-[#1cabb1] transition-colors"
-                          />
-                          {transferSelection === 'emi' && <div className="absolute w-2 h-2 bg-[#1cabb1] rounded-full"></div>}
-                        </div>
-                        <span className="text-[14px] font-medium text-gray-700">EMI Card</span>
-                      </label>
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <div className="relative flex items-center justify-center">
-                          <input 
-                            type="radio" 
-                            name="transfer_selection"
-                            checked={transferSelection === 'verification'}
-                            onChange={() => setTransferSelection('verification')}
-                            className="w-4 h-4 rounded-full border-2 border-gray-400 appearance-none checked:border-[#1cabb1] transition-colors"
-                          />
-                          {transferSelection === 'verification' && <div className="absolute w-2 h-2 bg-[#1cabb1] rounded-full"></div>}
-                        </div>
-                        <span className="text-[14px] font-medium text-gray-700">Verification Credit</span>
-                      </label>
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <div className="relative flex items-center justify-center">
-                          <input 
-                            type="radio" 
-                            name="transfer_selection"
-                            checked={transferSelection === 'both'}
-                            onChange={() => setTransferSelection('both')}
-                            className="w-4 h-4 rounded-full border-2 border-gray-400 appearance-none checked:border-[#1cabb1] transition-colors"
-                          />
-                          {transferSelection === 'both' && <div className="absolute w-2 h-2 bg-[#1cabb1] rounded-full"></div>}
-                        </div>
-                        <span className="text-[14px] font-medium text-gray-700">Both</span>
-                      </label>
-                    </div>
-                  </div>
-
-                  <div className="flex gap-4 pt-2">
-                    {(transferSelection === 'emi' || transferSelection === 'both') && (
-                      <div className="flex-1">
-                        <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">EMI Card</label>
-                        <input 
-                          type="number" 
-                          placeholder="Enter quantity"
-                          className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white text-[15px]" 
-                        />
-                      </div>
-                    )}
-                    {(transferSelection === 'verification' || transferSelection === 'both') && (
-                      <div className="flex-1">
-                        <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">Verification Credit</label>
-                        <input 
-                          type="number" 
-                          placeholder="Enter quantity"
-                          className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white text-[15px]" 
-                        />
-                      </div>
-                    )}
-                  </div>
+              {/* Quantities */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-[#1b2559] mb-1.5">EMI Cards to Allocate</label>
+                  <input 
+                    type="number" 
+                    min="0"
+                    max={walletMetrics?.emiCards?.available || 0}
+                    placeholder="Enter quantity"
+                    value={distributeEmiQty}
+                    onChange={(e) => setDistributeEmiQty(e.target.value)}
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white text-sm" 
+                  />
+                  <span className="text-[11px] text-gray-400 block mt-1">
+                    Max: {walletMetrics?.emiCards?.available || 0}
+                  </span>
                 </div>
-              )}
+                <div>
+                  <label className="block text-xs font-bold text-[#1b2559] mb-1.5">Verification Credits</label>
+                  <input 
+                    type="number" 
+                    min="0"
+                    max={walletMetrics?.verificationCredits?.available || 0}
+                    placeholder="Enter quantity"
+                    value={distributeVerificationQty}
+                    onChange={(e) => setDistributeVerificationQty(e.target.value)}
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white text-sm" 
+                  />
+                  <span className="text-[11px] text-gray-400 block mt-1">
+                    Max: {walletMetrics?.verificationCredits?.available || 0}
+                  </span>
+                </div>
+              </div>
 
-              <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
+              {/* Remarks */}
+              <div>
+                <label className="block text-xs font-bold text-[#1b2559] mb-1.5">Remarks / Purpose (Optional)</label>
+                <input 
+                  type="text" 
+                  placeholder="e.g. Monthly branch allocation, initial batch..."
+                  value={transferRemarks}
+                  onChange={(e) => setTransferRemarks(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white text-sm" 
+                />
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4 border-t border-gray-200/80">
                 <button 
+                  type="button"
                   onClick={() => setIsDistributeModalOpen(false)} 
-                  className="px-6 py-2.5 rounded-full border-[1.5px] border-[#1cabb1] text-[#1cabb1] font-semibold hover:bg-teal-50 transition-colors text-[14px] bg-white"
+                  className="px-5 py-2.5 rounded-xl border border-gray-200 text-gray-600 font-semibold hover:bg-gray-100 transition-colors text-sm"
                 >
                   Cancel
                 </button>
                 <button 
-                  onClick={() => setIsDistributeModalOpen(false)} 
-                  className="px-8 py-2.5 rounded-full bg-[#1cabb1] text-white font-semibold hover:bg-[#168f94] transition-colors shadow-sm text-[14px]"
+                  type="button"
+                  disabled={submittingTransfer || !targetBranchId}
+                  onClick={handleTransferStock} 
+                  className="px-6 py-2.5 rounded-xl bg-[#1cabb1] text-white font-semibold hover:bg-[#168f94] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm text-sm flex items-center gap-2"
                 >
-                  {distributeType === 'add' ? 'Add' : 'Transfer'}
+                  {submittingTransfer ? (
+                    <>
+                      <RefreshCcw size={16} className="animate-spin" />
+                      <span>Allocating Stock...</span>
+                    </>
+                  ) : (
+                    <span>Allocate to Branch</span>
+                  )}
                 </button>
               </div>
             </div>
@@ -534,6 +1456,88 @@ const CardsAndCredit = () => {
         </div>
       )}
 
+      {/* VIEW ORDER INVOICE MODAL */}
+      {selectedOrderDetails && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 transition-opacity animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden flex flex-col border border-gray-100">
+            <div className="flex justify-between items-center p-6 pb-4 bg-gray-50/60 border-b border-gray-100">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-teal-50 text-[#1cabb1] flex items-center justify-center">
+                  <FileText size={18} />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-[#1b2559]">Purchase Invoice Details</h2>
+                  <p className="text-xs text-gray-400 font-mono">{selectedOrderDetails.orderId || selectedOrderDetails.id}</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setSelectedOrderDetails(null)} 
+                className="text-gray-400 hover:text-gray-700 p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4 text-sm">
+              <div className="grid grid-cols-2 gap-4 bg-gray-50 rounded-xl p-4">
+                <div>
+                  <span className="text-xs text-gray-500 block">Invoice Number</span>
+                  <span className="font-semibold text-gray-800 font-mono text-xs">{selectedOrderDetails.invoiceNumber || 'N/A'}</span>
+                </div>
+                <div>
+                  <span className="text-xs text-gray-500 block">Transaction ID</span>
+                  <span className="font-semibold text-gray-800 font-mono text-xs">{selectedOrderDetails.transactionId || 'N/A'}</span>
+                </div>
+                <div>
+                  <span className="text-xs text-gray-500 block">Payment Method</span>
+                  <span className="font-semibold text-gray-800">{selectedOrderDetails.paymentMethod || 'EASEBUZZ'}</span>
+                </div>
+                <div>
+                  <span className="text-xs text-gray-500 block">Payment Status</span>
+                  <span className="font-bold text-emerald-600">{selectedOrderDetails.paymentStatus || 'SUCCESS'}</span>
+                </div>
+              </div>
+
+              <div className="border border-gray-100 rounded-xl p-4 space-y-2">
+                <div className="flex justify-between text-xs text-gray-600">
+                  <span>EMI Cards ({selectedOrderDetails.emiQuantity || 0} Qty @ ₹{selectedOrderDetails.emiRate || 499})</span>
+                  <span>₹{((selectedOrderDetails.emiQuantity || 0) * (selectedOrderDetails.emiRate || 499)).toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between text-xs text-gray-600">
+                  <span>Verification Credits ({selectedOrderDetails.verificationQuantity || 0} Qty @ ₹{selectedOrderDetails.verificationRate || 50})</span>
+                  <span>₹{((selectedOrderDetails.verificationQuantity || 0) * (selectedOrderDetails.verificationRate || 50)).toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between text-xs text-gray-600 pt-1 border-t border-gray-100">
+                  <span>Subtotal</span>
+                  <span>₹{(selectedOrderDetails.subtotal || 0).toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between text-xs text-gray-500">
+                  <span>CGST (9%)</span>
+                  <span>+ ₹{(selectedOrderDetails.cgst || 0).toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between text-xs text-gray-500">
+                  <span>SGST (9%)</span>
+                  <span>+ ₹{(selectedOrderDetails.sgst || 0).toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between font-bold text-base text-[#1b2559] pt-2 border-t border-gray-100">
+                  <span>Total Amount Paid</span>
+                  <span>₹{(selectedOrderDetails.total || selectedOrderDetails.totalAmount || 0).toLocaleString()}</span>
+                </div>
+              </div>
+
+              <div className="flex justify-end pt-2">
+                <button
+                  type="button"
+                  onClick={() => setSelectedOrderDetails(null)}
+                  className="px-6 py-2.5 rounded-xl bg-[#1cabb1] text-white font-semibold hover:bg-[#168f94] transition-colors text-sm"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

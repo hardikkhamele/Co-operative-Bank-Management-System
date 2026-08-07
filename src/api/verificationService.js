@@ -9,19 +9,23 @@ export const verificationService = {
    * @param {string} data.fullName - Full name of the applicant (Required)
    * @param {string} data.dob - Date of birth (Required: YYYY-MM-DD)
    * @param {string} data.pan - PAN card number (Required: 10-char alphanumeric)
-   * @param {string} [data.mobile] - Mobile number (Optional: 10 digits)
+   * @param {string} [data.mobile] - Mobile / Phone number (10 digits)
+   * @param {string} [data.phoneNumber] - Phone number alias
    * @returns {Promise<Object>} API response with creditReport, score and history
    */
-  checkCibilScore: async ({ fullName, dob, pan, mobile }) => {
+  checkCibilScore: async ({ fullName, dob, pan, mobile, phoneNumber, phone }) => {
     try {
+      const phoneVal = (mobile || phoneNumber || phone || '').toString().trim();
       const payload = {
         fullName: fullName?.trim(),
         dob,
         pan: pan?.trim()?.toUpperCase(),
       };
 
-      if (mobile && mobile.trim()) {
-        payload.mobile = mobile.trim();
+      if (phoneVal) {
+        payload.mobile = phoneVal;
+        payload.phoneNumber = phoneVal;
+        payload.phone = phoneVal;
       }
 
       const response = await axiosInstance.post('/v1/society/cibil-score', payload);

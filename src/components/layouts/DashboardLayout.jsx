@@ -1,13 +1,25 @@
-import React, { useState } from 'react';
-import { NavLink, Link, Outlet, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { NavLink, Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { LayoutDashboard, MapPin, IdCard, UserPlus, List, ClipboardList, Store, Box, ArrowDownRight, ArrowUpRight, ArrowRightLeft, RefreshCcw, UserCheck, UserCog, Tag, ChevronDown, Bell, User, LogOut, CreditCard, Headphones, FileText, BarChart2, TrendingUp, CalendarDays, Banknote } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
+import useLoadingStore from '../../store/loadingStore';
 import GlobalLoader from '../GlobalLoader';
 
 const DashboardLayout = () => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const logout = useAuthStore((state) => state.logout);
+  const user = useAuthStore((state) => state.user);
+  const resetLoader = useLoadingStore((state) => state.resetLoader);
+
+  const userName = user?.fullName || user?.name || 'Bank Admin';
+  const userAvatar = user?.avatar || user?.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=1cabb1&color=fff`;
+
+  // Automatically clear any stuck loader on route change
+  useEffect(() => {
+    resetLoader();
+  }, [location.pathname, resetLoader]);
 
   const handleLogout = () => {
     if (logout) logout();
@@ -144,6 +156,7 @@ const DashboardLayout = () => {
             </div>
           </div>
 
+          {/* Attendance Report - Commented out for now
           <div>
             <h3 className="text-[15px] font-bold text-gray-800 mb-2 px-6">Attendance Report</h3>
             <div className="space-y-1">
@@ -152,6 +165,7 @@ const DashboardLayout = () => {
               </NavLink>
             </div>
           </div>
+          */}
 
           <div>
             <h3 className="text-[15px] font-bold text-gray-800 mb-2 px-6">Roles & Permissions</h3>
@@ -161,7 +175,6 @@ const DashboardLayout = () => {
               </NavLink>
             </div>
           </div>
-
 
           <div>
             <h3 className="text-[15px] font-bold text-gray-800 mb-2 px-6">Settings</h3>
@@ -176,19 +189,17 @@ const DashboardLayout = () => {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden relative">
-        <GlobalLoader />
-
         {/* Topbar */}
         <header className="h-16 bg-[#1cabb1] text-white flex items-center justify-between px-8 shadow-sm shrink-0">
           <div>
             <div className="text-xs text-white/80 font-medium">Welcome</div>
-            <div className="text-lg font-semibold tracking-wide">Eleanor Pena</div>
+            <div className="text-lg font-semibold tracking-wide">{userName}</div>
           </div>
           
           <div className="flex items-center gap-5 relative">
             <Link to="/notifications" className="relative p-2 bg-white/20 rounded-full hover:bg-white/30 transition-colors block">
               <Bell size={20} className="text-white" />
-              <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-[#32c965] rounded-full border border-[#1cabb1] flex items-center justify-center text-[8px] font-bold">2</span>
+              <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-[#32c965] rounded-full border border-[#1cabb1] flex items-center justify-center text-[8px] font-bold"></span>
             </Link>
             
             <div className="relative">
@@ -196,10 +207,10 @@ const DashboardLayout = () => {
                 onClick={() => setIsProfileOpen(!isProfileOpen)}
                 className="flex items-center gap-2 bg-white/90 text-gray-800 py-1.5 px-2 pr-3 rounded-full cursor-pointer hover:bg-white transition-colors shadow-sm"
               >
-                <div className="w-8 h-8 rounded-full bg-gray-200 overflow-hidden border border-gray-100">
-                  <img src="https://ui-avatars.com/api/?name=Eleanor+Pena&background=F3F4F6&color=374151" alt="Avatar" className="w-full h-full object-cover" />
+                <div className="w-8 h-8 rounded-full bg-gray-200 overflow-hidden border border-gray-100 flex items-center justify-center">
+                  <img src={userAvatar} alt={userName} className="w-full h-full object-cover" />
                 </div>
-                <span className="text-sm font-medium">Eleanor</span>
+                <span className="text-sm font-medium">{userName.split(' ')[0]}</span>
                 <ChevronDown size={14} className={`text-gray-500 transition-transform ${isProfileOpen ? 'rotate-180' : ''}`} />
               </div>
 
@@ -227,7 +238,8 @@ const DashboardLayout = () => {
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-y-auto bg-gray-50 p-6">
+        <main className="flex-1 overflow-y-auto bg-gray-50 p-6 relative">
+          <GlobalLoader />
           <Outlet />
         </main>
       </div>

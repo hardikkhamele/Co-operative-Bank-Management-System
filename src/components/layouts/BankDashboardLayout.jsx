@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
-import { Outlet, Link, NavLink, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Outlet, Link, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { Home, Users, Building, FileText, Settings, Bell, ChevronDown, User, LogOut } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
+import useLoadingStore from '../../store/loadingStore';
 import GlobalLoader from '../GlobalLoader';
 
 const bankNavItems = [
@@ -16,7 +17,13 @@ const bankNavItems = [
 const BankDashboardLayout = () => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const logout = useAuthStore((state) => state.logout);
+  const resetLoader = useLoadingStore((state) => state.resetLoader);
+
+  useEffect(() => {
+    resetLoader();
+  }, [location.pathname, resetLoader]);
 
   const handleLogout = () => {
     if (logout) logout();
@@ -60,8 +67,6 @@ const BankDashboardLayout = () => {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden relative">
-        <GlobalLoader />
-
         {/* Topbar */}
         <header className="h-16 bg-white border-b border-gray-200 text-gray-800 flex items-center justify-between px-8 shadow-sm shrink-0">
           <div>
@@ -109,7 +114,8 @@ const BankDashboardLayout = () => {
           </div>
         </header>
         
-        <main className="flex-1 overflow-y-auto p-6 md:p-8">
+        <main className="flex-1 overflow-y-auto p-6 md:p-8 relative">
+          <GlobalLoader />
           <Outlet />
         </main>
       </div>

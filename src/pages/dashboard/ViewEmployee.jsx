@@ -55,8 +55,8 @@ const ViewEmployee = () => {
     fetchEmployee();
   }, [id]);
 
-  if (loading) {
-    return <div className="p-8 text-center text-gray-500">Loading employee details...</div>;
+  if (loading && !employee) {
+    return null;
   }
 
   if (!employee) {

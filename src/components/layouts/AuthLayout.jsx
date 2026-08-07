@@ -1,5 +1,4 @@
 import React from 'react';
-import GlobalLoader from '../GlobalLoader';
 
 const AuthLayout = ({ children, illustration }) => {
   return (
@@ -19,7 +18,6 @@ const AuthLayout = ({ children, illustration }) => {
         
         {/* Right Side Form Card */}
         <div className="w-full max-w-md bg-[#faf9fe] rounded-3xl shadow-2xl p-10 relative overflow-hidden">
-          <GlobalLoader />
           {children}
         </div>
       </div>

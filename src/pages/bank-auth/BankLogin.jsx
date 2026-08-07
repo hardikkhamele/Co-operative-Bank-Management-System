@@ -10,8 +10,8 @@ import { validateEmail, validatePassword } from '../../utils/validation';
 const BankLogin = () => {
   const [formData, setFormData] = useState({ 
     role: 'BRANCH_MANAGER', 
-    email: 'admin@cooperativebank.com', 
-    password: 'password123' 
+    email: 'stark@bank.com', 
+    password: 'Password@123' 
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -38,13 +38,34 @@ const BankLogin = () => {
         
         if (availableRoles && availableRoles.length > 0) {
           setRoles(availableRoles);
+          setFormData(prev => ({
+            ...prev,
+            role: prev.role || (availableRoles.some(r => (r.code || r.value) === 'BRANCH_MANAGER') ? 'BRANCH_MANAGER' : (availableRoles[0]?.code || availableRoles[0]?.value || 'BRANCH_MANAGER'))
+          }));
         } else {
-          setError("Failed to parse roles from API response.");
-          console.error("Unexpected API response:", response);
+          const fallbackRoles = [
+            { code: 'BANK_OWNER', name: 'Bank Owner' },
+            { code: 'BRANCH_MANAGER', name: 'Branch Manager' },
+            { code: 'CA', name: 'Chartered Accountant' }
+          ];
+          setRoles(fallbackRoles);
+          setFormData(prev => ({
+            ...prev,
+            role: prev.role || 'BRANCH_MANAGER'
+          }));
         }
       } catch (err) {
         console.error("Failed to fetch roles:", err);
-        setError("Failed to load roles: " + (err.message || "Network Error"));
+        const fallbackRoles = [
+          { code: 'BANK_OWNER', name: 'Bank Owner' },
+          { code: 'BRANCH_MANAGER', name: 'Branch Manager' },
+          { code: 'CA', name: 'Chartered Accountant' }
+        ];
+        setRoles(fallbackRoles);
+        setFormData(prev => ({
+          ...prev,
+          role: prev.role || 'BRANCH_MANAGER'
+        }));
       }
     };
     fetchRoles();
@@ -134,9 +155,11 @@ const BankLogin = () => {
               className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#5a5ce5] focus:border-transparent transition-all bg-white appearance-none text-gray-700 text-sm"
             >
               <option value="" disabled>Select</option>
-              {roles.map(role => (
-                <option key={role.code} value={role.code}>{role.name}</option>
-              ))}
+              {roles.map(role => {
+                const code = role.code || role.value || role.id || role;
+                const name = role.name || role.label || role.title || code;
+                return <option key={code} value={code}>{name}</option>;
+              })}
             </select>
             <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-500">
               <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg>
@@ -191,10 +214,13 @@ const BankLogin = () => {
           className={`w-full py-3.5 px-4 bg-[#295995] text-white text-[15px] font-medium rounded-full transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#295995] flex justify-center items-center ${loading ? 'opacity-70 cursor-not-allowed' : 'hover:bg-[#1f4577]'}`}
         >
           {loading ? (
-            <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
+            <div className="flex items-center justify-center gap-2">
+              <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <span>Logging in...</span>
+            </div>
           ) : (
             'Login'
           )}

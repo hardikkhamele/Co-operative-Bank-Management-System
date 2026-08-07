@@ -26,6 +26,12 @@ const useAuthStore = create(
         });
       },
       
+      setUser: (user) => set({ user }),
+
+      updateUser: (updatedFields) => set((state) => ({ 
+        user: state.user ? { ...state.user, ...updatedFields } : updatedFields 
+      })),
+      
       setTokens: (tokens) => {
         const accessToken = typeof tokens === 'string' ? tokens : (tokens?.accessToken || tokens?.tokens?.accessToken || tokens?.token);
         const refreshToken = typeof tokens === 'object' ? (tokens?.refreshToken || tokens?.tokens?.refreshToken || null) : null;

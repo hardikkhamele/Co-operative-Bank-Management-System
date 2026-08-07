@@ -142,9 +142,7 @@ const RolesAndPermissions = () => {
             </tr>
           </thead>
           <tbody>
-            {loading ? (
-              <tr><td colSpan="5" className="py-8 text-center text-gray-500">Loading roles...</td></tr>
-            ) : roles.length === 0 ? (
+            {loading && roles.length === 0 ? null : roles.length === 0 ? (
               <tr><td colSpan="5" className="py-8 text-center text-gray-500">No roles found.</td></tr>
             ) : (
               roles.map((row, index) => (

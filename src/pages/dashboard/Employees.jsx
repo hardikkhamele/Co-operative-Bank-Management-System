@@ -264,9 +264,7 @@ const Employees = () => {
               </tr>
             </thead>
             <tbody>
-              {loading ? (
-                <tr><td colSpan="7" className="py-8 text-center text-gray-500">Loading employees...</td></tr>
-              ) : error ? (
+              {loading && employees.length === 0 ? null : error ? (
                 <tr><td colSpan="7" className="py-8 text-center text-red-500">{error}</td></tr>
               ) : employees.length === 0 ? (
                 <tr><td colSpan="7" className="py-8 text-center text-gray-500">No employees found.</td></tr>

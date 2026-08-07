@@ -344,8 +344,8 @@ const EditEmployee = () => {
 
   const tabs = ['Personal Details', 'Job Details', 'Shift & WOFF', 'Attendance', 'WOFF & HOFF', 'KRA Settings'];
 
-  if (loading) {
-    return <div className="text-center p-10 text-gray-500">Loading employee details...</div>;
+  if (loading && !formData.fullName) {
+    return null;
   }
 
   return (

@@ -24,11 +24,24 @@ const processQueue = (error, token = null) => {
   failedQueue = [];
 };
 
+// Helper to determine if global loader overlay should be displayed
+const shouldTriggerGlobalLoader = (config) => {
+  if (config.skipLoader) return false;
+  if (config.showLoader === true) return true;
+  // Automatically show global loader for mutations (creates, updates, deletes, purchases, transfers)
+  const method = (config.method || 'get').toUpperCase();
+  const isMutation = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method);
+  const isAuthRefresh = config.url?.includes('/auth/refresh');
+  return isMutation && !isAuthRefresh;
+};
+
 // Request interceptor
 axiosInstance.interceptors.request.use(
   (config) => {
-    // Show global loader for every request
-    useLoadingStore.getState().showLoader();
+    if (shouldTriggerGlobalLoader(config)) {
+      config._hasTriggeredLoader = true;
+      useLoadingStore.getState().showLoader();
+    }
 
     const token = useAuthStore.getState().accessToken;
     if (token) {
@@ -37,7 +50,9 @@ axiosInstance.interceptors.request.use(
     return config;
   },
   (error) => {
-    useLoadingStore.getState().hideLoader();
+    if (error.config?._hasTriggeredLoader) {
+      useLoadingStore.getState().hideLoader();
+    }
     return Promise.reject(error);
   }
 );
@@ -45,15 +60,20 @@ axiosInstance.interceptors.request.use(
 // Response interceptor
 axiosInstance.interceptors.response.use(
   (response) => {
-    // Hide global loader on successful response
-    useLoadingStore.getState().hideLoader();
+    if (response.config?._hasTriggeredLoader) {
+      useLoadingStore.getState().hideLoader();
+    }
     return response;
   },
   async (error) => {
     const originalRequest = error.config;
 
-    if (!originalRequest) {
+    if (originalRequest?._hasTriggeredLoader) {
       useLoadingStore.getState().hideLoader();
+      originalRequest._hasTriggeredLoader = false;
+    }
+
+    if (!originalRequest) {
       return Promise.reject(error);
     }
 
@@ -66,7 +86,6 @@ axiosInstance.interceptors.response.use(
       !originalRequest.url?.includes('/auth/refresh')
     ) {
       if (isRefreshing) {
-        // If refresh is already in progress, enqueue this request
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
         })
@@ -75,7 +94,6 @@ axiosInstance.interceptors.response.use(
             return axiosInstance(originalRequest);
           })
           .catch((err) => {
-            useLoadingStore.getState().hideLoader();
             return Promise.reject(err);
           });
       }
@@ -87,7 +105,7 @@ axiosInstance.interceptors.response.use(
 
       if (!refreshToken) {
         isRefreshing = false;
-        useLoadingStore.getState().hideLoader();
+        useLoadingStore.getState().resetLoader();
         useAuthStore.getState().logout();
         window.location.href = '/login';
         return Promise.reject(error);
@@ -116,7 +134,7 @@ axiosInstance.interceptors.response.use(
         }
       } catch (refreshError) {
         processQueue(refreshError, null);
-        useLoadingStore.getState().hideLoader();
+        useLoadingStore.getState().resetLoader();
         useAuthStore.getState().logout();
         window.location.href = '/login';
         return Promise.reject(refreshError);
@@ -125,11 +143,8 @@ axiosInstance.interceptors.response.use(
       }
     }
 
-    // Hide loader on error response
-    useLoadingStore.getState().hideLoader();
     return Promise.reject(error);
   }
 );
 
 export default axiosInstance;
-

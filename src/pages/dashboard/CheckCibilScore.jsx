@@ -14,7 +14,8 @@ import {
   MapPin, 
   Mail, 
   Calendar,
-  ArrowLeft
+  ArrowLeft,
+  Phone
 } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { verificationService } from '../../api/verificationService';
@@ -29,6 +30,7 @@ const CheckCibilScore = () => {
 
   const [formData, setFormData] = useState({
     fullName: '',
+    phoneNumber: '',
     panNumber: '',
     dob: '',
   });
@@ -37,6 +39,9 @@ const CheckCibilScore = () => {
     const { name, value } = e.target;
     if (name === 'panNumber') {
       setFormData((prev) => ({ ...prev, [name]: sanitizePAN(value) }));
+    } else if (name === 'phoneNumber') {
+      const cleanPhone = value.replace(/\D/g, '').slice(0, 10);
+      setFormData((prev) => ({ ...prev, [name]: cleanPhone }));
     } else {
       setFormData((prev) => ({ ...prev, [name]: value }));
     }
@@ -46,6 +51,10 @@ const CheckCibilScore = () => {
   const validateForm = () => {
     if (!formData.fullName.trim()) {
       toast.error('Please enter the full name');
+      return false;
+    }
+    if (formData.phoneNumber && formData.phoneNumber.length > 0 && formData.phoneNumber.length !== 10) {
+      toast.error('Please enter a valid 10-digit phone number');
       return false;
     }
     const panErr = validatePAN(formData.panNumber).error;
@@ -73,6 +82,8 @@ const CheckCibilScore = () => {
         fullName: formData.fullName.trim(),
         dob: formData.dob,
         pan: formData.panNumber.trim().toUpperCase(),
+        mobile: formData.phoneNumber.trim(),
+        phoneNumber: formData.phoneNumber.trim(),
       });
 
       if (response && (response.success || response.statusCode === 200)) {
@@ -92,8 +103,9 @@ const CheckCibilScore = () => {
         'Failed to fetch credit report. Please try again.';
 
       if (statusCode === 422 || err.response?.data?.errorCode === 'BUREAU_DATA_UNAVAILABLE') {
-        setApiError('Credit Bureau data is unavailable for these customer details. No previous credit history was found.');
-        toast.info('No credit history found for this applicant.');
+        const msg = err.response?.data?.message || err.response?.data?.details || 'Credit Bureau data is unavailable for these customer details. No previous credit history was found.';
+        setApiError(msg);
+        toast.info(msg);
       } else if (statusCode === 400) {
         setApiError(`Validation Error: ${errorMsg}`);
         toast.error(errorMsg);
@@ -109,6 +121,7 @@ const CheckCibilScore = () => {
   const handleReset = () => {
     setFormData({
       fullName: '',
+      phoneNumber: '',
       panNumber: '',
       dob: '',
     });
@@ -256,12 +269,12 @@ const CheckCibilScore = () => {
                 <h3 className="text-lg font-bold text-gray-800">Applicant Information</h3>
               </div>
               <span className="text-xs font-semibold text-gray-500 bg-white px-3 py-1 rounded-full border border-gray-200">
-                All 3 Fields Required *
+                Applicant Details
               </span>
             </div>
 
             <form onSubmit={handleSubmit} className="p-6 md:p-8">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
                 
                 {/* 1. Full Name */}
                 <div className="space-y-1.5">
@@ -273,14 +286,38 @@ const CheckCibilScore = () => {
                     name="fullName"
                     value={formData.fullName}
                     onChange={handleInputChange}
-                    placeholder="Enter full name (e.g. Bhushan Shahare)"
+                    placeholder="e.g. Rahul Sharma"
                     className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-gray-50/50 text-gray-800 font-medium"
                     required
                     disabled={loading}
                   />
                 </div>
 
-                {/* 2. PAN Card Number */}
+                {/* 2. Phone Number */}
+                <div className="space-y-1.5">
+                  <label className="text-sm font-semibold text-gray-700 flex items-center gap-1">
+                    <Phone size={14} className="text-[#1cabb1]" />
+                    Phone Number
+                  </label>
+                  <div className="relative flex items-center">
+                    <span className="absolute left-3 text-xs font-bold text-gray-400 select-none">
+                      +91
+                    </span>
+                    <input
+                      type="tel"
+                      name="phoneNumber"
+                      maxLength={10}
+                      value={formData.phoneNumber}
+                      onChange={handleInputChange}
+                      placeholder="9876543210"
+                      className="w-full pl-11 pr-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-gray-50/50 text-gray-800 font-medium font-mono"
+                      disabled={loading}
+                    />
+                  </div>
+                  <p className="text-[11px] text-gray-400">10-digit mobile number</p>
+                </div>
+
+                {/* 3. PAN Card Number */}
                 <div className="space-y-1.5">
                   <label className="text-sm font-semibold text-gray-700 flex items-center gap-1">
                     PAN Card Number <span className="text-red-500">*</span>
@@ -296,10 +333,10 @@ const CheckCibilScore = () => {
                     required
                     disabled={loading}
                   />
-                  <p className="text-xs text-gray-400">Format: 5 letters, 4 numbers, 1 letter</p>
+                  <p className="text-[11px] text-gray-400">5 letters, 4 numbers, 1 letter</p>
                 </div>
 
-                {/* 3. Date of Birth */}
+                {/* 4. Date of Birth */}
                 <div className="space-y-1.5">
                   <label className="text-sm font-semibold text-gray-700 flex items-center gap-1">
                     Date Of Birth <span className="text-red-500">*</span>
@@ -718,6 +755,18 @@ const CheckCibilScore = () => {
                     </span>
                   </div>
                 </div>
+
+                {(formData.phoneNumber || applicantDetails.MobilePhoneNumber || applicantDetails.Telephone_Number) && (
+                  <div className="p-4 rounded-xl bg-gray-50 border border-gray-100 flex items-start gap-3.5">
+                    <Phone className="text-[#1cabb1] shrink-0 mt-0.5" size={20} />
+                    <div>
+                      <span className="text-xs text-gray-400 font-semibold uppercase block">Phone Number</span>
+                      <span className="text-sm font-mono font-bold text-gray-800">
+                        {formData.phoneNumber ? `+91 ${formData.phoneNumber}` : (applicantDetails.MobilePhoneNumber || applicantDetails.Telephone_Number)}
+                      </span>
+                    </div>
+                  </div>
+                )}
 
                 {applicantDetails.EMailId && (
                   <div className="p-4 rounded-xl bg-gray-50 border border-gray-100 flex items-start gap-3.5">
