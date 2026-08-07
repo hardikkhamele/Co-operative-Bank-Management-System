@@ -24,26 +24,33 @@ const SetupLoan = () => {
   ];
 
   const handleOtpChange = (index, value) => {
-    if (isNaN(value)) return;
+    const clean = value.replace(/\D/g, '').slice(-1);
     const newOtp = [...otp];
-    newOtp[index] = value;
+    newOtp[index] = clean;
     setOtp(newOtp);
     
-    // Auto focus next logic could go here
-    if (value && index < 3) {
+    if (clean && index < 3) {
       const nextInput = document.getElementById(`otp-input-${index + 1}`);
       if (nextInput) nextInput.focus();
     }
   };
 
   const handleVerifyOtp = () => {
-    // Assuming OTP is verified
+    const fullOtp = otp.join('');
+    if (fullOtp.length !== 4) {
+      toast.error("Please enter the complete 4-digit OTP.");
+      return;
+    }
+    toast.success("OTP verified successfully!");
     setShowOtpModal(false);
     setShowPaymentModal(true);
   };
 
   const handleConfirmPayment = () => {
-    // Simulate payment success
+    if (!selectedPaymentMethod) {
+      toast.error("Please select a payment method.");
+      return;
+    }
     toast.success("Payment Successful!");
     setShowPaymentModal(false);
   };

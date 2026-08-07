@@ -1,16 +1,103 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ChevronRight, Calendar, ChevronDown, Upload, X } from 'lucide-react';
+import { toast } from 'react-toastify';
+import { 
+  validatePhone, 
+  validatePAN, 
+  validateAadhaar, 
+  validatePincode, 
+  sanitizeDigits, 
+  sanitizePAN 
+} from '../../utils/validation';
 
 const CreateLead = () => {
+  const navigate = useNavigate();
   const [isOtpModalOpen, setIsOtpModalOpen] = useState(false);
-  const [otpStep, setOtpStep] = useState(1); // 1 = Get OTP, 2 = Enter OTP
-  const [aadhaarNumber, setAadhaarNumber] = useState('');
+  const [otpStep, setOtpStep] = useState(1); // 1 = Get OTP, 2 = Enter OTP, 3 = Confirm Address
+  
+  const [formData, setFormData] = useState({
+    fullName: '',
+    gender: '',
+    dob: '',
+    mobileNumber: '',
+    panNumber: '',
+    aadhaarNumber: '',
+    pinCode: '',
+    termsAccepted: false
+  });
+  const [modalAadhaar, setModalAadhaar] = useState('');
+  const [otpDigits, setOtpDigits] = useState(['', '', '', '', '', '']);
 
   const handleNext = (e) => {
     e.preventDefault();
+    if (!formData.fullName.trim()) {
+      toast.error("Full Name is required.");
+      return;
+    }
+    if (!formData.gender) {
+      toast.error("Please select a gender.");
+      return;
+    }
+    if (!formData.dob) {
+      toast.error("Date of Birth is required.");
+      return;
+    }
+    const phoneErr = validatePhone(formData.mobileNumber).error;
+    if (phoneErr) {
+      toast.error(phoneErr);
+      return;
+    }
+    const panErr = validatePAN(formData.panNumber).error;
+    if (panErr) {
+      toast.error(panErr);
+      return;
+    }
+    const aadharErr = validateAadhaar(formData.aadhaarNumber).error;
+    if (aadharErr) {
+      toast.error(aadharErr);
+      return;
+    }
+    const pinErr = validatePincode(formData.pinCode).error;
+    if (pinErr) {
+      toast.error(pinErr);
+      return;
+    }
+    if (!formData.termsAccepted) {
+      toast.error("Please accept the terms and conditions.");
+      return;
+    }
+
+    setModalAadhaar(formData.aadhaarNumber);
     setIsOtpModalOpen(true);
     setOtpStep(1);
+  };
+
+  const handleGetOtp = () => {
+    const aadharErr = validateAadhaar(modalAadhaar).error;
+    if (aadharErr) {
+      toast.error(aadharErr);
+      return;
+    }
+    toast.success("OTP sent to Aadhaar linked mobile number.");
+    setOtpStep(2);
+  };
+
+  const handleVerifyOtp = () => {
+    const fullOtp = otpDigits.join('');
+    if (fullOtp.length !== 6) {
+      toast.error("Please enter complete 6-digit OTP.");
+      return;
+    }
+    toast.success("Aadhaar verified successfully!");
+    setOtpStep(3);
+  };
+
+  const handleOtpDigitChange = (val, index) => {
+    const clean = sanitizeDigits(val, 1);
+    const newOtp = [...otpDigits];
+    newOtp[index] = clean;
+    setOtpDigits(newOtp);
   };
 
   return (
@@ -36,15 +123,27 @@ const CreateLead = () => {
             <h2 className="text-lg font-bold text-gray-800 mb-6">Basic Information</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-semibold text-gray-800 mb-2">Full Name (As Per PAN Card)</label>
-                <input type="text" placeholder="Enter full name" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm" required />
+                <label className="block text-sm font-semibold text-gray-800 mb-2">Full Name (As Per PAN Card) *</label>
+                <input 
+                  type="text" 
+                  placeholder="Enter full name" 
+                  value={formData.fullName}
+                  onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm" 
+                  required 
+                />
               </div>
               
               <div>
-                <label className="block text-sm font-semibold text-gray-800 mb-2">Gender</label>
+                <label className="block text-sm font-semibold text-gray-800 mb-2">Gender *</label>
                 <div className="relative">
-                  <select className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white appearance-none text-gray-500 shadow-sm" required>
-                    <option value="" disabled selected>Select</option>
+                  <select 
+                    value={formData.gender}
+                    onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white appearance-none text-gray-700 shadow-sm" 
+                    required
+                  >
+                    <option value="">Select</option>
                     <option value="male">Male</option>
                     <option value="female">Female</option>
                     <option value="other">Other</option>
@@ -54,16 +153,29 @@ const CreateLead = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-800 mb-2">Date Of Birth</label>
+                <label className="block text-sm font-semibold text-gray-800 mb-2">Date Of Birth *</label>
                 <div className="relative">
-                  <input type="text" placeholder="DD/MM/YYYY" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm" required />
-                  <Calendar size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
+                  <input 
+                    type="date" 
+                    value={formData.dob}
+                    onChange={(e) => setFormData({ ...formData, dob: e.target.value })}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm text-gray-700" 
+                    required 
+                  />
                 </div>
               </div>
               
               <div>
-                <label className="block text-sm font-semibold text-gray-800 mb-2">Mobile Number</label>
-                <input type="tel" placeholder="Enter mobile number" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm" required />
+                <label className="block text-sm font-semibold text-gray-800 mb-2">Mobile Number *</label>
+                <input 
+                  type="tel" 
+                  placeholder="10-digit mobile number" 
+                  maxLength={10}
+                  value={formData.mobileNumber}
+                  onChange={(e) => setFormData({ ...formData, mobileNumber: sanitizeDigits(e.target.value, 10) })}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm" 
+                  required 
+                />
               </div>
             </div>
           </div>
@@ -73,8 +185,16 @@ const CreateLead = () => {
             <h2 className="text-lg font-bold text-gray-800 mb-6">Identity Documents</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-semibold text-gray-800 mb-2">PAN Number</label>
-                <input type="text" placeholder="Enter PAN Number" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm" required />
+                <label className="block text-sm font-semibold text-gray-800 mb-2">PAN Number *</label>
+                <input 
+                  type="text" 
+                  placeholder="e.g. ABCDE1234F" 
+                  maxLength={10}
+                  value={formData.panNumber}
+                  onChange={(e) => setFormData({ ...formData, panNumber: sanitizePAN(e.target.value) })}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm uppercase" 
+                  required 
+                />
               </div>
 
               <div>
@@ -86,13 +206,14 @@ const CreateLead = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-800 mb-2">Aadhaar Number</label>
+                <label className="block text-sm font-semibold text-gray-800 mb-2">Aadhaar Number *</label>
                 <input 
-                  type="text" 
-                  placeholder="Enter Aadhaar Number" 
+                  type="tel" 
+                  placeholder="12-digit Aadhaar number" 
+                  maxLength={12}
                   className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm" 
-                  value={aadhaarNumber}
-                  onChange={(e) => setAadhaarNumber(e.target.value)}
+                  value={formData.aadhaarNumber}
+                  onChange={(e) => setFormData({ ...formData, aadhaarNumber: sanitizeDigits(e.target.value, 12) })}
                   required 
                 />
               </div>
@@ -112,14 +233,29 @@ const CreateLead = () => {
             <h2 className="text-lg font-bold text-gray-800 mb-6">Address Details</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
               <div>
-                <label className="block text-sm font-semibold text-gray-800 mb-2">Current Residential PIN Code</label>
-                <input type="text" placeholder="Enter 6-digit current residential PIN code" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm" required />
+                <label className="block text-sm font-semibold text-gray-800 mb-2">Current Residential PIN Code *</label>
+                <input 
+                  type="tel" 
+                  placeholder="6-digit PIN code" 
+                  maxLength={6}
+                  value={formData.pinCode}
+                  onChange={(e) => setFormData({ ...formData, pinCode: sanitizeDigits(e.target.value, 6) })}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm" 
+                  required 
+                />
               </div>
             </div>
 
             <div className="flex items-start gap-3">
-              <input type="checkbox" id="terms" className="mt-1 w-5 h-5 rounded border-gray-300 text-[#1cabb1] focus:ring-[#1cabb1]" required />
-              <label htmlFor="terms" className="text-[15px] text-gray-600 leading-relaxed">
+              <input 
+                type="checkbox" 
+                id="terms" 
+                checked={formData.termsAccepted}
+                onChange={(e) => setFormData({ ...formData, termsAccepted: e.target.checked })}
+                className="mt-1 w-5 h-5 rounded border-gray-300 text-[#1cabb1] focus:ring-[#1cabb1]" 
+                required 
+              />
+              <label htmlFor="terms" className="text-[15px] text-gray-600 leading-relaxed cursor-pointer">
                 I have read, understand, and hereby accept the Advita product application <br/>
                 <a href="#" className="text-red-500 hover:underline">Terms and Conditions</a>.
               </label>
@@ -165,10 +301,11 @@ const CreateLead = () => {
                   <div className="mb-6">
                     <label className="block text-sm font-bold text-gray-800 mb-2">Enter 12-Digit Aadhaar Number/VID Number*</label>
                     <input 
-                      type="text" 
-                      value={aadhaarNumber} 
-                      onChange={(e) => setAadhaarNumber(e.target.value)}
-                      placeholder="Type" 
+                      type="tel" 
+                      maxLength={12}
+                      value={modalAadhaar} 
+                      onChange={(e) => setModalAadhaar(sanitizeDigits(e.target.value, 12))}
+                      placeholder="12-digit Aadhaar Number" 
                       className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500" 
                     />
                   </div>
@@ -180,7 +317,8 @@ const CreateLead = () => {
                   </div>
 
                   <button 
-                    onClick={() => setOtpStep(2)}
+                    onClick={handleGetOtp}
+                    type="button"
                     className="w-full py-3.5 rounded-full bg-[#1cabb1] text-white font-semibold hover:bg-[#168f94] transition-colors"
                   >
                     Get OTP
@@ -197,32 +335,34 @@ const CreateLead = () => {
                   <div className="mb-6">
                     <h3 className="font-bold text-gray-800 mb-2">Verify Aadhaar With OTP</h3>
                     <p className="text-xs text-gray-500 mb-4">
-                      Enter The OTP Sent To The Mobile Number Xxxxxx210 And Email ID Linked To Your Aadhaar
+                      Enter The OTP Sent To The Mobile Number linked To Your Aadhaar
                     </p>
                     
                     <h4 className="font-bold text-gray-800 mb-3 text-sm">Enter OTP</h4>
                     <div className="flex gap-2 justify-between mb-2">
-                      {[...Array(6)].map((_, i) => (
+                      {otpDigits.map((digit, i) => (
                         <input 
                           key={i} 
-                          type="text" 
-                          maxLength="1" 
+                          type="tel" 
+                          maxLength={1}
+                          value={digit}
+                          onChange={(e) => handleOtpDigitChange(e.target.value, i)}
                           className="w-12 h-12 text-center border border-gray-200 rounded-lg text-lg font-semibold focus:outline-none focus:border-[#1cabb1] focus:ring-1 focus:ring-[#1cabb1]" 
                         />
                       ))}
                     </div>
                     
                     <div className="flex justify-between items-center mt-3">
-                      <span className="text-xs text-gray-400">2 attempts left</span>
+                      <span className="text-xs text-gray-400">Attempts left: 3</span>
                       <div className="text-right">
-                        <button className="text-xs font-semibold text-gray-600 hover:text-gray-800">Resend OTP</button>
-                        <div className="text-[11px] text-gray-400">In 10:00 secs</div>
+                        <button type="button" onClick={handleGetOtp} className="text-xs font-semibold text-gray-600 hover:text-gray-800">Resend OTP</button>
                       </div>
                     </div>
                   </div>
 
                   <button 
-                    onClick={() => setOtpStep(3)}
+                    onClick={handleVerifyOtp}
+                    type="button"
                     className="w-full py-3.5 rounded-full bg-[#1cabb1] text-white font-semibold hover:bg-[#168f94] transition-colors mt-6"
                   >
                     Verify

@@ -1,26 +1,56 @@
 import React, { useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Pencil } from 'lucide-react';
+import { toast } from 'react-toastify';
 import AuthLayout from '../../components/layouts/AuthLayout';
 import otpIllustration from '../../assets/images/enter-otp.png';
+import { sanitizeDigits } from '../../utils/validation';
 
 const VerifyOTP = () => {
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const inputRefs = useRef([]);
   const navigate = useNavigate();
 
-  const handleChange = (element, index) => {
-    if (isNaN(element.value)) return false;
-    setOtp([...otp.map((d, idx) => (idx === index ? element.value : d))]);
+  const handleChange = (e, index) => {
+    const cleanVal = sanitizeDigits(e.target.value, 1);
+    const newOtp = [...otp];
+    newOtp[index] = cleanVal;
+    setOtp(newOtp);
 
-    // Focus next input
-    if (element.nextSibling && element.value !== '') {
-      element.nextSibling.focus();
+    // Focus next input if value entered
+    if (cleanVal && index < 5 && inputRefs.current[index + 1]) {
+      inputRefs.current[index + 1].focus();
+    }
+  };
+
+  const handleKeyDown = (e, index) => {
+    if (e.key === 'Backspace' && !otp[index] && index > 0 && inputRefs.current[index - 1]) {
+      inputRefs.current[index - 1].focus();
+    }
+  };
+
+  const handlePaste = (e) => {
+    e.preventDefault();
+    const pasteData = sanitizeDigits(e.clipboardData.getData('text'), 6);
+    if (!pasteData) return;
+    const newOtp = [...otp];
+    for (let i = 0; i < pasteData.length && i < 6; i++) {
+      newOtp[i] = pasteData[i];
+    }
+    setOtp(newOtp);
+    const focusIdx = Math.min(pasteData.length, 5);
+    if (inputRefs.current[focusIdx]) {
+      inputRefs.current[focusIdx].focus();
     }
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    const fullOtp = otp.join('');
+    if (fullOtp.length !== 6) {
+      toast.error('Please enter complete 6-digit OTP.');
+      return;
+    }
     navigate('/reset-password');
   };
 
@@ -53,11 +83,16 @@ const VerifyOTP = () => {
             <input
               className="w-10 h-10 md:w-12 md:h-12 border border-gray-200 rounded-lg text-center text-lg font-semibold text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#1b58a6] focus:border-transparent bg-white transition-all shadow-sm"
               type="text"
-              name="otp"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              name={`otp-${index}`}
               maxLength="1"
               key={index}
+              ref={(el) => (inputRefs.current[index] = el)}
               value={data}
-              onChange={(e) => handleChange(e.target, index)}
+              onChange={(e) => handleChange(e, index)}
+              onKeyDown={(e) => handleKeyDown(e, index)}
+              onPaste={handlePaste}
               onFocus={(e) => e.target.select()}
             />
           ))}

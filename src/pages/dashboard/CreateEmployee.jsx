@@ -1,15 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import { Link, useNavigate } from 'react-router-dom';
-import { ChevronRight, Camera, Calendar, ChevronDown } from 'lucide-react';
+import { ChevronRight, Camera, Calendar, ChevronDown, Eye, EyeOff } from 'lucide-react';
 import { employeeService } from '../../api/employeeService';
 import { branchService } from '../../api/branchService';
 import { roleService } from '../../api/roleService';
+import { 
+  validatePassword, 
+  validatePhone, 
+  validateEmail, 
+  sanitizeDigits, 
+  preventInvalidNumberKeys,
+  validatePositiveNumber 
+} from '../../utils/validation';
 
 const CreateEmployee = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('Personal Details');
   const [submitting, setSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   // Dynamic Options
   const [branches, setBranches] = useState([]);
@@ -64,13 +73,37 @@ const CreateEmployee = () => {
   });
 
   const handleCreate = async () => {
-    if (!personalDetails.fullName || !personalDetails.email || !personalDetails.password) {
-      alert("Name, Email, and Password are required in Personal Details.");
+    if (!personalDetails.fullName?.trim()) {
+      toast.error("Full Name is required.");
       setActiveTab('Personal Details');
       return;
     }
+
+    const emailCheck = validateEmail(personalDetails.email);
+    if (!emailCheck.isValid) {
+      toast.error(emailCheck.error);
+      setActiveTab('Personal Details');
+      return;
+    }
+
+    const passCheck = validatePassword(personalDetails.password, { minLength: 6 });
+    if (!passCheck.isValid) {
+      toast.error(passCheck.error);
+      setActiveTab('Personal Details');
+      return;
+    }
+
+    if (personalDetails.phoneNumber) {
+      const phoneCheck = validatePhone(personalDetails.phoneNumber, { required: false });
+      if (!phoneCheck.isValid) {
+        toast.error(phoneCheck.error);
+        setActiveTab('Personal Details');
+        return;
+      }
+    }
+
     if (!jobDetails.roleId || !jobDetails.branchId) {
-      alert("Role and Branch are required in Job Details.");
+      toast.error("Role and Branch are required in Job Details.");
       setActiveTab('Job Details');
       return;
     }
@@ -78,7 +111,12 @@ const CreateEmployee = () => {
     setSubmitting(true);
     try {
       const payload = {
-        personalDetails: { ...personalDetails },
+        personalDetails: { 
+          ...personalDetails,
+          fullName: personalDetails.fullName.trim(),
+          email: personalDetails.email.trim(),
+          phoneNumber: personalDetails.phoneNumber.trim()
+        },
         jobDetails: {
           ...jobDetails,
           salary: Math.max(0, Number(jobDetails.salary) || 0),
@@ -140,6 +178,7 @@ const CreateEmployee = () => {
 
       const response = await employeeService.create(payload);
       if (response.success) {
+        toast.success("Employee created successfully!");
         navigate('/employees');
       }
     } catch (err) {
@@ -191,19 +230,53 @@ const CreateEmployee = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-semibold text-gray-800 mb-2">Full Name *</label>
-                <input type="text" value={personalDetails.fullName} onChange={e => setPersonalDetails({...personalDetails, fullName: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1cabb1] bg-white text-sm" />
+                <input 
+                  type="text" 
+                  value={personalDetails.fullName} 
+                  onChange={e => setPersonalDetails({...personalDetails, fullName: e.target.value})} 
+                  placeholder="Enter full name"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1cabb1] bg-white text-sm" 
+                />
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-800 mb-2">Email *</label>
-                <input type="email" value={personalDetails.email} onChange={e => setPersonalDetails({...personalDetails, email: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1cabb1] bg-white text-sm" />
+                <input 
+                  type="email" 
+                  value={personalDetails.email} 
+                  onChange={e => setPersonalDetails({...personalDetails, email: e.target.value})} 
+                  placeholder="Enter email address"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1cabb1] bg-white text-sm" 
+                />
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-800 mb-2">Password *</label>
-                <input type="text" value={personalDetails.password} onChange={e => setPersonalDetails({...personalDetails, password: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1cabb1] bg-white text-sm" />
+                <div className="relative">
+                  <input 
+                    type={showPassword ? "text" : "password"} 
+                    value={personalDetails.password} 
+                    onChange={e => setPersonalDetails({...personalDetails, password: e.target.value})} 
+                    placeholder="Minimum 6 characters"
+                    className="w-full pl-4 pr-10 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1cabb1] bg-white text-sm" 
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 focus:outline-none"
+                  >
+                    {showPassword ? <Eye size={18} /> : <EyeOff size={18} />}
+                  </button>
+                </div>
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-800 mb-2">Phone</label>
-                <input type="text" value={personalDetails.phoneNumber} onChange={e => setPersonalDetails({...personalDetails, phoneNumber: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1cabb1] bg-white text-sm" />
+                <input 
+                  type="tel" 
+                  value={personalDetails.phoneNumber} 
+                  onChange={e => setPersonalDetails({...personalDetails, phoneNumber: sanitizeDigits(e.target.value, 10)})} 
+                  placeholder="10-digit mobile number"
+                  maxLength={10}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1cabb1] bg-white text-sm" 
+                />
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-800 mb-2">Gender</label>

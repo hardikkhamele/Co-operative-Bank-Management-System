@@ -1,19 +1,64 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ChevronRight, Calendar, ChevronDown, Upload } from 'lucide-react';
+import { toast } from 'react-toastify';
+import { 
+  validatePhone, 
+  validatePAN, 
+  validateAadhaar, 
+  validatePincode, 
+  sanitizeDigits, 
+  sanitizePAN 
+} from '../../utils/validation';
 
 const EditLead = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const leadData = location.state || {};
 
-  const [aadhaarNumber, setAadhaarNumber] = useState(leadData.aadhaar || '1234 5678 9012');
-  const [fullName, setFullName] = useState(leadData.name || 'Amit Dutta');
-  const [mobileNumber, setMobileNumber] = useState(leadData.phone || '9876543210');
-  const [pinCode, setPinCode] = useState(leadData.pinCode || '411061');
+  const [formData, setFormData] = useState({
+    fullName: leadData.name || 'Amit Dutta',
+    gender: leadData.gender || 'male',
+    dob: leadData.dob || '1996-01-01',
+    mobileNumber: leadData.phone || '9876543210',
+    panNumber: leadData.pan || 'ABCDE1234F',
+    aadhaarNumber: leadData.aadhaar || '123456789012',
+    pinCode: leadData.pinCode || '411061',
+    termsAccepted: true
+  });
 
   const handleSave = (e) => {
     e.preventDefault();
+    if (!formData.fullName.trim()) {
+      toast.error("Full Name is required.");
+      return;
+    }
+    if (!formData.gender) {
+      toast.error("Please select a gender.");
+      return;
+    }
+    const phoneErr = validatePhone(formData.mobileNumber).error;
+    if (phoneErr) {
+      toast.error(phoneErr);
+      return;
+    }
+    const panErr = validatePAN(formData.panNumber).error;
+    if (panErr) {
+      toast.error(panErr);
+      return;
+    }
+    const aadharErr = validateAadhaar(formData.aadhaarNumber).error;
+    if (aadharErr) {
+      toast.error(aadharErr);
+      return;
+    }
+    const pinErr = validatePincode(formData.pinCode).error;
+    if (pinErr) {
+      toast.error(pinErr);
+      return;
+    }
+
+    toast.success("Lead updated successfully!");
     navigate('/leads');
   };
 
@@ -40,11 +85,11 @@ const EditLead = () => {
             <h2 className="text-lg font-bold text-gray-800 mb-6">Basic Information</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-semibold text-gray-800 mb-2">Full Name (As Per PAN Card)</label>
+                <label className="block text-sm font-semibold text-gray-800 mb-2">Full Name (As Per PAN Card) *</label>
                 <input 
                   type="text" 
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
+                  value={formData.fullName}
+                  onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
                   placeholder="Enter full name" 
                   className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm" 
                   required 
@@ -52,9 +97,14 @@ const EditLead = () => {
               </div>
               
               <div>
-                <label className="block text-sm font-semibold text-gray-800 mb-2">Gender</label>
+                <label className="block text-sm font-semibold text-gray-800 mb-2">Gender *</label>
                 <div className="relative">
-                  <select defaultValue="male" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white appearance-none text-gray-700 shadow-sm" required>
+                  <select 
+                    value={formData.gender}
+                    onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white appearance-none text-gray-700 shadow-sm" 
+                    required
+                  >
                     <option value="male">Male</option>
                     <option value="female">Female</option>
                     <option value="other">Other</option>
@@ -66,18 +116,24 @@ const EditLead = () => {
               <div>
                 <label className="block text-sm font-semibold text-gray-800 mb-2">Date Of Birth</label>
                 <div className="relative">
-                  <input type="text" defaultValue="01/01/1996" placeholder="DD/MM/YYYY" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm" required />
-                  <Calendar size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
+                  <input 
+                    type="date" 
+                    value={formData.dob}
+                    onChange={(e) => setFormData({ ...formData, dob: e.target.value })}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm text-gray-700" 
+                    required 
+                  />
                 </div>
               </div>
               
               <div>
-                <label className="block text-sm font-semibold text-gray-800 mb-2">Mobile Number</label>
+                <label className="block text-sm font-semibold text-gray-800 mb-2">Mobile Number *</label>
                 <input 
                   type="tel" 
-                  value={mobileNumber}
-                  onChange={(e) => setMobileNumber(e.target.value)}
-                  placeholder="Enter mobile number" 
+                  maxLength={10}
+                  value={formData.mobileNumber}
+                  onChange={(e) => setFormData({ ...formData, mobileNumber: sanitizeDigits(e.target.value, 10) })}
+                  placeholder="10-digit mobile number" 
                   className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm" 
                   required 
                 />
@@ -90,8 +146,16 @@ const EditLead = () => {
             <h2 className="text-lg font-bold text-gray-800 mb-6">Identity Documents</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-semibold text-gray-800 mb-2">PAN Number</label>
-                <input type="text" defaultValue="ABCDE1234F" placeholder="Enter PAN Number" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm" required />
+                <label className="block text-sm font-semibold text-gray-800 mb-2">PAN Number *</label>
+                <input 
+                  type="text" 
+                  maxLength={10}
+                  value={formData.panNumber}
+                  onChange={(e) => setFormData({ ...formData, panNumber: sanitizePAN(e.target.value) })}
+                  placeholder="e.g. ABCDE1234F" 
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm uppercase" 
+                  required 
+                />
               </div>
 
               <div>
@@ -104,13 +168,14 @@ const EditLead = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-800 mb-2">Aadhaar Number</label>
+                <label className="block text-sm font-semibold text-gray-800 mb-2">Aadhaar Number *</label>
                 <input 
-                  type="text" 
-                  placeholder="Enter Aadhaar Number" 
+                  type="tel" 
+                  maxLength={12}
+                  placeholder="12-digit Aadhaar number" 
                   className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm" 
-                  value={aadhaarNumber}
-                  onChange={(e) => setAadhaarNumber(e.target.value)}
+                  value={formData.aadhaarNumber}
+                  onChange={(e) => setFormData({ ...formData, aadhaarNumber: sanitizeDigits(e.target.value, 12) })}
                   required 
                 />
               </div>
@@ -131,12 +196,13 @@ const EditLead = () => {
             <h2 className="text-lg font-bold text-gray-800 mb-6">Address Details</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
               <div>
-                <label className="block text-sm font-semibold text-gray-800 mb-2">Current Residential PIN Code</label>
+                <label className="block text-sm font-semibold text-gray-800 mb-2">Current Residential PIN Code *</label>
                 <input 
-                  type="text" 
-                  value={pinCode}
-                  onChange={(e) => setPinCode(e.target.value)}
-                  placeholder="Enter 6-digit current residential PIN code" 
+                  type="tel" 
+                  maxLength={6}
+                  value={formData.pinCode}
+                  onChange={(e) => setFormData({ ...formData, pinCode: sanitizeDigits(e.target.value, 6) })}
+                  placeholder="6-digit PIN code" 
                   className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm" 
                   required 
                 />
@@ -144,8 +210,15 @@ const EditLead = () => {
             </div>
 
             <div className="flex items-start gap-3">
-              <input type="checkbox" id="terms" className="mt-1 w-5 h-5 rounded border-gray-300 text-[#1cabb1] focus:ring-[#1cabb1]" defaultChecked required />
-              <label htmlFor="terms" className="text-[15px] text-gray-600 leading-relaxed">
+              <input 
+                type="checkbox" 
+                id="terms" 
+                checked={formData.termsAccepted}
+                onChange={(e) => setFormData({ ...formData, termsAccepted: e.target.checked })}
+                className="mt-1 w-5 h-5 rounded border-gray-300 text-[#1cabb1] focus:ring-[#1cabb1]" 
+                required 
+              />
+              <label htmlFor="terms" className="text-[15px] text-gray-600 leading-relaxed cursor-pointer">
                 I have read, understand, and hereby accept the Advita product application <br/>
                 <a href="#" className="text-red-500 hover:underline">Terms and Conditions</a>.
               </label>

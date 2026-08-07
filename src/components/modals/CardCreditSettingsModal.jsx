@@ -1,11 +1,32 @@
 import React, { useState } from 'react';
 import { X, ChevronDown, ChevronUp } from 'lucide-react';
+import { toast } from 'react-toastify';
+import { preventInvalidNumberKeys } from '../../utils/validation';
 
 const CardCreditSettingsModal = ({ isOpen, onClose }) => {
   const [selectedType, setSelectedType] = useState('add');
   const [transferSelection, setTransferSelection] = useState('both');
+  const [emiQuantity, setEmiQuantity] = useState('');
+  const [creditQuantity, setCreditQuantity] = useState('');
 
   if (!isOpen) return null;
+
+  const handleSave = () => {
+    if (selectedType === 'add' || transferSelection === 'emi' || transferSelection === 'both') {
+      if (emiQuantity !== '' && Number(emiQuantity) < 0) {
+        toast.error('EMI Card quantity cannot be negative.');
+        return;
+      }
+    }
+    if (selectedType === 'add' || transferSelection === 'verification' || transferSelection === 'both') {
+      if (creditQuantity !== '' && Number(creditQuantity) < 0) {
+        toast.error('Verification Credit quantity cannot be negative.');
+        return;
+      }
+    }
+    toast.success(`${selectedType === 'add' ? 'Added' : 'Transferred'} successfully!`);
+    onClose();
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 transition-opacity">
@@ -147,6 +168,10 @@ const CardCreditSettingsModal = ({ isOpen, onClose }) => {
                 <div className="relative">
                   <input 
                     type="number" 
+                    min="0"
+                    value={emiQuantity}
+                    onChange={(e) => setEmiQuantity(e.target.value)}
+                    onKeyDown={preventInvalidNumberKeys}
                     placeholder="Enter quantity" 
                     className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1] focus:border-transparent bg-white text-[15px] shadow-sm appearance-none" 
                     style={{ MozAppearance: 'textfield' }} // hides standard arrows in firefox
@@ -160,6 +185,10 @@ const CardCreditSettingsModal = ({ isOpen, onClose }) => {
                 <div className="relative">
                   <input 
                     type="number" 
+                    min="0"
+                    value={creditQuantity}
+                    onChange={(e) => setCreditQuantity(e.target.value)}
+                    onKeyDown={preventInvalidNumberKeys}
                     placeholder="Enter quantity" 
                     className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1] focus:border-transparent bg-white text-[15px] shadow-sm appearance-none" 
                     style={{ MozAppearance: 'textfield' }}
@@ -180,10 +209,10 @@ const CardCreditSettingsModal = ({ isOpen, onClose }) => {
             Cancel
           </button>
           <button 
-            onClick={onClose}
+            onClick={handleSave}
             className="py-2.5 px-8 rounded-full bg-[#1cabb1] text-white font-semibold hover:bg-[#159a9f] transition-colors focus:outline-none text-[15px] shadow-sm"
           >
-            Add
+            {selectedType === 'add' ? 'Add' : 'Transfer'}
           </button>
         </div>
       </div>

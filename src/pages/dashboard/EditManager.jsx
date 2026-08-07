@@ -1,10 +1,17 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { ChevronRight, Camera, Calendar, ChevronDown, Clock } from 'lucide-react';
-
-import { useLocation } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { ChevronRight, Camera, Calendar, ChevronDown, Clock, Eye, EyeOff } from 'lucide-react';
+import { toast } from 'react-toastify';
+import { 
+  validateEmail, 
+  validatePhone, 
+  validatePassword, 
+  sanitizeDigits, 
+  preventInvalidNumberKeys 
+} from '../../utils/validation';
 
 const EditManager = () => {
+  const navigate = useNavigate();
   const location = useLocation();
   const managerData = location.state || {};
   const [activeTab, setActiveTab] = useState('personal');
@@ -12,6 +19,54 @@ const EditManager = () => {
                       managerData.type === 'Branch Manager' ? 'branch' : 
                       managerData.type === 'Collection Manager' ? 'collection' : '';
   const [managerType, setManagerType] = useState(initialType);
+  const [showPassword, setShowPassword] = useState(false);
+  const [formData, setFormData] = useState({
+    fullName: managerData.name || '',
+    gender: managerData.gender?.toLowerCase() || '',
+    dob: managerData.dob || '',
+    phone: managerData.phone || '',
+    email: managerData.email || '',
+    password: '',
+    address: managerData.address || '',
+    salary: managerData.salary ? managerData.salary.replace(/[^0-9]/g, '') : '',
+    region: managerData.region?.toLowerCase().includes('north') ? 'north' : managerData.region?.toLowerCase().includes('south') ? 'south' : managerData.region?.toLowerCase().includes('east') ? 'east' : managerData.region?.toLowerCase().includes('west') ? 'west' : '',
+    branch: managerData.branch || ''
+  });
+
+  const handleChange = (field, value) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleSave = () => {
+    if (!formData.fullName.trim()) {
+      setActiveTab('personal');
+      toast.error("Please enter manager's full name");
+      return;
+    }
+    const emailErr = validateEmail(formData.email).error;
+    if (emailErr) {
+      setActiveTab('personal');
+      toast.error(emailErr);
+      return;
+    }
+    const phoneErr = validatePhone(formData.phone).error;
+    if (phoneErr) {
+      setActiveTab('personal');
+      toast.error(phoneErr);
+      return;
+    }
+    if (formData.password) {
+      const passErr = validatePassword(formData.password, { minLength: 6 }).error;
+      if (passErr) {
+        setActiveTab('personal');
+        toast.error(passErr);
+        return;
+      }
+    }
+
+    toast.success("Manager updated successfully!");
+    navigate('/managers');
+  };
 
   const tabs = [
     { id: 'personal', label: 'Personal Details' },
@@ -80,14 +135,24 @@ const EditManager = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-8">
                 <div>
-                  <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">Full Name</label>
-                  <input type="text" defaultValue={managerData.name || ''} placeholder="Enter full name" className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm text-[15px]" />
+                  <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">Full Name *</label>
+                  <input 
+                    type="text" 
+                    value={formData.fullName} 
+                    onChange={e => handleChange('fullName', e.target.value)}
+                    placeholder="Enter full name" 
+                    className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm text-[15px]" 
+                  />
                 </div>
                 
                 <div>
                   <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">Gender</label>
                   <div className="relative">
-                    <select defaultValue={managerData.gender?.toLowerCase() || ''} className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white appearance-none text-gray-500 shadow-sm text-[15px]">
+                    <select 
+                      value={formData.gender}
+                      onChange={e => handleChange('gender', e.target.value)}
+                      className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white appearance-none text-gray-500 shadow-sm text-[15px]"
+                    >
                       <option value="" disabled>Select</option>
                       <option value="male">Male</option>
                       <option value="female">Female</option>
@@ -100,29 +165,69 @@ const EditManager = () => {
                 <div>
                   <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">Date Of Birth</label>
                   <div className="relative">
-                    <input type="text" defaultValue={managerData.dob || ''} placeholder="DD/MM/YYYY" className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm text-[15px]" />
+                    <input 
+                      type="text" 
+                      value={formData.dob} 
+                      onChange={e => handleChange('dob', e.target.value)}
+                      placeholder="DD/MM/YYYY" 
+                      className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm text-[15px]" 
+                    />
                     <Calendar size={20} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
                   </div>
                 </div>
                 
                 <div>
-                  <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">Phone</label>
-                  <input type="tel" defaultValue={managerData.phone || ''} placeholder="Enter phone Number" className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm text-[15px]" />
+                  <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">Phone *</label>
+                  <input 
+                    type="tel" 
+                    value={formData.phone} 
+                    onChange={e => handleChange('phone', sanitizeDigits(e.target.value, 10))}
+                    placeholder="10-digit Phone Number" 
+                    maxLength={10}
+                    className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm text-[15px]" 
+                  />
                 </div>
                 
                 <div>
-                  <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">Email</label>
-                  <input type="email" defaultValue={managerData.email || ''} placeholder="Enter email" className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm text-[15px]" />
+                  <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">Email *</label>
+                  <input 
+                    type="email" 
+                    value={formData.email} 
+                    onChange={e => handleChange('email', e.target.value)}
+                    placeholder="Enter email" 
+                    className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm text-[15px]" 
+                  />
                 </div>
                 
                 <div>
                   <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">Password</label>
-                  <input type="password" defaultValue={managerData.password || ''} placeholder="Create password" className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm text-[15px]" />
+                  <div className="relative">
+                    <input 
+                      type={showPassword ? "text" : "password"} 
+                      value={formData.password} 
+                      onChange={e => handleChange('password', e.target.value)}
+                      placeholder="Change password (leave empty to keep current)" 
+                      className="w-full pl-4 pr-11 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm text-[15px]" 
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-gray-400 hover:text-gray-600 focus:outline-none"
+                    >
+                      {showPassword ? <Eye size={18} /> : <EyeOff size={18} />}
+                    </button>
+                  </div>
                 </div>
 
                 <div>
                   <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">Address</label>
-                  <input type="text" defaultValue={managerData.address || ''} placeholder="Enter address" className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm text-[15px]" />
+                  <input 
+                    type="text" 
+                    value={formData.address} 
+                    onChange={e => handleChange('address', e.target.value)}
+                    placeholder="Enter address" 
+                    className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm text-[15px]" 
+                  />
                 </div>
               </div>
             </div>
@@ -149,7 +254,11 @@ const EditManager = () => {
               <div>
                 <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">Region</label>
                 <div className="relative">
-                  <select defaultValue={managerData.region?.toLowerCase().includes('north') ? 'north' : managerData.region?.toLowerCase().includes('south') ? 'south' : managerData.region?.toLowerCase().includes('east') ? 'east' : managerData.region?.toLowerCase().includes('west') ? 'west' : ''} className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white appearance-none text-gray-500 shadow-sm text-[15px]">
+                  <select 
+                    value={formData.region}
+                    onChange={e => handleChange('region', e.target.value)}
+                    className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white appearance-none text-gray-500 shadow-sm text-[15px]"
+                  >
                     <option value="" disabled>Select</option>
                     <option value="north">North</option>
                     <option value="south">South</option>
@@ -163,7 +272,11 @@ const EditManager = () => {
               <div>
                 <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">Branch</label>
                 <div className="relative">
-                  <select defaultValue={managerData.branch || ''} className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white appearance-none text-gray-500 shadow-sm text-[15px]">
+                  <select 
+                    value={formData.branch}
+                    onChange={e => handleChange('branch', e.target.value)}
+                    className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white appearance-none text-gray-500 shadow-sm text-[15px]"
+                  >
                     <option value="" disabled>Select</option>
                     <option value="b1">Branch 1</option>
                     <option value="b2">Branch 2</option>
@@ -174,7 +287,15 @@ const EditManager = () => {
 
               <div>
                 <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">Salary</label>
-                <input type="number" defaultValue={managerData.salary ? managerData.salary.replace(/[^0-9]/g, '') : ''} placeholder="Rs." className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm text-[15px]" />
+                <input 
+                  type="number" 
+                  min="0"
+                  onKeyDown={preventInvalidNumberKeys}
+                  value={formData.salary} 
+                  onChange={e => handleChange('salary', e.target.value)}
+                  placeholder="Rs." 
+                  className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm text-[15px]" 
+                />
               </div>
             </div>
           </div>
@@ -695,12 +816,13 @@ const EditManager = () => {
         >
           Cancel
         </Link>
-        <Link
-          to="/managers"
+        <button
+          type="button"
+          onClick={handleSave}
           className="px-10 py-3 rounded-full bg-[#1cabb1] hover:bg-[#168f94] text-white font-semibold transition-colors shadow-sm text-[15px]"
         >
           Save Changes
-        </Link>
+        </button>
       </div>
 
 

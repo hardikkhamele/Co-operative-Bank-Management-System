@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { verificationService } from '../../api/verificationService';
+import { validatePAN, sanitizePAN } from '../../utils/validation';
 
 const CheckCibilScore = () => {
   const [step, setStep] = useState('form'); // 'form' | 'result'
@@ -35,7 +36,7 @@ const CheckCibilScore = () => {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     if (name === 'panNumber') {
-      setFormData((prev) => ({ ...prev, [name]: value.toUpperCase() }));
+      setFormData((prev) => ({ ...prev, [name]: sanitizePAN(value) }));
     } else {
       setFormData((prev) => ({ ...prev, [name]: value }));
     }
@@ -47,9 +48,9 @@ const CheckCibilScore = () => {
       toast.error('Please enter the full name');
       return false;
     }
-    const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
-    if (!formData.panNumber || !panRegex.test(formData.panNumber.trim().toUpperCase())) {
-      toast.error('Please enter a valid 10-digit PAN (e.g. ABCDE1234F)');
+    const panErr = validatePAN(formData.panNumber).error;
+    if (panErr) {
+      toast.error(panErr);
       return false;
     }
     if (!formData.dob) {

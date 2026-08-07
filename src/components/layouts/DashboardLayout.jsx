@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { NavLink, Link, Outlet, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, MapPin, IdCard, UserPlus, List, ClipboardList, Store, Box, ArrowDownRight, ArrowUpRight, ArrowRightLeft, RefreshCcw, UserCheck, UserCog, Tag, ChevronDown, Bell, User, LogOut, CreditCard, Headphones, FileText, BarChart2, TrendingUp, CalendarDays, Banknote } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
+import GlobalLoader from '../GlobalLoader';
 
 const DashboardLayout = () => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -174,9 +175,11 @@ const DashboardLayout = () => {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden relative">
+        <GlobalLoader />
+
         {/* Topbar */}
-        <header className="h-16 bg-[#1cabb1] text-white flex items-center justify-between px-8 shadow-sm">
+        <header className="h-16 bg-[#1cabb1] text-white flex items-center justify-between px-8 shadow-sm shrink-0">
           <div>
             <div className="text-xs text-white/80 font-medium">Welcome</div>
             <div className="text-lg font-semibold tracking-wide">Eleanor Pena</div>

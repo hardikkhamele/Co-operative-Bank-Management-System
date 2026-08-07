@@ -5,6 +5,7 @@ import useAuthStore from '../../store/authStore';
 import loginIllustration from '../../assets/images/login.png';
 import { authService } from '../../api/authService';
 import { AlertCircle, Eye, EyeOff, UserCog, User, Landmark } from 'lucide-react';
+import { validateEmail, validatePassword } from '../../utils/validation';
 
 const Login = () => {
   const [formData, setFormData] = useState({ 
@@ -53,12 +54,25 @@ const Login = () => {
        setError("Please select a role");
        return;
     }
+
+    const emailCheck = validateEmail(formData.email);
+    if (!emailCheck.isValid) {
+      setError(emailCheck.error);
+      return;
+    }
+
+    const passwordCheck = validatePassword(formData.password, { minLength: 6 });
+    if (!passwordCheck.isValid) {
+      setError(passwordCheck.error);
+      return;
+    }
+
     setLoading(true);
     setError(null);
     
     try {
       const response = await authService.login({
-        email: formData.email,
+        email: formData.email.trim(),
         password: formData.password,
         role: formData.role
       });

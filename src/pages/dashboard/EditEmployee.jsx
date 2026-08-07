@@ -1,10 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ChevronRight, Camera, Calendar, ChevronDown, CheckCircle2 } from 'lucide-react';
+import { ChevronRight, Camera, Calendar, ChevronDown, CheckCircle2, Eye, EyeOff } from 'lucide-react';
 import { employeeService } from '../../api/employeeService';
 import { branchService } from '../../api/branchService';
 import { roleService } from '../../api/roleService';
+import { 
+  validatePassword, 
+  validatePhone, 
+  validateEmail, 
+  sanitizeDigits, 
+  preventInvalidNumberKeys 
+} from '../../utils/validation';
 
 const EditEmployee = () => {
   const navigate = useNavigate();
@@ -14,6 +21,7 @@ const EditEmployee = () => {
   const [loading, setLoading] = useState(true);
   const [submittingTab, setSubmittingTab] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
+  const [showPassword, setShowPassword] = useState(false);
   
   // Dynamic Options
   const [branches, setBranches] = useState([]);
@@ -166,9 +174,41 @@ const EditEmployee = () => {
 
 
   const savePersonalDetails = async () => {
+    if (!personalDetails.fullName?.trim()) {
+      toast.error("Full Name is required.");
+      return;
+    }
+
+    const emailCheck = validateEmail(personalDetails.email);
+    if (!emailCheck.isValid) {
+      toast.error(emailCheck.error);
+      return;
+    }
+
+    if (personalDetails.password) {
+      const passCheck = validatePassword(personalDetails.password, { minLength: 6 });
+      if (!passCheck.isValid) {
+        toast.error(passCheck.error);
+        return;
+      }
+    }
+
+    if (personalDetails.phoneNumber) {
+      const phoneCheck = validatePhone(personalDetails.phoneNumber, { required: false });
+      if (!phoneCheck.isValid) {
+        toast.error(phoneCheck.error);
+        return;
+      }
+    }
+
     setSubmittingTab('Personal Details');
     try {
-      const payload = { ...personalDetails };
+      const payload = { 
+        ...personalDetails,
+        fullName: personalDetails.fullName.trim(),
+        email: personalDetails.email.trim(),
+        phoneNumber: personalDetails.phoneNumber.trim()
+      };
       if (!payload.password) delete payload.password; // Don't send empty password
       await employeeService.updatePersonalDetails(id, payload);
       toast.success('Personal details updated!');
@@ -376,11 +416,33 @@ const EditEmployee = () => {
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-800 mb-2">Change Password (Optional)</label>
-                <input type="text" placeholder="Leave blank to keep current" value={personalDetails.password} onChange={e => setPersonalDetails({...personalDetails, password: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1cabb1] bg-white text-sm" />
+                <div className="relative">
+                  <input 
+                    type={showPassword ? "text" : "password"} 
+                    placeholder="Leave blank to keep current (min 6 chars)" 
+                    value={personalDetails.password} 
+                    onChange={e => setPersonalDetails({...personalDetails, password: e.target.value})} 
+                    className="w-full pl-4 pr-10 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1cabb1] bg-white text-sm" 
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 focus:outline-none"
+                  >
+                    {showPassword ? <Eye size={18} /> : <EyeOff size={18} />}
+                  </button>
+                </div>
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-800 mb-2">Phone</label>
-                <input type="text" value={personalDetails.phoneNumber} onChange={e => setPersonalDetails({...personalDetails, phoneNumber: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1cabb1] bg-white text-sm" />
+                <input 
+                  type="tel" 
+                  value={personalDetails.phoneNumber} 
+                  onChange={e => setPersonalDetails({...personalDetails, phoneNumber: sanitizeDigits(e.target.value, 10)})} 
+                  placeholder="10-digit mobile number"
+                  maxLength={10}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1cabb1] bg-white text-sm" 
+                />
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-800 mb-2">Gender</label>

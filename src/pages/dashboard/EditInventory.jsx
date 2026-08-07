@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams, useLocation } from 'react-router-dom';
 import { ChevronRight, Loader2 } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { inventoryService } from '../../api/inventoryService';
+import { preventInvalidNumberKeys } from '../../utils/validation';
 
 const EditInventory = () => {
   const navigate = useNavigate();
@@ -130,6 +131,7 @@ const EditInventory = () => {
                   min="0"
                   value={formData.quantity}
                   onChange={handleChange}
+                  onKeyDown={preventInvalidNumberKeys}
                   placeholder="Enter quantity (e.g., 1800)" 
                   className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1cabb1]"
                   required

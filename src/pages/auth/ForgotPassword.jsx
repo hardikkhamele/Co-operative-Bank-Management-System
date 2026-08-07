@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import AuthLayout from '../../components/layouts/AuthLayout';
 import forgotIllustration from '../../assets/images/forgot-password.png';
+import { validateEmail } from '../../utils/validation';
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState('');
@@ -9,6 +11,11 @@ const ForgotPassword = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    const check = validateEmail(email);
+    if (!check.isValid) {
+      toast.error(check.error);
+      return;
+    }
     // Simulate API call
     navigate('/verify-otp');
   };

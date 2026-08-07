@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
-import { Search, Edit, Trash2, ChevronRight, SlidersHorizontal, ChevronDown, X, ArrowRight, ArrowLeft } from 'lucide-react';
+import { Search, Edit, Trash2, ChevronRight, SlidersHorizontal, ChevronDown, X, ArrowRight, ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import CardCreditSettingsModal from '../../components/modals/CardCreditSettingsModal';
 import { branchService } from '../../api/branchService';
+import { validateEmail, validatePhone, validatePassword, validatePincode, sanitizeDigits, preventInvalidNumberKeys } from '../../utils/validation';
 
 const Branch = () => {
   const [branches, setBranches] = useState([]);
@@ -31,7 +32,11 @@ const Branch = () => {
   // Create Modal State
   const [createStep, setCreateStep] = useState(1);
   const [createSubmitting, setCreateSubmitting] = useState(false);
+<<<<<<< Updated upstream
   const [editStep, setEditStep] = useState(1);
+=======
+  const [showManagerPassword, setShowManagerPassword] = useState(false);
+>>>>>>> Stashed changes
   const [createForm, setCreateForm] = useState({
     branch: { name: '', code: '', email: '', phoneNumber: '', state: '', cardStock: 0, verificationCredits: 0, addressLine1: '', city: '', pincode: '' },
     manager: { fullName: '', email: '', phoneNumber: '', password: '', employeeCode: '' }
@@ -92,6 +97,53 @@ const Branch = () => {
   };
 
   const submitCreateBranch = async () => {
+    // Validate Branch Details
+    const branchEmailErr = validateEmail(createForm.branch.email).error;
+    if (branchEmailErr) {
+      toast.error(`Branch Email: ${branchEmailErr}`);
+      setCreateStep(1);
+      return;
+    }
+
+    if (createForm.branch.phoneNumber) {
+      const branchPhoneErr = validatePhone(createForm.branch.phoneNumber).error;
+      if (branchPhoneErr) {
+        toast.error(`Branch Phone: ${branchPhoneErr}`);
+        setCreateStep(1);
+        return;
+      }
+    }
+
+    if (createForm.branch.pincode) {
+      const pinErr = validatePincode(createForm.branch.pincode).error;
+      if (pinErr) {
+        toast.error(pinErr);
+        setCreateStep(1);
+        return;
+      }
+    }
+
+    // Validate Manager Credentials
+    const mgrEmailErr = validateEmail(createForm.manager.email).error;
+    if (mgrEmailErr) {
+      toast.error(`Manager Email: ${mgrEmailErr}`);
+      return;
+    }
+
+    const passErr = validatePassword(createForm.manager.password, { minLength: 6 }).error;
+    if (passErr) {
+      toast.error(`Manager Password: ${passErr}`);
+      return;
+    }
+
+    if (createForm.manager.phoneNumber) {
+      const mgrPhoneErr = validatePhone(createForm.manager.phoneNumber).error;
+      if (mgrPhoneErr) {
+        toast.error(`Manager Phone: ${mgrPhoneErr}`);
+        return;
+      }
+    }
+
     setCreateSubmitting(true);
     try {
       const nameParts = createForm.manager.fullName.trim().split(' ');
@@ -105,8 +157,8 @@ const Branch = () => {
           email: createForm.branch.email,
           phoneNumber: createForm.branch.phoneNumber,
           state: createForm.branch.state,
-          cardStock: Number(createForm.branch.cardStock),
-          verificationCredits: Number(createForm.branch.verificationCredits),
+          cardStock: Number(createForm.branch.cardStock) || 0,
+          verificationCredits: Number(createForm.branch.verificationCredits) || 0,
           address: {
             addressLine1: createForm.branch.addressLine1,
             city: createForm.branch.city,
@@ -122,6 +174,7 @@ const Branch = () => {
           phoneNumber: createForm.manager.phoneNumber,
           password: createForm.manager.password,
           employeeCode: createForm.manager.employeeCode,
+<<<<<<< Updated upstream
           personalDetails: {
             fullName: createForm.manager.fullName,
             firstName: firstName,
@@ -144,6 +197,15 @@ const Branch = () => {
       if (response && response.success) {
         toast.success(response.message || "Branch and Branch Manager created successfully.");
       }
+=======
+          personalDetails: {},
+          jobDetails: {}
+        }
+      };
+      
+      await branchService.create(payload);
+      toast.success("Branch created successfully!");
+>>>>>>> Stashed changes
       setIsCreateModalOpen(false);
       setCreateStep(1);
       setCreateForm({
@@ -461,7 +523,14 @@ const Branch = () => {
                     </div>
                     <div>
                       <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">Phone Number</label>
-                      <input type="text" value={createForm.branch.phoneNumber} onChange={e => handleCreateChange('branch', 'phoneNumber', e.target.value)} placeholder="Phone" className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1cabb1] text-sm" />
+                      <input 
+                        type="tel" 
+                        value={createForm.branch.phoneNumber} 
+                        onChange={e => handleCreateChange('branch', 'phoneNumber', sanitizeDigits(e.target.value, 10))} 
+                        placeholder="10-digit Phone" 
+                        maxLength={10}
+                        className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1cabb1] text-sm" 
+                      />
                     </div>
                   </div>
                   <div>
@@ -489,17 +558,38 @@ const Branch = () => {
                     </div>
                     <div>
                       <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">Pincode</label>
-                      <input type="text" value={createForm.branch.pincode} onChange={e => handleCreateChange('branch', 'pincode', e.target.value)} placeholder="Pincode" className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1cabb1] text-sm" />
+                      <input 
+                        type="text" 
+                        value={createForm.branch.pincode} 
+                        onChange={e => handleCreateChange('branch', 'pincode', sanitizeDigits(e.target.value, 6))} 
+                        placeholder="6-digit Pincode" 
+                        maxLength={6}
+                        className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1cabb1] text-sm" 
+                      />
                     </div>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">Initial EMI Card Stock</label>
-                      <input type="number" value={createForm.branch.cardStock} onChange={e => handleCreateChange('branch', 'cardStock', e.target.value)} className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1cabb1] text-sm" />
+                      <input 
+                        type="number" 
+                        min="0"
+                        onKeyDown={preventInvalidNumberKeys}
+                        value={createForm.branch.cardStock} 
+                        onChange={e => handleCreateChange('branch', 'cardStock', e.target.value)} 
+                        className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1cabb1] text-sm" 
+                      />
                     </div>
                     <div>
                       <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">Initial Verification Credits</label>
-                      <input type="number" value={createForm.branch.verificationCredits} onChange={e => handleCreateChange('branch', 'verificationCredits', e.target.value)} className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1cabb1] text-sm" />
+                      <input 
+                        type="number" 
+                        min="0"
+                        onKeyDown={preventInvalidNumberKeys}
+                        value={createForm.branch.verificationCredits} 
+                        onChange={e => handleCreateChange('branch', 'verificationCredits', e.target.value)} 
+                        className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1cabb1] text-sm" 
+                      />
                     </div>
                   </div>
                 </div>
@@ -514,12 +604,38 @@ const Branch = () => {
                   </div>
                   <div>
                     <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">Temporary Password *</label>
+<<<<<<< Updated upstream
                     <input type="password" minLength={8} value={createForm.manager.password} onChange={e => handleCreateChange('manager', 'password', e.target.value)} placeholder="Password (Min 8 characters)" className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1cabb1] text-sm" />
+=======
+                    <div className="relative">
+                      <input 
+                        type={showManagerPassword ? "text" : "password"} 
+                        value={createForm.manager.password} 
+                        onChange={e => handleCreateChange('manager', 'password', e.target.value)} 
+                        placeholder="Min 6 characters" 
+                        className="w-full pl-3 pr-10 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1cabb1] text-sm" 
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowManagerPassword(!showManagerPassword)}
+                        className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 focus:outline-none"
+                      >
+                        {showManagerPassword ? <Eye size={16} /> : <EyeOff size={16} />}
+                      </button>
+                    </div>
+>>>>>>> Stashed changes
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">Phone Number</label>
-                      <input type="text" value={createForm.manager.phoneNumber} onChange={e => handleCreateChange('manager', 'phoneNumber', e.target.value)} placeholder="Phone" className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1cabb1] text-sm" />
+                      <input 
+                        type="tel" 
+                        value={createForm.manager.phoneNumber} 
+                        onChange={e => handleCreateChange('manager', 'phoneNumber', sanitizeDigits(e.target.value, 10))} 
+                        placeholder="10-digit Phone" 
+                        maxLength={10}
+                        className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1cabb1] text-sm" 
+                      />
                     </div>
                     <div>
                       <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">Employee Code</label>

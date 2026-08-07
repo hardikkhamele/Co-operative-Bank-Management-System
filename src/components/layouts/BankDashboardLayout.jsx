@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Outlet, Link, NavLink, useNavigate } from 'react-router-dom';
 import { Home, Users, Building, FileText, Settings, Bell, ChevronDown, User, LogOut } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
+import GlobalLoader from '../GlobalLoader';
 
 const bankNavItems = [
   { name: 'Dashboard', path: '/bank/dashboard', icon: Home },
@@ -59,8 +60,10 @@ const BankDashboardLayout = () => {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden relative">
+        <GlobalLoader />
+
         {/* Topbar */}
-        <header className="h-16 bg-white border-b border-gray-200 text-gray-800 flex items-center justify-between px-8 shadow-sm">
+        <header className="h-16 bg-white border-b border-gray-200 text-gray-800 flex items-center justify-between px-8 shadow-sm shrink-0">
           <div>
             <div className="text-lg font-semibold tracking-wide text-gray-800">Bank Portal</div>
           </div>

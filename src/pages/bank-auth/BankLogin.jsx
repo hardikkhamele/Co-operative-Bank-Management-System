@@ -5,6 +5,7 @@ import useAuthStore from '../../store/authStore';
 import loginIllustration from '../../assets/images/login.png';
 import { authService } from '../../api/authService';
 import { Building2, Users, AlertCircle, Eye, EyeOff, Landmark } from 'lucide-react';
+import { validateEmail, validatePassword } from '../../utils/validation';
 
 const BankLogin = () => {
   const [formData, setFormData] = useState({ 
@@ -53,16 +54,34 @@ const BankLogin = () => {
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+    setError(null);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!formData.role) {
+      setError("Please select a role");
+      return;
+    }
+
+    const emailCheck = validateEmail(formData.email);
+    if (!emailCheck.isValid) {
+      setError(emailCheck.error);
+      return;
+    }
+
+    const passwordCheck = validatePassword(formData.password, { minLength: 6 });
+    if (!passwordCheck.isValid) {
+      setError(passwordCheck.error);
+      return;
+    }
+
     setLoading(true);
     setError(null);
     
     try {
       const response = await authService.login({
-        email: formData.email,
+        email: formData.email.trim(),
         password: formData.password,
         role: formData.role
       });

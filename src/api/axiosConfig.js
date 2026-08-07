@@ -1,5 +1,6 @@
 import axios from 'axios';
 import useAuthStore from '../store/authStore';
+import useLoadingStore from '../store/loadingStore';
 
 const axiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_URL || '/api',
@@ -26,6 +27,9 @@ const processQueue = (error, token = null) => {
 // Request interceptor
 axiosInstance.interceptors.request.use(
   (config) => {
+    // Show global loader for every request
+    useLoadingStore.getState().showLoader();
+
     const token = useAuthStore.getState().accessToken;
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -33,17 +37,23 @@ axiosInstance.interceptors.request.use(
     return config;
   },
   (error) => {
+    useLoadingStore.getState().hideLoader();
     return Promise.reject(error);
   }
 );
 
 // Response interceptor
 axiosInstance.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // Hide global loader on successful response
+    useLoadingStore.getState().hideLoader();
+    return response;
+  },
   async (error) => {
     const originalRequest = error.config;
 
     if (!originalRequest) {
+      useLoadingStore.getState().hideLoader();
       return Promise.reject(error);
     }
 
@@ -64,7 +74,10 @@ axiosInstance.interceptors.response.use(
             originalRequest.headers.Authorization = `Bearer ${token}`;
             return axiosInstance(originalRequest);
           })
-          .catch((err) => Promise.reject(err));
+          .catch((err) => {
+            useLoadingStore.getState().hideLoader();
+            return Promise.reject(err);
+          });
       }
 
       originalRequest._retry = true;
@@ -74,6 +87,7 @@ axiosInstance.interceptors.response.use(
 
       if (!refreshToken) {
         isRefreshing = false;
+        useLoadingStore.getState().hideLoader();
         useAuthStore.getState().logout();
         window.location.href = '/login';
         return Promise.reject(error);
@@ -102,6 +116,7 @@ axiosInstance.interceptors.response.use(
         }
       } catch (refreshError) {
         processQueue(refreshError, null);
+        useLoadingStore.getState().hideLoader();
         useAuthStore.getState().logout();
         window.location.href = '/login';
         return Promise.reject(refreshError);
@@ -110,8 +125,11 @@ axiosInstance.interceptors.response.use(
       }
     }
 
+    // Hide loader on error response
+    useLoadingStore.getState().hideLoader();
     return Promise.reject(error);
   }
 );
 
 export default axiosInstance;
+
