@@ -29,7 +29,7 @@ const DashboardLayout = () => {
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
       {/* Sidebar */}
-      <div className="w-64 bg-[#f4f5fa] border-r border-gray-200 flex flex-col shadow-sm z-10">
+      <div className="w-64 bg-[#f4f5fa] border-r border-gray-200 flex flex-col shadow-sm z-10 print:hidden">
         {/* Logo Area */}
         <div className="h-[76px] flex items-center px-4 border-b border-gray-200">
           <div className="flex items-center gap-3">
@@ -190,7 +190,7 @@ const DashboardLayout = () => {
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden relative">
         {/* Topbar */}
-        <header className="h-16 bg-[#1cabb1] text-white flex items-center justify-between px-8 shadow-sm shrink-0">
+        <header className="h-16 bg-[#1cabb1] text-white flex items-center justify-between px-8 shadow-sm shrink-0 print:hidden">
           <div>
             <div className="text-xs text-white/80 font-medium">Welcome</div>
             <div className="text-lg font-semibold tracking-wide">{userName}</div>

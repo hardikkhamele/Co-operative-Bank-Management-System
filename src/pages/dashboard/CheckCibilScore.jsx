@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   ShieldCheck, 
@@ -34,6 +34,22 @@ const CheckCibilScore = () => {
     panNumber: '',
     dob: '',
   });
+
+  useEffect(() => {
+    const savedStep = sessionStorage.getItem('cibil_step');
+    const savedReport = sessionStorage.getItem('cibil_reportData');
+    const savedForm = sessionStorage.getItem('cibil_formData');
+
+    if (savedStep === 'result' && savedReport && savedForm) {
+      try {
+        setReportResult(JSON.parse(savedReport));
+        setFormData(JSON.parse(savedForm));
+        setStep('result');
+      } catch (e) {
+        console.error("Failed to parse saved CIBIL data", e);
+      }
+    }
+  }, []);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -87,8 +103,14 @@ const CheckCibilScore = () => {
       });
 
       if (response && (response.success || response.statusCode === 200)) {
-        setReportResult(response.data || response);
+        const resultData = response.data || response;
+        setReportResult(resultData);
         setStep('result');
+        
+        sessionStorage.setItem('cibil_reportData', JSON.stringify(resultData));
+        sessionStorage.setItem('cibil_formData', JSON.stringify(formData));
+        sessionStorage.setItem('cibil_step', 'result');
+
         toast.success(response.message || 'Credit report retrieved successfully!');
       } else {
         throw new Error(response.message || 'Failed to retrieve credit score');
@@ -128,6 +150,10 @@ const CheckCibilScore = () => {
     setApiError(null);
     setReportResult(null);
     setStep('form');
+    
+    sessionStorage.removeItem('cibil_reportData');
+    sessionStorage.removeItem('cibil_formData');
+    sessionStorage.removeItem('cibil_step');
   };
 
   // Helper functions for parsing report
@@ -181,7 +207,7 @@ const CheckCibilScore = () => {
   return (
     <div className="w-full h-full flex flex-col pb-10">
       {/* Header & Breadcrumbs */}
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-4 print:hidden">
         <div>
           <h1 className="text-2xl font-bold text-gray-800 mb-1">
             {step === 'form' ? 'Check CIBIL / Experian Credit Score' : 'Credit Bureau Report'}
@@ -193,7 +219,7 @@ const CheckCibilScore = () => {
             <span>&gt;</span>
             <span 
               className={step === 'form' ? "text-[#1cabb1] font-medium" : "text-gray-500 cursor-pointer hover:text-[#1cabb1]"} 
-              onClick={() => step === 'result' && setStep('form')}
+              onClick={() => step === 'result' && handleReset()}
             >
               Check CIBIL Score
             </span>
@@ -209,14 +235,21 @@ const CheckCibilScore = () => {
         {step === 'result' && (
           <div className="flex items-center gap-3">
             <button
-              onClick={() => setStep('form')}
+              onClick={handleReset}
               className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 transition-all text-sm shadow-sm"
             >
               <ArrowLeft size={16} />
               Check Another Score
             </button>
             <button
-              onClick={() => window.print()}
+              onClick={() => {
+                const pdfUrl = reportResult?.pdfUrl || reportResult?.data?.pdfUrl;
+                if (pdfUrl) {
+                  window.open(pdfUrl, '_blank');
+                } else {
+                  window.print();
+                }
+              }}
               className="flex items-center gap-2 px-5 py-2 rounded-lg bg-[#1cabb1] text-white font-semibold hover:bg-[#159a9f] transition-all text-sm shadow-md shadow-[#1cabb1]/20"
             >
               <Printer size={16} />
@@ -566,7 +599,7 @@ const CheckCibilScore = () => {
           </div>
 
           {/* Tab Navigation */}
-          <div className="flex items-center gap-2 border-b border-gray-200">
+          <div className="flex items-center gap-2 border-b border-gray-200 print:hidden">
             <button
               onClick={() => setActiveTab('overview')}
               className={`px-5 py-3 text-sm font-bold border-b-2 transition-all flex items-center gap-2 ${

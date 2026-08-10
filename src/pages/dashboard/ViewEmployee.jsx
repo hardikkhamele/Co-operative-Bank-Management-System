@@ -1,27 +1,31 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { ChevronRight, Calendar, Phone, Mail, Lock, MapPin, Clock, Check, AlertCircle, Fingerprint, Map, Banknote, UserCircle, ThumbsUp, ArrowLeftRight } from 'lucide-react';
+import { 
+  ChevronRight, Calendar, Phone, Mail, Lock, MapPin, Clock, Check, 
+  AlertCircle, Fingerprint, Map, Banknote, UserCircle, ThumbsUp, 
+  ArrowLeftRight, ShieldCheck, Briefcase, Building2, Award, 
+  Loader2, BadgeCheck, X
+} from 'lucide-react';
 import { employeeService } from '../../api/employeeService';
-import { branchService } from '../../api/branchService';
 
 const InfoCard = ({ icon: Icon, title, value }) => (
-  <div className="bg-[#fafafa] rounded-xl p-4 flex items-center gap-4">
-    <div className="text-[#1cabb1] shrink-0">
+  <div className="bg-[#fafafa] rounded-xl p-4 flex items-center gap-4 border border-gray-100/60">
+    <div className="text-[#1cabb1] shrink-0 bg-white p-2.5 rounded-lg shadow-2xs border border-gray-100">
       <Icon size={20} strokeWidth={2} />
     </div>
-    <div className="flex flex-col">
+    <div className="flex flex-col min-w-0">
       <span className="text-[13px] text-gray-500 font-medium mb-0.5">{title}</span>
-      <span className="text-[14px] text-gray-800 font-semibold">{value || '-'}</span>
+      <span className="text-[14px] text-gray-800 font-semibold truncate">{value || '—'}</span>
     </div>
   </div>
 );
 
-const CheckCard = ({ label }) => (
-  <div className="bg-[#fafafa] rounded-xl p-4 flex items-center gap-3">
-    <div className="text-[#1cabb1] shrink-0">
-      <Check size={18} strokeWidth={2.5} />
+const CheckCard = ({ label, active = true }) => (
+  <div className={`rounded-xl p-4 flex items-center gap-3 border ${active ? 'bg-emerald-50/50 border-emerald-100 text-emerald-800' : 'bg-[#fafafa] border-gray-100 text-gray-400'}`}>
+    <div className={`shrink-0 p-1.5 rounded-full ${active ? 'bg-emerald-100 text-emerald-600' : 'bg-gray-200 text-gray-400'}`}>
+      {active ? <Check size={15} strokeWidth={3} /> : <X size={15} strokeWidth={2.5} />}
     </div>
-    <span className="text-[14px] font-semibold text-gray-800">{label}</span>
+    <span className="text-[14px] font-semibold">{label}</span>
   </div>
 );
 
@@ -30,47 +34,101 @@ const ViewEmployee = () => {
   const [activeTab, setActiveTab] = useState('Personal Details');
   const [loading, setLoading] = useState(true);
   const [employee, setEmployee] = useState(null);
-
   const [errorMsg, setErrorMsg] = useState('');
 
   useEffect(() => {
     const fetchEmployee = async () => {
       try {
+        setLoading(true);
         const res = await employeeService.getById(id);
-        console.log('RES:', res);
-        if (res.success && res.data) {
+        if (res && (res.success || res.statusCode === 200) && res.data) {
           setEmployee(res.data);
+        } else if (res && res.data) {
+          setEmployee(res.data);
+        } else if (res && res.fullName) {
+          setEmployee(res);
         } else {
-          setErrorMsg(JSON.stringify(res));
-          if (res && !res.success && res.data) { setEmployee(res.data); }
-          if (res && res.fullName) { setEmployee(res); }
+          setErrorMsg(res?.message || 'Employee not found');
         }
       } catch (err) {
-        console.error("Failed to load employee", err);
-        setErrorMsg(err.message || String(err));
+        console.error("Failed to load employee details:", err);
+        setErrorMsg(err.response?.data?.message || err.message || 'Failed to load employee details');
       } finally {
         setLoading(false);
       }
     };
-    fetchEmployee();
+    if (id) {
+      fetchEmployee();
+    }
   }, [id]);
 
-  if (loading && !employee) {
-    return null;
-  }
+  const formatDate = (dateStr) => {
+    if (!dateStr) return '—';
+    try {
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return dateStr;
+      return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    } catch {
+      return dateStr;
+    }
+  };
 
-  if (!employee) {
-    return <div className="p-8 text-center text-red-500">Employee not found. Debug Info: {errorMsg}</div>;
-  }
-
-  const tabs = ['Personal Details', 'Job Details', 'Shift & WOFF', 'Attendance', 'WOFF / HOFF', 'KRA Settings'];
+  const formatCurrency = (val) => {
+    if (val === null || val === undefined || val === '') return '—';
+    const num = Number(val);
+    if (isNaN(num)) return val;
+    return `₹${num.toLocaleString('en-IN')}`;
+  };
 
   const getInitials = (name) => {
     if (!name) return 'EM';
-    return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+    return name.split(' ').filter(Boolean).map(n => n[0]).join('').substring(0, 2).toUpperCase();
   };
 
-  const getBoolValue = (val) => val ? 'Yes' : 'No';
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] gap-3">
+        <Loader2 size={32} className="animate-spin text-[#1cabb1]" />
+        <span className="text-gray-500 font-medium text-sm">Loading employee details...</span>
+      </div>
+    );
+  }
+
+  if (!employee) {
+    return (
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center">
+        <AlertCircle size={40} className="mx-auto text-rose-500 mb-3" />
+        <h2 className="text-lg font-bold text-gray-800 mb-1">Employee Details Unavailable</h2>
+        <p className="text-sm text-gray-500 mb-4">{errorMsg || 'Could not retrieve employee information.'}</p>
+        <Link to="/employees" className="inline-flex items-center px-4 py-2 bg-[#1cabb1] text-white rounded-lg font-semibold text-sm hover:bg-[#16949a] transition-colors">
+          Back to Employee List
+        </Link>
+      </div>
+    );
+  }
+
+  // Nested Safe Properties
+  const personal = employee.personalDetails || {};
+  const job = employee.jobDetails || {};
+  const shift = employee.shiftSettings || {};
+  const attendance = employee.attendanceSettings || {};
+  const woffHoff = employee.woffHoffSettings || {};
+  const kra = employee.kraSettings || {};
+  const role = employee.role || {};
+  const branch = employee.branch || {};
+
+  const empName = employee.fullName || personal.fullName || employee.firstName || 'Employee';
+  const empCode = employee.employeeCode || employee.employeeId || '—';
+  const empDesignation = employee.designation || job.designation || role.name || 'Employee';
+  const empDepartment = employee.department || job.department || personal.department || 'Loans & Disbursals';
+  const empStatus = employee.status || 'ACTIVE';
+
+  const profileImg = personal.profileImage || employee.profileImage;
+  const avatarUrl = profileImg 
+    ? (profileImg.startsWith('http') ? profileImg : `http://localhost:5000${profileImg}`)
+    : null;
+
+  const tabs = ['Personal Details', 'Job Details', 'Shift & WOFF', 'Attendance', 'WOFF / HOFF', 'KRA Settings'];
 
   return (
     <div className="flex flex-col gap-6 w-full">
@@ -84,55 +142,70 @@ const ViewEmployee = () => {
           <ChevronRight size={14} className="mx-2" />
           <Link to="/employees" className="hover:text-gray-700">Employee</Link>
           <ChevronRight size={14} className="mx-2" />
-          <span className="text-[#5a5ce5]">Employee Details</span>
+          <span className="text-[#5a5ce5] font-semibold">{empName}</span>
         </div>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         {/* Profile Banner */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-8 pb-6 border-b border-gray-100">
           <div className="flex items-center gap-5">
-            <div className="w-[72px] h-[72px] rounded-full border-[3px] border-[#1cabb1] overflow-hidden bg-[#f4f2ff] flex items-center justify-center shrink-0">
-              {employee.profileImage ? (
-                <img src={`http://localhost:5000${employee.profileImage}`} alt="Profile" className="w-full h-full object-cover" />
+            <div className="w-[76px] h-[76px] rounded-full border-[3px] border-[#1cabb1] overflow-hidden bg-[#f4f2ff] flex items-center justify-center shrink-0 shadow-sm">
+              {avatarUrl ? (
+                <img src={avatarUrl} alt={empName} className="w-full h-full object-cover" />
               ) : (
-                <span className="text-2xl font-bold text-[#5a5ce5]">{getInitials(employee.fullName)}</span>
+                <span className="text-2xl font-bold text-[#5a5ce5]">{getInitials(empName)}</span>
               )}
             </div>
             <div>
-              <h2 className="text-[22px] font-bold text-[#1b2559] mb-1.5">{employee.fullName}</h2>
-              <span className="inline-block px-3 py-1 bg-[#6366f1] text-white text-[11px] font-medium rounded-full">
-                {employee.type === 'MANAGER' ? 'Branch Manager' : (employee.designation || employee.role?.name || 'Employee')}
-              </span>
+              <div className="flex items-center gap-3 mb-1">
+                <h2 className="text-[22px] font-bold text-[#1b2559]">{empName}</h2>
+                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${empStatus === 'ACTIVE' ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-700'}`}>
+                  {empStatus}
+                </span>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="inline-block px-3 py-1 bg-[#6366f1] text-white text-[11px] font-semibold rounded-full">
+                  {empDesignation}
+                </span>
+                <span className="inline-block px-3 py-1 bg-gray-100 text-gray-700 text-[11px] font-semibold rounded-full">
+                  ID: {empCode}
+                </span>
+                <span className="inline-block px-3 py-1 bg-teal-50 text-teal-700 text-[11px] font-semibold rounded-full">
+                  {empDepartment}
+                </span>
+              </div>
             </div>
           </div>
           
           {/* Quick Info Box */}
-          <div className="bg-[#f4f5f9] rounded-xl p-4 flex gap-8">
+          <div className="bg-[#f4f5f9] rounded-2xl p-4 px-6 flex flex-wrap gap-8 items-center border border-gray-100">
             <div className="flex flex-col">
-              <span className="text-[12px] text-gray-500 font-medium mb-1">Shift</span>
-              <span className="text-[14px] text-gray-800 font-bold">{employee.shiftSettings?.punchInTime || '10:00'}-{employee.shiftSettings?.punchOutTime || '21:00'}</span>
+              <span className="text-[12px] text-gray-500 font-medium mb-0.5">Shift Timings</span>
+              <span className="text-[14px] text-gray-800 font-bold">{shift.punchInTime || '09:30'} - {shift.punchOutTime || '18:30'}</span>
             </div>
+            <div className="w-[1px] h-8 bg-gray-200 hidden sm:block"></div>
             <div className="flex flex-col">
-              <span className="text-[12px] text-gray-500 font-medium mb-1">Weekly Off</span>
-              <span className="text-[14px] text-gray-800 font-bold">{employee.shiftSettings?.weeklyOffDays?.join(', ') || 'Sun'}</span>
+              <span className="text-[12px] text-gray-500 font-medium mb-0.5">Weekly Off</span>
+              <span className="text-[14px] text-gray-800 font-bold">{shift.weeklyOff?.day || employee.weeklyOff || 'SUNDAY'}</span>
             </div>
+            <div className="w-[1px] h-8 bg-gray-200 hidden sm:block"></div>
             <div className="flex flex-col">
-              <span className="text-[12px] text-gray-500 font-medium mb-1">Joined</span>
-              <span className="text-[14px] text-gray-800 font-bold">{employee.joiningDate ? employee.joiningDate.substring(0, 10) : '-'}</span>
+              <span className="text-[12px] text-gray-500 font-medium mb-0.5">Date of Joining</span>
+              <span className="text-[14px] text-gray-800 font-bold">{formatDate(job.joiningDate || employee.joiningDate)}</span>
             </div>
           </div>
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-2 border-b border-gray-100 pb-6 mb-6 overflow-x-auto no-scrollbar">
+        <div className="flex gap-2 border-b border-gray-100 pb-5 mb-6 overflow-x-auto no-scrollbar">
           {tabs.map(tab => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-5 py-2.5 rounded-xl font-medium text-[14px] whitespace-nowrap transition-colors ${
+              className={`px-5 py-2.5 rounded-xl font-semibold text-[14px] whitespace-nowrap transition-all ${
                 activeTab === tab 
-                  ? 'bg-[#eef2ff] text-[#4f46e5]' 
+                  ? 'bg-[#eef2ff] text-[#4f46e5] shadow-xs' 
                   : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
               }`}
             >
@@ -143,226 +216,254 @@ const ViewEmployee = () => {
 
         {/* Tab Content */}
         <div className="min-h-[400px]">
+          {/* TAB 1: PERSONAL DETAILS */}
           {activeTab === 'Personal Details' && (
-            <div>
-              <h2 className="text-[20px] font-bold text-[#1b2559] mb-6">Personal Details</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <InfoCard icon={UserCircle} title="Gender" value={employee.gender} />
-                <InfoCard icon={Calendar} title="Date Of Birth" value={employee.dateOfBirth ? employee.dateOfBirth.substring(0, 10) : ''} />
-                <InfoCard icon={Phone} title="Phone" value={employee.phoneNumber} />
-                <InfoCard icon={Mail} title="Email" value={employee.email} />
+            <div className="space-y-6">
+              <h2 className="text-[18px] font-bold text-[#1b2559]">Personal Details</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <InfoCard icon={UserCircle} title="Full Name" value={personal.fullName || empName} />
+                <InfoCard icon={UserCircle} title="Gender" value={personal.gender || employee.gender || '—'} />
+                <InfoCard icon={Calendar} title="Date Of Birth" value={formatDate(personal.dob || personal.dateOfBirth || employee.dateOfBirth)} />
+                <InfoCard icon={Phone} title="Phone Number" value={personal.phoneNumber || employee.phoneNumber || '—'} />
+                <InfoCard icon={Mail} title="Email Address" value={personal.email || employee.email || '—'} />
                 <InfoCard icon={Lock} title="Password" value="••••••••" />
-                <InfoCard icon={MapPin} title="Address" value={employee.address} />
+                <InfoCard icon={MapPin} title="Residential Address" value={personal.address || employee.address || '—'} />
+                <InfoCard icon={Building2} title="Office Address" value={personal.officeAddress || employee.officeAddress || '—'} />
+                <InfoCard icon={Award} title="Blood Group" value={personal.bloodGroup || employee.bloodGroup || '—'} />
+                <InfoCard icon={Clock} title="Duty Hours" value={personal.dutyHours || employee.dutyHours || `${shift.punchInTime || '09:30'} to ${shift.punchOutTime || '18:30'}`} />
+                <InfoCard icon={Calendar} title="Weekly Off" value={personal.weeklyOff || employee.weeklyOff || shift.weeklyOff?.day || 'SUNDAY'} />
+                <InfoCard icon={Briefcase} title="Department" value={personal.department || empDepartment} />
               </div>
             </div>
           )}
 
+          {/* TAB 2: JOB DETAILS */}
           {activeTab === 'Job Details' && (
-            <div>
-              <h2 className="text-[20px] font-bold text-[#1b2559] mb-6">Job Details</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <InfoCard icon={Map} title="State" value={employee.state} />
-                <InfoCard icon={MapPin} title="Branch" value={employee.branch?.name} />
-                <InfoCard icon={Banknote} title="Salary" value={`Rs. ${employee.salary || '0'}/-`} />
-                <InfoCard icon={Calendar} title="Joining Date" value={employee.joiningDate ? employee.joiningDate.substring(0, 10) : ''} />
-                <InfoCard icon={Calendar} title="Probation Period" value={`${employee.probationPeriod || 0} Months`} />
+            <div className="space-y-6">
+              <h2 className="text-[18px] font-bold text-[#1b2559]">Job Details</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <InfoCard icon={Briefcase} title="Designation" value={job.designation || empDesignation} />
+                <InfoCard icon={Building2} title="Department" value={job.department || empDepartment} />
+                <InfoCard icon={MapPin} title="Branch" value={branch.name ? `${branch.name} (${branch.code || ''})` : '—'} />
+                <InfoCard icon={Map} title="State" value={job.state || branch.state || employee.state || '—'} />
+                <InfoCard icon={Banknote} title="Monthly Salary" value={formatCurrency(job.salary !== undefined ? job.salary : employee.salary)} />
+                <InfoCard icon={Calendar} title="Joining Date" value={formatDate(job.joiningDate || employee.joiningDate)} />
+                <InfoCard icon={Clock} title="Probation Period" value={`${job.probationPeriodMonths ?? employee.probationPeriod ?? 0} Months`} />
+                <InfoCard icon={ShieldCheck} title="Employee Code / ID" value={empCode} />
+                <InfoCard icon={UserCircle} title="Assigned Role" value={role.name || empDesignation} />
               </div>
+
+              {role.permissions && role.permissions.length > 0 && (
+                <div className="mt-6 bg-[#fafafa] p-5 rounded-2xl border border-gray-100">
+                  <h3 className="text-sm font-bold text-[#1b2559] mb-3">Role Permissions</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {role.permissions.map((perm, idx) => (
+                      <span key={idx} className="px-3 py-1 bg-indigo-50 border border-indigo-100 text-indigo-700 text-xs font-semibold rounded-lg">
+                        {perm}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
+          {/* TAB 3: SHIFT & WOFF */}
           {activeTab === 'Shift & WOFF' && (
             <div className="space-y-8">
-              <h2 className="text-[20px] font-bold text-[#1b2559] mb-2">Shift & Woff</h2>
+              <h2 className="text-[18px] font-bold text-[#1b2559]">Shift & Weekly Off</h2>
               
               <div>
-                <h3 className="text-[16px] font-bold text-[#1b2559] mb-4">Shift</h3>
+                <h3 className="text-[15px] font-bold text-[#1b2559] mb-3">Shift Timing</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <InfoCard icon={Clock} title="Punch In Time" value={employee.shiftSettings?.punchInTime} />
-                  <InfoCard icon={Clock} title="Punch Out Time" value={employee.shiftSettings?.punchOutTime} />
+                  <InfoCard icon={Clock} title="Punch In Time" value={shift.punchInTime || '09:30'} />
+                  <InfoCard icon={Clock} title="Punch Out Time" value={shift.punchOutTime || '18:30'} />
                 </div>
               </div>
 
               <div>
-                <h3 className="text-[16px] font-bold text-[#1b2559] mb-4">Weekly Off</h3>
+                <h3 className="text-[15px] font-bold text-[#1b2559] mb-3">Weekly Off Rules</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <InfoCard icon={Calendar} title="Weekly Off Days" value={employee.shiftSettings?.weeklyOffDays?.join(', ')} />
-                  {employee.shiftSettings?.weeklyOffPayable && <CheckCard label="Weekly Of Payable" />}
-                  {employee.shiftSettings?.variableWeeklyOff && <CheckCard label="Variable Weekly Off" />}
-                  {employee.shiftSettings?.secondWeeklyOff && <CheckCard label="Second weekly off" />}
+                  <InfoCard icon={Calendar} title="Weekly Off Day" value={shift.weeklyOff?.day || employee.weeklyOff || 'SUNDAY'} />
+                  <CheckCard label="Weekly Off Payable" active={Boolean(shift.weeklyOff?.payable ?? true)} />
+                  <CheckCard label="Variable Weekly Off" active={Boolean(shift.weeklyOff?.variable)} />
+                  <CheckCard 
+                    label={`Second Weekly Off ${shift.weeklyOff?.secondWeeklyOff ? `(${shift.weeklyOff?.secondWeeklyOffDay || 'SATURDAY'})` : ''}`} 
+                    active={Boolean(shift.weeklyOff?.secondWeeklyOff)} 
+                  />
                 </div>
               </div>
 
               <div>
-                <h3 className="text-[16px] font-bold text-[#1b2559] mb-4">Other Details</h3>
+                <h3 className="text-[15px] font-bold text-[#1b2559] mb-3">Punctuality & Tolerance Settings</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <InfoCard icon={Clock} title="Late Allowed (Mins)" value={`${employee.shiftSettings?.lateAllowedMins || 0} ${employee.shiftSettings?.lateAllowedAsPerShift ? '(As Per Shift)' : ''}`} />
-                  <InfoCard icon={Clock} title="Early Allowed (Min)" value={`${employee.shiftSettings?.earlyAllowedMins || 0} ${employee.shiftSettings?.earlyAllowedAsPerShift ? '(As Per Shift)' : ''}`} />
-                  <InfoCard icon={Clock} title="Half Day (Min)" value={`${employee.shiftSettings?.halfDayMins || 0} ${employee.shiftSettings?.halfDayAsPerShift ? '(As Per Shift)' : ''}`} />
-                  <InfoCard icon={Clock} title="Full Day (Min)" value={`${employee.shiftSettings?.fullDayMins || 0} ${employee.shiftSettings?.fullDayAsPerShift ? '(As Per Shift)' : ''}`} />
+                  <InfoCard icon={Clock} title="Late Allowed" value={`${shift.lateAllowedMinutes ?? shift.lateAllowedMins ?? 0} Mins ${shift.lateAllowedAsPerShift ? '(As Per Shift)' : ''}`} />
+                  <InfoCard icon={Clock} title="Early Allowed" value={`${shift.earlyAllowedMinutes ?? shift.earlyAllowedMins ?? 0} Mins ${shift.earlyAllowedAsPerShift ? '(As Per Shift)' : ''}`} />
+                  <InfoCard icon={Clock} title="Half Day Threshold" value={`${shift.halfDayMinutes ?? shift.halfDayMins ?? 240} Mins (${((shift.halfDayMinutes ?? 240)/60).toFixed(1)} hrs) ${shift.halfDayAsPerShift ? '(As Per Shift)' : ''}`} />
+                  <InfoCard icon={Clock} title="Full Day Threshold" value={`${shift.fullDayMinutes ?? shift.fullDayMins ?? 480} Mins (${((shift.fullDayMinutes ?? 480)/60).toFixed(1)} hrs) ${shift.fullDayAsPerShift ? '(As Per Shift)' : ''}`} />
                 </div>
               </div>
             </div>
           )}
 
+          {/* TAB 4: ATTENDANCE */}
           {activeTab === 'Attendance' && (
             <div className="space-y-8">
-              <h2 className="text-[20px] font-bold text-[#1b2559] mb-2">Attendance</h2>
+              <h2 className="text-[18px] font-bold text-[#1b2559]">Attendance Settings</h2>
               
               <div>
-                <h3 className="text-[16px] font-bold text-[#1b2559] mb-4">Punch</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <InfoCard icon={ThumbsUp} title="Punch Type" value={
-                    employee.attendanceSettings?.punchType === 'SINGLE' ? 'Single' :
-                    employee.attendanceSettings?.punchType === 'DOUBLE' ? 'Double' :
-                    employee.attendanceSettings?.punchType === 'MULTIPLE' ? 'Multiple' : '—'
-                  } />
-                  <InfoCard icon={AlertCircle} title="No Out- Punch Found - Action" value={
-                    employee.attendanceSettings?.noOutPunchAction === 'MARK_HALF_DAY' ? 'Mark Half Day' :
-                    employee.attendanceSettings?.noOutPunchAction === 'MARK_ABSENT' ? 'Mark Absent' : '—'
-                  } />
-                  <InfoCard icon={Clock} title="Present On Wo / Holiday - Action" value={
-                    employee.attendanceSettings?.presentOnWeeklyOffHolidayAction === 'EXTRA_PAY' ? 'Extra Pay' :
-                    employee.attendanceSettings?.presentOnWeeklyOffHolidayAction === 'COMPENSATORY_OFF' ? 'Mark as COFF' : '—'
-                  } />
+                <h3 className="text-[15px] font-bold text-[#1b2559] mb-3">Punch Rules</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <InfoCard icon={ThumbsUp} title="Punch Type" value={attendance.punchType || 'DOUBLE'} />
+                  <InfoCard icon={AlertCircle} title="No Out-Punch Action" value={attendance.noOutPunchAction?.replace(/_/g, ' ') || 'MARK HALF DAY'} />
+                  <InfoCard icon={Clock} title="Present On WO / Holiday Action" value={attendance.presentOnWeeklyOffHolidayAction?.replace(/_/g, ' ') || 'EXTRA PAY'} />
                 </div>
               </div>
 
               <div>
-                <h3 className="text-[16px] font-bold text-[#1b2559] mb-4">Late Cut</h3>
+                <h3 className="text-[15px] font-bold text-[#1b2559] mb-3">Late Cut Policy</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <InfoCard icon={Calendar} title="Allowed Day" value={employee.attendanceSettings?.lateCut?.allowedDays} />
-                  <InfoCard icon={ArrowLeftRight} title="Action" value={
-                    employee.attendanceSettings?.lateCut?.action === 'MARK_HALF_DAY' ? 'Half Day' :
-                    employee.attendanceSettings?.lateCut?.action === 'MARK_ABSENT' ? 'Absent' : '—'
-                  } />
-                  {employee.attendanceSettings?.lateCut?.allowed && <CheckCard label="Late Cut Allowed" />}
-                  {employee.attendanceSettings?.lateCut?.extraDeduction && <CheckCard label="Extra Late Cut Deduction" />}
-                  {employee.attendanceSettings?.lateCut?.additionalInLeaveBalance && <CheckCard label="Additional Late Cut In Leave Balance" />}
+                  <InfoCard icon={Calendar} title="Allowed Late Days" value={`${attendance.lateCut?.allowedDays ?? 3} Days`} />
+                  <InfoCard icon={ArrowLeftRight} title="Late Cut Action" value={attendance.lateCut?.action?.replace(/_/g, ' ') || 'MARK HALF DAY'} />
+                  <CheckCard label="Late Cut Deduction Enabled" active={Boolean(attendance.lateCut?.enabled)} />
+                  <CheckCard label="Extra Late Cut Deduction" active={Boolean(attendance.lateCut?.extraLateCutDeduction || attendance.lateCut?.extraDeduction)} />
+                  <CheckCard label="Additional Late Cut In Leave Balance" active={Boolean(attendance.lateCut?.additionalLateCutInLeaveBalance || attendance.lateCut?.additionalInLeaveBalance)} />
                 </div>
               </div>
 
               <div>
-                <h3 className="text-[16px] font-bold text-[#1b2559] mb-4">Overtime</h3>
+                <h3 className="text-[15px] font-bold text-[#1b2559] mb-3">Lunch & Early Leaving</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <InfoCard icon={Clock} title="Lunch Allowed (Mins)" value={`${employee.attendanceSettings?.lunchAndEarlyGoing?.lunchAllowedMins || 0} ${employee.attendanceSettings?.lunchAndEarlyGoing?.lunchAsPerShift ? '(As Per Shift)' : ''}`} />
-                  {employee.attendanceSettings?.lunchAndEarlyGoing?.lunchAllowed && <CheckCard label="Lunch Allowed" />}
-                  {employee.attendanceSettings?.lunchAndEarlyGoing?.earlyGoingAllowed && <CheckCard label="Early Going Allowed" />}
+                  <InfoCard icon={Clock} title="Lunch Allowed" value={`${attendance.lunchAndEarlyGoing?.lunchAllowedMinutes ?? attendance.lunchAndEarlyGoing?.lunchAllowedMins ?? 0} Mins ${attendance.lunchAndEarlyGoing?.lunchAsPerShift ? '(As Per Shift)' : ''}`} />
+                  <CheckCard label="Lunch Allowed" active={Boolean(attendance.lunchAndEarlyGoing?.lunchAllowed)} />
+                  <CheckCard label="Early Going Allowed" active={Boolean(attendance.lunchAndEarlyGoing?.earlyGoingAllowed)} />
                 </div>
               </div>
 
               <div>
-                <h3 className="text-[16px] font-bold text-[#1b2559] mb-4">Lunch & Early Going</h3>
+                <h3 className="text-[15px] font-bold text-[#1b2559] mb-3">Overtime (OT) Policy</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {employee.attendanceSettings?.overtime?.allowed && <CheckCard label="Overtime Allowed" />}
-                  {employee.attendanceSettings?.overtime?.customOT && <CheckCard label="Custom OT" />}
-                  {employee.attendanceSettings?.overtime?.beforeOT && <CheckCard label="Before OT" />}
-                  <InfoCard icon={Clock} title="OT Grace Period (Mins)" value={employee.attendanceSettings?.overtime?.gracePeriodMinutes} />
-                  <InfoCard icon={Clock} title="1 day OT Hrs" value={employee.attendanceSettings?.overtime?.oneDayOTHrs} />
-                  {employee.attendanceSettings?.overtime?.otAsPerShift && <CheckCard label="OT As Per Shift" />}
-                  {employee.attendanceSettings?.overtime?.considerOTAsCOFF && <CheckCard label="Consider OT As COFF" />}
+                  <CheckCard label="Overtime Allowed" active={Boolean(attendance.overtime?.allowed)} />
+                  <CheckCard label="Custom OT" active={Boolean(attendance.overtime?.customOT)} />
+                  <CheckCard label="Before Shift OT" active={Boolean(attendance.overtime?.beforeOT)} />
+                  <InfoCard icon={Clock} title="OT Grace Period" value={`${attendance.overtime?.gracePeriodMinutes ?? 5} Mins`} />
+                  <InfoCard icon={Clock} title="1 Day Max OT" value={`${attendance.overtime?.oneDayOTHrs ?? 4} Hours`} />
+                  <CheckCard label="OT As Per Shift" active={Boolean(attendance.overtime?.asPerShift || attendance.overtime?.otAsPerShift)} />
+                  <CheckCard label="Consider OT As Comp-Off (COFF)" active={Boolean(attendance.overtime?.considerAsCompOff || attendance.overtime?.considerOTAsCOFF)} />
                 </div>
               </div>
             </div>
           )}
 
+          {/* TAB 5: WOFF / HOFF */}
           {activeTab === 'WOFF / HOFF' && (
             <div className="space-y-8">
-              <h2 className="text-[20px] font-bold text-[#1b2559] mb-2">WOFF & HOFF</h2>
+              <h2 className="text-[18px] font-bold text-[#1b2559]">WOFF & HOFF Sandwich Rules</h2>
               
               <div>
-                <h3 className="text-[16px] font-bold text-[#1b2559] mb-4">Sandwich Absence Rules - Weekly Off</h3>
+                <h3 className="text-[15px] font-bold text-[#1b2559] mb-3">Sandwich Absence Rules - Weekly Off</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {employee.woffHoffSettings?.woAbsentBefore && <CheckCard label="Absent Before Weekly Off" />}
-                  {employee.woffHoffSettings?.woAbsentAfter && <CheckCard label="Absent After Weekly Off" />}
-                  {employee.woffHoffSettings?.woAbsentBeforeOrAfter && <CheckCard label="Absent Before Or After Weekly Off" />}
-                  {employee.woffHoffSettings?.woAddWorkingHrs && <CheckCard label="Add Working Hrs On Weekly Off Day" />}
-                  {employee.woffHoffSettings?.woLateDeductionNotApplied && <CheckCard label="Late Deduction Not Applied On WO If Present" />}
-                  {employee.woffHoffSettings?.woLWP && <CheckCard label="LWP" />}
+                  <CheckCard label="Absent Before Weekly Off" active={Boolean(woffHoff.weeklyOffRules?.absentBefore ?? woffHoff.woAbsentBefore)} />
+                  <CheckCard label="Absent After Weekly Off" active={Boolean(woffHoff.weeklyOffRules?.absentAfter ?? woffHoff.woAbsentAfter)} />
+                  <CheckCard label="Absent Before Or After Weekly Off" active={Boolean(woffHoff.weeklyOffRules?.absentBeforeOrAfter ?? woffHoff.woAbsentBeforeOrAfter)} />
+                  <CheckCard label="Add Working Hours On Weekly Off Day" active={Boolean(woffHoff.weeklyOffRules?.addWorkingHours ?? woffHoff.woAddWorkingHrs)} />
+                  <CheckCard label="Late Deduction Not Applied On WO If Present" active={Boolean(woffHoff.weeklyOffRules?.ignoreLateDeductionIfPresent ?? woffHoff.woLateDeductionNotApplied)} />
+                  <CheckCard label="Leave Without Pay (LWP)" active={Boolean(woffHoff.weeklyOffRules?.lwp ?? woffHoff.woLWP)} />
                 </div>
               </div>
 
               <div>
-                <h3 className="text-[16px] font-bold text-[#1b2559] mb-4">Sandwich Absence Rules - Holidays</h3>
+                <h3 className="text-[15px] font-bold text-[#1b2559] mb-3">Sandwich Absence Rules - Holidays</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {employee.woffHoffSettings?.holAbsentBefore && <CheckCard label="Absent Before Holiday" />}
-                  {employee.woffHoffSettings?.holAbsentAfter && <CheckCard label="Absent After Holiday" />}
-                  {employee.woffHoffSettings?.holAbsentBeforeAndAfter && <CheckCard label="Absent Before & After Holiday" />}
-                  {employee.woffHoffSettings?.holAddWorkingHrs && <CheckCard label="Add Working Hours On Holiday Day" />}
-                  {employee.woffHoffSettings?.holLateDeductionNotApplied && <CheckCard label="Late Deduction Not Applied On Holiday If Present" />}
-                  {employee.woffHoffSettings?.holLWP && <CheckCard label="LWP" />}
+                  <CheckCard label="Absent Before Holiday" active={Boolean(woffHoff.holidayRules?.absentBefore ?? woffHoff.holAbsentBefore)} />
+                  <CheckCard label="Absent After Holiday" active={Boolean(woffHoff.holidayRules?.absentAfter ?? woffHoff.holAbsentAfter)} />
+                  <CheckCard label="Absent Before & After Holiday" active={Boolean(woffHoff.holidayRules?.absentBeforeAndAfter ?? woffHoff.holAbsentBeforeAndAfter)} />
+                  <CheckCard label="Add Working Hours On Holiday Day" active={Boolean(woffHoff.holidayRules?.addWorkingHours ?? woffHoff.holAddWorkingHrs)} />
+                  <CheckCard label="Late Deduction Not Applied On Holiday If Present" active={Boolean(woffHoff.holidayRules?.ignoreLateDeductionIfPresent ?? woffHoff.holLateDeductionNotApplied)} />
+                  <CheckCard label="Leave Without Pay (LWP)" active={Boolean(woffHoff.holidayRules?.lwp ?? woffHoff.holLWP)} />
                 </div>
               </div>
 
               <div>
-                <h3 className="text-[16px] font-bold text-[#1b2559] mb-4">Leave Between Holiday Or Weekly Off</h3>
+                <h3 className="text-[15px] font-bold text-[#1b2559] mb-3">Leave Bridge Rules</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {employee.woffHoffSettings?.considerWOInLeave && <CheckCard label='Consider "Weekly Off" In Leave Application' />}
-                  {employee.woffHoffSettings?.considerHolInLeave && <CheckCard label='Consider "Holiday" In Leave Application' />}
-                  {employee.woffHoffSettings?.absentWOLeaveWOAbsent && <CheckCard label="Absent — WO — Leave = WO Absent" />}
-                  {employee.woffHoffSettings?.leaveWOAbsentWOAbsent && <CheckCard label="Leave — WO — Absent = WO Absent" />}
-                  {employee.woffHoffSettings?.absentHolLeaveHolAbsent && <CheckCard label="Absent — Holiday — Leave = Holiday Absent" />}
-                  {employee.woffHoffSettings?.leaveHolAbsentHolAbsent && <CheckCard label="Leave — Holiday — Absent = Holiday Absent" />}
+                  <CheckCard label='Consider "Weekly Off" In Leave Application' active={Boolean(woffHoff.leaveBridgeRules?.considerWeeklyOffInLeave ?? woffHoff.considerWOInLeave)} />
+                  <CheckCard label='Consider "Holiday" In Leave Application' active={Boolean(woffHoff.leaveBridgeRules?.considerHolidayInLeave ?? woffHoff.considerHolInLeave)} />
+                  <CheckCard label="Absent — WO — Leave = WO Absent" active={Boolean(woffHoff.leaveBridgeRules?.absentWeeklyOffLeaveMarksWeeklyOffAbsent ?? woffHoff.absentWOLeaveWOAbsent)} />
+                  <CheckCard label="Leave — WO — Absent = WO Absent" active={Boolean(woffHoff.leaveBridgeRules?.leaveWeeklyOffAbsentMarksWeeklyOffAbsent ?? woffHoff.leaveWOAbsentWOAbsent)} />
+                  <CheckCard label="Absent — Holiday — Leave = Holiday Absent" active={Boolean(woffHoff.leaveBridgeRules?.absentHolidayLeaveMarksHolidayAbsent ?? woffHoff.absentHolLeaveHolAbsent)} />
+                  <CheckCard label="Leave — Holiday — Absent = Holiday Absent" active={Boolean(woffHoff.leaveBridgeRules?.leaveHolidayAbsentMarksHolidayAbsent ?? woffHoff.leaveHolAbsentHolAbsent)} />
                 </div>
               </div>
 
               <div>
-                <h3 className="text-[16px] font-bold text-[#1b2559] mb-4">Leave Settings</h3>
+                <h3 className="text-[15px] font-bold text-[#1b2559] mb-3">Leave Settings</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <InfoCard icon={Banknote} title="Leave In Cash" value={employee.woffHoffSettings?.leaveInCash ? 'Yes' : 'No'} />
-                  <InfoCard icon={Calendar} title="Leave Carry Forward" value={employee.woffHoffSettings?.leaveCarryForward ? 'Yes' : 'No'} />
+                  <InfoCard icon={Banknote} title="Leave Encashment Allowed" value={(woffHoff.leaveSettings?.leaveEncashmentAllowed ?? woffHoff.leaveInCash) ? 'Yes' : 'No'} />
+                  <InfoCard icon={Calendar} title="Leave Carry Forward Allowed" value={(woffHoff.leaveSettings?.carryForwardAllowed ?? woffHoff.leaveCarryForward) ? 'Yes' : 'No'} />
                 </div>
               </div>
             </div>
           )}
 
+          {/* TAB 6: KRA SETTINGS */}
           {activeTab === 'KRA Settings' && (
             <div className="space-y-6">
-              <h2 className="text-[20px] font-bold text-[#1b2559] mb-4">KRA Settings</h2>
+              <div className="flex justify-between items-center">
+                <h2 className="text-[18px] font-bold text-[#1b2559]">KRA & Targets ({kra.year || 2026})</h2>
+              </div>
               
-              <div className="bg-[#f8f9fc] rounded-xl border border-gray-100 overflow-hidden">
+              <div className="bg-[#f8f9fc] rounded-2xl border border-gray-100 overflow-hidden">
                 <div className="p-6 pb-4">
                   <h3 className="text-[15px] font-bold text-[#1b2559]">Target List</h3>
                 </div>
                 
-                <div className="overflow-x-auto px-2 pb-6">
-                  <table className="w-full text-left border-collapse min-w-[600px] bg-white rounded-lg overflow-hidden">
+                <div className="overflow-x-auto px-4 pb-6">
+                  <table className="w-full text-left border-collapse min-w-[650px] bg-white rounded-xl overflow-hidden shadow-2xs">
                     <thead>
-                      <tr className="border-b border-gray-100 text-[14px] text-[#1b2559] font-bold">
+                      <tr className="border-b border-gray-100 bg-[#f4f3fb] text-[14px] text-[#1b2559] font-bold">
                         <th className="py-4 px-6 font-semibold w-24">Sr. No.</th>
-                        <th className="py-4 px-6 font-semibold">Product</th>
-                        <th className="py-4 px-6 font-semibold">Daily</th>
-                        <th className="py-4 px-6 font-semibold">Weekly</th>
-                        <th className="py-4 px-6 font-semibold">Monthly</th>
-                        <th className="py-4 px-6 font-semibold">Yearly</th>
+                        <th className="py-4 px-6 font-semibold">Product Name</th>
+                        <th className="py-4 px-6 font-semibold">Type</th>
+                        <th className="py-4 px-6 font-semibold text-right">Daily</th>
+                        <th className="py-4 px-6 font-semibold text-right">Weekly</th>
+                        <th className="py-4 px-6 font-semibold text-right">Monthly</th>
+                        <th className="py-4 px-6 font-semibold text-right">Yearly Target</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {(!employee.kraSettings?.targets || employee.kraSettings.targets.length === 0) ? (
+                      {(!kra.targets || kra.targets.length === 0) ? (
                         <tr>
-                          <td colSpan="6" className="py-8 text-center text-gray-500">No targets found.</td>
+                          <td colSpan="7" className="py-10 text-center text-gray-500 font-medium">
+                            No KRA targets assigned for this employee.
+                          </td>
                         </tr>
                       ) : (
-                        employee.kraSettings.targets.map((target, index) => {
+                        kra.targets.map((target, index) => {
                           const yearly = Number(target.targetValue) || 0;
                           const monthly = yearly / 12;
-                          const weekly = monthly / 4;
-                          const daily = weekly / 5;
+                          const weekly = yearly / 52;
+                          const daily = yearly / 300;
+                          const isAmount = target.targetType === 'AMOUNT' || yearly >= 10000;
 
-                          // Helper to format values with optional rupee symbol if it looks like a currency amount
-                          // Using a heuristic: if yearly > 10000, we prepend ₹, otherwise not.
                           const formatVal = (val) => {
-                            const formatted = val.toLocaleString('en-IN', { maximumFractionDigits: 0 });
-                            return yearly >= 10000 ? `₹${formatted}` : formatted;
+                            const formatted = Math.round(val).toLocaleString('en-IN');
+                            return isAmount ? `₹${formatted}` : formatted;
                           };
 
                           return (
-                            <tr key={index} className="border-b border-gray-50 text-[14px] text-[#4b5563]">
-                              <td className="py-4 px-6 text-center">{index + 1}</td>
-                              <td className="py-4 px-6 text-[#1b2559] font-medium">{target.product}</td>
-                              <td className="py-4 px-6">{formatVal(daily)}</td>
-                              <td className="py-4 px-6">{formatVal(weekly)}</td>
-                              <td className="py-4 px-6">{formatVal(monthly)}</td>
-                              <td className="py-4 px-6">{formatVal(yearly)}</td>
+                            <tr key={index} className="border-b border-gray-50 text-[14px] text-gray-700 hover:bg-gray-50 transition-colors">
+                              <td className="py-4 px-6 font-medium text-gray-500">{index + 1}</td>
+                              <td className="py-4 px-6 text-[#1b2559] font-bold">{target.product}</td>
+                              <td className="py-4 px-6">
+                                <span className="inline-block px-2.5 py-0.5 bg-gray-100 text-gray-700 text-xs font-semibold rounded-md">
+                                  {target.targetType || 'AMOUNT'}
+                                </span>
+                              </td>
+                              <td className="py-4 px-6 text-right font-medium">{formatVal(daily)}</td>
+                              <td className="py-4 px-6 text-right font-medium">{formatVal(weekly)}</td>
+                              <td className="py-4 px-6 text-right font-medium">{formatVal(monthly)}</td>
+                              <td className="py-4 px-6 text-right font-bold text-emerald-700">{formatVal(yearly)}</td>
                             </tr>
                           );
                         })

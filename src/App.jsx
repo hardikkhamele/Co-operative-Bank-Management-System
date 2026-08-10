@@ -154,8 +154,11 @@ function App() {
             <Route path="leads" element={<Leads />} />
             <Route path="leads/create" element={<CreateLead />} />
             <Route path="leads/edit" element={<EditLead />} />
+            <Route path="leads/edit/:id" element={<EditLead />} />
             <Route path="leads/view" element={<ViewLead />} />
+            <Route path="leads/view/:id" element={<ViewLead />} />
             <Route path="leads/setup-loan" element={<SetupLoan />} />
+            <Route path="leads/setup-loan/:id" element={<SetupLoan />} />
             <Route path="region" element={<Region />} />
             <Route path="branch" element={<Branch />} />
             <Route path="roles-permissions" element={<RolesAndPermissions />} />

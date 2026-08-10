@@ -32,13 +32,13 @@ export const cashPaymentService = {
 
   /**
    * 3. Submit Cash
-   * POST /v1/society/cash-payment/:employeeId
+   * POST /v1/society/cash-payment/:employeeId/submit-cash
    * @param {string} employeeId
    * @param {Object} data - { date, amountSubmitted, remarks }
    */
   submitCash: async (employeeId, data) => {
     try {
-      const response = await axiosInstance.post(`/v1/society/cash-payment/${employeeId}`, data);
+      const response = await axiosInstance.post(`/v1/society/cash-payment/${employeeId}/submit-cash`, data);
       return response.data;
     } catch (error) {
       throw error;

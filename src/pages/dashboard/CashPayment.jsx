@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Search, ChevronRight, SlidersHorizontal, ChevronDown, X, Eye, Download, Loader2 } from 'lucide-react';
+import { Search, ChevronRight, ChevronLeft, SlidersHorizontal, ChevronDown, X, Eye, Download, Loader2, ArrowDownCircle } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { cashPaymentService } from '../../api/cashPaymentService';
@@ -26,6 +26,17 @@ const CashPayment = () => {
     limit: 10,
     totalRecords: 0,
     totalPages: 1
+  });
+
+  // Submit Cash Modal State
+  const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const todayISO = new Date().toISOString().split('T')[0];
+  const [submitForm, setSubmitForm] = useState({
+    date: todayISO,
+    amountSubmitted: '',
+    remarks: ''
   });
 
   const toggleFilter = (setter, value) => {
@@ -98,6 +109,66 @@ const CashPayment = () => {
     }
     return true;
   });
+
+  // Open Submit Cash Modal
+  const openSubmitModal = (employee) => {
+    setSelectedEmployee(employee);
+    setSubmitForm({
+      date: todayISO,
+      amountSubmitted: '',
+      remarks: ''
+    });
+    setIsSubmitModalOpen(true);
+  };
+
+  // Handle Cash Submission
+  const handleSubmitCash = async (e) => {
+    e.preventDefault();
+    const empId = selectedEmployee?.employeeId || selectedEmployee?._id || selectedEmployee?.id;
+    if (!empId) {
+      toast.error('Employee ID is missing');
+      return;
+    }
+    if (!submitForm.date) {
+      toast.error('Please select a date');
+      return;
+    }
+    const amount = Number(submitForm.amountSubmitted);
+    if (!amount || amount <= 0) {
+      toast.error('Please enter a valid submission amount');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const payload = {
+        date: submitForm.date,
+        amountSubmitted: amount,
+        remarks: submitForm.remarks.trim() || 'Cash deposited successfully'
+      };
+
+      const res = await cashPaymentService.submitCash(empId, payload);
+      if (res && (res.success || res.statusCode === 200)) {
+        toast.success(res?.message || 'Cash deposited successfully!');
+        setIsSubmitModalOpen(false);
+        setSelectedEmployee(null);
+        setSubmitForm({
+          date: todayISO,
+          amountSubmitted: '',
+          remarks: ''
+        });
+        // Re-fetch cash payments
+        fetchCashPayments();
+      } else {
+        throw new Error(res?.message || 'Failed to submit cash');
+      }
+    } catch (err) {
+      console.error('Error submitting cash:', err);
+      toast.error(err.response?.data?.message || err.message || 'Failed to submit cash');
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   // Export to CSV
   const handleExport = () => {
@@ -198,24 +269,45 @@ const CashPayment = () => {
                       <span className="text-gray-500 text-[14px] font-medium">Designation</span>
                       <ChevronDown size={18} className={`text-gray-400 transition-transform ${openFilterDropdown === 'designation' ? 'rotate-180' : ''}`} />
                     </div>
+
                     {openFilterDropdown === 'designation' && (
-                      <div className="absolute z-30 top-full left-0 w-full mt-2 bg-white border border-gray-200 rounded-xl shadow-lg py-3 flex flex-col gap-2">
-                        {['Onboarding Team', 'Collection Executive', 'Branch Manager', 'Assistant Branch Manager'].map(opt => (
-                          <label key={opt} className="flex items-center gap-3 px-4 py-1.5 hover:bg-gray-50 cursor-pointer">
-                            <div className="relative flex items-center justify-center">
-                              <input 
-                                type="checkbox" 
-                                className="w-5 h-5 rounded-[4px] border-2 border-gray-400 appearance-none checked:bg-[#1cabb1] checked:border-[#1cabb1] transition-colors cursor-pointer"
-                                checked={filterDesignation.includes(opt)}
-                                onChange={() => toggleFilter(setFilterDesignation, opt)}
-                              />
-                              {filterDesignation.includes(opt) && (
-                                <svg className="absolute w-3.5 h-3.5 text-white pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                                  <polyline points="20 6 9 17 4 12"></polyline>
-                                </svg>
-                              )}
-                            </div>
-                            <span className="text-[15px] font-medium text-gray-700">{opt}</span>
+                      <div className="absolute z-30 top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-lg border border-gray-100 p-4 space-y-3">
+                        {['Onboarding Team', 'Branch Manager', 'Collection Officer', 'Field Agent'].map((desig) => (
+                          <label key={desig} className="flex items-center gap-3 cursor-pointer select-none">
+                            <input 
+                              type="checkbox" 
+                              checked={filterDesignation.includes(desig)}
+                              onChange={() => toggleFilter(setFilterDesignation, desig)}
+                              className="w-4 h-4 text-[#1cabb1] rounded border-gray-300 focus:ring-[#1cabb1]" 
+                            />
+                            <span className="text-sm font-medium text-gray-700">{desig}</span>
+                          </label>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Branch Dropdown */}
+                  <div className="relative">
+                    <div 
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 flex justify-between items-center cursor-pointer bg-white"
+                      onClick={() => setOpenFilterDropdown(openFilterDropdown === 'branch' ? null : 'branch')}
+                    >
+                      <span className="text-gray-500 text-[14px] font-medium">Branch</span>
+                      <ChevronDown size={18} className={`text-gray-400 transition-transform ${openFilterDropdown === 'branch' ? 'rotate-180' : ''}`} />
+                    </div>
+
+                    {openFilterDropdown === 'branch' && (
+                      <div className="absolute z-30 top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-lg border border-gray-100 p-4 space-y-3">
+                        {['Main Branch', 'North Zone Branch', 'South Zone Branch', 'East Zone Branch'].map((br) => (
+                          <label key={br} className="flex items-center gap-3 cursor-pointer select-none">
+                            <input 
+                              type="checkbox" 
+                              checked={filterBranch.includes(br)}
+                              onChange={() => toggleFilter(setFilterBranch, br)}
+                              className="w-4 h-4 text-[#1cabb1] rounded border-gray-300 focus:ring-[#1cabb1]" 
+                            />
+                            <span className="text-sm font-medium text-gray-700">{br}</span>
                           </label>
                         ))}
                       </div>
@@ -225,16 +317,20 @@ const CashPayment = () => {
 
                 <div className="flex gap-3">
                   <button 
-                    className="flex-1 py-2.5 rounded-full border-[1.5px] border-[#1cabb1] text-[#1cabb1] font-semibold hover:bg-teal-50 transition-colors focus:outline-none text-sm bg-white"
-                    onClick={() => { setFilterDesignation([]); setFilterBranch([]); }}
+                    onClick={() => {
+                      setFilterDesignation([]);
+                      setFilterBranch([]);
+                      setIsFilterOpen(false);
+                    }}
+                    className="flex-1 py-2.5 rounded-full border border-[#1cabb1] text-[#1cabb1] font-semibold text-sm hover:bg-teal-50 transition-colors"
                   >
-                    Reset Filter
+                    Reset
                   </button>
                   <button 
-                    className="flex-1 py-2.5 rounded-full bg-[#1cabb1] text-white font-semibold hover:bg-[#168f94] transition-colors focus:outline-none text-sm shadow-sm"
                     onClick={() => setIsFilterOpen(false)}
+                    className="flex-1 py-2.5 rounded-full bg-[#1b58a6] text-white font-semibold text-sm hover:bg-[#154685] transition-colors"
                   >
-                    Set Filter
+                    Apply
                   </button>
                 </div>
               </div>
@@ -314,7 +410,15 @@ const CashPayment = () => {
                         </span>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="flex items-center justify-center gap-3">
+                        <div className="flex items-center justify-center gap-2">
+                          <button 
+                            onClick={() => openSubmitModal(payment)}
+                            className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-medium text-xs transition-colors"
+                            title="Submit Cash"
+                          >
+                            <ArrowDownCircle size={14} />
+                            <span>Submit Cash</span>
+                          </button>
                           <button 
                             onClick={() => navigate(`/cash-payment/view/${empId}`)}
                             className="w-8 h-8 flex items-center justify-center rounded bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors" 
@@ -343,7 +447,7 @@ const CashPayment = () => {
               disabled={page <= 1}
               className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors disabled:opacity-50"
             >
-              <ChevronRight size={16} className="rotate-180" />
+              <ChevronLeft size={16} />
             </button>
 
             {(() => {
@@ -379,6 +483,84 @@ const CashPayment = () => {
           </div>
         </div>
       </div>
+
+      {/* Quick Submit Cash Modal */}
+      {isSubmitModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 transition-opacity">
+          <div className="bg-white rounded-xl w-full max-w-[500px] shadow-2xl overflow-hidden flex flex-col">
+            <div className="flex justify-between items-center p-6 pb-3 border-b border-gray-100">
+              <div>
+                <h2 className="text-xl font-bold text-[#1b2559]">Submit Cash</h2>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  Deposit cash collected by <span className="font-semibold text-[#1cabb1]">{selectedEmployee?.employeeName || selectedEmployee?.name || 'Employee'}</span>
+                </p>
+              </div>
+              <button onClick={() => setIsSubmitModalOpen(false)} className="text-gray-500 hover:text-gray-800 transition-colors">
+                <X size={24} />
+              </button>
+            </div>
+            <form onSubmit={handleSubmitCash} className="p-6 pt-4 space-y-4">
+              <div>
+                <label className="block text-[14px] font-semibold text-gray-700 mb-1.5">
+                  Date <span className="text-red-500">*</span>
+                </label>
+                <input 
+                  type="date" 
+                  required
+                  value={submitForm.date}
+                  onChange={(e) => setSubmitForm({ ...submitForm, date: e.target.value })}
+                  className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white text-[15px] text-gray-800" 
+                />
+              </div>
+              
+              <div>
+                <label className="block text-[14px] font-semibold text-gray-700 mb-1.5">
+                  Amount (₹) <span className="text-red-500">*</span>
+                </label>
+                <input 
+                  type="number" 
+                  required
+                  min="1"
+                  step="any"
+                  placeholder="Enter Amount (e.g. 5000)"
+                  value={submitForm.amountSubmitted}
+                  onChange={(e) => setSubmitForm({ ...submitForm, amountSubmitted: e.target.value })}
+                  className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white text-[15px] text-gray-800 appearance-none font-medium" 
+                />
+              </div>
+              
+              <div>
+                <label className="block text-[14px] font-semibold text-gray-700 mb-1.5">Remarks</label>
+                <textarea 
+                  rows="3" 
+                  placeholder="Enter remarks (e.g. Cash deposited successfully)..." 
+                  value={submitForm.remarks}
+                  onChange={(e) => setSubmitForm({ ...submitForm, remarks: e.target.value })}
+                  className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white text-[15px] text-gray-800 resize-none"
+                ></textarea>
+              </div>
+              
+              <div className="flex justify-end items-center gap-3 mt-6 pt-4 border-t border-gray-100">
+                <button 
+                  type="button"
+                  onClick={() => setIsSubmitModalOpen(false)} 
+                  className="px-6 py-2.5 rounded-full border-[1.5px] border-gray-300 text-gray-700 font-semibold hover:bg-gray-50 transition-colors text-[14px] bg-white"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit"
+                  disabled={submitting}
+                  className="flex items-center gap-2 px-7 py-2.5 rounded-full bg-[#1cabb1] text-white font-semibold hover:bg-[#168f94] transition-colors shadow-sm text-[14px] disabled:opacity-50"
+                >
+                  {submitting && <Loader2 size={16} className="animate-spin" />}
+                  {submitting ? 'Submitting...' : 'Submit Cash'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

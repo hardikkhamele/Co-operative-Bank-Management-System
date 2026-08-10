@@ -26,6 +26,7 @@ export const verificationService = {
         payload.mobile = phoneVal;
         payload.phoneNumber = phoneVal;
         payload.phone = phoneVal;
+        payload.mobileNumber = phoneVal;
       }
 
       const response = await axiosInstance.post('/v1/society/cibil-score', payload);
