@@ -7,52 +7,6 @@ import {
 import { Users, Banknote, Landmark, CreditCard, Wallet, Loader2 } from 'lucide-react';
 import { dashboardService } from '../../api/dashboardService';
 
-const fallbackStatsData = {
-  emiCard: { title: 'EMI Card', count: 4200, formattedCount: '4,200' },
-  verificationCredit: { title: 'Verification Credit', count: 8400, formattedCount: '8,400' },
-  totalLeads: { title: 'Total Leads', count: 3067498, formattedCount: '30,67,498', changeText: 'This Month +3.7%', isPositive: true },
-  totalLoanDistributed: { title: 'Total Loan Distributed', amount: 1025098764, formattedAmount: '₹102,50,98,764', changeText: 'This Month -1.7%', isPositive: false },
-  collectionPending: { title: 'Collection Pending', amount: 5098764, formattedAmount: '₹50,98,764', changeText: 'This Month -1.7%', isPositive: false },
-  totalRevenue: { title: 'Total Revenue', amount: 1298764, formattedAmount: '₹12,98,764', changeText: 'This Month -1.7%', isPositive: false },
-  totalBranch: { title: 'Total Branch', count: 510, formattedCount: '510', changeText: 'This Month -1.7%', isPositive: false },
-  totalStaff: { title: 'Total Staff', count: 8764, formattedCount: '8,764', changeText: 'This Month -1.7%', isPositive: false }
-};
-
-const fallbackRevenueMonths = [
-  { month: 'Jan', thisYear: 30000, lastYear: 20000, formattedThisYear: '₹30K', formattedLastYear: '₹20K' },
-  { month: 'Feb', thisYear: 25000, lastYear: 28000, formattedThisYear: '₹25K', formattedLastYear: '₹28K' },
-  { month: 'Mar', thisYear: 22000, lastYear: 29000, formattedThisYear: '₹22K', formattedLastYear: '₹29K' },
-  { month: 'Apr', thisYear: 35000, lastYear: 40000, formattedThisYear: '₹35K', formattedLastYear: '₹40K' },
-  { month: 'May', thisYear: 32000, lastYear: 48000, formattedThisYear: '₹32K', formattedLastYear: '₹48K' },
-  { month: 'Jun', thisYear: 55000, lastYear: 30000, formattedThisYear: '₹55K', formattedLastYear: '₹30K' },
-  { month: 'Jul', thisYear: 88000, lastYear: 32000, formattedThisYear: '₹88K', formattedLastYear: '₹32K' },
-  { month: 'Aug', thisYear: 105000, lastYear: 35000, formattedThisYear: '₹105K', formattedLastYear: '₹35K' },
-  { month: 'Sep', thisYear: 72000, lastYear: 25000, formattedThisYear: '₹72K', formattedLastYear: '₹25K' },
-  { month: 'Oct', thisYear: 80000, lastYear: 85000, formattedThisYear: '₹80K', formattedLastYear: '₹85K' },
-  { month: 'Nov', thisYear: 42000, lastYear: 90000, formattedThisYear: '₹42K', formattedLastYear: '₹90K' },
-  { month: 'Dec', thisYear: 60000, lastYear: 115000, formattedThisYear: '₹60K', formattedLastYear: '₹115K' },
-];
-
-const fallbackLoanCategories = [
-  { category: 'Mobiles on EMI', amount: 200000, formattedAmount: '₹200K', count: 150 },
-  { category: 'Electronics on EMI', amount: 53000, formattedAmount: '53K', count: 42 },
-  { category: 'Two Wheeler Loan', amount: 80000, formattedAmount: '₹80K', count: 28 },
-  { category: 'Used Car Loan', amount: 160000, formattedAmount: '₹160K', count: 14 },
-  { category: 'New Car Loan', amount: 120000, formattedAmount: '₹120K', count: 8 },
-];
-
-const fallbackServices = [
-  { service: 'Loan Service', serviceKey: 'LOAN', percentage: 100, amount: 1025098764, formattedAmount: '₹102,50,98,764', color: '#f48b29', status: 'ACTIVE' },
-];
-
-const actionsData = [
-  { time: '6:35 AM', action: 'New lead application submitted.' },
-  { time: '6:33 AM', action: 'EMI Card payment received.' },
-  { time: '6:32 AM', action: 'Customer loan verification approved.' },
-  { time: '6:31 AM', action: 'Daily cash reconciliation updated.' },
-  { time: '6:30 AM', action: 'New branch staff account created.' },
-];
-
 const CustomTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
     return (
@@ -71,24 +25,27 @@ const CustomTooltip = ({ active, payload, label }) => {
 
 const Dashboard = () => {
   // 1. Stats State
-  const [stats, setStats] = useState(fallbackStatsData);
+  const [stats, setStats] = useState({});
   const [loadingStats, setLoadingStats] = useState(false);
 
   // 2. Revenue Chart State
-  const [revenueData, setRevenueData] = useState(fallbackRevenueMonths);
+  const [revenueData, setRevenueData] = useState([]);
   const [revenueLegends, setRevenueLegends] = useState({ thisYear: 'This year', lastYear: 'Last year' });
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [loadingRevenue, setLoadingRevenue] = useState(false);
 
   // 3. Loan Distributed Chart State
-  const [loanCategories, setLoanCategories] = useState(fallbackLoanCategories);
+  const [loanCategories, setLoanCategories] = useState([]);
   const [loanTimeFilter, setLoanTimeFilter] = useState('Today');
   const [loadingLoanChart, setLoadingLoanChart] = useState(false);
 
   // 4. Services Sales Contribution State
-  const [servicesData, setServicesData] = useState(fallbackServices);
+  const [servicesData, setServicesData] = useState([]);
   const [servicesTimeFilter, setServicesTimeFilter] = useState('Today');
   const [loadingServices, setLoadingServices] = useState(false);
+
+  // 5. Actions Data State (Currently missing API)
+  const [actionsData, setActionsData] = useState([]);
 
   // 1. Fetch Stats Cards (API 1)
   const fetchStats = useCallback(async () => {
@@ -210,48 +167,48 @@ const Dashboard = () => {
   const kpiCards = [
     {
       title: stats.totalLeads?.title || 'Total Leads',
-      value: stats.totalLeads?.formattedCount || (stats.totalLeads?.count != null ? stats.totalLeads.count.toLocaleString('en-IN') : '30,67,498'),
-      change: stats.totalLeads?.changeText || `${stats.totalLeads?.percentageChange != null ? (stats.totalLeads.percentageChange > 0 ? '+' : '') + stats.totalLeads.percentageChange + '%' : '+3.7 %'}`,
+      value: stats.totalLeads?.formattedCount || (stats.totalLeads?.count != null ? stats.totalLeads.count.toLocaleString('en-IN') : '0'),
+      change: stats.totalLeads?.changeText || `${stats.totalLeads?.percentageChange != null ? (stats.totalLeads.percentageChange > 0 ? '+' : '') + stats.totalLeads.percentageChange + '%' : '0%'}`,
       color: 'bg-[#00c5d5]',
       icon: <Users size={20} />,
       path: '/leads'
     },
     {
       title: stats.totalLoanDistributed?.title || 'Total Loan Distributed',
-      value: stats.totalLoanDistributed?.formattedAmount || (stats.totalLoanDistributed?.amount != null ? `₹${stats.totalLoanDistributed.amount.toLocaleString('en-IN')}` : '₹102,50,98,764'),
-      change: stats.totalLoanDistributed?.changeText || `${stats.totalLoanDistributed?.percentageChange != null ? (stats.totalLoanDistributed.percentageChange > 0 ? '+' : '') + stats.totalLoanDistributed.percentageChange + '%' : '-1.7 %'}`,
+      value: stats.totalLoanDistributed?.formattedAmount || (stats.totalLoanDistributed?.amount != null ? `₹${stats.totalLoanDistributed.amount.toLocaleString('en-IN')}` : '₹0'),
+      change: stats.totalLoanDistributed?.changeText || `${stats.totalLoanDistributed?.percentageChange != null ? (stats.totalLoanDistributed.percentageChange > 0 ? '+' : '') + stats.totalLoanDistributed.percentageChange + '%' : '0%'}`,
       color: 'bg-[#b68962]',
       icon: <Banknote size={20} />,
-      path: '/customers'
+      path: '/dashboard'
     },
     {
       title: stats.collectionPending?.title || 'Collection Pending',
-      value: stats.collectionPending?.formattedAmount || (stats.collectionPending?.amount != null ? `₹${stats.collectionPending.amount.toLocaleString('en-IN')}` : '₹50,98,764'),
-      change: stats.collectionPending?.changeText || `${stats.collectionPending?.percentageChange != null ? (stats.collectionPending.percentageChange > 0 ? '+' : '') + stats.collectionPending.percentageChange + '%' : '-1.7 %'}`,
+      value: stats.collectionPending?.formattedAmount || (stats.collectionPending?.amount != null ? `₹${stats.collectionPending.amount.toLocaleString('en-IN')}` : '₹0'),
+      change: stats.collectionPending?.changeText || `${stats.collectionPending?.percentageChange != null ? (stats.collectionPending.percentageChange > 0 ? '+' : '') + stats.collectionPending.percentageChange + '%' : '0%'}`,
       color: 'bg-[#f48b29]',
       icon: <CreditCard size={20} />,
-      path: '/credit'
+      path: '/debit'
     },
     {
       title: stats.totalRevenue?.title || 'Total Revenue',
-      value: stats.totalRevenue?.formattedAmount || (stats.totalRevenue?.amount != null ? `₹${stats.totalRevenue.amount.toLocaleString('en-IN')}` : '₹12,98,764'),
-      change: stats.totalRevenue?.changeText || `${stats.totalRevenue?.percentageChange != null ? (stats.totalRevenue.percentageChange > 0 ? '+' : '') + stats.totalRevenue.percentageChange + '%' : '-1.7 %'}`,
+      value: stats.totalRevenue?.formattedAmount || (stats.totalRevenue?.amount != null ? `₹${stats.totalRevenue.amount.toLocaleString('en-IN')}` : '₹0'),
+      change: stats.totalRevenue?.changeText || `${stats.totalRevenue?.percentageChange != null ? (stats.totalRevenue.percentageChange > 0 ? '+' : '') + stats.totalRevenue.percentageChange + '%' : '0%'}`,
       color: 'bg-[#3bc454]',
       icon: <Wallet size={20} />,
       path: '/credit'
     },
     {
       title: stats.totalBranch?.title || 'Total Branch',
-      value: stats.totalBranch?.formattedCount || (stats.totalBranch?.count != null ? stats.totalBranch.count.toLocaleString('en-IN') : '510'),
-      change: stats.totalBranch?.changeText || `${stats.totalBranch?.percentageChange != null ? (stats.totalBranch.percentageChange > 0 ? '+' : '') + stats.totalBranch.percentageChange + '%' : '-1.7 %'}`,
+      value: stats.totalBranch?.formattedCount || (stats.totalBranch?.count != null ? stats.totalBranch.count.toLocaleString('en-IN') : '0'),
+      change: stats.totalBranch?.changeText || `${stats.totalBranch?.percentageChange != null ? (stats.totalBranch.percentageChange > 0 ? '+' : '') + stats.totalBranch.percentageChange + '%' : '0%'}`,
       color: 'bg-[#6154ff]',
       icon: <Landmark size={20} />,
       path: '/branch'
     },
     {
       title: stats.totalStaff?.title || 'Total Staff',
-      value: stats.totalStaff?.formattedCount || (stats.totalStaff?.count != null ? stats.totalStaff.count.toLocaleString('en-IN') : '8,764'),
-      change: stats.totalStaff?.changeText || `${stats.totalStaff?.percentageChange != null ? (stats.totalStaff.percentageChange > 0 ? '+' : '') + stats.totalStaff.percentageChange + '%' : '-1.7 %'}`,
+      value: stats.totalStaff?.formattedCount || (stats.totalStaff?.count != null ? stats.totalStaff.count.toLocaleString('en-IN') : '0'),
+      change: stats.totalStaff?.changeText || `${stats.totalStaff?.percentageChange != null ? (stats.totalStaff.percentageChange > 0 ? '+' : '') + stats.totalStaff.percentageChange + '%' : '0%'}`,
       color: 'bg-[#d926e9]',
       icon: <Users size={20} />,
       path: '/employees'
@@ -267,16 +224,16 @@ const Dashboard = () => {
             <div className="text-[13px] text-gray-500 font-medium mb-1">
               {stats.emiCard?.title || 'EMI Card'}
             </div>
-            <div className="text-xl font-bold text-gray-800">
-              {stats.emiCard?.formattedCount || (stats.emiCard?.count != null ? stats.emiCard.count.toLocaleString('en-IN') : '4,200')}
+            <div className="text-xl font-bold text-[#0f4b86]">
+              {stats.emiCard?.formattedAvailable || (stats.emiCard?.available != null ? stats.emiCard.available.toLocaleString('en-IN') : '0')}
             </div>
           </div>
           <div className="px-6 py-4 text-center min-w-[150px]">
             <div className="text-[13px] text-gray-500 font-medium mb-1">
               {stats.verificationCredit?.title || 'Verification Credit'}
             </div>
-            <div className="text-xl font-bold text-gray-800">
-              {stats.verificationCredit?.formattedCount || (stats.verificationCredit?.count != null ? stats.verificationCredit.count.toLocaleString('en-IN') : '8,400')}
+            <div className="text-xl font-bold text-[#0f4b86]">
+              {stats.verificationCredit?.formattedAvailable || (stats.verificationCredit?.available != null ? stats.verificationCredit.available.toLocaleString('en-IN') : '0')}
             </div>
           </div>
         </div>
@@ -327,7 +284,7 @@ const Dashboard = () => {
           
           <div className="h-[280px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={revenueData} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
+              <LineChart data={revenueData.length ? revenueData : []} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
                 <XAxis 
                   dataKey="month" 
                   axisLine={false} 
@@ -342,24 +299,30 @@ const Dashboard = () => {
                   tickFormatter={(val) => val === 0 ? '₹0' : `₹${Math.round(val/1000)}K`} 
                 />
                 <Tooltip content={<CustomTooltip />} />
-                <Line 
-                  type="monotone" 
-                  name={revenueLegends.thisYear || 'This year'} 
-                  dataKey="thisYear" 
-                  stroke="#1cabb1" 
-                  strokeWidth={2.5} 
-                  dot={false} 
-                  activeDot={{ r: 6 }} 
-                />
-                <Line 
-                  type="monotone" 
-                  name={revenueLegends.lastYear || 'Last year'} 
-                  dataKey="lastYear" 
-                  stroke="#64748b" 
-                  strokeWidth={1.5} 
-                  strokeDasharray="4 4" 
-                  dot={false} 
-                />
+                {revenueData.length > 0 ? (
+                  <>
+                    <Line 
+                      type="monotone" 
+                      name={revenueLegends.thisYear || 'This year'} 
+                      dataKey="thisYear" 
+                      stroke="#1cabb1" 
+                      strokeWidth={2.5} 
+                      dot={false} 
+                      activeDot={{ r: 6 }} 
+                    />
+                    <Line 
+                      type="monotone" 
+                      name={revenueLegends.lastYear || 'Last year'} 
+                      dataKey="lastYear" 
+                      stroke="#64748b" 
+                      strokeWidth={1.5} 
+                      strokeDasharray="4 4" 
+                      dot={false} 
+                    />
+                  </>
+                ) : (
+                  <div className="flex items-center justify-center h-full text-gray-400">No revenue data available</div>
+                )}
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -386,65 +349,71 @@ const Dashboard = () => {
           
           <div className="h-[280px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={formattedLoanData} margin={{ top: 20, right: 10, left: -20, bottom: 20 }}>
-                <XAxis 
-                  dataKey="name" 
-                  axisLine={false} 
-                  tickLine={false} 
-                  tick={(props) => {
-                    const { x, y, payload } = props;
-                    const lines = payload.value.split('\n');
-                    return (
-                      <g transform={`translate(${x},${y})`}>
-                        {lines.map((line, index) => (
-                          <text key={index} x={0} y={index * 12 + 10} textAnchor="middle" fill="#64748b" fontSize={10}>
-                            {line}
-                          </text>
-                        ))}
-                      </g>
-                    );
-                  }}
-                  dy={10} 
-                  width={60} 
-                  interval={0}
-                />
-                <YAxis 
-                  axisLine={false} 
-                  tickLine={false} 
-                  tick={{fill: '#64748b', fontSize: 12}} 
-                  tickFormatter={(val) => val === 0 ? '0' : `₹${Math.round(val/1000)}k`} 
-                />
-                <Tooltip cursor={{fill: 'transparent'}} content={<CustomTooltip />} />
-                <Bar 
-                  dataKey="value" 
-                  name="Loan Amount"
-                  radius={[10, 10, 10, 10]} 
-                  barSize={16}
-                  fill="#4b5563" 
-                >
-                  <LabelList 
-                    dataKey="value" 
-                    position="top" 
-                    content={(props) => {
-                      const { x, y, width, value, index } = props;
-                      if (index === 1) {
-                        return (
-                          <g>
-                            <rect x={x + width/2 - 16} y={y - 24} width={32} height={18} fill="#1cabb1" rx={9} ry={9} />
-                            <text x={x + width / 2} y={y - 11} fill="white" textAnchor="middle" fontSize={10} fontWeight="bold">
-                              {Math.round(value/1000)}k
+              {formattedLoanData.length > 0 ? (
+                <BarChart data={formattedLoanData} margin={{ top: 20, right: 10, left: -20, bottom: 20 }}>
+                  <XAxis 
+                    dataKey="name" 
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={(props) => {
+                      const { x, y, payload } = props;
+                      const lines = payload.value.split('\n');
+                      return (
+                        <g transform={`translate(${x},${y})`}>
+                          {lines.map((line, index) => (
+                            <text key={index} x={0} y={index * 12 + 10} textAnchor="middle" fill="#64748b" fontSize={10}>
+                              {line}
                             </text>
-                          </g>
-                        );
-                      }
-                      return null;
-                    }} 
+                          ))}
+                        </g>
+                      );
+                    }}
+                    dy={10} 
+                    width={60} 
+                    interval={0}
                   />
-                  {formattedLoanData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.fill} />
-                  ))}
-                </Bar>
-              </BarChart>
+                  <YAxis 
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{fill: '#64748b', fontSize: 12}} 
+                    tickFormatter={(val) => val === 0 ? '0' : `₹${Math.round(val/1000)}k`} 
+                  />
+                  <Tooltip cursor={{fill: 'transparent'}} content={<CustomTooltip />} />
+                  <Bar 
+                    dataKey="value" 
+                    name="Loan Amount"
+                    radius={[10, 10, 10, 10]} 
+                    barSize={16}
+                    fill="#4b5563" 
+                  >
+                    <LabelList 
+                      dataKey="value" 
+                      position="top" 
+                      content={(props) => {
+                        const { x, y, width, value, index } = props;
+                        if (index === 1) {
+                          return (
+                            <g>
+                              <rect x={x + width/2 - 16} y={y - 24} width={32} height={18} fill="#1cabb1" rx={9} ry={9} />
+                              <text x={x + width / 2} y={y - 11} fill="white" textAnchor="middle" fontSize={10} fontWeight="bold">
+                                {Math.round(value/1000)}k
+                              </text>
+                            </g>
+                          );
+                        }
+                        return null;
+                      }} 
+                    />
+                    {formattedLoanData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.fill} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              ) : (
+                <div className="flex items-center justify-center h-full w-full">
+                  <span className="text-gray-400 font-medium">No loan distribution data available</span>
+                </div>
+              )}
             </ResponsiveContainer>
           </div>
         </div>
@@ -473,44 +442,52 @@ const Dashboard = () => {
           
           <div className="flex-1 flex items-center justify-center pt-2">
             <div className="h-[250px] w-full flex items-center">
-              <ResponsiveContainer width="60%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={formattedPieData}
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={105}
-                    innerRadius={0}
-                    dataKey="value"
-                    nameKey="name"
-                    stroke="none"
-                    labelLine={false}
-                    label={({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
-                      const radius = innerRadius + (outerRadius - innerRadius) * 0.65;
-                      const x = cx + radius * Math.cos(-midAngle * Math.PI / 180);
-                      const y = cy + radius * Math.sin(-midAngle * Math.PI / 180);
-                      return percent > 0.05 ? (
-                        <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central" fontSize={12} fontWeight={600}>
-                          {`${(percent * 100).toFixed(0)}%`}
-                        </text>
-                      ) : null;
-                    }}
-                  >
-                    {formattedPieData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
+              {formattedPieData.length > 0 ? (
+                <>
+                  <ResponsiveContainer width="60%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={formattedPieData}
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={105}
+                        innerRadius={0}
+                        dataKey="value"
+                        nameKey="name"
+                        stroke="none"
+                        labelLine={false}
+                        label={({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
+                          const radius = innerRadius + (outerRadius - innerRadius) * 0.65;
+                          const x = cx + radius * Math.cos(-midAngle * Math.PI / 180);
+                          const y = cy + radius * Math.sin(-midAngle * Math.PI / 180);
+                          return percent > 0.05 ? (
+                            <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central" fontSize={12} fontWeight={600}>
+                              {`${(percent * 100).toFixed(0)}%`}
+                            </text>
+                          ) : null;
+                        }}
+                      >
+                        {formattedPieData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip content={<CustomTooltip />} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <div className="w-[40%] flex flex-col justify-center gap-2.5 pl-4">
+                    {formattedPieData.map((entry, idx) => (
+                      <div key={idx} className="flex items-center gap-3 text-[13px] font-medium text-gray-700">
+                        <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: entry.color }}></span>
+                        <span className="truncate">{entry.name} ({entry.value}%)</span>
+                      </div>
                     ))}
-                  </Pie>
-                  <Tooltip content={<CustomTooltip />} />
-                </PieChart>
-              </ResponsiveContainer>
-              <div className="w-[40%] flex flex-col justify-center gap-2.5 pl-4">
-                {formattedPieData.map((entry, idx) => (
-                  <div key={idx} className="flex items-center gap-3 text-[13px] font-medium text-gray-700">
-                    <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: entry.color }}></span>
-                    <span className="truncate">{entry.name} ({entry.value}%)</span>
                   </div>
-                ))}
-              </div>
+                </>
+              ) : (
+                <div className="flex items-center justify-center w-full h-full text-gray-400 font-medium">
+                  No services data available
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -527,12 +504,20 @@ const Dashboard = () => {
                 </tr>
               </thead>
               <tbody>
-                {actionsData.map((item, idx) => (
-                  <tr key={idx} className="hover:bg-gray-50 transition-colors border-b last:border-b-0 border-gray-100">
-                    <td className="py-4 px-3 text-sm text-gray-700 whitespace-nowrap font-medium">{item.time}</td>
-                    <td className="py-4 px-3 text-sm text-gray-700">{item.action}</td>
+                {actionsData.length > 0 ? (
+                  actionsData.map((item, idx) => (
+                    <tr key={idx} className="hover:bg-gray-50 transition-colors border-b last:border-b-0 border-gray-100">
+                      <td className="py-4 px-3 text-sm text-gray-700 whitespace-nowrap font-medium">{item.time}</td>
+                      <td className="py-4 px-3 text-sm text-gray-700">{item.action}</td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="2" className="py-8 text-center text-gray-400 font-medium text-sm">
+                      No recent actions found
+                    </td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
           </div>

@@ -387,8 +387,9 @@ const Customers = () => {
             </div>
             
             {/* Body */}
-            <div className="px-8 pb-4 overflow-y-auto flex-1 space-y-5 bg-[#f4f3fb] scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-transparent pr-4 relative">
-              {/* Avatar Upload */}
+            <form onSubmit={(e) => { e.preventDefault(); setIsAddModalOpen(false); }} className="flex flex-col flex-1 overflow-hidden">
+              <div className="px-8 pb-4 overflow-y-auto flex-1 space-y-5 bg-[#f4f3fb] scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-transparent pr-4 relative">
+                {/* Avatar Upload */}
               <div className="flex justify-center mb-4 mt-2">
                 <div className="relative">
                   <div className="w-24 h-24 rounded-full border-[3px] border-[#1cabb1] overflow-hidden bg-gray-100 flex items-center justify-center shadow-sm">
@@ -428,13 +429,29 @@ const Customers = () => {
               </div>
 
               <div>
-                <label className="block text-[15px] font-semibold text-gray-800 mb-1.5">Phone</label>
-                <input type="tel" placeholder="Enter phone Number" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1cabb1] focus:border-[#1cabb1] bg-white text-[15px] text-gray-700 shadow-sm" />
+                <label className="block text-[15px] font-semibold text-gray-800 mb-1.5">Phone <span className="text-red-500">*</span></label>
+                <input 
+                  type="tel" 
+                  maxLength={10}
+                  pattern="\d{10}"
+                  onInput={(e) => { e.target.value = e.target.value.replace(/\D/g, '').slice(0, 10) }}
+                  placeholder="Enter 10-digit phone Number" 
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1cabb1] focus:border-[#1cabb1] bg-white text-[15px] text-gray-700 shadow-sm" 
+                  required
+                  title="Please enter a valid 10-digit phone number"
+                />
               </div>
 
               <div>
-                <label className="block text-[15px] font-semibold text-gray-800 mb-1.5">Email</label>
-                <input type="email" placeholder="Enter email" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1cabb1] focus:border-[#1cabb1] bg-white text-[15px] text-gray-700 shadow-sm" />
+                <label className="block text-[15px] font-semibold text-gray-800 mb-1.5">Email <span className="text-red-500">*</span></label>
+                <input 
+                  type="email" 
+                  pattern="[^@\s]+@[^@\s]+\.[^@\s]+"
+                  placeholder="Enter email address" 
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1cabb1] focus:border-[#1cabb1] bg-white text-[15px] text-gray-700 shadow-sm" 
+                  required
+                  title="Please enter a valid email address"
+                />
               </div>
 
               <div>
@@ -446,18 +463,20 @@ const Customers = () => {
             {/* Footer */}
             <div className="p-6 pt-4 bg-[#f4f3fb] flex justify-end gap-4 rounded-b-2xl">
               <button 
+                type="button"
                 onClick={() => setIsAddModalOpen(false)}
                 className="py-2.5 px-8 rounded-full border-2 border-[#1cabb1] text-[#1cabb1] font-semibold hover:bg-teal-50 transition-colors focus:outline-none text-[15px]"
               >
                 Cancel
               </button>
               <button 
-                onClick={() => setIsAddModalOpen(false)}
+                type="submit"
                 className="py-2.5 px-8 rounded-full bg-[#1cabb1] text-white font-semibold hover:bg-[#159a9f] transition-colors focus:outline-none text-[15px] shadow-sm"
               >
                 Create
               </button>
             </div>
+            </form>
           </div>
         </div>
       )}

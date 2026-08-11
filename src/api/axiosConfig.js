@@ -2,8 +2,14 @@ import axios from 'axios';
 import useAuthStore from '../store/authStore';
 import useLoadingStore from '../store/loadingStore';
 
+// Ensure the base URL always ends with /api if it's an external URL
+let apiBaseUrl = import.meta.env.VITE_API_URL || '/api';
+if (apiBaseUrl !== '/api' && !apiBaseUrl.match(/\/api\/?$/)) {
+  apiBaseUrl = apiBaseUrl.endsWith('/') ? `${apiBaseUrl}api` : `${apiBaseUrl}/api`;
+}
+
 const axiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || '/api',
+  baseURL: apiBaseUrl,
   headers: {
     'Content-Type': 'application/json',
   },

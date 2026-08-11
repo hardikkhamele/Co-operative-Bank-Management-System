@@ -9,67 +9,13 @@ import { validateEmail, validatePassword } from '../../utils/validation';
 
 const BankLogin = () => {
   const [formData, setFormData] = useState({ 
-    role: 'BRANCH_MANAGER', 
     email: 'stark@bank.com', 
     password: 'Password@123' 
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
-  const [roles, setRoles] = useState([]);
   
-  useEffect(() => {
-    const fetchRoles = async () => {
-      try {
-        const response = await authService.getRoles();
-        let availableRoles = [];
-        
-        if (response?.success && response?.data) {
-          if (Array.isArray(response.data)) {
-            availableRoles = response.data;
-          } else {
-            availableRoles = response.data.allRoles || [...(response.data.systemRoles || []), ...(response.data.customRoles || [])];
-          }
-        } else if (Array.isArray(response)) {
-          availableRoles = response;
-        } else if (response?.data && Array.isArray(response.data.data)) {
-          availableRoles = response.data.data;
-        }
-        
-        if (availableRoles && availableRoles.length > 0) {
-          setRoles(availableRoles);
-          setFormData(prev => ({
-            ...prev,
-            role: prev.role || (availableRoles.some(r => (r.code || r.value) === 'BRANCH_MANAGER') ? 'BRANCH_MANAGER' : (availableRoles[0]?.code || availableRoles[0]?.value || 'BRANCH_MANAGER'))
-          }));
-        } else {
-          const fallbackRoles = [
-            { code: 'BANK_OWNER', name: 'Bank Owner' },
-            { code: 'BRANCH_MANAGER', name: 'Branch Manager' },
-            { code: 'CA', name: 'Chartered Accountant' }
-          ];
-          setRoles(fallbackRoles);
-          setFormData(prev => ({
-            ...prev,
-            role: prev.role || 'BRANCH_MANAGER'
-          }));
-        }
-      } catch (err) {
-        console.error("Failed to fetch roles:", err);
-        const fallbackRoles = [
-          { code: 'BANK_OWNER', name: 'Bank Owner' },
-          { code: 'BRANCH_MANAGER', name: 'Branch Manager' },
-          { code: 'CA', name: 'Chartered Accountant' }
-        ];
-        setRoles(fallbackRoles);
-        setFormData(prev => ({
-          ...prev,
-          role: prev.role || 'BRANCH_MANAGER'
-        }));
-      }
-    };
-    fetchRoles();
-  }, []);
   const navigate = useNavigate();
   const login = useAuthStore((state) => state.login);
 
@@ -80,10 +26,6 @@ const BankLogin = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.role) {
-      setError("Please select a role");
-      return;
-    }
 
     const emailCheck = validateEmail(formData.email);
     if (!emailCheck.isValid) {
@@ -103,8 +45,7 @@ const BankLogin = () => {
     try {
       const response = await authService.login({
         email: formData.email.trim(),
-        password: formData.password,
-        role: formData.role
+        password: formData.password
       });
       
       if (response.success && response.data) {
@@ -126,13 +67,10 @@ const BankLogin = () => {
   return (
     <AuthLayout illustration={<img src={loginIllustration} alt="Bank Login Illustration" className="w-full max-w-md object-contain drop-shadow-2xl" />}>
       <div className="flex flex-col items-center text-center mb-8">
-        <div className="bg-white p-3 rounded-xl shadow-sm mb-6 flex flex-col items-center justify-center w-20 h-20">
-          <Landmark size={32} className="text-gray-900 mb-1" />
-          <span className="text-[10px] font-bold text-gray-900 tracking-wider">BANK</span>
-        </div>
-        <h2 className="text-[28px] font-bold text-gray-900 mb-2">Welcome Back</h2>
-        <h3 className="text-[18px] font-bold text-gray-800 mb-4">Login</h3>
-        <p className="text-[14px] font-semibold text-gray-500">Sign in with your registered email and password.</p>
+
+        <h2 className="text-[32px] font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-[#0f4b86] to-[#1cabb1] mb-2 tracking-tight">Welcome Back</h2>
+        <h3 className="text-[16px] font-semibold text-gray-800 mb-2 uppercase tracking-widest opacity-80">Login</h3>
+        <p className="text-[14px] font-medium text-gray-500 max-w-[260px] mx-auto leading-relaxed">Sign in with your registered email and password.</p>
       </div>
 
       {error && (
@@ -143,45 +81,22 @@ const BankLogin = () => {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Role Selection */}
-        <div>
-          <label className="block text-[13px] font-bold text-gray-700 mb-2">Role</label>
-          <div className="relative">
-            <select
-              name="role"
-              required
-              value={formData.role}
-              onChange={handleChange}
-              className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#5a5ce5] focus:border-transparent transition-all bg-white appearance-none text-gray-700 text-sm"
-            >
-              <option value="" disabled>Select</option>
-              {roles.map(role => {
-                const code = role.code || role.value || role.id || role;
-                const name = role.name || role.label || role.title || code;
-                return <option key={code} value={code}>{name}</option>;
-              })}
-            </select>
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-500">
-              <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg>
-            </div>
-          </div>
-        </div>
 
-        <div>
-          <label className="block text-[13px] font-bold text-gray-700 mb-2">Email</label>
+        <div className="relative group">
+          <label className="block text-[13px] font-bold text-gray-700 mb-2 tracking-wide uppercase opacity-90 transition-all group-focus-within:text-[#1cabb1]">Email</label>
           <input
             type="email"
             name="email"
             required
             value={formData.email}
             onChange={handleChange}
-            className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#5a5ce5] focus:border-transparent transition-all bg-white text-sm placeholder-gray-500"
+            className="w-full px-5 py-4 rounded-[14px] border border-gray-200/80 bg-gray-50/50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-[#1cabb1]/15 focus:border-[#1cabb1] transition-all duration-300 text-[15px] text-gray-800 placeholder-gray-400 font-medium shadow-sm hover:border-gray-300"
             placeholder="Enter email"
           />
         </div>
 
-        <div>
-          <label className="block text-[13px] font-bold text-gray-700 mb-2">Password</label>
+        <div className="relative group">
+          <label className="block text-[13px] font-bold text-gray-700 mb-2 tracking-wide uppercase opacity-90 transition-all group-focus-within:text-[#1cabb1]">Password</label>
           <div className="relative">
             <input
               type={showPassword ? "text" : "password"}
@@ -189,21 +104,21 @@ const BankLogin = () => {
               required
               value={formData.password}
               onChange={handleChange}
-              className="w-full pl-4 pr-12 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#5a5ce5] focus:border-transparent transition-all bg-white text-sm placeholder-gray-500"
+              className="w-full pl-5 pr-12 py-4 rounded-[14px] border border-gray-200/80 bg-gray-50/50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-[#1cabb1]/15 focus:border-[#1cabb1] transition-all duration-300 text-[15px] text-gray-800 placeholder-gray-400 font-medium shadow-sm hover:border-gray-300"
               placeholder="Enter Password"
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute inset-y-0 right-0 flex items-center pr-4 text-gray-400 hover:text-gray-600 transition-colors focus:outline-none"
+              className="absolute inset-y-0 right-0 flex items-center pr-4 text-gray-400 hover:text-[#1cabb1] transition-colors focus:outline-none"
             >
               {showPassword ? <Eye size={20} /> : <EyeOff size={20} />}
             </button>
           </div>
         </div>
 
-        <div className="flex justify-end mt-2 mb-6">
-          <Link to="/bank/forgot-password" className="text-[13px] text-[#00bcd4] hover:text-[#00a0b5] font-medium">
+        <div className="flex justify-end mt-2 mb-8">
+          <Link to="/bank/forgot-password" className="text-[13px] text-[#1cabb1] hover:text-[#148b90] font-bold transition-colors">
             Forget Password ?
           </Link>
         </div>
@@ -211,7 +126,7 @@ const BankLogin = () => {
         <button
           type="submit"
           disabled={loading}
-          className={`w-full py-3.5 px-4 bg-[#295995] text-white text-[15px] font-medium rounded-full transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#295995] flex justify-center items-center ${loading ? 'opacity-70 cursor-not-allowed' : 'hover:bg-[#1f4577]'}`}
+          className={`w-full py-4 px-6 bg-gradient-to-r from-[#0f4b86] to-[#1cabb1] text-white text-[16px] font-bold tracking-wide rounded-[14px] transition-all duration-300 shadow-[0_8px_20px_-6px_rgba(28,171,177,0.4)] focus:outline-none focus:ring-4 focus:ring-[#1cabb1]/30 flex justify-center items-center transform ${loading ? 'opacity-70 cursor-not-allowed' : 'hover:-translate-y-0.5 hover:shadow-[0_12px_25px_-6px_rgba(28,171,177,0.5)] active:translate-y-0'}`}
         >
           {loading ? (
             <div className="flex items-center justify-center gap-2">

@@ -1,5 +1,7 @@
 import React, { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import ProtectedRoute from './components/routes/ProtectedRoute';
+import PublicRoute from './components/routes/PublicRoute';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -115,22 +117,25 @@ function App() {
       />
       <Suspense fallback={<PageSuspenseFallback />}>
         <Routes>
-          <Route path="/" element={<Navigate to="/login" replace />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/verify-otp" element={<VerifyOTP />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
-          <Route path="/password-changed" element={<PasswordChanged />} />
-
-          {/* Bank Portal Routes */}
-          <Route path="/bank/login" element={<BankLogin />} />
-          <Route path="/bank" element={<BankDashboardLayout />}>
-            <Route path="dashboard" element={<BankDashboard />} />
+          <Route element={<PublicRoute />}>
+            <Route path="/login" element={<Login />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/verify-otp" element={<VerifyOTP />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/password-changed" element={<PasswordChanged />} />
+            <Route path="/bank/login" element={<BankLogin />} />
           </Route>
 
-          {/* Society Dashboard Routes */}
-          <Route path="/" element={<DashboardLayout />}>
-            <Route path="dashboard" element={<Dashboard />} />
+          <Route element={<ProtectedRoute />}>
+            {/* Bank Portal Routes */}
+            <Route path="/bank" element={<BankDashboardLayout />}>
+              <Route path="dashboard" element={<BankDashboard />} />
+            </Route>
+
+            {/* Society Dashboard Routes */}
+            <Route path="/" element={<DashboardLayout />}>
+              <Route index element={<Navigate to="/dashboard" replace />} />
+              <Route path="dashboard" element={<Dashboard />} />
             <Route path="profile" element={<MyProfile />} />
             <Route path="notifications" element={<Notifications />} />
             <Route path="managers" element={<Managers />} />
@@ -197,6 +202,7 @@ function App() {
             <Route path="cards-credit" element={<CardsAndCredit />} />
             <Route path="cards-credit/payment" element={<ChoosePaymentMethod />} />
             <Route path="cards-credit/payment/success" element={<PaymentSuccessful />} />
+            </Route>
           </Route>
         </Routes>
       </Suspense>

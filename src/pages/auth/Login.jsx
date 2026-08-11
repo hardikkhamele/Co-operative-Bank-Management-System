@@ -9,47 +9,12 @@ import { validateEmail, validatePassword } from '../../utils/validation';
 
 const Login = () => {
   const [formData, setFormData] = useState({ 
-    role: 'BRANCH_MANAGER', 
     email: 'stark@bank.com', 
     password: 'Password@123' 
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
-  const [roles, setRoles] = useState([]);
-
-  useEffect(() => {
-    const fetchRoles = async () => {
-      try {
-        const response = await authService.getRoles();
-        if (response.success && response.data) {
-          // Use allRoles if available, otherwise combine system and custom roles
-          const availableRoles = response.data.allRoles || [...(response.data.systemRoles || []), ...(response.data.customRoles || [])];
-          if (availableRoles && availableRoles.length > 0) {
-            setRoles(availableRoles);
-            setFormData(prev => ({
-              ...prev,
-              role: prev.role || (availableRoles.some(r => (r.code || r.value) === 'BRANCH_MANAGER') ? 'BRANCH_MANAGER' : (availableRoles[0]?.code || availableRoles[0]?.value || 'BRANCH_MANAGER'))
-            }));
-          }
-        }
-      } catch (err) {
-        console.error("Failed to fetch roles:", err);
-        // Fallback roles if the backend times out or is spinning up
-        const fallbackRoles = [
-          { code: 'BANK_OWNER', name: 'Bank Owner' },
-          { code: 'BRANCH_MANAGER', name: 'Branch Manager' },
-          { code: 'CA', name: 'Chartered Accountant' }
-        ];
-        setRoles(fallbackRoles);
-        setFormData(prev => ({
-          ...prev,
-          role: prev.role || 'BRANCH_MANAGER'
-        }));
-      }
-    };
-    fetchRoles();
-  }, []);
 
   const navigate = useNavigate();
   const login = useAuthStore((state) => state.login);
@@ -61,10 +26,6 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.role) {
-       setError("Please select a role");
-       return;
-    }
 
     const emailCheck = validateEmail(formData.email);
     if (!emailCheck.isValid) {
@@ -84,8 +45,7 @@ const Login = () => {
     try {
       const response = await authService.login({
         email: formData.email.trim(),
-        password: formData.password,
-        role: formData.role
+        password: formData.password
       });
       
       if (response.success && response.data) {
@@ -107,10 +67,7 @@ const Login = () => {
   return (
     <AuthLayout illustration={<img src={loginIllustration} alt="Login Illustration" className="w-full max-w-md object-contain drop-shadow-2xl" />}>
       <div className="flex flex-col items-center text-center mb-8">
-        <div className="bg-white p-3 rounded-xl shadow-sm mb-6 flex flex-col items-center justify-center w-20 h-20">
-          <Landmark size={32} className="text-gray-900 mb-1" />
-          <span className="text-[10px] font-bold text-gray-900 tracking-wider">BANK</span>
-        </div>
+
         <h2 className="text-[28px] font-bold text-gray-900 mb-2">Welcome Back</h2>
         <h3 className="text-[18px] font-bold text-gray-800 mb-4">Login</h3>
         <p className="text-[14px] font-semibold text-gray-500">Sign in with your registered email and password.</p>
@@ -124,30 +81,6 @@ const Login = () => {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Role Selection */}
-        <div>
-          <label className="block text-[13px] font-bold text-gray-700 mb-2">Role</label>
-          <div className="relative">
-            <select
-              name="role"
-              required
-              value={formData.role}
-              onChange={handleChange}
-              className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#5a5ce5] focus:border-transparent transition-all bg-white appearance-none text-gray-700 text-sm"
-            >
-              <option value="" disabled>Select</option>
-              {roles.map(role => {
-                const code = role.code || role.value || role.id || role;
-                const name = role.name || role.label || role.title || code;
-                return <option key={code} value={code}>{name}</option>;
-              })}
-            </select>
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-500">
-              <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg>
-            </div>
-          </div>
-        </div>
-
         <div>
           <label className="block text-[13px] font-bold text-gray-700 mb-2">Email</label>
           <input

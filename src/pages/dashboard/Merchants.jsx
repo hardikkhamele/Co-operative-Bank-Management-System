@@ -71,6 +71,7 @@ const Merchants = () => {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-gray-50/50 border-b border-gray-100">
+                <th className="py-4 px-6 font-semibold text-gray-700 text-sm">Sr No</th>
                 <th className="py-4 px-6 font-semibold text-gray-700 text-sm">Shop Name</th>
                 <th className="py-4 px-6 font-semibold text-gray-700 text-sm">Owner Name</th>
                 <th className="py-4 px-6 font-semibold text-gray-700 text-sm">Email</th>
@@ -79,8 +80,11 @@ const Merchants = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {filteredData.map((row) => (
+              {filteredData.map((row, index) => (
                 <tr key={row.id} className="hover:bg-gray-50/50 transition-colors">
+                  <td className="py-4 px-6">
+                    <div className="text-sm font-medium text-gray-600">{index + 1}</div>
+                  </td>
                   <td className="py-4 px-6">
                     <div className="font-medium text-gray-800">{row.shopName}</div>
                   </td>

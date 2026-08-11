@@ -135,23 +135,26 @@ const RolesAndPermissions = () => {
           <thead>
             <tr className="bg-indigo-50/50 text-gray-700 text-sm font-semibold border-b border-gray-100">
               <th className="py-4 px-6 text-center w-20">Sr. No.</th>
-              <th className="py-4 px-6">Roles</th>
-              <th className="py-4 px-6">Total Permissions</th>
+              <th className="py-4 px-6">Name</th>
+              <th className="py-4 px-6">Email</th>
+              <th className="py-4 px-6">Phone Number</th>
+              <th className="py-4 px-6">Role</th>
+              <th className="py-4 px-6">Permissions</th>
               <th className="py-4 px-6">Status</th>
               <th className="py-4 px-6 text-center w-32">Action</th>
             </tr>
           </thead>
           <tbody>
             {loading && roles.length === 0 ? null : roles.length === 0 ? (
-              <tr><td colSpan="5" className="py-8 text-center text-gray-500">No roles found.</td></tr>
+              <tr><td colSpan="8" className="py-8 text-center text-gray-500">No roles found.</td></tr>
             ) : (
               roles.map((row, index) => (
                 <tr key={row.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors text-sm text-gray-600">
                   <td className="py-4 px-6 text-center">{row.srNo || ((page - 1) * 10 + index + 1)}</td>
-                  <td className="py-4 px-6">
-                    <div className="font-medium text-gray-800">{row.name}</div>
-                    <div className="text-xs text-gray-400 mt-1">{row.description}</div>
-                  </td>
+                  <td className="py-4 px-6 font-medium text-gray-800">{row.name}</td>
+                  <td className="py-4 px-6">{row.email || '—'}</td>
+                  <td className="py-4 px-6">{row.phoneNumber || '—'}</td>
+                  <td className="py-4 px-6">{row.role || '—'}</td>
                   <td className="py-4 px-6">{row.permissions?.length || 0}</td>
                   <td className="py-4 px-6">
                     <span className={`px-2 py-1 rounded-full text-xs font-semibold ${row.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>

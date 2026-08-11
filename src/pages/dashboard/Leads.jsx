@@ -327,6 +327,8 @@ const Leads = () => {
                 <th className="py-4 px-6 font-semibold text-gray-700 text-sm">Application Number</th>
                 <th className="py-4 px-6 font-semibold text-gray-700 text-sm">Customer Name</th>
                 <th className="py-4 px-6 font-semibold text-gray-700 text-sm">Phone Number</th>
+                <th className="py-4 px-6 font-semibold text-gray-700 text-sm">Branch</th>
+                <th className="py-4 px-6 font-semibold text-gray-700 text-sm">Created By</th>
                 <th className="py-4 px-6 font-semibold text-gray-700 text-sm">Address</th>
                 <th className="py-4 px-6 font-semibold text-gray-700 text-sm">Status</th>
                 <th className="py-4 px-6 font-semibold text-gray-700 text-sm text-center">Action</th>
@@ -335,7 +337,7 @@ const Leads = () => {
             <tbody className="divide-y divide-gray-100">
               {loading ? (
                 <tr>
-                  <td colSpan="7" className="py-16 text-center text-gray-500">
+                  <td colSpan="9" className="py-16 text-center text-gray-500">
                     <div className="flex flex-col items-center justify-center gap-3">
                       <Loader2 size={32} className="animate-spin text-[#1cabb1]" />
                       <span className="text-sm font-medium">Loading leads...</span>
@@ -367,6 +369,8 @@ const Leads = () => {
                         </div>
                       </td>
                       <td className="py-4 px-6 text-sm text-gray-600">{lead.phoneNumber || '—'}</td>
+                      <td className="py-4 px-6 text-sm text-gray-600 font-medium">{lead.branchName || '—'}</td>
+                      <td className="py-4 px-6 text-sm text-gray-600">{lead.createdByName || '—'}</td>
                       <td className="py-4 px-6 text-sm text-gray-600 max-w-xs truncate" title={lead.address}>
                         {lead.address || '—'}
                       </td>
@@ -397,7 +401,7 @@ const Leads = () => {
                 })
               ) : (
                 <tr>
-                  <td colSpan="7" className="py-16 text-center text-gray-500">
+                  <td colSpan="9" className="py-16 text-center text-gray-500">
                     <div className="flex flex-col items-center justify-center gap-2">
                       <AlertCircle size={32} className="text-gray-300" />
                       <p className="text-sm font-medium text-gray-600">No leads found.</p>
