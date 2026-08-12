@@ -74,9 +74,7 @@ const ViewCashPayment = () => {
         });
         const historyList = Array.isArray(data.history) ? data.history : [];
         setHistory(historyList);
-        if (data.meta) {
-          setMeta(data.meta);
-        } else {
+        if (res.meta || res.pagination || res.data?.meta || res.data?.pagination) { setMeta(res.meta || res.pagination || res.data?.meta || res.data?.pagination); } else {
           setMeta({
             page,
             limit,

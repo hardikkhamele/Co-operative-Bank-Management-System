@@ -42,8 +42,8 @@ const RolesAndPermissions = () => {
       const response = await roleService.list(params);
       if (response.success) {
         setRoles(response.data);
-        setTotalPages(response.pagination?.totalPages || 1);
-        setTotalRecords(response.pagination?.totalRecords || 0);
+        setTotalPages(response.meta?.totalPages || response.pagination?.totalPages || response.data?.meta?.totalPages || response.data?.pagination?.totalPages || 1);
+        setTotalRecords(response.meta?.totalRecords || response.pagination?.totalRecords || response.data?.meta?.totalRecords || response.data?.pagination?.totalRecords || 0);
       }
     } catch (err) {
       console.error("Failed to fetch roles:", err);

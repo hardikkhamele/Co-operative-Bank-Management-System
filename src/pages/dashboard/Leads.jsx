@@ -95,9 +95,7 @@ const Leads = () => {
       const res = await leadService.list(params);
       if (res && res.success) {
         setLeads(res.data || []);
-        if (res.meta) {
-          setMeta(res.meta);
-        }
+        if (res.meta || res.pagination || res.data?.meta || res.data?.pagination) { setMeta(res.meta || res.pagination || res.data?.meta || res.data?.pagination); }
       } else {
         setLeads([]);
       }

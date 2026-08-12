@@ -56,7 +56,7 @@ const Branch = () => {
       const response = await branchService.list(params);
       if (response.success) {
         setBranches(response.data);
-        setTotalPages(response.pagination?.totalPages || 1);
+        setTotalPages(response.meta?.totalPages || response.pagination?.totalPages || response.data?.meta?.totalPages || response.data?.pagination?.totalPages || 1);
       }
     } catch (err) {
       console.error("Failed to fetch branches", err);

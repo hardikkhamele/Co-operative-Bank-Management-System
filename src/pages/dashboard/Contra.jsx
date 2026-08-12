@@ -106,9 +106,7 @@ const Contra = () => {
       if (res && res.success) {
         const listData = Array.isArray(res.data) ? res.data : (res.data?.receipts || []);
         setReceipts(listData);
-        if (res.meta) {
-          setMeta(res.meta);
-        } else {
+        if (res.meta || res.pagination || res.data?.meta || res.data?.pagination) { setMeta(res.meta || res.pagination || res.data?.meta || res.data?.pagination); } else {
           setMeta({
             totalRecords: listData.length,
             totalPages: Math.ceil(listData.length / limit) || 1,

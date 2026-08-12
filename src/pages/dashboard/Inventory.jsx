@@ -83,9 +83,7 @@ const Inventory = () => {
       const response = await inventoryService.list(params);
       if (response && response.success) {
         setInventory(response.data || []);
-        if (response.meta) {
-          setMeta(response.meta);
-        }
+        if (response.meta || response.pagination || response.data?.meta || response.data?.pagination) { setMeta(response.meta || response.pagination || response.data?.meta || response.data?.pagination); }
       } else {
         setInventory([]);
       }

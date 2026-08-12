@@ -73,9 +73,7 @@ const CashPayment = () => {
           ? dataPayload
           : [];
         setItems(itemsList);
-        if (dataPayload.meta) {
-          setMeta(dataPayload.meta);
-        } else {
+        if (res.meta || res.pagination || res.data?.meta || res.data?.pagination) { setMeta(res.meta || res.pagination || res.data?.meta || res.data?.pagination); } else {
           setMeta({
             page,
             limit,
