@@ -51,5 +51,45 @@ export const authService = {
     } catch (error) {
       throw error;
     }
+  },
+
+  // Forgot Password
+  forgotPassword: async (email) => {
+    try {
+      const response = await axiosInstance.post('/v1/society/auth/forgot-password', { email });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  // Verify OTP
+  verifyOtp: async (data) => {
+    try {
+      const response = await axiosInstance.post('/v1/society/auth/verify-otp', data);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  // Resend OTP
+  resendOtp: async (email) => {
+    try {
+      const response = await axiosInstance.post('/v1/society/auth/resend-otp', { email });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  // Reset Password
+  resetPassword: async (data) => {
+    try {
+      const response = await axiosInstance.post('/v1/society/auth/reset-password', data);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   }
 };

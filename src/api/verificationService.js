@@ -13,21 +13,15 @@ export const verificationService = {
    * @param {string} [data.phoneNumber] - Phone number alias
    * @returns {Promise<Object>} API response with creditReport, score and history
    */
-  checkCibilScore: async ({ fullName, dob, pan, mobile, phoneNumber, phone }) => {
+  checkCibilScore: async ({ fullName, dob, pan, mobile, phoneNumber, phone, mobileNumber }) => {
     try {
-      const phoneVal = (mobile || phoneNumber || phone || '').toString().trim();
+      const phoneVal = (mobileNumber || mobile || phoneNumber || phone || '').toString().trim();
       const payload = {
+        mobileNumber: phoneVal,
+        pan: pan?.trim()?.toUpperCase(),
         fullName: fullName?.trim(),
         dob,
-        pan: pan?.trim()?.toUpperCase(),
       };
-
-      if (phoneVal) {
-        payload.mobile = phoneVal;
-        payload.phoneNumber = phoneVal;
-        payload.phone = phoneVal;
-        payload.mobileNumber = phoneVal;
-      }
 
       const response = await axiosInstance.post('/v1/society/cibil-score', payload);
       return response.data;

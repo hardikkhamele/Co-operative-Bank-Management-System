@@ -1,25 +1,33 @@
-import React, { useState, useEffect } from 'react';
-import { toast } from 'react-toastify';
-import { Link, useNavigate } from 'react-router-dom';
-import { ChevronRight, Search, Eye, Edit, Trash2, ChevronLeft, X } from 'lucide-react';
-import { roleService } from '../../api/roleService';
+import React, { useState, useEffect } from "react";
+import { toast } from "react-toastify";
+import { Link, useNavigate } from "react-router-dom";
+import {
+  ChevronRight,
+  Search,
+  Eye,
+  Edit,
+  Trash2,
+  ChevronLeft,
+  X,
+} from "lucide-react";
+import { roleService } from "../../api/roleService";
 
 const RolesAndPermissions = () => {
   const navigate = useNavigate();
   const [roles, setRoles] = useState([]);
   const [loading, setLoading] = useState(true);
-  
+
   // Pagination & Search
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
 
   // Modals
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [selectedRoleForView, setSelectedRoleForView] = useState(null);
-  
+
   // Delete feedback
   const [errorMsg, setErrorMsg] = useState(null);
 
@@ -38,12 +46,24 @@ const RolesAndPermissions = () => {
     try {
       const params = { page, limit: 10 };
       if (debouncedSearch) params.search = debouncedSearch;
-      
+
       const response = await roleService.list(params);
       if (response.success) {
         setRoles(response.data);
-        setTotalPages(response.meta?.totalPages || response.pagination?.totalPages || response.data?.meta?.totalPages || response.data?.pagination?.totalPages || 1);
-        setTotalRecords(response.meta?.totalRecords || response.pagination?.totalRecords || response.data?.meta?.totalRecords || response.data?.pagination?.totalRecords || 0);
+        setTotalPages(
+          response.meta?.totalPages ||
+            response.pagination?.totalPages ||
+            response.data?.meta?.totalPages ||
+            response.data?.pagination?.totalPages ||
+            1,
+        );
+        setTotalRecords(
+          response.meta?.totalRecords ||
+            response.pagination?.totalRecords ||
+            response.data?.meta?.totalRecords ||
+            response.data?.pagination?.totalRecords ||
+            0,
+        );
       }
     } catch (err) {
       console.error("Failed to fetch roles:", err);
@@ -59,15 +79,18 @@ const RolesAndPermissions = () => {
 
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this role?")) return;
-    
+
     try {
       const res = await roleService.delete(id);
       if (res.success) {
+        toast.success(res.message || "Role deleted successfully.");
         fetchRoles();
       }
     } catch (err) {
       if (err.response?.status === 409) {
-        toast.error("Cannot delete role: It is currently assigned to active employees.");
+        toast.error(
+          "Cannot delete role: It is currently assigned to active employees.",
+        );
       } else {
         toast.error("An error occurred while deleting the role.");
       }
@@ -92,7 +115,9 @@ const RolesAndPermissions = () => {
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-[#4285F4] mb-2">Roles</h1>
         <div className="flex items-center text-sm text-gray-500">
-          <Link to="/dashboard" className="hover:text-[#1cabb1]">Dashboard</Link>
+          <Link to="/dashboard" className="hover:text-[#1cabb1]">
+            Dashboard
+          </Link>
           <ChevronRight size={14} className="mx-2" />
           <span>Roles & Permissions</span>
           <ChevronRight size={14} className="mx-2" />
@@ -110,7 +135,10 @@ const RolesAndPermissions = () => {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
         <div className="flex items-center gap-3 w-full sm:w-auto">
           <div className="relative w-full sm:w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+            <Search
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+              size={18}
+            />
             <input
               type="text"
               placeholder="Search roles..."
@@ -120,8 +148,8 @@ const RolesAndPermissions = () => {
             />
           </div>
         </div>
-        
-        <Link 
+
+        <Link
           to="/roles-permissions/create"
           className="bg-[#1cabb1] hover:bg-[#168f94] text-white px-4 py-2 rounded-full font-medium transition-colors flex items-center text-sm w-full sm:w-auto justify-center shrink-0"
         >
@@ -135,50 +163,74 @@ const RolesAndPermissions = () => {
           <thead>
             <tr className="bg-indigo-50/50 text-gray-700 text-sm font-semibold border-b border-gray-100">
               <th className="py-4 px-6 text-center w-20">Sr. No.</th>
-              <th className="py-4 px-6">Name</th>
-              <th className="py-4 px-6">Email</th>
-              <th className="py-4 px-6">Phone Number</th>
-              <th className="py-4 px-6">Role</th>
-              <th className="py-4 px-6">Permissions</th>
+              <th className="py-4 px-6">Role Name</th>
+
+              <th className="py-4 px-6">Description</th>
+              <th className="py-4 px-6 text-center">Permissions Count</th>
               <th className="py-4 px-6">Status</th>
               <th className="py-4 px-6 text-center w-32">Action</th>
             </tr>
           </thead>
           <tbody>
             {loading && roles.length === 0 ? null : roles.length === 0 ? (
-              <tr><td colSpan="8" className="py-8 text-center text-gray-500">No roles found.</td></tr>
+              <tr>
+                <td colSpan="8" className="py-8 text-center text-gray-500">
+                  No roles found.
+                </td>
+              </tr>
             ) : (
-              roles.map((row, index) => (
-                <tr key={row.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors text-sm text-gray-600">
-                  <td className="py-4 px-6 text-center">{row.srNo || ((page - 1) * 10 + index + 1)}</td>
-                  <td className="py-4 px-6 font-medium text-gray-800">{row.name}</td>
-                  <td className="py-4 px-6">{row.email || '—'}</td>
-                  <td className="py-4 px-6">{row.phoneNumber || '—'}</td>
-                  <td className="py-4 px-6">{row.role || '—'}</td>
-                  <td className="py-4 px-6">{row.permissions?.length || 0}</td>
+              roles.map((row, index) => {
+                const roleId = row._id || row.id || row.roleId;
+                return (
+                <tr
+                  key={roleId}
+                  className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors text-sm text-gray-600"
+                >
+                  <td className="py-4 px-6 text-center">
+                    {row.srNo || (page - 1) * 10 + index + 1}
+                  </td>
+                  <td className="py-4 px-6 font-medium text-gray-800">
+                    {row.name}
+                  </td>
+
+                  <td
+                    className="py-4 px-6 max-w-xs truncate"
+                    title={row.description}
+                  >
+                    {row.description || "—"}
+                  </td>
+                  <td className="py-4 px-6 text-center">
+                    <span className="bg-blue-50 text-blue-700 border border-blue-100 px-2.5 py-0.5 rounded-full text-xs font-semibold">
+                      {row.permissions?.length || 0}
+                    </span>
+                  </td>
                   <td className="py-4 px-6">
-                    <span className={`px-2 py-1 rounded-full text-xs font-semibold ${row.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                      {row.status || 'UNKNOWN'}
+                    <span
+                      className={`px-2 py-1 rounded-full text-xs font-semibold ${row.status === "ACTIVE" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}
+                    >
+                      {row.status || "UNKNOWN"}
                     </span>
                   </td>
                   <td className="py-4 px-6">
                     <div className="flex items-center justify-center gap-3">
-                      <button 
-                        onClick={() => handleView(row.id)}
+                      <button
+                        onClick={() => handleView(roleId)}
                         className="text-gray-400 hover:text-gray-700 transition-colors"
                         title="View Details"
                       >
                         <Eye size={18} />
                       </button>
-                      <button 
-                        onClick={() => navigate(`/roles-permissions/edit/${row.id}`)}
+                      <button
+                        onClick={() =>
+                          navigate(`/roles-permissions/edit/${roleId}`)
+                        }
                         className="text-gray-400 hover:text-blue-500 transition-colors"
                         title="Edit"
                       >
                         <Edit size={18} />
                       </button>
-                      <button 
-                        onClick={() => handleDelete(row.id)}
+                      <button
+                        onClick={() => handleDelete(roleId)}
                         className="text-gray-400 hover:text-red-500 transition-colors"
                         title="Delete"
                       >
@@ -187,7 +239,8 @@ const RolesAndPermissions = () => {
                     </div>
                   </td>
                 </tr>
-              ))
+                );
+              })
             )}
           </tbody>
         </table>
@@ -196,10 +249,12 @@ const RolesAndPermissions = () => {
       {/* Pagination */}
       {!loading && roles.length > 0 && (
         <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-gray-500">
-          <div>Showing page {page} of {totalPages} ({totalRecords} total entries)</div>
+          <div>
+            Showing page {page} of {totalPages} ({totalRecords} total entries)
+          </div>
           <div className="flex items-center gap-2">
-            <button 
-              onClick={() => setPage(p => Math.max(1, p - 1))}
+            <button
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page === 1}
               className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-[#1cabb1] hover:bg-[#1cabb1] hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
@@ -208,8 +263,8 @@ const RolesAndPermissions = () => {
             <button className="w-8 h-8 flex items-center justify-center rounded-full bg-[#1cabb1] text-white border border-[#1cabb1]">
               {page}
             </button>
-            <button 
-              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+            <button
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page === totalPages}
               className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-[#1cabb1] hover:bg-[#1cabb1] hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
@@ -225,35 +280,49 @@ const RolesAndPermissions = () => {
           <div className="bg-[#f4f6fa] rounded-xl shadow-2xl w-full max-w-2xl flex flex-col max-h-[85vh] animate-in fade-in zoom-in-95 duration-200">
             {/* Modal Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200/60 bg-white rounded-t-xl">
-              <h2 className="text-[17px] font-bold text-[#1e293b]">Roles & Permissions Details</h2>
-              <button 
+              <h2 className="text-[17px] font-bold text-[#1e293b]">
+                Roles & Permissions Details
+              </h2>
+              <button
                 onClick={() => setIsViewModalOpen(false)}
                 className="text-gray-400 hover:text-gray-700 transition-colors"
               >
                 <X size={20} />
               </button>
             </div>
-            
+
             {/* Modal Content */}
             <div className="p-6 overflow-y-auto custom-scrollbar flex-1">
               <div className="mb-4 pb-4 border-b border-gray-200">
-                <h3 className="text-[17px] font-bold text-[#3b82f6]">{selectedRoleForView.name}</h3>
-                <p className="text-sm text-gray-500 mt-1">{selectedRoleForView.description}</p>
+                <h3 className="text-[17px] font-bold text-[#3b82f6]">
+                  {selectedRoleForView.name}
+                </h3>
+                <p className="text-sm text-gray-500 mt-1">
+                  {selectedRoleForView.description}
+                </p>
               </div>
-              
-              <div className="text-[14px] font-bold text-gray-800 mb-3">Assigned Permissions</div>
-              
+
+              <div className="text-[14px] font-bold text-gray-800 mb-3">
+                Assigned Permissions
+              </div>
+
               <div className="flex flex-col rounded-xl overflow-hidden border border-gray-200 shadow-sm bg-white">
-                {selectedRoleForView.permissions && selectedRoleForView.permissions.length > 0 ? (
+                {selectedRoleForView.permissions &&
+                selectedRoleForView.permissions.length > 0 ? (
                   <div className="p-5 flex flex-wrap gap-2">
                     {selectedRoleForView.permissions.map((perm, idx) => (
-                      <span key={idx} className="bg-blue-50 text-blue-700 border border-blue-100 px-3 py-1 rounded-full text-xs font-medium">
+                      <span
+                        key={idx}
+                        className="bg-blue-50 text-blue-700 border border-blue-100 px-3 py-1 rounded-full text-xs font-medium"
+                      >
                         {perm}
                       </span>
                     ))}
                   </div>
                 ) : (
-                  <div className="p-5 text-gray-500 text-sm">No permissions assigned.</div>
+                  <div className="p-5 text-gray-500 text-sm">
+                    No permissions assigned.
+                  </div>
                 )}
               </div>
             </div>

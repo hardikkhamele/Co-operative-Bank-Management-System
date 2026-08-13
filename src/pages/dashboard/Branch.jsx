@@ -713,30 +713,6 @@ const Branch = () => {
                       />
                     </div>
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">Initial EMI Card Stock</label>
-                      <input 
-                        type="number" 
-                        min="0"
-                        onKeyDown={preventInvalidNumberKeys}
-                        value={createForm.branch.cardStock} 
-                        onChange={e => handleCreateChange('branch', 'cardStock', e.target.value)} 
-                        className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1cabb1] text-sm" 
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">Initial Verification Credits</label>
-                      <input 
-                        type="number" 
-                        min="0"
-                        onKeyDown={preventInvalidNumberKeys}
-                        value={createForm.branch.verificationCredits} 
-                        onChange={e => handleCreateChange('branch', 'verificationCredits', e.target.value)} 
-                        className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1cabb1] text-sm" 
-                      />
-                    </div>
-                  </div>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -793,7 +769,7 @@ const Branch = () => {
                   <button onClick={() => setIsCreateModalOpen(false)} className="px-6 py-2 rounded-full border border-gray-300 text-gray-700 font-semibold hover:bg-gray-50 transition-colors text-sm">Cancel</button>
                   <button 
                     onClick={() => setCreateStep(2)} 
-                    disabled={!createForm.branch.name || !createForm.branch.code || !createForm.branch.state || !createForm.branch.email}
+                    disabled={!createForm.branch.name || !createForm.branch.code || !createForm.branch.state || !createForm.branch.email || !createForm.manager.fullName}
                     className="px-6 py-2 rounded-full bg-[#1cabb1] text-white font-semibold hover:bg-[#168f94] transition-colors shadow-sm text-sm flex items-center gap-2 disabled:opacity-50"
                   >
                     Next Step <ArrowRight size={16} />
@@ -891,16 +867,6 @@ const Branch = () => {
                     <div>
                       <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">Pincode</label>
                       <input type="text" value={selectedBranch.address?.pincode || ''} onChange={(e) => setSelectedBranch({...selectedBranch, address: { ...selectedBranch.address, pincode: e.target.value }})} className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1cabb1] text-sm" />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">Initial EMI Card Stock</label>
-                      <input type="number" value={selectedBranch.cardStock || ''} onChange={(e) => setSelectedBranch({...selectedBranch, cardStock: e.target.value})} className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1cabb1] text-sm" />
-                    </div>
-                    <div>
-                      <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">Initial Verification Credits</label>
-                      <input type="number" value={selectedBranch.verificationCredits || ''} onChange={(e) => setSelectedBranch({...selectedBranch, verificationCredits: e.target.value})} className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1cabb1] text-sm" />
                     </div>
                   </div>
                 </>

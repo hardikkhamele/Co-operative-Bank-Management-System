@@ -195,13 +195,13 @@ const Employees = () => {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
                     <select 
                       value={selectedRoleId}
                       onChange={(e) => setSelectedRoleId(e.target.value)}
                       className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#1cabb1] bg-white text-sm"
                     >
-                      <option value="">All Roles</option>
+                      <option value="">All Departments</option>
                       {roleOptions.map(r => (
                         <option key={r.id} value={r.id}>{r.name}</option>
                       ))}

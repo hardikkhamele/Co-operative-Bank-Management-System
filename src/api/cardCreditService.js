@@ -21,6 +21,26 @@ export const cardCreditService = {
     }
   },
 
+  // 2.5 Calculate Purchase Price
+  calculatePrice: async (data) => {
+    try {
+      const response = await axiosInstance.post('/v1/society/cards-credit/calculate-price', data);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  // 3.5 Verify Razorpay Payment Signature
+  verifyPayment: async (data) => {
+    try {
+      const response = await axiosInstance.post('/v1/society/cards-credit/payment/verify', data);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
   // 3. Check Payment Status by Order ID
   checkPaymentStatus: async (orderId) => {
     try {

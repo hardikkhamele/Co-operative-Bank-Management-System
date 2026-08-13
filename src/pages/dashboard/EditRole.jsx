@@ -103,6 +103,7 @@ const EditRole = () => {
 
       const response = await roleService.update(id, payload);
       if (response.success) {
+        toast.success(response.message || "Role updated successfully.");
         navigate('/roles-permissions');
       }
     } catch (error) {

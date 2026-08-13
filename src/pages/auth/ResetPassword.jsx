@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { toast } from 'react-toastify';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { BadgeCheck, Eye, EyeOff } from 'lucide-react';
 import AuthLayout from '../../components/layouts/AuthLayout';
 import resetIllustration from '../../assets/images/reset-password.png';
 import { validatePassword, validateConfirmPassword } from '../../utils/validation';
+import { authService } from '../../api/authService';
+import { useEffect } from 'react';
 
 const ResetPassword = () => {
   const [passwords, setPasswords] = useState({ newPassword: '', confirmPassword: '' });
@@ -12,7 +14,16 @@ const ResetPassword = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+  const { email, resetToken } = location.state || {};
+
+  useEffect(() => {
+    if (!email || !resetToken) {
+      navigate('/forgot-password');
+    }
+  }, [email, resetToken, navigate]);
 
   const handleChange = (e) => {
     setPasswords({ ...passwords, [e.target.name]: e.target.value });
@@ -37,7 +48,25 @@ const ResetPassword = () => {
       return;
     }
 
-    setShowModal(true);
+    const resetData = async () => {
+      setLoading(true);
+      try {
+        await authService.resetPassword({ 
+          email, 
+          resetToken, 
+          password: passwords.newPassword, 
+          confirmPassword: passwords.confirmPassword 
+        });
+        setShowModal(true);
+      } catch (err) {
+        toast.error(err.response?.data?.message || 'Failed to reset password');
+        setError(err.response?.data?.message || 'Failed to reset password');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    resetData();
   };
 
   return (
@@ -108,9 +137,10 @@ const ResetPassword = () => {
 
           <button
             type="submit"
-            className="w-full py-3 px-4 mt-4 bg-[#1b58a6] hover:bg-[#154685] text-white font-medium rounded-full transition-colors shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#1b58a6] text-sm"
+            disabled={loading}
+            className="w-full py-3 px-4 mt-4 bg-[#1b58a6] hover:bg-[#154685] disabled:bg-gray-400 text-white font-medium rounded-full transition-colors shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#1b58a6] text-sm"
           >
-            Set Password
+            {loading ? 'Setting...' : 'Set Password'}
           </button>
         </form>
 

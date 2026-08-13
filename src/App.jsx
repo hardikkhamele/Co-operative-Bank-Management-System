@@ -180,8 +180,8 @@ function App() {
             <Route path="settings/help" element={<HelpSupport />} />
             <Route path="merchant" element={<Merchants />} />
             <Route path="merchant/create" element={<CreateMerchant />} />
-            <Route path="merchant/edit" element={<EditMerchant />} />
-            <Route path="merchant/view" element={<ViewMerchant />} />
+            <Route path="merchant/:id/edit" element={<EditMerchant />} />
+            <Route path="merchant/:id/view" element={<ViewMerchant />} />
             <Route path="price-settings" element={<PriceSettings />} />
             <Route path="inventory" element={<Inventory />} />
             <Route path="inventory/create" element={<CreateInventory />} />

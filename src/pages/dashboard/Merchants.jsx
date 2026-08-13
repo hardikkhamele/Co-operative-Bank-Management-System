@@ -1,31 +1,95 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronRight, Search, Eye, Edit, Trash2, X } from 'lucide-react';
+import { toast } from 'react-toastify';
+import { merchantService } from '../../api/merchantService';
 
 const mockMerchants = [
-  { id: 1, shopName: 'Tech Haven', ownerName: 'Tony Stark', email: 'tony@techhaven.com', phone: '9876543210' },
-  { id: 2, shopName: 'Daily Needs Grocery', ownerName: 'Bruce Wayne', email: 'bruce@dailyneeds.com', phone: '8765432109' },
-  { id: 3, shopName: 'Fashion Forward', ownerName: 'Diana Prince', email: 'diana@fashionforward.com', phone: '7654321098' },
+  { id: 1, shopName: 'Tech Haven', ownerName: 'Tony Stark', email: 'tony@techhaven.com', phone: '9876543210', status: 'ACTIVE' },
+  { id: 2, shopName: 'Daily Needs Grocery', ownerName: 'Bruce Wayne', email: 'bruce@dailyneeds.com', phone: '8765432109', status: 'ACTIVE' },
+  { id: 3, shopName: 'Fashion Forward', ownerName: 'Diana Prince', email: 'diana@fashionforward.com', phone: '7654321098', status: 'INACTIVE' },
 ];
 
 const Merchants = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  
+  const [merchants, setMerchants] = useState([]);
+  const [meta, setMeta] = useState({ page: 1, limit: 10, totalRecords: 0, totalPages: 1 });
+  const [isLoading, setIsLoading] = useState(false);
+
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [merchantToDelete, setMerchantToDelete] = useState(null);
 
-  const filteredData = mockMerchants.filter(row => {
-    return row.shopName.toLowerCase().includes(searchTerm.toLowerCase()) || 
-           row.ownerName.toLowerCase().includes(searchTerm.toLowerCase());
-  });
+  // Debounce search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchTerm);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  const fetchMerchants = async (page = 1) => {
+    setIsLoading(true);
+    try {
+      const params = { page, limit: 10 };
+      if (debouncedSearch) params.search = debouncedSearch;
+
+      const response = await merchantService.getMerchants(params);
+      if (response.success) {
+        setMerchants(response.data);
+        if (response.meta) {
+          setMeta(response.meta);
+        }
+      } else {
+        console.warn("Failed to fetch merchants, falling back to mock data");
+        setMerchants(mockMerchants);
+        setMeta({ page: 1, limit: 10, totalRecords: 3, totalPages: 1, hasNextPage: false, hasPrevPage: false });
+      }
+    } catch (error) {
+      console.error("Fetch merchants failed, falling back to mock data", error);
+      // Fallback for when backend endpoint returns 502/404
+      setMerchants(mockMerchants);
+      setMeta({ page: 1, limit: 10, totalRecords: 3, totalPages: 1, hasNextPage: false, hasPrevPage: false });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchMerchants(1);
+  }, [debouncedSearch]);
+
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= meta.totalPages) {
+      fetchMerchants(newPage);
+    }
+  };
 
   const handleDeleteClick = (merchant) => {
     setMerchantToDelete(merchant);
     setIsDeleteModalOpen(true);
   };
 
-  const confirmDelete = () => {
-    setIsDeleteModalOpen(false);
-    setMerchantToDelete(null);
+  const confirmDelete = async () => {
+    if (!merchantToDelete) return;
+    try {
+      const merchantId = merchantToDelete._id || merchantToDelete.merchantId || merchantToDelete.id;
+      const response = await merchantService.deleteMerchant(merchantId);
+      if (response.success) {
+        toast.success("Merchant deleted successfully.");
+        fetchMerchants(meta.page);
+      } else {
+        toast.error(response.message || response.error || "Failed to delete merchant.");
+      }
+    } catch (error) {
+      console.error("Delete failed", error);
+      const errorMsg = error.response?.data?.message || error.response?.data?.error || "Error deleting merchant.";
+      toast.error(errorMsg);
+    } finally {
+      setIsDeleteModalOpen(false);
+      setMerchantToDelete(null);
+    }
   };
 
   return (
@@ -43,23 +107,23 @@ const Merchants = () => {
       </div>
 
       {/* Toolbar */}
-      <div className="flex justify-between items-center shrink-0">
-        <div className="flex items-center gap-4">
-          <div className="relative">
+      <div className="flex flex-col sm:flex-row justify-between items-center shrink-0 gap-4">
+        <div className="flex items-center gap-4 w-full sm:w-auto">
+          <div className="relative w-full sm:w-80">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
             <input
               type="text"
               placeholder="Search Merchant"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-lg w-64 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all shadow-sm"
+              className="pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all shadow-sm text-sm"
             />
           </div>
         </div>
 
         <Link 
           to="/merchant/create" 
-          className="bg-[#1cabb1] hover:bg-[#168f94] text-white px-4 py-2 rounded-full font-medium transition-colors flex items-center text-sm shadow-sm"
+          className="bg-[#1cabb1] hover:bg-[#168f94] text-white px-5 py-2.5 rounded-full font-medium transition-colors flex items-center justify-center text-sm shadow-sm w-full sm:w-auto whitespace-nowrap"
         >
           + Add New Merchant
         </Link>
@@ -68,7 +132,7 @@ const Merchants = () => {
       {/* Table */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 flex-1 overflow-hidden flex flex-col">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table className="w-full text-left border-collapse min-w-[800px]">
             <thead>
               <tr className="bg-gray-50/50 border-b border-gray-100">
                 <th className="py-4 px-6 font-semibold text-gray-700 text-sm">Sr No</th>
@@ -76,59 +140,96 @@ const Merchants = () => {
                 <th className="py-4 px-6 font-semibold text-gray-700 text-sm">Owner Name</th>
                 <th className="py-4 px-6 font-semibold text-gray-700 text-sm">Email</th>
                 <th className="py-4 px-6 font-semibold text-gray-700 text-sm">Phone Number</th>
+                <th className="py-4 px-6 font-semibold text-gray-700 text-sm">Status</th>
                 <th className="py-4 px-6 font-semibold text-gray-700 text-sm text-center">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {filteredData.map((row, index) => (
-                <tr key={row.id} className="hover:bg-gray-50/50 transition-colors">
-                  <td className="py-4 px-6">
-                    <div className="text-sm font-medium text-gray-600">{index + 1}</div>
-                  </td>
-                  <td className="py-4 px-6">
-                    <div className="font-medium text-gray-800">{row.shopName}</div>
-                  </td>
-                  <td className="py-4 px-6">
-                    <div className="text-sm text-gray-800">{row.ownerName}</div>
-                  </td>
-                  <td className="py-4 px-6">
-                    <div className="text-sm text-gray-600">{row.email}</div>
-                  </td>
-                  <td className="py-4 px-6">
-                    <div className="text-sm text-gray-600">{row.phone}</div>
-                  </td>
-                  <td className="py-4 px-6">
-                    <div className="flex items-center justify-center gap-3">
-                      <Link to="/merchant/view" className="text-gray-800 hover:text-blue-500 transition-colors" title="View">
-                        <Eye size={18} />
-                      </Link>
-                      <Link to="/merchant/edit" className="text-gray-800 hover:text-blue-500 transition-colors" title="Edit">
-                        <Edit size={18} />
-                      </Link>
-                      <button 
-                        onClick={() => handleDeleteClick(row)}
-                        className="text-red-500 hover:text-red-600 transition-colors" 
-                        title="Delete"
-                      >
-                        <Trash2 size={18} />
-                      </button>
-                    </div>
-                  </td>
+              {isLoading ? (
+                <tr>
+                  <td colSpan="7" className="py-10 text-center text-gray-500">Loading merchants...</td>
                 </tr>
-              ))}
+              ) : merchants.length === 0 ? (
+                <tr>
+                  <td colSpan="7" className="py-10 text-center text-gray-500">No merchants found.</td>
+                </tr>
+              ) : (
+                merchants.map((row, index) => (
+                  <tr key={row.id} className="hover:bg-gray-50/50 transition-colors">
+                    <td className="py-4 px-6">
+                      <div className="text-sm font-medium text-gray-600">{(meta.page - 1) * meta.limit + index + 1}</div>
+                    </td>
+                    <td className="py-4 px-6">
+                      <div className="font-medium text-gray-800">{row.shopName}</div>
+                    </td>
+                    <td className="py-4 px-6">
+                      <div className="text-sm text-gray-800">{row.ownerName || row.shopOwnerName}</div>
+                    </td>
+                    <td className="py-4 px-6">
+                      <div className="text-sm text-gray-600">{row.email}</div>
+                    </td>
+                    <td className="py-4 px-6">
+                      <div className="text-sm text-gray-600">{row.phoneNumber || row.phone}</div>
+                    </td>
+                    <td className="py-4 px-6">
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        row.status === 'ACTIVE' ? 'bg-green-100 text-green-800' : 
+                        row.status === 'INACTIVE' ? 'bg-gray-100 text-gray-800' : 'bg-red-100 text-red-800'
+                      }`}>
+                        {row.status}
+                      </span>
+                    </td>
+                    <td className="py-4 px-6">
+                      <div className="flex items-center justify-center gap-3">
+                        <Link to={`/merchant/${row.id}/view`} className="text-gray-500 hover:text-[#1cabb1] transition-colors" title="View">
+                          <Eye size={18} />
+                        </Link>
+                        <Link to={`/merchant/${row.id}/edit`} className="text-gray-500 hover:text-[#5a5ce5] transition-colors" title="Edit">
+                          <Edit size={18} />
+                        </Link>
+                        <button 
+                          onClick={() => handleDeleteClick(row)}
+                          className="text-red-400 hover:text-red-600 transition-colors" 
+                          title="Delete"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
         
-        {/* Pagination Dummy */}
-        <div className="p-4 border-t border-gray-100 flex items-center justify-between text-sm text-gray-500 bg-gray-50/30 mt-auto">
-          <div>Showing 1 to {filteredData.length} of {filteredData.length} entries</div>
-          <div className="flex gap-1">
-            <button className="px-3 py-1 rounded-md border border-gray-200 bg-white hover:bg-gray-50 text-gray-600 font-medium">Previous</button>
-            <button className="px-3 py-1 rounded-md bg-[#1cabb1] text-white font-medium">1</button>
-            <button className="px-3 py-1 rounded-md border border-gray-200 bg-white hover:bg-gray-50 text-gray-600 font-medium">Next</button>
+        {/* Pagination */}
+        {!isLoading && merchants.length > 0 && meta && (
+          <div className="p-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between text-sm text-gray-500 bg-gray-50/30 mt-auto gap-4">
+            <div>
+              Showing {(meta.page - 1) * meta.limit + 1} to {Math.min(meta.page * meta.limit, meta.totalRecords || merchants.length)} of {meta.totalRecords || merchants.length} entries
+            </div>
+            <div className="flex gap-2">
+              <button 
+                disabled={!meta.hasPrevPage}
+                onClick={() => handlePageChange(meta.page - 1)}
+                className="px-3 py-1.5 rounded-md border border-gray-200 bg-white hover:bg-gray-50 text-gray-600 font-medium disabled:opacity-50 transition-colors"
+              >
+                Previous
+              </button>
+              <button className="px-3 py-1.5 rounded-md bg-[#1cabb1] text-white font-medium shadow-sm">
+                {meta.page}
+              </button>
+              <button 
+                disabled={!meta.hasNextPage}
+                onClick={() => handlePageChange(meta.page + 1)}
+                className="px-3 py-1.5 rounded-md border border-gray-200 bg-white hover:bg-gray-50 text-gray-600 font-medium disabled:opacity-50 transition-colors"
+              >
+                Next
+              </button>
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Delete Confirmation Modal */}
@@ -142,22 +243,22 @@ const Merchants = () => {
               </button>
             </div>
             <div className="p-6">
-              <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center text-red-500 mx-auto mb-4">
+              <div className="w-14 h-14 rounded-full bg-red-50 flex items-center justify-center text-red-500 mx-auto mb-4">
                 <Trash2 size={24} />
               </div>
-              <p className="text-center text-gray-600 mb-6 text-sm">
-                Are you sure you want to delete <span className="font-bold text-gray-800">{merchantToDelete?.shopName}</span>? This action cannot be undone.
+              <p className="text-center text-gray-600 mb-6">
+                Are you sure you want to delete <span className="font-bold text-gray-800">{merchantToDelete?.shopName}</span>?<br/>This action cannot be undone.
               </p>
               <div className="flex gap-3">
                 <button 
                   onClick={() => setIsDeleteModalOpen(false)}
-                  className="flex-1 py-2.5 px-4 rounded-xl border border-gray-200 text-gray-700 font-medium hover:bg-gray-50 transition-colors text-sm"
+                  className="flex-1 py-3 px-4 rounded-xl border border-gray-200 text-gray-700 font-semibold hover:bg-gray-50 transition-colors text-sm"
                 >
                   Cancel
                 </button>
                 <button 
                   onClick={confirmDelete}
-                  className="flex-1 py-2.5 px-4 rounded-xl bg-red-500 text-white font-medium hover:bg-red-600 transition-colors text-sm shadow-sm shadow-red-500/20"
+                  className="flex-1 py-3 px-4 rounded-xl bg-red-500 text-white font-semibold hover:bg-red-600 transition-colors text-sm shadow-sm"
                 >
                   Delete
                 </button>

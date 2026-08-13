@@ -89,6 +89,7 @@ const CreateRole = () => {
 
       const response = await roleService.create(payload);
       if (response.success) {
+        toast.success(response.message || "Role created successfully.");
         navigate('/roles-permissions');
       }
     } catch (error) {

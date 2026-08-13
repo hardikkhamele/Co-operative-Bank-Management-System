@@ -29,10 +29,10 @@ const CheckCibilScore = () => {
   const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'accounts' | 'inquiries' | 'demographics'
 
   const [formData, setFormData] = useState({
-    fullName: '',
-    phoneNumber: '',
-    panNumber: '',
-    dob: '',
+    fullName: 'VITTHAL DEVARD WAKODE',
+    mobileNumber: '9552823088',
+    panNumber: 'ABWPW0802F',
+    dob: '1990-10-29',
   });
 
   useEffect(() => {
@@ -53,12 +53,12 @@ const CheckCibilScore = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    if (name === 'panNumber') {
-      setFormData((prev) => ({ ...prev, [name]: sanitizePAN(value) }));
-    } else if (name === 'phoneNumber') {
-      const cleanPhone = value.replace(/\D/g, '').slice(0, 10);
-      setFormData((prev) => ({ ...prev, [name]: cleanPhone }));
-    } else {
+      if (name === 'panNumber') {
+        setFormData((prev) => ({ ...prev, [name]: sanitizePAN(value) }));
+      } else if (name === 'mobileNumber') {
+        const cleanPhone = value.replace(/\D/g, '').slice(0, 10);
+        setFormData((prev) => ({ ...prev, [name]: cleanPhone }));
+      } else {
       setFormData((prev) => ({ ...prev, [name]: value }));
     }
     if (apiError) setApiError(null);
@@ -69,8 +69,8 @@ const CheckCibilScore = () => {
       toast.error('Please enter the full name');
       return false;
     }
-    if (formData.phoneNumber && formData.phoneNumber.length > 0 && formData.phoneNumber.length !== 10) {
-      toast.error('Please enter a valid 10-digit phone number');
+    if (formData.mobileNumber && formData.mobileNumber.length > 0 && formData.mobileNumber.length !== 10) {
+      toast.error('Please enter a valid 10-digit mobile number');
       return false;
     }
     const panErr = validatePAN(formData.panNumber).error;
@@ -94,12 +94,14 @@ const CheckCibilScore = () => {
     setApiError(null);
 
     try {
+      // Convert YYYY-MM-DD to DD/MM/YYYY
+      const formattedDob = formData.dob ? formData.dob.split('-').reverse().join('/') : '';
+      
       const response = await verificationService.checkCibilScore({
         fullName: formData.fullName.trim(),
-        dob: formData.dob,
+        dob: formattedDob,
         pan: formData.panNumber.trim().toUpperCase(),
-        mobile: formData.phoneNumber.trim(),
-        phoneNumber: formData.phoneNumber.trim(),
+        mobileNumber: formData.mobileNumber.trim(),
       });
 
       if (response && (response.success || response.statusCode === 200)) {
@@ -143,7 +145,7 @@ const CheckCibilScore = () => {
   const handleReset = () => {
     setFormData({
       fullName: '',
-      phoneNumber: '',
+      mobileNumber: '',
       panNumber: '',
       dob: '',
     });
@@ -326,11 +328,11 @@ const CheckCibilScore = () => {
                   />
                 </div>
 
-                {/* 2. Phone Number */}
+                {/* 2. Mobile Number */}
                 <div className="space-y-1.5">
                   <label className="text-sm font-semibold text-gray-700 flex items-center gap-1">
                     <Phone size={14} className="text-[#1cabb1]" />
-                    Phone Number
+                    Mobile Number
                   </label>
                   <div className="relative flex items-center">
                     <span className="absolute left-3 text-xs font-bold text-gray-400 select-none">
@@ -338,9 +340,9 @@ const CheckCibilScore = () => {
                     </span>
                     <input
                       type="tel"
-                      name="phoneNumber"
+                      name="mobileNumber"
                       maxLength={10}
-                      value={formData.phoneNumber}
+                      value={formData.mobileNumber}
                       onChange={handleInputChange}
                       placeholder="9876543210"
                       className="w-full pl-11 pr-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-gray-50/50 text-gray-800 font-medium font-mono"

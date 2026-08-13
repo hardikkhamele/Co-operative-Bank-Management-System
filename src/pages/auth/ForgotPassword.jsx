@@ -4,20 +4,31 @@ import { toast } from 'react-toastify';
 import AuthLayout from '../../components/layouts/AuthLayout';
 import forgotIllustration from '../../assets/images/forgot-password.png';
 import { validateEmail } from '../../utils/validation';
+import { authService } from '../../api/authService';
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const check = validateEmail(email);
     if (!check.isValid) {
       toast.error(check.error);
       return;
     }
-    // Simulate API call
-    navigate('/verify-otp');
+    
+    setLoading(true);
+    try {
+      const res = await authService.forgotPassword(email);
+      toast.success(res.message || 'OTP sent successfully');
+      navigate('/verify-otp', { state: { email } });
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to send OTP');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -52,9 +63,10 @@ const ForgotPassword = () => {
 
         <button
           type="submit"
-          className="w-full py-3 px-4 mt-2 bg-[#1b58a6] hover:bg-[#154685] text-white font-medium rounded-full transition-colors shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#1b58a6] text-sm"
+          disabled={loading}
+          className="w-full py-3 px-4 mt-2 bg-[#1b58a6] hover:bg-[#154685] disabled:bg-gray-400 text-white font-medium rounded-full transition-colors shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#1b58a6] text-sm"
         >
-          Get OTP
+          {loading ? 'Sending...' : 'Get OTP'}
         </button>
       </form>
 

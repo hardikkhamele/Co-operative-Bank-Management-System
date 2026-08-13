@@ -1,15 +1,26 @@
 import React, { useState, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Pencil } from 'lucide-react';
 import { toast } from 'react-toastify';
 import AuthLayout from '../../components/layouts/AuthLayout';
 import otpIllustration from '../../assets/images/enter-otp.png';
 import { sanitizeDigits } from '../../utils/validation';
+import { authService } from '../../api/authService';
+import { useEffect } from 'react';
 
 const VerifyOTP = () => {
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
+  const [loading, setLoading] = useState(false);
   const inputRefs = useRef([]);
   const navigate = useNavigate();
+  const location = useLocation();
+  const email = location.state?.email;
+
+  useEffect(() => {
+    if (!email) {
+      navigate('/forgot-password');
+    }
+  }, [email, navigate]);
 
   const handleChange = (e, index) => {
     const cleanVal = sanitizeDigits(e.target.value, 1);
@@ -44,14 +55,33 @@ const VerifyOTP = () => {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const fullOtp = otp.join('');
     if (fullOtp.length !== 6) {
       toast.error('Please enter complete 6-digit OTP.');
       return;
     }
-    navigate('/reset-password');
+    
+    setLoading(true);
+    try {
+      const res = await authService.verifyOtp({ email, otp: fullOtp });
+      toast.success(res.message || 'OTP verified successfully');
+      navigate('/reset-password', { state: { email, resetToken: res.data.resetToken } });
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Invalid OTP');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResend = async () => {
+    try {
+      const res = await authService.resendOtp(email);
+      toast.success(res.message || 'OTP resent successfully');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to resend OTP');
+    }
   };
 
   return (
@@ -69,8 +99,8 @@ const VerifyOTP = () => {
           A 6 digit OTP has been sent to
           <br />
           <span className="text-[#1b58a6] font-medium flex items-center justify-center gap-1.5 mt-1">
-            example@mail.com
-            <button className="text-[#00bcd4] hover:text-[#00a0b5]">
+            {email}
+            <button onClick={() => navigate('/forgot-password')} className="text-[#00bcd4] hover:text-[#00a0b5]">
               <Pencil size={12} />
             </button>
           </span>
@@ -100,16 +130,17 @@ const VerifyOTP = () => {
 
         <p className="text-xs text-gray-500 mt-2 mb-2">
           Didn't received the code?{' '}
-          <button type="button" className="text-[#00bcd4] hover:text-[#00a0b5] font-semibold">
+          <button type="button" onClick={handleResend} className="text-[#00bcd4] hover:text-[#00a0b5] font-semibold">
             Resend Code
           </button>
         </p>
 
         <button
           type="submit"
-          className="w-full py-3 px-4 mt-2 bg-[#1b58a6] hover:bg-[#154685] text-white font-medium rounded-full transition-colors shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#1b58a6] text-sm"
+          disabled={loading}
+          className="w-full py-3 px-4 mt-2 bg-[#1b58a6] hover:bg-[#154685] disabled:bg-gray-400 text-white font-medium rounded-full transition-colors shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#1b58a6] text-sm"
         >
-          Verify OTP
+          {loading ? 'Verifying...' : 'Verify OTP'}
         </button>
       </form>
 

@@ -76,6 +76,15 @@ const DashboardLayout = () => {
           </div>
 
           <div>
+            <h3 className="text-[15px] font-bold text-gray-800 mb-2 px-6">Partner Management</h3>
+            <div className="space-y-1">
+              <NavLink to="/merchant" className={({ isActive }) => `flex items-center gap-3 px-6 py-2.5 text-[15px] font-medium transition-colors border-l-4 ${isActive ? "border-[#1cabb1] bg-[#1cabb1]/10 text-[#1cabb1]" : "border-transparent text-[#4b5563] hover:text-gray-900 hover:bg-gray-100/50"}`}>
+                <Store size={20} /> Merchant
+              </NavLink>
+            </div>
+          </div>
+
+          <div>
             <h3 className="text-[15px] font-bold text-gray-800 mb-2 px-6">HR Management</h3>
             <div className="space-y-1">
               <NavLink to="/employees" className={({ isActive }) => `flex items-center gap-3 px-6 py-2.5 text-[15px] font-medium transition-colors border-l-4 ${isActive ? "border-[#1cabb1] bg-[#1cabb1]/10 text-[#1cabb1]" : "border-transparent text-[#4b5563] hover:text-gray-900 hover:bg-gray-100/50"}`}>

@@ -9,8 +9,8 @@ import { validateEmail, validatePassword } from '../../utils/validation';
 
 const Login = () => {
   const [formData, setFormData] = useState({ 
-    email: 'stark@bank.com', 
-    password: 'Password@123' 
+    email: 'bank@advita.com', 
+    password: 'Test@123' 
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);

@@ -1,4 +1,21 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+
+/**
+ * Utility to dynamically load the Razorpay Checkout SDK script
+ */
+const loadRazorpayScript = () => {
+  return new Promise((resolve) => {
+    if (window.Razorpay) {
+      resolve(true);
+      return;
+    }
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
+};
 import { 
   CreditCard, 
   X, 
@@ -131,8 +148,25 @@ const CardsAndCredit = () => {
   const [purchaseVerification, setPurchaseVerification] = useState(true);
   const [emiQty, setEmiQty] = useState(100);
   const [verificationQty, setVerificationQty] = useState(200);
-  const [emiRateEst] = useState(499); // standard dynamic estimate rate
-  const [verificationRateEst] = useState(50); // standard dynamic estimate rate
+
+  const [pricingData, setPricingData] = useState(null);
+  const [isCalculatingPrice, setIsCalculatingPrice] = useState(false);
+
+  // Razorpay Checkout State
+  const [statusLog, setStatusLog] = useState('');
+  const [polling, setPolling] = useState(false);
+  const [paymentLink, setPaymentLink] = useState(null);
+  const pollIntervalRef = useRef(null);
+  const pollCountRef = useRef(0);
+
+  // Cleanup polling on unmount
+  useEffect(() => {
+    return () => {
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current);
+      }
+    };
+  }, []);
 
   // Distribute / Transfer Form State
   const [distributeType, setDistributeType] = useState('add'); // 'add' (Bank->Branch) | 'transfer' (Branch->Branch)
@@ -143,13 +177,40 @@ const CardsAndCredit = () => {
   const [distributeVerificationQty, setDistributeVerificationQty] = useState('');
   const [transferRemarks, setTransferRemarks] = useState('');
 
-  // Calculated estimates for Purchase Modal
-  const calculatedEmiSubtotal = purchaseEmi ? (Number(emiQty) || 0) * emiRateEst : 0;
-  const calculatedVerificationSubtotal = purchaseVerification ? (Number(verificationQty) || 0) * verificationRateEst : 0;
-  const calculatedSubtotal = calculatedEmiSubtotal + calculatedVerificationSubtotal;
-  const calculatedCgst = Math.round(calculatedSubtotal * 0.09);
-  const calculatedSgst = Math.round(calculatedSubtotal * 0.09);
-  const calculatedTotalPayable = calculatedSubtotal + calculatedCgst + calculatedSgst;
+  // Dynamic Price Calculation Effect
+  useEffect(() => {
+    const calculateDynamicPrice = async () => {
+      if (!isPurchaseModalOpen) return;
+      
+      const payload = {
+        emiCardQuantity: purchaseEmi ? (Number(emiQty) || 0) : 0,
+        verificationCreditQuantity: purchaseVerification ? (Number(verificationQty) || 0) : 0
+      };
+
+      if (payload.emiCardQuantity === 0 && payload.verificationCreditQuantity === 0) {
+        setPricingData(null);
+        return;
+      }
+
+      setIsCalculatingPrice(true);
+      try {
+        const response = await cardCreditService.calculatePrice(payload);
+        if (response.success && response.data) {
+          setPricingData(response.data);
+        }
+      } catch (error) {
+        console.error('Failed to calculate dynamic pricing', error);
+      } finally {
+        setIsCalculatingPrice(false);
+      }
+    };
+
+    const debounceTimer = setTimeout(() => {
+      calculateDynamicPrice();
+    }, 400);
+
+    return () => clearTimeout(debounceTimer);
+  }, [emiQty, verificationQty, purchaseEmi, purchaseVerification, isPurchaseModalOpen]);
 
   // 1. Fetch Bank Wallet Dashboard
   const fetchDashboardData = useCallback(async () => {
@@ -361,6 +422,16 @@ const CardsAndCredit = () => {
 
     try {
       setSubmittingPurchase(true);
+      setPaymentLink(null);
+      setStatusLog("Loading Razorpay SDK...");
+      const isScriptLoaded = await loadRazorpayScript();
+      if (!isScriptLoaded) {
+        toast.error("Failed to load Razorpay SDK. Please check your internet connection.");
+        setSubmittingPurchase(false);
+        return;
+      }
+
+      setStatusLog("Creating payment order on backend...");
       const payload = {
         purchaseType,
         emiQuantity: emiQ,
@@ -370,28 +441,129 @@ const CardsAndCredit = () => {
       const res = await cardCreditService.initiatePurchase(payload);
 
       if (res && res.success && res.data) {
-        toast.success(res.message || 'Purchase initiated successfully!');
-        setIsPurchaseModalOpen(false);
+        const orderData = res.data;
+        if (orderData.paymentLink || orderData.checkoutUrl) {
+          setPaymentLink(orderData.paymentLink || orderData.checkoutUrl);
+        }
 
-        // Navigate to payment page with checkout / order details
-        navigate('/cards-credit/payment', {
-          state: {
-            orderData: res.data,
-            priceBreakdown: res.data.priceBreakdown,
-            checkoutUrl: res.data.checkoutUrl || res.data.paymentLink,
-            orderId: res.data.orderId,
-            purchaseId: res.data.purchaseId
-          }
+        setStatusLog("Opening Razorpay Payment Popup...");
+
+        const options = {
+          key: orderData.keyId || orderData.razorpayKeyId,
+          amount: orderData.amountInPaise,
+          currency: orderData.currency || "INR",
+          name: "Advita Enterprise ERP",
+          description: `Credit Purchase (${purchaseType})`,
+          order_id: orderData.orderId,
+          handler: async function (paymentResponse) {
+            setStatusLog("Payment completed in popup! Verifying with backend...");
+            try {
+              const verifyRes = await cardCreditService.verifyPayment({
+                razorpay_order_id: paymentResponse.razorpay_order_id || orderData.orderId,
+                razorpay_payment_id: paymentResponse.razorpay_payment_id,
+                razorpay_signature: paymentResponse.razorpay_signature,
+              });
+              
+              if (verifyRes && verifyRes.success) {
+                toast.success(`Payment Successful! Invoice: ${verifyRes.data?.invoiceNumber || ""}`);
+                setSubmittingPurchase(false);
+                setIsPurchaseModalOpen(false);
+                setStatusLog("");
+                fetchDashboardData();
+                fetchPurchaseHistory(1);
+                return;
+              }
+            } catch (err) {
+              console.warn("Direct verification failed, falling back to polling...", err);
+            }
+            startPolling(orderData.orderId);
+          },
+          prefill: orderData.prefill || {
+            email: "bank@advita.com",
+            contact: "7798598099",
+          },
+          modal: {
+            ondismiss: function () {
+              setStatusLog("Payment popup closed. You can use the payment link below to retry.");
+              setSubmittingPurchase(false);
+            },
+            escape: true,
+            confirm_close: true,
+          },
+          theme: {
+            color: "#1cabb1",
+          },
+        };
+
+        const rzp = new window.Razorpay(options);
+        rzp.on("payment.failed", function (response) {
+          setStatusLog(`Payment Failed: ${response.error.description}`);
+          toast.error(`Payment Failed: ${response.error.description}`);
+          setSubmittingPurchase(false);
         });
+
+        rzp.open();
       } else {
         toast.error(res?.message || 'Failed to initiate purchase');
+        setSubmittingPurchase(false);
       }
     } catch (error) {
       console.error('Error initiating purchase:', error);
       toast.error(error.response?.data?.message || 'Error occurred while initiating purchase');
-    } finally {
       setSubmittingPurchase(false);
     }
+  };
+
+  const startPolling = (orderId) => {
+    setPolling(true);
+    pollCountRef.current = 0;
+
+    if (pollIntervalRef.current) {
+      clearInterval(pollIntervalRef.current);
+    }
+
+    setStatusLog("Waiting for payment confirmation... (polling)");
+
+    pollIntervalRef.current = setInterval(async () => {
+      pollCountRef.current += 1;
+
+      if (pollCountRef.current > 24) {
+        clearInterval(pollIntervalRef.current);
+        pollIntervalRef.current = null;
+        setPolling(false);
+        setSubmittingPurchase(false);
+        setStatusLog("Payment verification timed out. If completed, it will be updated via webhook.");
+        toast.info("Payment verification timed out. Please check your purchase history later.");
+        return;
+      }
+
+      try {
+        const res = await cardCreditService.checkPaymentStatus(orderId);
+        if (res && res.success) {
+          if (res.data.paymentStatus === "SUCCESS") {
+            clearInterval(pollIntervalRef.current);
+            pollIntervalRef.current = null;
+            setPolling(false);
+            setSubmittingPurchase(false);
+            setPaymentLink(null);
+            setStatusLog("");
+            setIsPurchaseModalOpen(false);
+            toast.success(`Payment Successful! Invoice: ${res.data.invoiceNumber || ""}`);
+            fetchDashboardData();
+            fetchPurchaseHistory(1);
+          } else if (res.data.paymentStatus === "FAILED") {
+            clearInterval(pollIntervalRef.current);
+            pollIntervalRef.current = null;
+            setPolling(false);
+            setSubmittingPurchase(false);
+            setStatusLog(`Payment Failed for Order: ${orderId}`);
+            toast.error("Payment Failed");
+          }
+        }
+      } catch (err) {
+        console.warn(`Status check error: ${err.message} (retrying...)`);
+      }
+    }, 5000);
   };
 
   // Handle Stock Transfer Submit
@@ -1191,7 +1363,7 @@ const CardsAndCredit = () => {
             <div className="flex justify-between items-center p-6 pb-4 bg-white border-b border-gray-100">
               <div>
                 <h2 className="text-xl font-bold text-[#1b2559]">Purchase Cards & Credits</h2>
-                <p className="text-xs text-gray-500 mt-0.5">Order official inventory through Easebuzz Gateway</p>
+                <p className="text-xs text-gray-500 mt-0.5">Order official inventory through Razorpay Gateway</p>
               </div>
               <button 
                 onClick={() => setIsPurchaseModalOpen(false)} 
@@ -1236,7 +1408,9 @@ const CardsAndCredit = () => {
                     disabled={!purchaseEmi}
                     className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white text-sm disabled:bg-gray-100 disabled:text-gray-400" 
                   />
-                  <span className="text-[11px] text-gray-400 block mt-1">Estimated @ ₹{emiRateEst}/card</span>
+                  <span className="text-[11px] text-gray-400 block mt-1">
+                    {isCalculatingPrice ? 'Calculating...' : (pricingData?.emiCard?.unitPrice ? `Estimated @ ₹${pricingData.emiCard.unitPrice}/card` : 'Enter quantity')}
+                  </span>
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-gray-700 mb-1.5">
@@ -1250,55 +1424,66 @@ const CardsAndCredit = () => {
                     disabled={!purchaseVerification}
                     className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white text-sm disabled:bg-gray-100 disabled:text-gray-400" 
                   />
-                  <span className="text-[11px] text-gray-400 block mt-1">Estimated @ ₹{verificationRateEst}/credit</span>
+                  <span className="text-[11px] text-gray-400 block mt-1">
+                    {isCalculatingPrice ? 'Calculating...' : (pricingData?.verificationCredit?.unitPrice ? `Estimated @ ₹${pricingData.verificationCredit.unitPrice}/credit` : 'Enter quantity')}
+                  </span>
                 </div>
               </div>
 
               {/* Price Breakdown Calculation Card */}
-              <div className="bg-white rounded-xl p-5 border border-gray-200 shadow-sm space-y-2.5">
+              <div className="bg-white rounded-xl p-5 border border-gray-200 shadow-sm space-y-2.5 relative">
+                {isCalculatingPrice && (
+                  <div className="absolute inset-0 bg-white/70 backdrop-blur-[1px] flex items-center justify-center z-10 rounded-xl">
+                    <RefreshCcw size={20} className="animate-spin text-[#1cabb1]" />
+                  </div>
+                )}
                 <div className="flex items-center justify-between border-b border-gray-100 pb-2 mb-1">
                   <h3 className="font-bold text-[#1b2559] text-sm flex items-center gap-1.5">
                     <Receipt size={16} className="text-[#1cabb1]" />
                     Estimated Price Breakdown
                   </h3>
                   <span className="text-[11px] bg-teal-50 text-[#1cabb1] font-semibold px-2 py-0.5 rounded">
-                    18% GST (9% CGST + 9% SGST)
+                    Total Amount Includes Applicable Taxes
                   </span>
                 </div>
                 
                 {purchaseEmi && (
                   <div className="flex justify-between text-xs">
-                    <span className="text-gray-500">EMI Cards ({emiQty || 0} Qty @ ₹{emiRateEst})</span>
-                    <span className="font-medium text-gray-800">₹{calculatedEmiSubtotal.toLocaleString()}</span>
+                    <span className="text-gray-500">EMI Cards ({pricingData?.emiCard?.quantity || 0} Qty)</span>
+                    <span className="font-medium text-gray-800">₹{(pricingData?.emiCard?.totalPrice || 0).toLocaleString()}</span>
                   </div>
                 )}
                 {purchaseVerification && (
                   <div className="flex justify-between text-xs">
-                    <span className="text-gray-500">Verification Credits ({verificationQty || 0} Qty @ ₹{verificationRateEst})</span>
-                    <span className="font-medium text-gray-800">₹{calculatedVerificationSubtotal.toLocaleString()}</span>
+                    <span className="text-gray-500">Verification Credits ({pricingData?.verificationCredit?.quantity || 0} Qty)</span>
+                    <span className="font-medium text-gray-800">₹{(pricingData?.verificationCredit?.totalPrice || 0).toLocaleString()}</span>
                   </div>
                 )}
                 
                 <div className="flex justify-between text-xs pt-1 border-t border-gray-100">
                   <span className="text-gray-600 font-semibold">Subtotal</span>
-                  <span className="font-semibold text-gray-800">₹{calculatedSubtotal.toLocaleString()}</span>
+                  <span className="font-semibold text-gray-800">₹{(pricingData?.totalAmount || 0).toLocaleString()}</span>
                 </div>
                 
-                <div className="flex justify-between text-xs">
-                  <span className="text-gray-500">CGST (9%)</span>
-                  <span className="font-medium text-gray-700">+ ₹{calculatedCgst.toLocaleString()}</span>
-                </div>
-                
-                <div className="flex justify-between text-xs border-b border-gray-100 pb-2">
-                  <span className="text-gray-500">SGST (9%)</span>
-                  <span className="font-medium text-gray-700">+ ₹{calculatedSgst.toLocaleString()}</span>
-                </div>
-                
-                <div className="flex justify-between items-baseline pt-1">
+                <div className="flex justify-between items-baseline pt-2 border-t border-gray-100 mt-2">
                   <span className="font-bold text-gray-800 text-sm">Estimated Total Payable</span>
-                  <span className="font-bold text-[#1b2559] text-xl">₹{calculatedTotalPayable.toLocaleString()}</span>
+                  <span className="font-bold text-[#1b2559] text-xl">₹{(pricingData?.totalPayableAmount || 0).toLocaleString()}</span>
                 </div>
               </div>
+
+              {paymentLink && (
+                <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-3 flex flex-col gap-1.5">
+                  <span className="text-xs text-emerald-600 font-medium">If popup didn't open, use this link:</span>
+                  <a href={paymentLink} target="_blank" rel="noopener noreferrer" className="text-sm font-semibold text-emerald-700 underline">
+                    Open Payment Page →
+                  </a>
+                </div>
+              )}
+              {statusLog && (
+                <div className="bg-gray-50 border border-gray-100 rounded-xl p-3 text-xs text-gray-600 font-mono text-center">
+                  {statusLog}
+                </div>
+              )}
 
               <div className="flex justify-end gap-3 pt-2">
                 <button 
@@ -1310,17 +1495,17 @@ const CardsAndCredit = () => {
                 </button>
                 <button 
                   type="button"
-                  disabled={submittingPurchase || (!purchaseEmi && !purchaseVerification)}
+                  disabled={submittingPurchase || (!purchaseEmi && !purchaseVerification) || isCalculatingPrice || polling}
                   onClick={handleInitiatePurchase} 
                   className="px-6 py-2.5 rounded-xl bg-[#1cabb1] text-white font-semibold hover:bg-[#168f94] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm text-sm flex items-center gap-2"
                 >
-                  {submittingPurchase ? (
+                  {submittingPurchase || polling ? (
                     <>
                       <RefreshCcw size={16} className="animate-spin" />
-                      <span>Initiating Purchase...</span>
+                      <span>{polling ? 'Verifying...' : 'Processing...'}</span>
                     </>
                   ) : (
-                    <span>Proceed to Pay ₹{calculatedTotalPayable.toLocaleString()}</span>
+                    <span>Proceed to Pay ₹{(pricingData?.totalPayableAmount || 0).toLocaleString()}</span>
                   )}
                 </button>
               </div>

@@ -310,9 +310,9 @@ const CreateEmployee = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-800 mb-2">Role *</label>
+                <label className="block text-sm font-semibold text-gray-800 mb-2">Department *</label>
                 <select value={jobDetails.roleId} onChange={e => setJobDetails({...jobDetails, roleId: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1cabb1] bg-white text-sm">
-                  <option value="">Select Role</option>
+                  <option value="">Select Department</option>
                   {roles.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
                 </select>
               </div>
