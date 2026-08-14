@@ -87,6 +87,7 @@ const Contra = lazy(() => import('./pages/dashboard/Contra'));
 const ViewContraReceipt = lazy(() => import('./pages/dashboard/ViewContraReceipt'));
 const CheckCibilScore = lazy(() => import('./pages/dashboard/CheckCibilScore'));
 const KycVerification = lazy(() => import('./pages/dashboard/KycVerification'));
+const KycCallback = lazy(() => import('./pages/dashboard/KycCallback'));
 const CashPayment = lazy(() => import('./pages/dashboard/CashPayment'));
 const ViewCashPayment = lazy(() => import('./pages/dashboard/ViewCashPayment'));
 
@@ -94,6 +95,9 @@ const ViewCashPayment = lazy(() => import('./pages/dashboard/ViewCashPayment'));
 const CardsAndCredit = lazy(() => import('./pages/dashboard/CardsAndCredit'));
 const ChoosePaymentMethod = lazy(() => import('./pages/dashboard/ChoosePaymentMethod'));
 const PaymentSuccessful = lazy(() => import('./pages/dashboard/PaymentSuccessful'));
+
+// General
+const ComingSoon = lazy(() => import('./pages/dashboard/ComingSoon'));
 
 // Fallback spinner component for page-level transitions
 const PageSuspenseFallback = () => (
@@ -197,11 +201,16 @@ function App() {
             <Route path="contra/view/:id" element={<ViewContraReceipt />} />
             <Route path="cibil" element={<CheckCibilScore />} />
             <Route path="kyc" element={<KycVerification />} />
+            <Route path="kyc/callback" element={<KycCallback />} />
             <Route path="cash-payment" element={<CashPayment />} />
             <Route path="cash-payment/view/:id" element={<ViewCashPayment />} />
             <Route path="cards-credit" element={<CardsAndCredit />} />
             <Route path="cards-credit/payment" element={<ChoosePaymentMethod />} />
             <Route path="cards-credit/payment/success" element={<PaymentSuccessful />} />
+            <Route path="upi-autopay" element={<ComingSoon />} />
+            <Route path="whatsapp-banking" element={<ComingSoon />} />
+            <Route path="biomatrix-integration" element={<ComingSoon />} />
+            <Route path="coming-soon" element={<ComingSoon />} />
             </Route>
           </Route>
         </Routes>
