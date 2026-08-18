@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { kpaReportService } from '../../api/kpaReportService';
+import useBranchStore from '../../store/branchStore';
 
 const AVAILABLE_YEARS = [2026, 2025, 2024, 2027];
 const AVAILABLE_MONTHS = [
@@ -53,6 +54,7 @@ const ViewReport = () => {
   const [selectedMonth, setSelectedMonth] = useState('');
   const [selectedProduct, setSelectedProduct] = useState('Loan Disbursement');
   const [selectedTimeframe, setSelectedTimeframe] = useState('yearly'); // 'yearly' | 'monthly' | 'weekly' | 'daily'
+  const globalBranchId = useBranchStore(state => state.globalBranchId);
 
   // Data States
   const [loading, setLoading] = useState(true);
@@ -75,6 +77,9 @@ const ViewReport = () => {
       if (selectedProduct) {
         params.product = selectedProduct;
       }
+      if (globalBranchId) {
+        params.branchId = globalBranchId;
+      }
 
       const response = await kpaReportService.getDetail(id, params);
 
@@ -93,7 +98,7 @@ const ViewReport = () => {
 
   useEffect(() => {
     fetchKpaDetail();
-  }, [id, selectedYear, selectedMonth, selectedProduct]);
+  }, [id, selectedYear, selectedMonth, selectedProduct, globalBranchId]);
 
   // Employee details from response or fallbacks
   const employee = kpaData?.employee || {

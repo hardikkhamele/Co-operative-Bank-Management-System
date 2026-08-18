@@ -37,7 +37,11 @@ export const contraReceiptService = {
    */
   create: async (data) => {
     try {
-      const response = await axiosInstance.post('/v1/society/contra-receipts', data);
+      const response = await axiosInstance.post('/v1/society/contra-receipts', data, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
       return response.data;
     } catch (error) {
       throw error;
@@ -63,7 +67,11 @@ export const contraReceiptService = {
    */
   update: async (id, data) => {
     try {
-      const response = await axiosInstance.put(`/v1/society/contra-receipts/${id}`, data);
+      const response = await axiosInstance.put(`/v1/society/contra-receipts/${id}`, data, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
       return response.data;
     } catch (error) {
       throw error;

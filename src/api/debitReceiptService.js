@@ -37,7 +37,11 @@ export const debitReceiptService = {
    */
   create: async (data) => {
     try {
-      const response = await axiosInstance.post('/v1/society/debit-receipts', data);
+      const response = await axiosInstance.post('/v1/society/debit-receipts', data, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
       return response.data;
     } catch (error) {
       throw error;
@@ -63,7 +67,11 @@ export const debitReceiptService = {
    */
   update: async (id, data) => {
     try {
-      const response = await axiosInstance.put(`/v1/society/debit-receipts/${id}`, data);
+      const response = await axiosInstance.put(`/v1/society/debit-receipts/${id}`, data, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
       return response.data;
     } catch (error) {
       throw error;

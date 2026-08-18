@@ -3,6 +3,7 @@ import { Search, Edit, Trash2, ChevronRight, SlidersHorizontal, ChevronDown, X, 
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { creditReceiptService } from '../../api/creditReceiptService';
+import useBranchStore from '../../store/branchStore';
 
 const fallbackReceipts = [
   { id: '1', _id: '1', srNo: 1, receiptNo: 'CR-000001', name: 'Mamta Lodhi', glHead: '410105', glHeadName: 'Loan', accountNumber: '36489745148', acNo: '36489745148', date: '2026-07-20', status: 'NEW' },
@@ -35,7 +36,9 @@ const Credit = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [openFilterDropdown, setOpenFilterDropdown] = useState(null);
   const [selectedStatus, setSelectedStatus] = useState('');
+  const globalBranchId = useBranchStore(state => state.globalBranchId);
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   
@@ -66,7 +69,8 @@ const Credit = () => {
     glHeadName: 'Loan',
     accountNumber: '',
     date: todayISO,
-    status: 'NEW'
+    status: 'NEW',
+    file: null
   });
 
   // Form State for Edit
@@ -76,7 +80,8 @@ const Credit = () => {
     glHeadName: 'Loan',
     accountNumber: '',
     date: todayISO,
-    status: 'NEW'
+    status: 'NEW',
+    file: null
   });
 
   // Debounce search
@@ -100,6 +105,7 @@ const Credit = () => {
       if (selectedStatus) params.status = selectedStatus.toUpperCase();
       if (dateFrom) params.dateFrom = dateFrom;
       if (dateTo) params.dateTo = dateTo;
+      if (globalBranchId) params.branchId = globalBranchId;
 
       const res = await creditReceiptService.list(params);
       if (res && res.success) {
@@ -152,7 +158,7 @@ const Credit = () => {
     } finally {
       setLoading(false);
     }
-  }, [page, limit, debouncedSearch, selectedStatus, dateFrom, dateTo]);
+  }, [page, limit, debouncedSearch, selectedStatus, dateFrom, dateTo, globalBranchId]);
 
   useEffect(() => {
     fetchReceipts();
@@ -172,16 +178,21 @@ const Credit = () => {
 
     setSubmitting(true);
     try {
-      const payload = {
-        name: createForm.name.trim(),
-        glHead: createForm.glHead,
-        glHeadName: createForm.glHeadName,
-        accountNumber: createForm.accountNumber.trim(),
-        date: createForm.date,
-        status: createForm.status.toUpperCase()
-      };
+      const formData = new FormData();
+      formData.append('name', createForm.name.trim());
+      formData.append('glHead', createForm.glHead);
+      formData.append('glHeadName', createForm.glHeadName);
+      formData.append('accountNumber', createForm.accountNumber.trim());
+      formData.append('date', createForm.date);
+      formData.append('status', createForm.status.toUpperCase());
+      if (globalBranchId) {
+        formData.append('branchId', globalBranchId);
+      }
+      if (createForm.file) {
+        formData.append('document', createForm.file);
+      }
       
-      const res = await creditReceiptService.create(payload);
+      const res = await creditReceiptService.create(formData);
       toast.success(res?.message || 'Credit Receipt created successfully!');
       setIsCreateModalOpen(false);
       // Reset form
@@ -191,7 +202,8 @@ const Credit = () => {
         glHeadName: 'Loan',
         accountNumber: '',
         date: todayISO,
-        status: 'NEW'
+        status: 'NEW',
+        file: null
       });
       fetchReceipts();
     } catch (err) {
@@ -210,7 +222,8 @@ const Credit = () => {
       glHeadName: receipt.glHeadName || 'Loan',
       accountNumber: receipt.accountNumber || receipt.acNo || '',
       date: receipt.date ? receipt.date.split('T')[0] : todayISO,
-      status: (receipt.status || 'NEW').toUpperCase()
+      status: (receipt.status || 'NEW').toUpperCase(),
+      file: null
     });
     setIsEditModalOpen(true);
   };
@@ -223,16 +236,21 @@ const Credit = () => {
     setSubmitting(true);
     try {
       const receiptId = selectedReceipt._id || selectedReceipt.id;
-      const payload = {
-        name: editForm.name.trim(),
-        glHead: editForm.glHead,
-        glHeadName: editForm.glHeadName,
-        accountNumber: editForm.accountNumber.trim(),
-        date: editForm.date,
-        status: editForm.status.toUpperCase()
-      };
+      const formData = new FormData();
+      formData.append('name', editForm.name.trim());
+      formData.append('glHead', editForm.glHead);
+      formData.append('glHeadName', editForm.glHeadName);
+      formData.append('accountNumber', editForm.accountNumber.trim());
+      formData.append('date', editForm.date);
+      formData.append('status', editForm.status.toUpperCase());
+      if (globalBranchId) {
+        formData.append('branchId', globalBranchId);
+      }
+      if (editForm.file) {
+        formData.append('document', editForm.file);
+      }
 
-      const res = await creditReceiptService.update(receiptId, payload);
+      const res = await creditReceiptService.update(receiptId, formData);
       toast.success(res?.message || 'Receipt updated successfully.');
       setIsEditModalOpen(false);
       setSelectedReceipt(null);
@@ -272,6 +290,7 @@ const Credit = () => {
       if (selectedStatus) params.status = selectedStatus.toUpperCase();
       if (dateFrom) params.dateFrom = dateFrom;
       if (dateTo) params.dateTo = dateTo;
+      if (globalBranchId) params.branchId = globalBranchId;
 
       const data = await creditReceiptService.exportCsv(params);
       
@@ -474,6 +493,7 @@ const Credit = () => {
                 <th className="px-6 py-4">A/C No.</th>
                 <th className="px-6 py-4">Date</th>
                 <th className="px-6 py-4">Status</th>
+                <th className="px-6 py-4">Image</th>
                 <th className="px-6 py-4 text-center">Action</th>
               </tr>
             </thead>
@@ -511,6 +531,15 @@ const Credit = () => {
                       <td className="px-6 py-4 text-gray-700">{formattedDate}</td>
                       <td className="px-6 py-4">
                         {getStatusBadge(receipt.status)}
+                      </td>
+                      <td className="px-6 py-4">
+                        {receipt.image ? (
+                          <a href={receipt.image} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full bg-blue-50 text-[#1b7ef7] hover:bg-blue-100 transition-colors">
+                            <Eye size={14} /> View
+                          </a>
+                        ) : (
+                          <span className="text-gray-400 text-sm">—</span>
+                        )}
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center justify-center gap-2.5">
@@ -695,6 +724,16 @@ const Credit = () => {
                 </div>
               </div>
 
+              <div>
+                <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">Upload Document</label>
+                <input 
+                  type="file" 
+                  accept=".pdf,.jpg,.jpeg,.png"
+                  onChange={(e) => setCreateForm({ ...createForm, file: e.target.files[0] })}
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white text-[15px] text-gray-800 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[#1cabb1]/10 file:text-[#1cabb1] hover:file:bg-[#1cabb1]/20" 
+                />
+              </div>
+
               <div className="flex justify-end items-center gap-3 mt-6 pt-4 border-t border-gray-200">
                 <button 
                   type="button"
@@ -814,6 +853,24 @@ const Credit = () => {
                     <ChevronDown size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
                   </div>
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">Upload Document</label>
+                {selectedReceipt.image && (
+                  <div className="mb-3 p-3 bg-gray-50 rounded-xl border border-gray-100 flex items-center justify-between">
+                    <span className="text-xs text-gray-500 font-medium">Current Attachment</span>
+                    <a href={selectedReceipt.image} target="_blank" rel="noopener noreferrer" className="text-xs font-bold text-[#1cabb1] hover:text-[#159a9f] flex items-center gap-1 transition-colors">
+                      <Eye size={14} /> View File
+                    </a>
+                  </div>
+                )}
+                <input 
+                  type="file" 
+                  accept=".pdf,.jpg,.jpeg,.png"
+                  onChange={(e) => setEditForm({ ...editForm, file: e.target.files[0] })}
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white text-[15px] text-gray-800 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[#1cabb1]/10 file:text-[#1cabb1] hover:file:bg-[#1cabb1]/20" 
+                />
               </div>
 
               <div className="flex justify-end items-center gap-3 mt-6 pt-4 border-t border-gray-200">

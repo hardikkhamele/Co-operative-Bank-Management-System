@@ -20,6 +20,7 @@ import {
 import { kpaReportService } from '../../api/kpaReportService';
 import { branchService } from '../../api/branchService';
 import { roleService } from '../../api/roleService';
+import useBranchStore from '../../store/branchStore';
 
 const INDIAN_STATES = [
   'Andhra Pradesh',
@@ -87,6 +88,7 @@ const KPAReport = () => {
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const globalBranchId = useBranchStore(state => state.globalBranchId);
 
   // Dropdown Options
   const [branchOptions, setBranchOptions] = useState([]);
@@ -160,6 +162,8 @@ const KPAReport = () => {
       }
       if (appliedFilters.branchIds) {
         params.branchIds = appliedFilters.branchIds;
+      } else if (globalBranchId) {
+        params.branchId = globalBranchId;
       }
       if (appliedFilters.date) {
         params.date = appliedFilters.date;
@@ -202,7 +206,7 @@ const KPAReport = () => {
   // Trigger data fetch on page, search, or applied filter change
   useEffect(() => {
     fetchKpaReports();
-  }, [page, debouncedSearch, appliedFilters]);
+  }, [page, debouncedSearch, appliedFilters, globalBranchId]);
 
   // Open Filter modal and sync temp filters
   const handleOpenFilterModal = () => {
@@ -250,6 +254,7 @@ const KPAReport = () => {
       if (appliedFilters.designations) params.designations = appliedFilters.designations;
       if (appliedFilters.states) params.states = appliedFilters.states;
       if (appliedFilters.branchIds) params.branchIds = appliedFilters.branchIds;
+      else if (globalBranchId) params.branchId = globalBranchId;
       if (appliedFilters.date) params.date = appliedFilters.date;
 
       const blobData = await kpaReportService.export(params);

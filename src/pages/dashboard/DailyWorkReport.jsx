@@ -24,6 +24,7 @@ import { branchService } from '../../api/branchService';
 import { employeeService } from '../../api/employeeService';
 import { roleService } from '../../api/roleService';
 import useAuthStore from '../../store/authStore';
+import useBranchStore from '../../store/branchStore';
 
 const INDIAN_STATES = [
   'Andhra Pradesh',
@@ -104,6 +105,7 @@ const DailyWorkReport = () => {
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const globalBranchId = useBranchStore(state => state.globalBranchId);
 
   // Log Work Report Modal State
   const [isLogModalOpen, setIsLogModalOpen] = useState(false);
@@ -221,6 +223,8 @@ const DailyWorkReport = () => {
       }
       if (appliedFilters.branchId || appliedFilters.branchIds) {
         params.branchId = appliedFilters.branchId || appliedFilters.branchIds;
+      } else if (globalBranchId) {
+        params.branchId = globalBranchId;
       }
       if (appliedFilters.employeeId) {
         params.employeeId = appliedFilters.employeeId;
@@ -272,7 +276,7 @@ const DailyWorkReport = () => {
   // Trigger data fetch on filter/page/search change
   useEffect(() => {
     fetchWorkReports();
-  }, [page, debouncedSearch, appliedFilters]);
+  }, [page, debouncedSearch, appliedFilters, globalBranchId]);
 
   // Open Filter modal and sync temp filters
   const handleOpenFilterModal = () => {
@@ -381,6 +385,7 @@ const DailyWorkReport = () => {
       if (appliedFilters.startDate) params.startDate = appliedFilters.startDate;
       if (appliedFilters.endDate) params.endDate = appliedFilters.endDate;
       if (appliedFilters.branchId || appliedFilters.branchIds) params.branchId = appliedFilters.branchId || appliedFilters.branchIds;
+      else if (globalBranchId) params.branchId = globalBranchId;
       if (appliedFilters.employeeId) params.employeeId = appliedFilters.employeeId;
       if (appliedFilters.designations) params.designations = appliedFilters.designations;
       if (appliedFilters.states) params.states = appliedFilters.states;

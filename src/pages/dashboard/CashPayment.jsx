@@ -3,6 +3,7 @@ import { Search, ChevronRight, ChevronLeft, SlidersHorizontal, ChevronDown, X, E
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { cashPaymentService } from '../../api/cashPaymentService';
+import useBranchStore from '../../store/branchStore';
 
 const CashPayment = () => {
   const navigate = useNavigate();
@@ -16,7 +17,8 @@ const CashPayment = () => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [openFilterDropdown, setOpenFilterDropdown] = useState(null);
   const [filterDesignation, setFilterDesignation] = useState([]);
-  const [filterBranch, setFilterBranch] = useState([]);
+  
+  const globalBranchId = useBranchStore(state => state.globalBranchId);
   
   // Pagination State
   const [page, setPage] = useState(1);
@@ -63,6 +65,9 @@ const CashPayment = () => {
       if (debouncedSearch.trim()) {
         params.search = debouncedSearch.trim();
       }
+      if (globalBranchId) {
+        params.branchId = globalBranchId;
+      }
 
       const res = await cashPaymentService.list(params);
       if (res && (res.success || res.statusCode === 200)) {
@@ -91,19 +96,16 @@ const CashPayment = () => {
     } finally {
       setLoading(false);
     }
-  }, [page, limit, debouncedSearch]);
+  }, [page, limit, debouncedSearch, globalBranchId]);
 
   useEffect(() => {
     fetchCashPayments();
   }, [fetchCashPayments]);
 
-  // Client-side filtering for designation and branch if selected
+  // Client-side filtering for designation if selected
   const displayedItems = items.filter(item => {
     if (filterDesignation.length > 0 && item.designation) {
       if (!filterDesignation.includes(item.designation)) return false;
-    }
-    if (filterBranch.length > 0 && item.branch) {
-      if (!filterBranch.includes(item.branch)) return false;
     }
     return true;
   });
@@ -241,9 +243,9 @@ const CashPayment = () => {
               title="Filters"
             >
               <SlidersHorizontal size={18} />
-              {(filterDesignation.length > 0 || filterBranch.length > 0) && (
+              {filterDesignation.length > 0 && (
                 <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-[#1b58a6] rounded-full border border-white flex items-center justify-center text-[9px] text-white font-bold">
-                  {(filterDesignation.length > 0 ? 1 : 0) + (filterBranch.length > 0 ? 1 : 0)}
+                  {filterDesignation.length > 0 ? 1 : 0}
                 </span>
               )}
             </button>
@@ -284,40 +286,13 @@ const CashPayment = () => {
                       </div>
                     )}
                   </div>
-
-                  {/* Branch Dropdown */}
-                  <div className="relative">
-                    <div 
-                      className="w-full px-4 py-3 rounded-xl border border-gray-200 flex justify-between items-center cursor-pointer bg-white"
-                      onClick={() => setOpenFilterDropdown(openFilterDropdown === 'branch' ? null : 'branch')}
-                    >
-                      <span className="text-gray-500 text-[14px] font-medium">Branch</span>
-                      <ChevronDown size={18} className={`text-gray-400 transition-transform ${openFilterDropdown === 'branch' ? 'rotate-180' : ''}`} />
-                    </div>
-
-                    {openFilterDropdown === 'branch' && (
-                      <div className="absolute z-30 top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-lg border border-gray-100 p-4 space-y-3">
-                        {['Main Branch', 'North Zone Branch', 'South Zone Branch', 'East Zone Branch'].map((br) => (
-                          <label key={br} className="flex items-center gap-3 cursor-pointer select-none">
-                            <input 
-                              type="checkbox" 
-                              checked={filterBranch.includes(br)}
-                              onChange={() => toggleFilter(setFilterBranch, br)}
-                              className="w-4 h-4 text-[#1cabb1] rounded border-gray-300 focus:ring-[#1cabb1]" 
-                            />
-                            <span className="text-sm font-medium text-gray-700">{br}</span>
-                          </label>
-                        ))}
-                      </div>
-                    )}
-                  </div>
                 </div>
 
                 <div className="flex gap-3">
                   <button 
                     onClick={() => {
                       setFilterDesignation([]);
-                      setFilterBranch([]);
+                      setPage(1);
                       setIsFilterOpen(false);
                     }}
                     className="flex-1 py-2.5 rounded-full border border-[#1cabb1] text-[#1cabb1] font-semibold text-sm hover:bg-teal-50 transition-colors"

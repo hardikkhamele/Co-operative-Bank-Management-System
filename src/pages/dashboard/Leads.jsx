@@ -6,6 +6,7 @@ import {
   SlidersHorizontal, Download, ChevronLeft, Loader2, AlertCircle 
 } from 'lucide-react';
 import { leadService } from '../../api/leadService';
+import useBranchStore from '../../store/branchStore';
 
 const getStatusBadge = (status) => {
   const normalized = (status || '').toUpperCase();
@@ -60,6 +61,7 @@ const Leads = () => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState('');
   const [openStatusDropdown, setOpenStatusDropdown] = useState(false);
+  const globalBranchId = useBranchStore(state => state.globalBranchId);
 
   // Delete modal states
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -92,6 +94,10 @@ const Leads = () => {
         params.status = selectedStatus;
       }
 
+      if (globalBranchId) {
+        params.branchId = globalBranchId;
+      }
+
       const res = await leadService.list(params);
       if (res && res.success) {
         setLeads(res.data || []);
@@ -107,7 +113,7 @@ const Leads = () => {
     } finally {
       setLoading(false);
     }
-  }, [page, limit, debouncedSearch, selectedStatus]);
+  }, [page, limit, debouncedSearch, selectedStatus, globalBranchId]);
 
   useEffect(() => {
     fetchLeads();
@@ -124,6 +130,7 @@ const Leads = () => {
       };
       if (debouncedSearch.trim()) params.search = debouncedSearch.trim();
       if (selectedStatus) params.status = selectedStatus;
+      if (globalBranchId) params.branchId = globalBranchId;
 
       const blobData = await leadService.export(params);
       const url = window.URL.createObjectURL(new Blob([blobData], { type: 'text/csv;charset=utf-8;' }));

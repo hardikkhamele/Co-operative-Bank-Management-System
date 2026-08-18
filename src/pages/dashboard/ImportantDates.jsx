@@ -19,6 +19,7 @@ import {
 import { workReportService } from '../../api/workReportService';
 import { branchService } from '../../api/branchService';
 import { roleService } from '../../api/roleService';
+import useBranchStore from '../../store/branchStore';
 
 const INDIAN_STATES = [
   'Andhra Pradesh',
@@ -86,6 +87,7 @@ const ImportantDates = () => {
   const [search, setSearch] = useState('');
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const globalBranchId = useBranchStore(state => state.globalBranchId);
   
   // Detailed Filter Modal States
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -145,6 +147,7 @@ const ImportantDates = () => {
       if (appliedFilters.designation) params.designation = appliedFilters.designation;
       if (appliedFilters.state) params.state = appliedFilters.state;
       if (appliedFilters.branchId) params.branchId = appliedFilters.branchId;
+      else if (globalBranchId) params.branchId = globalBranchId;
 
       const response = await workReportService.getImportantDates(params);
 
@@ -164,7 +167,7 @@ const ImportantDates = () => {
 
   useEffect(() => {
     fetchImportantDates();
-  }, [selectedMonth, selectedYear, appliedFilters]);
+  }, [selectedMonth, selectedYear, appliedFilters, globalBranchId]);
 
   // Filter list client-side for quick search
   const filteredList = useMemo(() => {

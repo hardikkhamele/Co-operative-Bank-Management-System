@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronRight, Search, Eye, Edit, Trash2, X } from 'lucide-react';
+import { ChevronRight, Search, Eye, Edit, Trash2, X, SlidersHorizontal, ChevronDown } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { merchantService } from '../../api/merchantService';
+import useBranchStore from '../../store/branchStore';
 
 const mockMerchants = [
   { id: 1, shopName: 'Tech Haven', ownerName: 'Tony Stark', email: 'tony@techhaven.com', phone: '9876543210', status: 'ACTIVE' },
@@ -13,6 +14,11 @@ const mockMerchants = [
 const Merchants = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
+  
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [openFilterDropdown, setOpenFilterDropdown] = useState(null);
+  const [selectedStatus, setSelectedStatus] = useState('');
+  const globalBranchId = useBranchStore(state => state.globalBranchId);
   
   const [merchants, setMerchants] = useState([]);
   const [meta, setMeta] = useState({ page: 1, limit: 10, totalRecords: 0, totalPages: 1 });
@@ -29,11 +35,15 @@ const Merchants = () => {
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
+  // Debounce search
+
   const fetchMerchants = async (page = 1) => {
     setIsLoading(true);
     try {
       const params = { page, limit: 10 };
       if (debouncedSearch) params.search = debouncedSearch;
+      if (selectedStatus) params.status = selectedStatus;
+      if (globalBranchId) params.branchId = globalBranchId;
 
       const response = await merchantService.getMerchants(params);
       if (response.success) {
@@ -58,7 +68,7 @@ const Merchants = () => {
 
   useEffect(() => {
     fetchMerchants(1);
-  }, [debouncedSearch]);
+  }, [debouncedSearch, selectedStatus, globalBranchId]);
 
   const handlePageChange = (newPage) => {
     if (newPage >= 1 && newPage <= meta.totalPages) {
@@ -118,6 +128,64 @@ const Merchants = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all shadow-sm text-sm"
             />
+          </div>
+
+          {/* Filter Popover Button */}
+          <div className="relative">
+            <button 
+              onClick={() => setIsFilterOpen(!isFilterOpen)}
+              className="flex items-center justify-center p-2.5 border border-gray-200 rounded-lg text-gray-500 hover:bg-gray-50 transition-colors relative focus:outline-none bg-white"
+              title="Filters"
+            >
+              <SlidersHorizontal size={18} />
+              {(selectedStatus) && (
+                <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-[#1b58a6] rounded-full border border-white flex items-center justify-center text-[9px] text-white font-bold">
+                  {(selectedStatus ? 1 : 0)}
+                </span>
+              )}
+            </button>
+            
+            {/* Filter Dropdown Popover */}
+            {isFilterOpen && (
+              <div className="absolute z-30 top-full left-0 sm:left-auto sm:right-0 mt-2 w-80 bg-[#f8f9fb] border border-gray-200 rounded-2xl shadow-xl p-5">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="font-bold text-gray-800 text-[16px]">Filter Merchants</h3>
+                  <button onClick={() => setIsFilterOpen(false)} className="text-gray-500 hover:text-gray-800 transition-colors">
+                    <X size={20} />
+                  </button>
+                </div>
+
+                <div className="space-y-4 mb-5">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Status</label>
+                    <select 
+                      value={selectedStatus}
+                      onChange={(e) => setSelectedStatus(e.target.value)}
+                      className="w-full px-3 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1cabb1] bg-white text-sm text-gray-700"
+                    >
+                      <option value="">All Statuses</option>
+                      <option value="ACTIVE">Active</option>
+                      <option value="INACTIVE">Inactive</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="flex gap-3">
+                  <button 
+                    className="flex-1 py-2 rounded-full border-[1.5px] border-[#1cabb1] text-[#1cabb1] font-semibold hover:bg-teal-50 transition-colors text-sm bg-white"
+                    onClick={() => { setSelectedStatus(''); }}
+                  >
+                    Reset
+                  </button>
+                  <button 
+                    className="flex-1 py-2 rounded-full bg-[#1cabb1] text-white font-semibold hover:bg-[#168f94] transition-colors text-sm shadow-sm"
+                    onClick={() => { setIsFilterOpen(false); fetchMerchants(1); }}
+                  >
+                    Apply Filter
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

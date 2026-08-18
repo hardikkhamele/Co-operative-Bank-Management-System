@@ -6,6 +6,7 @@ import {
 } from 'recharts';
 import { Users, Banknote, Landmark, CreditCard, Wallet, Loader2 } from 'lucide-react';
 import { dashboardService } from '../../api/dashboardService';
+import useBranchStore from '../../store/branchStore';
 
 const CustomTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
@@ -24,6 +25,8 @@ const CustomTooltip = ({ active, payload, label }) => {
 };
 
 const Dashboard = () => {
+  const globalBranchId = useBranchStore(state => state.globalBranchId);
+
   // 1. Stats State
   const [stats, setStats] = useState({});
   const [loadingStats, setLoadingStats] = useState(false);
@@ -44,14 +47,15 @@ const Dashboard = () => {
   const [servicesTimeFilter, setServicesTimeFilter] = useState('Today');
   const [loadingServices, setLoadingServices] = useState(false);
 
-  // 5. Actions Data State (Currently missing API)
+  // 5. Actions Data State
   const [actionsData, setActionsData] = useState([]);
+  const [loadingOverview, setLoadingOverview] = useState(false);
 
   // 1. Fetch Stats Cards (API 1)
   const fetchStats = useCallback(async () => {
     try {
       setLoadingStats(true);
-      const res = await dashboardService.getStats();
+      const res = await dashboardService.getStats({ branchId: globalBranchId, timeFilter: 'Today' });
       if (res && res.success && res.data) {
         setStats(res.data);
       }
@@ -60,13 +64,13 @@ const Dashboard = () => {
     } finally {
       setLoadingStats(false);
     }
-  }, []);
+  }, [globalBranchId]);
 
   // 2. Fetch Revenue Comparison (API 2)
   const fetchRevenue = useCallback(async () => {
     try {
       setLoadingRevenue(true);
-      const res = await dashboardService.getRevenueChart({ year: selectedYear });
+      const res = await dashboardService.getRevenueChart({ year: selectedYear, branchId: globalBranchId });
       if (res && res.success && res.data) {
         if (Array.isArray(res.data.months) && res.data.months.length > 0) {
           setRevenueData(res.data.months);
@@ -80,13 +84,13 @@ const Dashboard = () => {
     } finally {
       setLoadingRevenue(false);
     }
-  }, [selectedYear]);
+  }, [selectedYear, globalBranchId]);
 
   // 3. Fetch Loan Distributed (API 3)
   const fetchLoanDistributed = useCallback(async () => {
     try {
       setLoadingLoanChart(true);
-      const res = await dashboardService.getLoanDistributedChart({ timeFilter: loanTimeFilter });
+      const res = await dashboardService.getLoanDistributedChart({ timeFilter: loanTimeFilter, branchId: globalBranchId });
       if (res && res.success && res.data) {
         if (Array.isArray(res.data.categories) && res.data.categories.length > 0) {
           setLoanCategories(res.data.categories);
@@ -97,13 +101,13 @@ const Dashboard = () => {
     } finally {
       setLoadingLoanChart(false);
     }
-  }, [loanTimeFilter]);
+  }, [loanTimeFilter, globalBranchId]);
 
   // 4. Fetch Services Contribution (API 4)
   const fetchServicesStats = useCallback(async () => {
     try {
       setLoadingServices(true);
-      const res = await dashboardService.getServicesStats({ timeFilter: servicesTimeFilter });
+      const res = await dashboardService.getServicesStats({ timeFilter: servicesTimeFilter, branchId: globalBranchId });
       if (res && res.success && res.data) {
         if (Array.isArray(res.data.services) && res.data.services.length > 0) {
           setServicesData(res.data.services);
@@ -114,7 +118,26 @@ const Dashboard = () => {
     } finally {
       setLoadingServices(false);
     }
-  }, [servicesTimeFilter]);
+  }, [servicesTimeFilter, globalBranchId]);
+
+  // 5. Fetch Overview (API 5)
+  const fetchOverview = useCallback(async () => {
+    try {
+      setLoadingOverview(true);
+      const res = await dashboardService.getOverview({ branchId: globalBranchId });
+      if (res && res.success && res.data) {
+        if (Array.isArray(res.data.actions)) {
+          setActionsData(res.data.actions);
+        } else if (Array.isArray(res.data)) {
+          setActionsData(res.data);
+        }
+      }
+    } catch (err) {
+      console.warn('Dashboard overview fallback:', err.message);
+    } finally {
+      setLoadingOverview(false);
+    }
+  }, [globalBranchId]);
 
   useEffect(() => {
     fetchStats();
@@ -131,6 +154,10 @@ const Dashboard = () => {
   useEffect(() => {
     fetchServicesStats();
   }, [fetchServicesStats]);
+
+  useEffect(() => {
+    fetchOverview();
+  }, [fetchOverview]);
 
   // Transform Loan Categories for Bar Chart
   const formattedLoanData = loanCategories.map((c, index) => {
@@ -217,8 +244,10 @@ const Dashboard = () => {
 
   return (
     <div className="space-y-6">
-      {/* Top Section - EMI Card & Verification Credit (API 1) */}
-      <div className="flex justify-end mb-2">
+      {/* Top Section - Title & Credits */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-2">
+        <h2 className="text-xl font-bold text-[#1b2559]">Overview</h2>
+
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 flex overflow-hidden">
           <div className="px-6 py-4 border-r border-gray-100 text-center min-w-[130px]">
             <div className="text-[13px] text-gray-500 font-medium mb-1">
@@ -494,7 +523,10 @@ const Dashboard = () => {
 
         {/* Last 5 Actions Table */}
         <div className="bg-[#fafafa] p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col">
-          <h3 className="text-[17px] font-bold text-gray-800 mb-6">Last 5 Actions</h3>
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-[17px] font-bold text-gray-800">Last 5 Actions</h3>
+            {loadingOverview && <Loader2 size={14} className="animate-spin text-[#1cabb1]" />}
+          </div>
           <div className="overflow-x-auto flex-1">
             <table className="w-full text-left border-collapse">
               <thead>

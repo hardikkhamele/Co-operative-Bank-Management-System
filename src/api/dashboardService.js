@@ -2,9 +2,9 @@ import axiosInstance from './axiosConfig';
 
 export const dashboardService = {
   // 1. Fetch Society Dashboard Stats Cards
-  getStats: async () => {
+  getStats: async (params = {}) => {
     try {
-      const response = await axiosInstance.get('/v1/society/dashboard/stats');
+      const response = await axiosInstance.get('/v1/society/dashboard/stats', { params });
       return response.data;
     } catch (error) {
       throw error;
@@ -35,6 +35,16 @@ export const dashboardService = {
   getServicesStats: async (params = {}) => {
     try {
       const response = await axiosInstance.get('/v1/society/dashboard/services-stats', { params });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  // 5. Fetch Overview
+  getOverview: async (params = {}) => {
+    try {
+      const response = await axiosInstance.get('/v1/society/dashboard/overview', { params });
       return response.data;
     } catch (error) {
       throw error;

@@ -130,6 +130,16 @@ export const branchService = {
       throw error;
     }
   },
+
+  // 14. Get Branch Dropdown List
+  getDropdownList: async () => {
+    try {
+      const response = await axiosInstance.get('/v1/society/branches/dropdown');
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
 };
 
 export default branchService;

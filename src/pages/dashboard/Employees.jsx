@@ -3,8 +3,8 @@ import { toast } from 'react-toastify';
 import { Link, useNavigate } from 'react-router-dom';
 import { ChevronRight, Search, SlidersHorizontal, Eye, Edit, Trash2, ChevronLeft, X, ChevronDown, Calendar } from 'lucide-react';
 import { employeeService } from '../../api/employeeService';
-import { branchService } from '../../api/branchService';
 import { roleService } from '../../api/roleService';
+import useBranchStore from '../../store/branchStore';
 
 const Employees = () => {
   const navigate = useNavigate();
@@ -25,11 +25,10 @@ const Employees = () => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   
   // Dropdown Options State (fetched from APIs)
-  const [branchOptions, setBranchOptions] = useState([]);
   const [roleOptions, setRoleOptions] = useState([]);
   
   // Selected Filters
-  const [selectedBranchId, setSelectedBranchId] = useState('');
+  const globalBranchId = useBranchStore(state => state.globalBranchId);
   const [selectedRoleId, setSelectedRoleId] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('');
   
@@ -46,15 +45,11 @@ const Employees = () => {
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
-  // Fetch Branches and Roles for Filters
+  // Fetch Roles for Filters
   useEffect(() => {
     const fetchOptions = async () => {
       try {
-        const [branchRes, roleRes] = await Promise.all([
-          branchService.list({ limit: 100 }), // Get max possible for filter dropdown
-          roleService.list({ limit: 100 })
-        ]);
-        if (branchRes.success) setBranchOptions(branchRes.data);
+        const roleRes = await roleService.list({ limit: 100 });
         if (roleRes.success) setRoleOptions(roleRes.data);
       } catch (err) {
         console.error("Failed to load filter options", err);
@@ -75,7 +70,7 @@ const Employees = () => {
       };
       
       if (debouncedSearch) params.search = debouncedSearch;
-      if (selectedBranchId) params.branchId = selectedBranchId;
+      if (globalBranchId) params.branchId = globalBranchId;
       if (selectedRoleId) params.roleId = selectedRoleId;
       if (selectedStatus) params.status = selectedStatus;
       
@@ -95,7 +90,7 @@ const Employees = () => {
 
   useEffect(() => {
     fetchEmployees();
-  }, [page, debouncedSearch, selectedBranchId, selectedRoleId, selectedStatus]);
+  }, [page, debouncedSearch, globalBranchId, selectedRoleId, selectedStatus]);
 
   const handleDeleteClick = (employee) => {
     setEmployeeToDelete(employee);
@@ -120,7 +115,6 @@ const Employees = () => {
   };
 
   const resetFilters = () => {
-    setSelectedBranchId('');
     setSelectedRoleId('');
     setSelectedStatus('');
     setPage(1);
@@ -165,7 +159,7 @@ const Employees = () => {
               className="p-2.5 bg-white border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors shadow-sm relative focus:outline-none"
             >
               <SlidersHorizontal size={18} />
-              {(selectedBranchId || selectedRoleId || selectedStatus) && (
+              {(selectedRoleId || selectedStatus) && (
                 <span className="absolute -top-1 -right-1 w-3 h-3 bg-[#1b58a6] rounded-full border border-white"></span>
               )}
             </button>
@@ -181,19 +175,6 @@ const Employees = () => {
                 </div>
                 
                 <div className="p-5 pt-2 space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Branch</label>
-                    <select 
-                      value={selectedBranchId}
-                      onChange={(e) => setSelectedBranchId(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#1cabb1] bg-white text-sm"
-                    >
-                      <option value="">All Branches</option>
-                      {branchOptions.map(b => (
-                        <option key={b.id} value={b.id}>{b.name}</option>
-                      ))}
-                    </select>
-                  </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
                     <select 

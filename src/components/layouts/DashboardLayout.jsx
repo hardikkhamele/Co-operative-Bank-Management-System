@@ -3,6 +3,7 @@ import { NavLink, Link, Outlet, useNavigate, useLocation } from 'react-router-do
 import { LayoutDashboard, MapPin, IdCard, UserPlus, List, ClipboardList, Store, Box, ArrowDownRight, ArrowUpRight, ArrowRightLeft, RefreshCcw, UserCheck, UserCog, Tag, ChevronDown, Bell, User, LogOut, CreditCard, Headphones, FileText, BarChart2, TrendingUp, CalendarDays, Banknote, Smartphone, MessageCircle, Fingerprint } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
 import useLoadingStore from '../../store/loadingStore';
+import useBranchStore from '../../store/branchStore';
 import GlobalLoader from '../GlobalLoader';
 
 const SidebarGroup = ({ title, children, defaultOpen = false }) => {
@@ -56,6 +57,12 @@ const DashboardLayout = () => {
   useEffect(() => {
     resetLoader();
   }, [location.pathname, resetLoader]);
+
+  const { globalBranchId, setGlobalBranchId, branchOptions, fetchBranches } = useBranchStore();
+
+  useEffect(() => {
+    fetchBranches();
+  }, [fetchBranches]);
 
   const handleLogout = () => {
     if (logout) logout();
@@ -222,9 +229,31 @@ const DashboardLayout = () => {
       <div className="flex-1 flex flex-col overflow-hidden relative">
         {/* Topbar */}
         <header className="h-16 bg-[#1cabb1] text-white flex items-center justify-between px-8 shadow-sm shrink-0 print:hidden">
-          <div>
-            <div className="text-xs text-white/80 font-medium">Welcome</div>
-            <div className="text-lg font-semibold tracking-wide">{userName}</div>
+          <div className="flex items-center gap-8">
+            <div>
+              <div className="text-xs text-white/80 font-medium">Welcome</div>
+              <div className="text-lg font-semibold tracking-wide">{userName}</div>
+            </div>
+            
+            {/* Global Branch Filter */}
+            <div className="hidden sm:block relative w-64">
+              <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                <MapPin size={16} className="text-white/80" />
+              </div>
+              <select
+                value={globalBranchId}
+                onChange={(e) => setGlobalBranchId(e.target.value)}
+                className="w-full pl-10 pr-10 py-2 rounded-xl bg-white/20 border border-white/30 text-white focus:outline-none focus:ring-2 focus:ring-white/50 transition-all appearance-none text-[13px] font-medium shadow-sm cursor-pointer hover:bg-white/30"
+              >
+                <option value="" className="text-gray-800">All Branches</option>
+                {branchOptions.map((br) => (
+                  <option key={br.id} value={br.id} className="text-gray-800">
+                    {br.name || br.branchName}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/80 pointer-events-none" />
+            </div>
           </div>
           
           <div className="flex items-center gap-5 relative">
