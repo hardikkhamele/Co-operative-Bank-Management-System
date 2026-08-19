@@ -14,6 +14,7 @@ const mockManagers = [
 ];
 
 const MultiSelectDropdown = ({ label, options, selectedValues, onChange }) => {
+
   const [isOpen, setIsOpen] = useState(false);
   
   const toggleOption = (option) => {
@@ -42,7 +43,7 @@ const MultiSelectDropdown = ({ label, options, selectedValues, onChange }) => {
             <label key={idx} className="flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 rounded-lg cursor-pointer transition-colors">
               <input 
                 type="checkbox" 
-                className="w-4 h-4 rounded border-gray-300 text-[#1cabb1] focus:ring-[#1cabb1]"
+                className="w-4 h-4 rounded border-gray-300 text-[#1D4ED8] focus:ring-[#1D4ED8]"
                 checked={selectedValues.includes(option)}
                 onChange={() => toggleOption(option)}
               />
@@ -95,7 +96,7 @@ const Managers = () => {
           <ChevronRight size={14} className="mx-2" />
           <span className="hover:text-gray-700">User Management</span>
           <ChevronRight size={14} className="mx-2" />
-          <span className="text-[#5a5ce5]">Managers</span>
+          <span className="text-[#1B58A6]">Managers</span>
         </div>
       </div>
 
@@ -109,7 +110,7 @@ const Managers = () => {
               placeholder="Search"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-lg w-64 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all shadow-sm"
+              className="pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-lg w-64 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all shadow-sm"
             />
           </div>
           <div className="relative">
@@ -119,7 +120,7 @@ const Managers = () => {
             >
               <SlidersHorizontal size={18} />
               {(selectedTypes.length > 0 || selectedRegions.length > 0 || selectedBranches.length > 0) && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 bg-[#5a5ce5] rounded-full border border-white flex items-center justify-center text-[9px] font-bold text-white">
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-[#1B58A6] rounded-full border border-white flex items-center justify-center text-[9px] font-bold text-white">
                   {selectedTypes.length + selectedRegions.length + selectedBranches.length}
                 </span>
               )}
@@ -163,13 +164,13 @@ const Managers = () => {
                       setSelectedRegions([]);
                       setSelectedBranches([]);
                     }}
-                    className="flex-1 py-2.5 px-4 rounded-full border-2 border-[#1cabb1] text-[#1cabb1] font-semibold hover:bg-teal-50 transition-colors bg-white text-sm"
+                    className="flex-1 py-2.5 px-4 rounded-full border-2 border-[#1D4ED8] text-[#1D4ED8] font-semibold hover:bg-teal-50 transition-colors bg-white text-sm"
                   >
                     Reset Filter
                   </button>
                   <button 
                     onClick={() => setIsFilterOpen(false)}
-                    className="flex-1 py-2.5 px-4 rounded-full bg-[#1cabb1] text-white font-semibold hover:bg-[#168f94] transition-colors shadow-sm text-sm"
+                    className="flex-1 py-2.5 px-4 rounded-full bg-[#1D4ED8] text-white font-semibold hover:bg-[#168f94] transition-colors shadow-sm text-sm"
                   >
                     Set Filter
                   </button>
@@ -181,7 +182,7 @@ const Managers = () => {
 
         <Link 
           to="/managers/create"
-          className="bg-[#1cabb1] hover:bg-[#168f94] text-white px-4 py-2 rounded-full font-medium transition-colors flex items-center text-sm shadow-sm"
+          className="bg-[#1D4ED8] hover:bg-[#168f94] text-white px-4 py-2 rounded-full font-medium transition-colors flex items-center text-sm shadow-sm"
         >
           + Create Manager
         </Link>
@@ -259,19 +260,19 @@ const Managers = () => {
       <div className="flex items-center justify-between text-sm text-gray-500 shrink-0">
         <div>Showing {filteredData.length > 0 ? 1 : 0} to {filteredData.length} of 30 Entries</div>
         <div className="flex items-center gap-2">
-          <button className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 bg-white text-[#1cabb1] hover:bg-[#1cabb1] hover:text-white transition-colors shadow-sm">
+          <button className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 bg-white text-[#1D4ED8] hover:bg-[#1D4ED8] hover:text-white transition-colors shadow-sm">
             <ChevronLeft size={16} />
           </button>
-          <button className="w-8 h-8 flex items-center justify-center rounded-full bg-[#1cabb1] text-white border border-[#1cabb1] shadow-sm">
+          <button className="w-8 h-8 flex items-center justify-center rounded-full bg-[#1D4ED8] text-white border border-[#1D4ED8] shadow-sm">
             1
           </button>
-          <button className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 bg-white text-[#1cabb1] hover:bg-[#1cabb1] hover:text-white transition-colors shadow-sm">
+          <button className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 bg-white text-[#1D4ED8] hover:bg-[#1D4ED8] hover:text-white transition-colors shadow-sm">
             2
           </button>
-          <button className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 bg-white text-[#1cabb1] hover:bg-[#1cabb1] hover:text-white transition-colors shadow-sm">
+          <button className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 bg-white text-[#1D4ED8] hover:bg-[#1D4ED8] hover:text-white transition-colors shadow-sm">
             3
           </button>
-          <button className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 bg-white text-[#1cabb1] hover:bg-[#1cabb1] hover:text-white transition-colors shadow-sm">
+          <button className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 bg-white text-[#1D4ED8] hover:bg-[#1D4ED8] hover:text-white transition-colors shadow-sm">
             <ChevronRight size={16} />
           </button>
         </div>

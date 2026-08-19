@@ -4,7 +4,7 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   BarChart, Bar, PieChart, Pie, Cell, LabelList
 } from 'recharts';
-import { Users, Banknote, Landmark, CreditCard, Wallet, Loader2 } from 'lucide-react';
+import { Users, Banknote, Landmark, CreditCard, Wallet, Loader2, MapPin, ChevronDown } from 'lucide-react';
 import { dashboardService } from '../../api/dashboardService';
 import useBranchStore from '../../store/branchStore';
 
@@ -14,7 +14,7 @@ const CustomTooltip = ({ active, payload, label }) => {
       <div className="bg-white p-3 rounded-lg shadow-lg border border-gray-100">
         <p className="font-semibold text-gray-800 mb-1">{label || payload[0].payload.name || payload[0].payload.rawCategory}</p>
         {payload.map((entry, index) => (
-          <p key={index} style={{ color: entry.color || '#1cabb1' }} className="text-sm font-medium">
+          <p key={index} style={{ color: entry.color || '#1D4ED8' }} className="text-sm font-medium">
             {entry.name}: {typeof entry.value === 'number' ? `₹${entry.value.toLocaleString()}` : entry.value}
           </p>
         ))}
@@ -25,7 +25,7 @@ const CustomTooltip = ({ active, payload, label }) => {
 };
 
 const Dashboard = () => {
-  const globalBranchId = useBranchStore(state => state.globalBranchId);
+  const { globalBranchId, setGlobalBranchId, branchOptions } = useBranchStore();
 
   // 1. Stats State
   const [stats, setStats] = useState({});
@@ -174,7 +174,7 @@ const Dashboard = () => {
       value: c.amount,
       formattedAmount: c.formattedAmount,
       count: c.count,
-      fill: index === 1 ? '#1cabb1' : '#4b5563'
+      fill: '#1B58A6'
     };
   });
 
@@ -196,7 +196,6 @@ const Dashboard = () => {
       title: stats.totalLeads?.title || 'Total Leads',
       value: stats.totalLeads?.formattedCount || (stats.totalLeads?.count != null ? stats.totalLeads.count.toLocaleString('en-IN') : '0'),
       change: stats.totalLeads?.changeText || `${stats.totalLeads?.percentageChange != null ? (stats.totalLeads.percentageChange > 0 ? '+' : '') + stats.totalLeads.percentageChange + '%' : '0%'}`,
-      color: 'bg-[#00c5d5]',
       icon: <Users size={20} />,
       path: '/leads'
     },
@@ -204,7 +203,6 @@ const Dashboard = () => {
       title: stats.totalLoanDistributed?.title || 'Total Loan Distributed',
       value: stats.totalLoanDistributed?.formattedAmount || (stats.totalLoanDistributed?.amount != null ? `₹${stats.totalLoanDistributed.amount.toLocaleString('en-IN')}` : '₹0'),
       change: stats.totalLoanDistributed?.changeText || `${stats.totalLoanDistributed?.percentageChange != null ? (stats.totalLoanDistributed.percentageChange > 0 ? '+' : '') + stats.totalLoanDistributed.percentageChange + '%' : '0%'}`,
-      color: 'bg-[#b68962]',
       icon: <Banknote size={20} />,
       path: '/dashboard'
     },
@@ -212,7 +210,6 @@ const Dashboard = () => {
       title: stats.collectionPending?.title || 'Collection Pending',
       value: stats.collectionPending?.formattedAmount || (stats.collectionPending?.amount != null ? `₹${stats.collectionPending.amount.toLocaleString('en-IN')}` : '₹0'),
       change: stats.collectionPending?.changeText || `${stats.collectionPending?.percentageChange != null ? (stats.collectionPending.percentageChange > 0 ? '+' : '') + stats.collectionPending.percentageChange + '%' : '0%'}`,
-      color: 'bg-[#f48b29]',
       icon: <CreditCard size={20} />,
       path: '/debit'
     },
@@ -220,7 +217,6 @@ const Dashboard = () => {
       title: stats.totalRevenue?.title || 'Total Revenue',
       value: stats.totalRevenue?.formattedAmount || (stats.totalRevenue?.amount != null ? `₹${stats.totalRevenue.amount.toLocaleString('en-IN')}` : '₹0'),
       change: stats.totalRevenue?.changeText || `${stats.totalRevenue?.percentageChange != null ? (stats.totalRevenue.percentageChange > 0 ? '+' : '') + stats.totalRevenue.percentageChange + '%' : '0%'}`,
-      color: 'bg-[#3bc454]',
       icon: <Wallet size={20} />,
       path: '/credit'
     },
@@ -228,7 +224,6 @@ const Dashboard = () => {
       title: stats.totalBranch?.title || 'Total Branch',
       value: stats.totalBranch?.formattedCount || (stats.totalBranch?.count != null ? stats.totalBranch.count.toLocaleString('en-IN') : '0'),
       change: stats.totalBranch?.changeText || `${stats.totalBranch?.percentageChange != null ? (stats.totalBranch.percentageChange > 0 ? '+' : '') + stats.totalBranch.percentageChange + '%' : '0%'}`,
-      color: 'bg-[#6154ff]',
       icon: <Landmark size={20} />,
       path: '/branch'
     },
@@ -236,7 +231,6 @@ const Dashboard = () => {
       title: stats.totalStaff?.title || 'Total Staff',
       value: stats.totalStaff?.formattedCount || (stats.totalStaff?.count != null ? stats.totalStaff.count.toLocaleString('en-IN') : '0'),
       change: stats.totalStaff?.changeText || `${stats.totalStaff?.percentageChange != null ? (stats.totalStaff.percentageChange > 0 ? '+' : '') + stats.totalStaff.percentageChange + '%' : '0%'}`,
-      color: 'bg-[#d926e9]',
       icon: <Users size={20} />,
       path: '/employees'
     },
@@ -246,14 +240,34 @@ const Dashboard = () => {
     <div className="space-y-6">
       {/* Top Section - Title & Credits */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-2">
-        <h2 className="text-xl font-bold text-[#1b2559]">Overview</h2>
+        <div className="flex flex-col gap-3">
+          <div className="relative w-max min-w-[220px]">
+            <div className="absolute inset-y-0 left-3.5 flex items-center pointer-events-none">
+              <MapPin size={16} className="text-brand-primary" />
+            </div>
+            <select
+              value={globalBranchId}
+              onChange={(e) => setGlobalBranchId(e.target.value)}
+              className="w-full pl-10 pr-10 py-2 rounded-xl bg-white border border-gray-200 text-gray-700 focus:outline-none focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-all appearance-none text-[14px] font-medium shadow-sm cursor-pointer hover:border-gray-300"
+            >
+              <option value="" className="text-gray-800">All Branches</option>
+              {branchOptions.map((br) => (
+                <option key={br.id} value={br.id} className="text-gray-800">
+                  {br.name || br.branchName}
+                </option>
+              ))}
+            </select>
+            <ChevronDown size={16} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+          </div>
+          <h2 className="text-xl font-bold text-text-heading">Overview</h2>
+        </div>
 
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 flex overflow-hidden">
           <div className="px-6 py-4 border-r border-gray-100 text-center min-w-[130px]">
             <div className="text-[13px] text-gray-500 font-medium mb-1">
               {stats.emiCard?.title || 'EMI Card'}
             </div>
-            <div className="text-xl font-bold text-[#0f4b86]">
+            <div className="text-xl font-bold text-brand-primary-dark">
               {stats.emiCard?.formattedAvailable || (stats.emiCard?.available != null ? stats.emiCard.available.toLocaleString('en-IN') : '0')}
             </div>
           </div>
@@ -261,7 +275,7 @@ const Dashboard = () => {
             <div className="text-[13px] text-gray-500 font-medium mb-1">
               {stats.verificationCredit?.title || 'Verification Credit'}
             </div>
-            <div className="text-xl font-bold text-[#0f4b86]">
+            <div className="text-xl font-bold text-brand-primary-dark">
               {stats.verificationCredit?.formattedAvailable || (stats.verificationCredit?.available != null ? stats.verificationCredit.available.toLocaleString('en-IN') : '0')}
             </div>
           </div>
@@ -274,16 +288,23 @@ const Dashboard = () => {
           <Link 
             key={idx} 
             to={stat.path} 
-            className={`${stat.color} rounded-xl p-5 text-white shadow-sm flex flex-col justify-between h-[130px] hover:-translate-y-1 hover:shadow-md transition-all duration-200 block cursor-pointer`}
+            className="bg-brand-bg-card border border-border-default rounded-xl p-5 shadow-[0_1px_3px_rgba(16,24,40,0.06)] flex flex-col justify-between h-[130px] hover:shadow-[0_4px_12px_rgba(16,24,40,0.08)] transition-all duration-300 block cursor-pointer"
           >
             <div className="flex justify-between items-start">
-              <span className="text-[15px] font-medium">{stat.title}</span>
-              <div className="opacity-90">{stat.icon}</div>
+              <span className="text-[14px] font-medium text-text-muted">{stat.title}</span>
+              <div className="p-2 rounded-lg bg-brand-light text-brand-primary shadow-sm">
+                {stat.icon}
+              </div>
             </div>
             <div>
-              <div className="text-3xl font-bold mb-1 tracking-tight">{stat.value}</div>
-              <div className="text-sm font-medium">
-                {stat.change.includes('This Month') ? stat.change : `This Month ${stat.change}`}
+              <div className="text-3xl font-bold mb-1 tracking-tight text-text-heading">{stat.value}</div>
+              <div className="text-[13px] font-medium flex items-center gap-1.5 mt-1 text-text-muted">
+                <span className={`px-2 py-0.5 rounded-md font-semibold ${
+                  stat.change.startsWith('+') ? 'bg-semantic-success-light text-semantic-success' :
+                  stat.change.startsWith('-') ? 'bg-semantic-danger-light text-semantic-danger' :
+                  'bg-brand-surface text-text-muted'
+                }`}>{stat.change}</span>
+                <span>{stat.change.includes('This Month') ? '' : ' This Month'}</span>
               </div>
             </div>
           </Link>
@@ -299,16 +320,16 @@ const Dashboard = () => {
               <h3 className="text-[17px] font-bold text-gray-800">Total Revenue Chart <span className="text-gray-300 font-light mx-2">|</span></h3>
               <div className="flex items-center gap-6 text-sm font-medium text-gray-600">
                 <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#1cabb1]"></span>
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#1B58A6]"></span>
                   {revenueLegends.thisYear || 'This year'}
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-gray-500"></span>
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#A9BDD3]"></span>
                   {revenueLegends.lastYear || 'Last year'}
                 </div>
               </div>
             </div>
-            {loadingRevenue && <Loader2 size={16} className="animate-spin text-[#1cabb1]" />}
+            {loadingRevenue && <Loader2 size={16} className="animate-spin text-brand-primary" />}
           </div>
           
           <div className="h-[280px] w-full">
@@ -334,7 +355,7 @@ const Dashboard = () => {
                       type="monotone" 
                       name={revenueLegends.thisYear || 'This year'} 
                       dataKey="thisYear" 
-                      stroke="#1cabb1" 
+                      stroke="#1B58A6" 
                       strokeWidth={2.5} 
                       dot={false} 
                       activeDot={{ r: 6 }} 
@@ -343,7 +364,7 @@ const Dashboard = () => {
                       type="monotone" 
                       name={revenueLegends.lastYear || 'Last year'} 
                       dataKey="lastYear" 
-                      stroke="#64748b" 
+                      stroke="#A9BDD3" 
                       strokeWidth={1.5} 
                       strokeDasharray="4 4" 
                       dot={false} 
@@ -362,12 +383,12 @@ const Dashboard = () => {
           <div className="flex justify-between items-center mb-6">
             <div className="flex items-center gap-2">
               <h3 className="text-[17px] font-bold text-gray-800">Loan Distributed</h3>
-              {loadingLoanChart && <Loader2 size={14} className="animate-spin text-[#1cabb1]" />}
+              {loadingLoanChart && <Loader2 size={14} className="animate-spin text-brand-primary" />}
             </div>
             <select 
               value={loanTimeFilter} 
               onChange={(e) => setLoanTimeFilter(e.target.value)}
-              className="bg-[#f3f4f6] border border-gray-200 text-gray-700 text-xs font-semibold rounded-lg focus:ring-[#1cabb1] focus:border-[#1cabb1] block px-3 py-1.5 outline-none cursor-pointer"
+              className="bg-[#f3f4f6] border border-gray-200 text-gray-700 text-xs font-semibold rounded-lg focus:ring-brand-primary focus:border-brand-primary block px-3 py-1.5 outline-none cursor-pointer"
             >
               <option value="Today">Today</option>
               <option value="Weekly">This Week</option>
@@ -413,7 +434,7 @@ const Dashboard = () => {
                     name="Loan Amount"
                     radius={[10, 10, 10, 10]} 
                     barSize={16}
-                    fill="#4b5563" 
+                    fill="#1B58A6" 
                   >
                     <LabelList 
                       dataKey="value" 
@@ -423,7 +444,7 @@ const Dashboard = () => {
                         if (index === 1) {
                           return (
                             <g>
-                              <rect x={x + width/2 - 16} y={y - 24} width={32} height={18} fill="#1cabb1" rx={9} ry={9} />
+                              <rect x={x + width/2 - 16} y={y - 24} width={32} height={18} fill="#1B58A6" rx={9} ry={9} />
                               <text x={x + width / 2} y={y - 11} fill="white" textAnchor="middle" fontSize={10} fontWeight="bold">
                                 {Math.round(value/1000)}k
                               </text>
@@ -455,12 +476,12 @@ const Dashboard = () => {
           <div className="flex justify-between items-center mb-6">
             <div className="flex items-center gap-2">
               <h3 className="text-[17px] font-bold text-gray-800">Sales contribution of Services</h3>
-              {loadingServices && <Loader2 size={14} className="animate-spin text-[#1cabb1]" />}
+              {loadingServices && <Loader2 size={14} className="animate-spin text-brand-primary" />}
             </div>
             <select 
               value={servicesTimeFilter}
               onChange={(e) => setServicesTimeFilter(e.target.value)}
-              className="bg-[#f3f4f6] border border-gray-200 text-gray-700 text-xs font-semibold rounded-lg focus:ring-[#1cabb1] focus:border-[#1cabb1] block px-3 py-1.5 outline-none cursor-pointer"
+              className="bg-[#f3f4f6] border border-gray-200 text-gray-700 text-xs font-semibold rounded-lg focus:ring-brand-primary focus:border-brand-primary block px-3 py-1.5 outline-none cursor-pointer"
             >
               <option value="Today">Today</option>
               <option value="Weekly">This Week</option>
@@ -525,7 +546,7 @@ const Dashboard = () => {
         <div className="bg-[#fafafa] p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col">
           <div className="flex justify-between items-center mb-6">
             <h3 className="text-[17px] font-bold text-gray-800">Last 5 Actions</h3>
-            {loadingOverview && <Loader2 size={14} className="animate-spin text-[#1cabb1]" />}
+            {loadingOverview && <Loader2 size={14} className="animate-spin text-brand-primary" />}
           </div>
           <div className="overflow-x-auto flex-1">
             <table className="w-full text-left border-collapse">

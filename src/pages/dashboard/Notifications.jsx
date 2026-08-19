@@ -40,13 +40,13 @@ const Notifications = () => {
     <div className="space-y-6 max-w-5xl mx-auto w-full pb-10">
       {/* Header Card */}
       <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-        <h2 className="text-xl font-bold text-[#1b58a6] mb-2">Notification</h2>
+        <h2 className="text-xl font-bold text-[#1D4ED8] mb-2">Notification</h2>
         <div className="flex items-center text-sm font-medium">
           <Link to="/dashboard" className="text-gray-500 hover:text-gray-800 transition-colors">
             Dashboard
           </Link>
           <ChevronRight size={16} className="mx-1 text-gray-400" />
-          <span className="text-[#1b58a6]">Notification</span>
+          <span className="text-[#1D4ED8]">Notification</span>
         </div>
       </div>
 
@@ -75,7 +75,7 @@ const Notifications = () => {
             <div>
               <Link 
                 to={notification.link} 
-                className="text-[#1b58a6] font-semibold text-sm hover:text-[#154685] transition-colors whitespace-nowrap"
+                className="text-[#1D4ED8] font-semibold text-sm hover:text-[#154685] transition-colors whitespace-nowrap"
               >
                 Check Now
               </Link>

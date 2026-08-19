@@ -102,7 +102,7 @@ const ComingSoon = lazy(() => import('./pages/dashboard/ComingSoon'));
 // Fallback spinner component for page-level transitions
 const PageSuspenseFallback = () => (
   <div className="w-full min-h-[60vh] flex items-center justify-center">
-    <div className="w-8 h-8 border-3 border-gray-200 border-t-[#1cabb1] rounded-full animate-spin"></div>
+    <div className="w-8 h-8 border-3 border-gray-200 border-t-[#1D4ED8] rounded-full animate-spin"></div>
   </div>
 );
 

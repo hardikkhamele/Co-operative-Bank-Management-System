@@ -106,7 +106,7 @@ const ViewLead = () => {
       case 'PENDING_DOWN_PAYMENT':
         return <div className="px-6 py-1.5 rounded bg-amber-50 border border-amber-300 text-amber-600 font-semibold text-[13px]">Pending Down Payment</div>;
       case 'ACTIVE':
-        return <div className="px-6 py-1.5 rounded bg-indigo-50 border border-indigo-200 text-[#5a5ce5] font-semibold text-[13px]">Active</div>;
+        return <div className="px-6 py-1.5 rounded bg-indigo-50 border border-indigo-200 text-[#1B58A6] font-semibold text-[13px]">Active</div>;
       case 'COMPLETED':
         return <div className="px-6 py-1.5 rounded bg-green-50 border border-green-400 text-[#00c950] font-semibold text-[13px]">Completed</div>;
       case 'REJECTED':
@@ -126,7 +126,7 @@ const ViewLead = () => {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px]">
-        <Loader2 size={36} className="animate-spin text-[#1cabb1] mb-3" />
+        <Loader2 size={36} className="animate-spin text-[#1D4ED8] mb-3" />
         <p className="text-gray-500 font-medium">Loading lead details...</p>
       </div>
     );
@@ -139,7 +139,7 @@ const ViewLead = () => {
       
       {/* Breadcrumb Card */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 shrink-0 relative">
-        <h1 className="text-[22px] font-bold text-[#1b58a6] mb-3">Lead Details</h1>
+        <h1 className="text-[22px] font-bold text-[#1D4ED8] mb-3">Lead Details</h1>
         <div className="flex items-center text-sm font-medium text-gray-500">
           <Link to="/dashboard" className="hover:text-gray-800 transition-colors">Dashboard</Link>
           <ChevronRight size={16} className="mx-1.5 text-gray-400" />
@@ -147,14 +147,14 @@ const ViewLead = () => {
           <ChevronRight size={16} className="mx-1.5 text-gray-400" />
           <Link to="/leads" className="hover:text-gray-800 transition-colors">Leads</Link>
           <ChevronRight size={16} className="mx-1.5 text-gray-400" />
-          <span className="text-[#1b58a6]">Lead Details</span>
+          <span className="text-[#1D4ED8]">Lead Details</span>
         </div>
       </div>
 
       {/* App Number & Action Buttons */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 min-h-[44px]">
         <div className="text-[15px] font-medium text-gray-700">
-          Application Number: <span className="text-[#1b58a6] ml-1 font-bold">{applicationId}</span>
+          Application Number: <span className="text-[#1D4ED8] ml-1 font-bold">{applicationId}</span>
         </div>
         
         <div className="flex flex-wrap items-center gap-3">
@@ -178,7 +178,7 @@ const ViewLead = () => {
                   loanInformation: loanInfo
                 } 
               }}
-              className="bg-[#1cabb1] hover:bg-[#159a9f] text-white px-6 py-2.5 rounded-full font-bold transition-all text-[13px] shadow-sm flex items-center gap-2"
+              className="bg-[#1D4ED8] hover:bg-[#159a9f] text-white px-6 py-2.5 rounded-full font-bold transition-all text-[13px] shadow-sm flex items-center gap-2"
             >
               <span>Setup Loan</span>
               <ArrowRight size={16} />
@@ -188,15 +188,15 @@ const ViewLead = () => {
           {/* Action buttons for ACTIVE or COMPLETED */}
           {isActiveOrCompleted && (
             <>
-              <button className="flex items-center gap-2 bg-[#1cabb1] hover:bg-[#159a9f] text-white px-5 py-2.5 rounded-full font-semibold transition-colors text-[13px] shadow-sm">
+              <button className="flex items-center gap-2 bg-[#1D4ED8] hover:bg-[#159a9f] text-white px-5 py-2.5 rounded-full font-semibold transition-colors text-[13px] shadow-sm">
                 <Download size={16} />
                 Loan Agreement
               </button>
-              <button className="flex items-center gap-2 bg-[#1cabb1] hover:bg-[#159a9f] text-white px-5 py-2.5 rounded-full font-semibold transition-colors text-[13px] shadow-sm">
+              <button className="flex items-center gap-2 bg-[#1D4ED8] hover:bg-[#159a9f] text-white px-5 py-2.5 rounded-full font-semibold transition-colors text-[13px] shadow-sm">
                 <Download size={16} />
                 Account Form
               </button>
-              <button className="flex items-center gap-2 bg-[#1cabb1] hover:bg-[#159a9f] text-white px-5 py-2.5 rounded-full font-semibold transition-colors text-[13px] shadow-sm">
+              <button className="flex items-center gap-2 bg-[#1D4ED8] hover:bg-[#159a9f] text-white px-5 py-2.5 rounded-full font-semibold transition-colors text-[13px] shadow-sm">
                 <Download size={16} />
                 Membership Form
               </button>
@@ -215,7 +215,7 @@ const ViewLead = () => {
               className="w-16 h-16 rounded-full object-cover shadow-sm"
             />
           ) : (
-            <div className="w-16 h-16 rounded-full bg-[#f4f2ff] flex items-center justify-center text-xl font-bold text-[#5a5ce5]">
+            <div className="w-16 h-16 rounded-full bg-[#f4f2ff] flex items-center justify-center text-xl font-bold text-[#1B58A6]">
               {getInitials(customerName)}
             </div>
           )}
@@ -271,7 +271,7 @@ const ViewLead = () => {
               {panCardUrl && (
                 <button 
                   onClick={() => setPreviewImage({ url: panCardUrl, title: 'PAN Card' })}
-                  className="flex items-center gap-1 text-[#1b58a6] hover:underline"
+                  className="flex items-center gap-1 text-[#1D4ED8] hover:underline"
                 >
                   <Eye size={14} /> Full View
                 </button>
@@ -322,7 +322,7 @@ const ViewLead = () => {
               {aadhaarCardUrl && (
                 <button 
                   onClick={() => setPreviewImage({ url: aadhaarCardUrl, title: 'Aadhaar Card' })}
-                  className="flex items-center gap-1 text-[#1b58a6] hover:underline"
+                  className="flex items-center gap-1 text-[#1D4ED8] hover:underline"
                 >
                   <Eye size={14} /> Full View
                 </button>
@@ -375,7 +375,7 @@ const ViewLead = () => {
           <div className="px-6 pb-6">
             <div className="p-4 rounded-xl border border-gray-200 bg-gray-50 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <FileText className="text-[#1cabb1]" size={24} />
+                <FileText className="text-[#1D4ED8]" size={24} />
                 <div>
                   <h4 className="text-sm font-bold text-gray-800">Digital Signature</h4>
                   <p className="text-xs text-gray-500">Customer signature on file</p>
@@ -383,7 +383,7 @@ const ViewLead = () => {
               </div>
               <button 
                 onClick={() => setPreviewImage({ url: digitalSignatureUrl, title: 'Digital Signature' })}
-                className="px-4 py-1.5 rounded-full border border-[#1cabb1] text-[#1cabb1] hover:bg-teal-50 text-xs font-semibold"
+                className="px-4 py-1.5 rounded-full border border-[#1D4ED8] text-[#1D4ED8] hover:bg-teal-50 text-xs font-semibold"
               >
                 View Signature
               </button>
@@ -396,7 +396,7 @@ const ViewLead = () => {
       {bankInfo && (bankInfo.bankName || bankInfo.accountNumber || bankInfo.ifsc || bankInfo.ifscCode) && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="bg-[#f4f3fb] px-6 py-4 border-b border-gray-100 flex items-center gap-2">
-            <Landmark size={18} className="text-[#1b58a6]" />
+            <Landmark size={18} className="text-[#1D4ED8]" />
             <h2 className="text-[17px] font-bold text-gray-800">Bank Information</h2>
           </div>
           <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4 text-[14px]">
@@ -440,7 +440,7 @@ const ViewLead = () => {
                     />
                   ) : (
                     <div className="flex flex-col items-center justify-center text-center p-2">
-                      <div className="w-10 h-10 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-[#1b58a6] mb-1">
+                      <div className="w-10 h-10 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-[#1D4ED8] mb-1">
                         <Landmark size={20} />
                       </div>
                       <span className="text-[11px] font-semibold text-gray-500">No Image</span>
@@ -455,7 +455,7 @@ const ViewLead = () => {
                 </div>
                 <div className="flex">
                   <span className="text-gray-500 w-36 font-medium">Loan Applied For:</span>
-                  <span className="text-gray-800 font-bold text-[15px] text-[#1b58a6]">{productName}</span>
+                  <span className="text-gray-800 font-bold text-[15px] text-[#1D4ED8]">{productName}</span>
                 </div>
                 <div className="flex">
                   <span className="text-gray-500 w-36 font-medium">Variant Details:</span>
@@ -512,7 +512,7 @@ const ViewLead = () => {
 
             <div className="flex items-center text-[15px]">
               <span className="text-gray-800 font-medium mr-2">Status:</span>
-              <span className={`font-semibold ${status === 'ACTIVE' ? 'text-[#5a5ce5]' : 'text-green-500'}`}>
+              <span className={`font-semibold ${status === 'ACTIVE' ? 'text-[#1B58A6]' : 'text-green-500'}`}>
                 {status}
               </span>
             </div>
@@ -570,7 +570,7 @@ const ViewLead = () => {
 
             {status !== 'COMPLETED' && (
               <div className="flex justify-end mt-8">
-                <button className="bg-[#1cabb1] hover:bg-[#159a9f] text-white px-6 py-2.5 rounded-full font-semibold transition-colors text-[14px] shadow-sm">
+                <button className="bg-[#1D4ED8] hover:bg-[#159a9f] text-white px-6 py-2.5 rounded-full font-semibold transition-colors text-[14px] shadow-sm">
                   Collect EMI
                 </button>
               </div>
@@ -585,7 +585,7 @@ const ViewLead = () => {
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="bg-[#f4f3fb] px-6 py-4 border-b border-gray-100 flex justify-between items-center">
             <h2 className="text-[17px] font-bold text-gray-800">Loan Information</h2>
-            <span className="text-xs font-semibold px-2.5 py-1 rounded bg-blue-50 text-[#1b58a6]">
+            <span className="text-xs font-semibold px-2.5 py-1 rounded bg-blue-50 text-[#1D4ED8]">
               {status === 'PENDING_DOWN_PAYMENT' ? 'Pending Down Payment' : 'New Application'}
             </span>
           </div>
@@ -634,7 +634,7 @@ const ViewLead = () => {
                     loanInformation: loanInfo
                   } 
                 }}
-                className="inline-flex items-center gap-2 bg-[#1cabb1] hover:bg-[#159a9f] text-white px-8 py-3 rounded-full font-bold transition-all shadow-md text-sm"
+                className="inline-flex items-center gap-2 bg-[#1D4ED8] hover:bg-[#159a9f] text-white px-8 py-3 rounded-full font-bold transition-all shadow-md text-sm"
               >
                 <span>Setup Loan</span>
                 <ArrowRight size={18} />
@@ -684,7 +684,7 @@ const ViewLead = () => {
                   href={previewImage.url} 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="text-xs text-[#1b58a6] hover:underline flex items-center gap-1 font-semibold"
+                  className="text-xs text-[#1D4ED8] hover:underline flex items-center gap-1 font-semibold"
                 >
                   <ExternalLink size={14} /> Open in new tab
                 </a>

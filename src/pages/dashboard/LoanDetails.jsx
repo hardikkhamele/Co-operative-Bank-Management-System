@@ -39,12 +39,12 @@ const LoanDetails = () => {
           <ChevronRight size={16} className="mx-1 text-gray-400" />
           <Link to={`/customers/${id || '1'}/loans`} className="hover:text-gray-900 transition-colors">Loan History</Link>
           <ChevronRight size={16} className="mx-1 text-gray-400" />
-          <span className="text-[#5a5ce5]">Loan Details</span>
+          <span className="text-[#1B58A6]">Loan Details</span>
         </div>
       </div>
 
       <div className="text-sm font-medium text-gray-700">
-        Application Number: <span className="text-[#5a5ce5]">APPL15655946</span>
+        Application Number: <span className="text-[#1B58A6]">APPL15655946</span>
       </div>
 
       {/* Customer Profile Card */}
@@ -59,7 +59,7 @@ const LoanDetails = () => {
           </div>
         </div>
         <div className={`px-6 py-2 text-sm font-medium rounded-md border ${
-          loanStatus === 'Active' ? 'bg-blue-50 text-[#5a5ce5] border-blue-200' :
+          loanStatus === 'Active' ? 'bg-blue-50 text-[#1B58A6] border-blue-200' :
           loanStatus === 'Completed' ? 'bg-green-50 text-[#00c950] border-green-300' :
           loanStatus === 'Rejected' ? 'bg-red-50 text-[#ff4c4c] border-red-300' :
           'bg-gray-200 text-gray-700 border-gray-300'
@@ -275,7 +275,7 @@ const LoanDetails = () => {
 
               <div className="flex text-[15px] text-gray-800 mt-4">
                 <span className="w-16 font-semibold text-gray-600">Status:</span>
-                <span className={`font-medium ${loanStatus === 'Completed' ? 'text-[#00c950]' : 'text-[#5a5ce5]'}`}>
+                <span className={`font-medium ${loanStatus === 'Completed' ? 'text-[#00c950]' : 'text-[#1B58A6]'}`}>
                   {loanStatus}
                 </span>
               </div>
@@ -338,14 +338,14 @@ const LoanDetails = () => {
           {loanStatus === 'New' ? (
             <Link 
               to="/leads/setup-loan"
-              className="inline-block bg-[#1cabb1] hover:bg-[#159a9f] text-white px-8 py-3 rounded-full font-semibold transition-colors shadow-sm"
+              className="inline-block bg-[#1D4ED8] hover:bg-[#159a9f] text-white px-8 py-3 rounded-full font-semibold transition-colors shadow-sm"
             >
               Setup Loan
             </Link>
           ) : (
             <button 
               onClick={() => setIsCollectModalOpen(true)}
-              className="bg-[#1cabb1] hover:bg-[#159a9f] text-white px-8 py-3 rounded-full font-semibold transition-colors shadow-sm"
+              className="bg-[#1D4ED8] hover:bg-[#159a9f] text-white px-8 py-3 rounded-full font-semibold transition-colors shadow-sm"
             >
               Collect EMI
             </button>
@@ -368,8 +368,8 @@ const LoanDetails = () => {
             {/* Body */}
             <div className="px-6 pb-6 overflow-y-auto flex-1 space-y-6 bg-[#f4f3fb] scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-transparent">
               {/* Product Card */}
-              <div className="border border-[#1cabb1] rounded-xl bg-white p-3 flex gap-4 shadow-sm items-center">
-                <div className="w-16 h-16 rounded-lg overflow-hidden border border-[#1cabb1] bg-gray-50 flex-shrink-0">
+              <div className="border border-[#1D4ED8] rounded-xl bg-white p-3 flex gap-4 shadow-sm items-center">
+                <div className="w-16 h-16 rounded-lg overflow-hidden border border-[#1D4ED8] bg-gray-50 flex-shrink-0">
                   <img src="https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=100&q=80" alt="iPhone 17" className="w-full h-full object-cover" />
                 </div>
                 <div>
@@ -383,29 +383,29 @@ const LoanDetails = () => {
               <div className="space-y-4">
                 <div>
                   <label className="block text-[15px] font-semibold text-gray-800 mb-1.5">Product Price</label>
-                  <input type="text" defaultValue="₹80,000" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1cabb1] focus:border-[#1cabb1] bg-white text-[15px] text-gray-700 shadow-sm" />
+                  <input type="text" defaultValue="₹80,000" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1D4ED8] focus:border-[#1D4ED8] bg-white text-[15px] text-gray-700 shadow-sm" />
                 </div>
                 <div>
                   <label className="block text-[15px] font-semibold text-gray-800 mb-1.5">EMI Tenure (In Month)</label>
-                  <input type="text" placeholder="Enter month" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1cabb1] focus:border-[#1cabb1] bg-white text-[15px] text-gray-700 shadow-sm" />
+                  <input type="text" placeholder="Enter month" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1D4ED8] focus:border-[#1D4ED8] bg-white text-[15px] text-gray-700 shadow-sm" />
                 </div>
                 <div>
                   <label className="block text-[15px] font-semibold text-gray-800 mb-1.5">Interest (%)</label>
-                  <input type="text" placeholder="Enter interest" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1cabb1] focus:border-[#1cabb1] bg-white text-[15px] text-gray-700 shadow-sm" />
+                  <input type="text" placeholder="Enter interest" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1D4ED8] focus:border-[#1D4ED8] bg-white text-[15px] text-gray-700 shadow-sm" />
                 </div>
               </div>
 
               {/* Checkboxes */}
               <div className="space-y-3 pt-2">
                 <label className="flex items-center gap-3 cursor-pointer">
-                  <div className="w-5 h-5 rounded border border-[#1cabb1] bg-white flex items-center justify-center">
-                    <div className="w-3 h-3 bg-transparent border-b-2 border-r-2 border-[#1cabb1] transform rotate-45 mb-1"></div>
+                  <div className="w-5 h-5 rounded border border-[#1D4ED8] bg-white flex items-center justify-center">
+                    <div className="w-3 h-3 bg-transparent border-b-2 border-r-2 border-[#1D4ED8] transform rotate-45 mb-1"></div>
                   </div>
                   <span className="text-[15px] font-medium text-gray-800">Add EMI Card</span>
                 </label>
                 <label className="flex items-center gap-3 cursor-pointer">
-                  <div className="w-5 h-5 rounded border border-[#1cabb1] bg-white flex items-center justify-center">
-                    <div className="w-3 h-3 bg-transparent border-b-2 border-r-2 border-[#1cabb1] transform rotate-45 mb-1"></div>
+                  <div className="w-5 h-5 rounded border border-[#1D4ED8] bg-white flex items-center justify-center">
+                    <div className="w-3 h-3 bg-transparent border-b-2 border-r-2 border-[#1D4ED8] transform rotate-45 mb-1"></div>
                   </div>
                   <span className="text-[15px] font-medium text-gray-800">Add Insurance</span>
                 </label>
@@ -493,13 +493,13 @@ const LoanDetails = () => {
             <div className="p-6 bg-[#f4f3fb] flex justify-end gap-4 rounded-b-2xl">
               <button 
                 onClick={() => setIsSetupModalOpen(false)}
-                className="py-2.5 px-8 rounded-full border-2 border-[#1cabb1] text-[#1cabb1] font-semibold hover:bg-teal-50 transition-colors focus:outline-none text-[15px]"
+                className="py-2.5 px-8 rounded-full border-2 border-[#1D4ED8] text-[#1D4ED8] font-semibold hover:bg-teal-50 transition-colors focus:outline-none text-[15px]"
               >
                 Cancel
               </button>
               <button 
                 onClick={() => setIsSetupModalOpen(false)}
-                className="py-2.5 px-8 rounded-full bg-[#1cabb1] text-white font-semibold hover:bg-[#159a9f] transition-colors focus:outline-none text-[15px] shadow-sm"
+                className="py-2.5 px-8 rounded-full bg-[#1D4ED8] text-white font-semibold hover:bg-[#159a9f] transition-colors focus:outline-none text-[15px] shadow-sm"
               >
                 Submit
               </button>
@@ -536,7 +536,7 @@ const LoanDetails = () => {
                 <div className="bg-white border border-gray-100 shadow-sm rounded-xl p-4 space-y-4 mb-6">
                   <div className="flex items-center justify-between cursor-pointer" onClick={() => toggleMonth('June')}>
                     <div className="flex items-center gap-3">
-                      <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${selectedMonths.includes('June') ? 'border-[#1cabb1] bg-[#1cabb1]' : 'border-gray-400 bg-white'}`}>
+                      <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${selectedMonths.includes('June') ? 'border-[#1D4ED8] bg-[#1D4ED8]' : 'border-gray-400 bg-white'}`}>
                         {selectedMonths.includes('June') && <div className="w-2.5 h-2.5 bg-transparent border-b-2 border-r-2 border-white transform rotate-45 mb-0.5"></div>}
                       </div>
                       <span className="text-gray-600 text-[15px]">June:</span>
@@ -549,7 +549,7 @@ const LoanDetails = () => {
                   
                   <div className="flex items-center justify-between cursor-pointer" onClick={() => toggleMonth('July')}>
                     <div className="flex items-center gap-3">
-                      <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${selectedMonths.includes('July') ? 'border-[#1cabb1] bg-[#1cabb1]' : 'border-gray-400 bg-white'}`}>
+                      <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${selectedMonths.includes('July') ? 'border-[#1D4ED8] bg-[#1D4ED8]' : 'border-gray-400 bg-white'}`}>
                         {selectedMonths.includes('July') && <div className="w-2.5 h-2.5 bg-transparent border-b-2 border-r-2 border-white transform rotate-45 mb-0.5"></div>}
                       </div>
                       <span className="text-gray-600 text-[15px]">July:</span>
@@ -562,7 +562,7 @@ const LoanDetails = () => {
 
                   <div className="flex items-center justify-between cursor-pointer" onClick={() => toggleMonth('August')}>
                     <div className="flex items-center gap-3">
-                      <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${selectedMonths.includes('August') ? 'border-[#1cabb1] bg-[#1cabb1]' : 'border-gray-400 bg-white'}`}>
+                      <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${selectedMonths.includes('August') ? 'border-[#1D4ED8] bg-[#1D4ED8]' : 'border-gray-400 bg-white'}`}>
                         {selectedMonths.includes('August') && <div className="w-2.5 h-2.5 bg-transparent border-b-2 border-r-2 border-white transform rotate-45 mb-0.5"></div>}
                       </div>
                       <span className="text-gray-600 text-[15px]">August:</span>
@@ -591,13 +591,13 @@ const LoanDetails = () => {
               <div className="p-6 pt-0 flex justify-end gap-4 rounded-b-2xl">
                 <button 
                   onClick={() => setIsCollectModalOpen(false)}
-                  className="py-2.5 px-8 rounded-full border-2 border-[#1cabb1] text-[#1cabb1] font-semibold hover:bg-teal-50 transition-colors focus:outline-none text-[15px]"
+                  className="py-2.5 px-8 rounded-full border-2 border-[#1D4ED8] text-[#1D4ED8] font-semibold hover:bg-teal-50 transition-colors focus:outline-none text-[15px]"
                 >
                   Cancel
                 </button>
                 <button 
                   onClick={() => setIsCollectModalOpen(false)}
-                  className="py-2.5 px-8 rounded-full bg-[#1cabb1] text-white font-semibold hover:bg-[#159a9f] transition-colors focus:outline-none text-[15px] shadow-sm"
+                  className="py-2.5 px-8 rounded-full bg-[#1D4ED8] text-white font-semibold hover:bg-[#159a9f] transition-colors focus:outline-none text-[15px] shadow-sm"
                 >
                   Collect ₹8,583
                 </button>

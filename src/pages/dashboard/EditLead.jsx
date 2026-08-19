@@ -74,7 +74,7 @@ const EditLead = () => {
           <ChevronRight size={14} className="mx-2" />
           <Link to="/leads" className="hover:text-gray-700">Leads</Link>
           <ChevronRight size={14} className="mx-2" />
-          <span className="text-[#5a5ce5]">Edit Lead</span>
+          <span className="text-[#1B58A6]">Edit Lead</span>
         </div>
       </div>
 
@@ -91,7 +91,7 @@ const EditLead = () => {
                   value={formData.fullName}
                   onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
                   placeholder="Enter full name" 
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm" 
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white shadow-sm" 
                   required 
                 />
               </div>
@@ -102,7 +102,7 @@ const EditLead = () => {
                   <select 
                     value={formData.gender}
                     onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white appearance-none text-gray-700 shadow-sm" 
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white appearance-none text-gray-700 shadow-sm" 
                     required
                   >
                     <option value="male">Male</option>
@@ -120,7 +120,7 @@ const EditLead = () => {
                     type="date" 
                     value={formData.dob}
                     onChange={(e) => setFormData({ ...formData, dob: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm text-gray-700" 
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white shadow-sm text-gray-700" 
                     required 
                   />
                 </div>
@@ -134,7 +134,7 @@ const EditLead = () => {
                   value={formData.mobileNumber}
                   onChange={(e) => setFormData({ ...formData, mobileNumber: sanitizeDigits(e.target.value, 10) })}
                   placeholder="10-digit mobile number" 
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm" 
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white shadow-sm" 
                   required 
                 />
               </div>
@@ -153,7 +153,7 @@ const EditLead = () => {
                   value={formData.panNumber}
                   onChange={(e) => setFormData({ ...formData, panNumber: sanitizePAN(e.target.value) })}
                   placeholder="e.g. ABCDE1234F" 
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm uppercase" 
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white shadow-sm uppercase" 
                   required 
                 />
               </div>
@@ -161,7 +161,7 @@ const EditLead = () => {
               <div>
                 <label className="block text-sm font-semibold text-gray-800 mb-2">PAN Card Image</label>
                 <div className="w-full px-4 py-6 rounded-xl border-2 border-dashed border-gray-200 bg-gray-50 hover:bg-gray-100 transition-colors flex flex-col items-center justify-center cursor-pointer">
-                  <Upload size={24} className="text-[#1cabb1] mb-2" />
+                  <Upload size={24} className="text-[#1D4ED8] mb-2" />
                   <span className="text-sm font-medium text-gray-800">pan_card_front.jpg</span>
                   <span className="text-xs text-gray-500 mt-1">Click to replace</span>
                 </div>
@@ -173,7 +173,7 @@ const EditLead = () => {
                   type="tel" 
                   maxLength={12}
                   placeholder="12-digit Aadhaar number" 
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm" 
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white shadow-sm" 
                   value={formData.aadhaarNumber}
                   onChange={(e) => setFormData({ ...formData, aadhaarNumber: sanitizeDigits(e.target.value, 12) })}
                   required 
@@ -183,7 +183,7 @@ const EditLead = () => {
               <div>
                 <label className="block text-sm font-semibold text-gray-800 mb-2">Aadhaar Card Image</label>
                 <div className="w-full px-4 py-6 rounded-xl border-2 border-dashed border-gray-200 bg-gray-50 hover:bg-gray-100 transition-colors flex flex-col items-center justify-center cursor-pointer">
-                  <Upload size={24} className="text-[#1cabb1] mb-2" />
+                  <Upload size={24} className="text-[#1D4ED8] mb-2" />
                   <span className="text-sm font-medium text-gray-800">aadhaar_card.jpg</span>
                   <span className="text-xs text-gray-500 mt-1">Click to replace</span>
                 </div>
@@ -203,7 +203,7 @@ const EditLead = () => {
                   value={formData.pinCode}
                   onChange={(e) => setFormData({ ...formData, pinCode: sanitizeDigits(e.target.value, 6) })}
                   placeholder="6-digit PIN code" 
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm" 
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white shadow-sm" 
                   required 
                 />
               </div>
@@ -215,7 +215,7 @@ const EditLead = () => {
                 id="terms" 
                 checked={formData.termsAccepted}
                 onChange={(e) => setFormData({ ...formData, termsAccepted: e.target.checked })}
-                className="mt-1 w-5 h-5 rounded border-gray-300 text-[#1cabb1] focus:ring-[#1cabb1]" 
+                className="mt-1 w-5 h-5 rounded border-gray-300 text-[#1D4ED8] focus:ring-[#1D4ED8]" 
                 required 
               />
               <label htmlFor="terms" className="text-[15px] text-gray-600 leading-relaxed cursor-pointer">
@@ -229,13 +229,13 @@ const EditLead = () => {
           <div className="flex justify-end items-center gap-4 pt-6 mt-4 border-t border-gray-100">
             <Link
               to="/leads"
-              className="px-8 py-2.5 rounded-full border-2 border-[#1cabb1] text-[#1cabb1] bg-white hover:bg-teal-50 font-semibold transition-colors"
+              className="px-8 py-2.5 rounded-full border-2 border-[#1D4ED8] text-[#1D4ED8] bg-white hover:bg-teal-50 font-semibold transition-colors"
             >
               Cancel
             </Link>
             <button
               type="submit"
-              className="px-8 py-2.5 rounded-full bg-[#1cabb1] hover:bg-[#168f94] text-white font-semibold transition-colors shadow-sm"
+              className="px-8 py-2.5 rounded-full bg-[#1D4ED8] hover:bg-[#168f94] text-white font-semibold transition-colors shadow-sm"
             >
               Save Changes
             </button>

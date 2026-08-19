@@ -189,15 +189,15 @@ const ViewCashPayment = () => {
           </div>
           <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 font-medium">
             <div className="flex items-center gap-1.5">
-              <Phone size={16} className="text-[#1cabb1]" />
+              <Phone size={16} className="text-[#1D4ED8]" />
               <span>{empPhone}</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <Mail size={16} className="text-[#1cabb1]" />
+              <Mail size={16} className="text-[#1D4ED8]" />
               <span>{empEmail}</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <MapPin size={16} className="text-[#1cabb1]" />
+              <MapPin size={16} className="text-[#1D4ED8]" />
               <span>{empBranch}</span>
             </div>
           </div>
@@ -234,7 +234,7 @@ const ViewCashPayment = () => {
       <div className="flex justify-end">
         <button 
           onClick={() => setIsSubmitModalOpen(true)}
-          className="bg-[#1b58a6] hover:bg-[#154685] text-white px-6 py-2.5 rounded-full font-semibold transition-colors text-sm shadow-sm"
+          className="bg-[#1D4ED8] hover:bg-[#154685] text-white px-6 py-2.5 rounded-full font-semibold transition-colors text-sm shadow-sm"
         >
           Submit Cash
         </button>
@@ -251,7 +251,7 @@ const ViewCashPayment = () => {
                 type="date"
                 value={fromDate}
                 onChange={(e) => { setFromDate(e.target.value); setPage(1); }}
-                className="px-3 py-1.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#1cabb1] focus:border-[#1cabb1] text-sm text-[#4b5563] bg-white font-medium"
+                className="px-3 py-1.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#1D4ED8] focus:border-[#1D4ED8] text-sm text-[#4b5563] bg-white font-medium"
               />
             </div>
             <div className="flex items-center gap-2">
@@ -260,7 +260,7 @@ const ViewCashPayment = () => {
                 type="date"
                 value={toDate}
                 onChange={(e) => { setToDate(e.target.value); setPage(1); }}
-                className="px-3 py-1.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#1cabb1] focus:border-[#1cabb1] text-sm text-[#4b5563] bg-white font-medium"
+                className="px-3 py-1.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#1D4ED8] focus:border-[#1D4ED8] text-sm text-[#4b5563] bg-white font-medium"
               />
             </div>
             {(fromDate || toDate) && (
@@ -290,7 +290,7 @@ const ViewCashPayment = () => {
                 <tr>
                   <td colSpan="4" className="text-center py-12">
                     <div className="flex items-center justify-center gap-2 text-gray-500">
-                      <Loader2 size={20} className="animate-spin text-[#1cabb1]" />
+                      <Loader2 size={20} className="animate-spin text-[#1D4ED8]" />
                       <span>Loading submission history...</span>
                     </div>
                   </td>
@@ -332,7 +332,7 @@ const ViewCashPayment = () => {
             <button 
               onClick={() => setPage(p => Math.max(1, p - 1))}
               disabled={page <= 1}
-              className="w-8 h-8 flex items-center justify-center rounded-full border border-[#1cabb1] text-[#1cabb1] hover:bg-teal-50 transition-colors disabled:opacity-40"
+              className="w-8 h-8 flex items-center justify-center rounded-full border border-[#1D4ED8] text-[#1D4ED8] hover:bg-teal-50 transition-colors disabled:opacity-40"
             >
               <ChevronLeft size={16} />
             </button>
@@ -351,7 +351,7 @@ const ViewCashPayment = () => {
                   <button 
                     key={i}
                     onClick={() => setPage(i)}
-                    className={`w-8 h-8 flex items-center justify-center rounded-full font-bold transition-colors ${page === i ? 'bg-[#1cabb1] text-white shadow-sm border border-[#1cabb1]' : 'border border-gray-200 text-gray-700 hover:bg-gray-50'}`}
+                    className={`w-8 h-8 flex items-center justify-center rounded-full font-bold transition-colors ${page === i ? 'bg-[#1D4ED8] text-white shadow-sm border border-[#1D4ED8]' : 'border border-gray-200 text-gray-700 hover:bg-gray-50'}`}
                   >
                     {i}
                   </button>
@@ -363,7 +363,7 @@ const ViewCashPayment = () => {
             <button 
               onClick={() => setPage(p => Math.min(meta.totalPages || 1, p + 1))}
               disabled={page >= (meta.totalPages || 1)}
-              className="w-8 h-8 flex items-center justify-center rounded-full border border-[#1cabb1] text-[#1cabb1] hover:bg-teal-50 transition-colors disabled:opacity-40"
+              className="w-8 h-8 flex items-center justify-center rounded-full border border-[#1D4ED8] text-[#1D4ED8] hover:bg-teal-50 transition-colors disabled:opacity-40"
             >
               <ChevronRight size={16} />
             </button>
@@ -378,7 +378,7 @@ const ViewCashPayment = () => {
             <div className="flex justify-between items-center p-6 pb-3 border-b border-gray-100">
               <div>
                 <h2 className="text-xl font-bold text-[#1b2559]">Submit Cash</h2>
-                <p className="text-xs text-gray-500 mt-0.5">Deposit cash collected by <span className="font-semibold text-[#1cabb1]">{empName}</span></p>
+                <p className="text-xs text-gray-500 mt-0.5">Deposit cash collected by <span className="font-semibold text-[#1D4ED8]">{empName}</span></p>
               </div>
               <button onClick={() => setIsSubmitModalOpen(false)} className="text-gray-500 hover:text-gray-800 transition-colors">
                 <X size={24} />
@@ -394,7 +394,7 @@ const ViewCashPayment = () => {
                   required
                   value={submitForm.date}
                   onChange={(e) => setSubmitForm({ ...submitForm, date: e.target.value })}
-                  className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white text-[15px] text-gray-800" 
+                  className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white text-[15px] text-gray-800" 
                 />
               </div>
               
@@ -410,7 +410,7 @@ const ViewCashPayment = () => {
                   placeholder="Enter Amount (e.g. 5000)"
                   value={submitForm.amountSubmitted}
                   onChange={(e) => setSubmitForm({ ...submitForm, amountSubmitted: e.target.value })}
-                  className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white text-[15px] text-gray-800 appearance-none font-medium" 
+                  className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white text-[15px] text-gray-800 appearance-none font-medium" 
                 />
               </div>
               
@@ -421,7 +421,7 @@ const ViewCashPayment = () => {
                   placeholder="Enter remarks (e.g. Cash deposited successfully)..." 
                   value={submitForm.remarks}
                   onChange={(e) => setSubmitForm({ ...submitForm, remarks: e.target.value })}
-                  className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white text-[15px] text-gray-800 resize-none"
+                  className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white text-[15px] text-gray-800 resize-none"
                 ></textarea>
               </div>
               
@@ -436,7 +436,7 @@ const ViewCashPayment = () => {
                 <button 
                   type="submit"
                   disabled={submitting}
-                  className="flex items-center gap-2 px-7 py-2.5 rounded-full bg-[#1cabb1] text-white font-semibold hover:bg-[#168f94] transition-colors shadow-sm text-[14px] disabled:opacity-50"
+                  className="flex items-center gap-2 px-7 py-2.5 rounded-full bg-[#1D4ED8] text-white font-semibold hover:bg-[#168f94] transition-colors shadow-sm text-[14px] disabled:opacity-50"
                 >
                   {submitting && <Loader2 size={16} className="animate-spin" />}
                   {submitting ? 'Submitting...' : 'Submit Cash'}

@@ -7,6 +7,7 @@ import { roleService } from '../../api/roleService';
 import useBranchStore from '../../store/branchStore';
 
 const Employees = () => {
+
   const navigate = useNavigate();
   
   // Data State
@@ -130,13 +131,13 @@ const Employees = () => {
     <div className="h-full flex flex-col gap-6 w-full">
       {/* Header Card */}
       <div className="bg-white rounded-lg p-5 shadow-sm border border-gray-100 shrink-0">
-        <h1 className="text-2xl font-bold text-[#1b58a6] mb-2">Employees</h1>
+        <h1 className="text-2xl font-bold text-[#1D4ED8] mb-2">Employees</h1>
         <div className="flex items-center text-sm font-medium text-gray-600">
           <Link to="/dashboard" className="hover:text-gray-900 transition-colors">Dashboard</Link>
           <ChevronRight size={16} className="mx-1 text-gray-400" />
           <span className="hover:text-gray-900 transition-colors">HR Management</span>
           <ChevronRight size={16} className="mx-1 text-gray-400" />
-          <span className="text-[#1b58a6]">Employee</span>
+          <span className="text-[#1D4ED8]">Employee</span>
         </div>
       </div>
 
@@ -150,7 +151,7 @@ const Employees = () => {
               placeholder="Search employees..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all shadow-sm text-sm"
+              className="pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all shadow-sm text-sm"
             />
           </div>
           <div className="relative">
@@ -160,7 +161,7 @@ const Employees = () => {
             >
               <SlidersHorizontal size={18} />
               {(selectedRoleId || selectedStatus) && (
-                <span className="absolute -top-1 -right-1 w-3 h-3 bg-[#1b58a6] rounded-full border border-white"></span>
+                <span className="absolute -top-1 -right-1 w-3 h-3 bg-[#1D4ED8] rounded-full border border-white"></span>
               )}
             </button>
 
@@ -180,7 +181,7 @@ const Employees = () => {
                     <select 
                       value={selectedRoleId}
                       onChange={(e) => setSelectedRoleId(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#1cabb1] bg-white text-sm"
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#1D4ED8] bg-white text-sm"
                     >
                       <option value="">All Departments</option>
                       {roleOptions.map(r => (
@@ -193,7 +194,7 @@ const Employees = () => {
                     <select 
                       value={selectedStatus}
                       onChange={(e) => setSelectedStatus(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#1cabb1] bg-white text-sm"
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#1D4ED8] bg-white text-sm"
                     >
                       <option value="">All</option>
                       <option value="ACTIVE">Active</option>
@@ -205,13 +206,13 @@ const Employees = () => {
                 <div className="p-5 pt-2 flex gap-3">
                   <button 
                     onClick={resetFilters}
-                    className="flex-1 py-2 rounded-full border border-[#1cabb1] text-[#1cabb1] font-semibold hover:bg-teal-50 transition-colors bg-white text-sm focus:outline-none"
+                    className="flex-1 py-2 rounded-full border border-[#1D4ED8] text-[#1D4ED8] font-semibold hover:bg-teal-50 transition-colors bg-white text-sm focus:outline-none"
                   >
                     Reset
                   </button>
                   <button 
                     onClick={applyFilters}
-                    className="flex-1 py-2 rounded-full bg-[#1cabb1] text-white font-semibold hover:bg-[#168f94] transition-colors shadow-sm text-sm focus:outline-none"
+                    className="flex-1 py-2 rounded-full bg-[#1D4ED8] text-white font-semibold hover:bg-[#168f94] transition-colors shadow-sm text-sm focus:outline-none"
                   >
                     Apply
                   </button>
@@ -223,7 +224,7 @@ const Employees = () => {
         
         <Link 
           to="/employees/create"
-          className="bg-[#1cabb1] hover:bg-[#168f94] text-white px-5 py-2.5 rounded-full font-semibold transition-colors shadow-sm flex items-center gap-2 text-sm shrink-0"
+          className="bg-[#1D4ED8] hover:bg-[#168f94] text-white px-5 py-2.5 rounded-full font-semibold transition-colors shadow-sm flex items-center gap-2 text-sm shrink-0"
         >
           + Add Staff
         </Link>
@@ -327,17 +328,17 @@ const Employees = () => {
               <button 
                 onClick={() => setPage(p => Math.max(1, p - 1))}
                 disabled={page === 1}
-                className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-[#1cabb1] hover:bg-[#1cabb1] hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-[#1D4ED8] hover:bg-[#1D4ED8] hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <ChevronLeft size={16} />
               </button>
-              <button className="w-8 h-8 flex items-center justify-center rounded-full bg-[#1cabb1] text-white font-medium shadow-sm border border-[#1cabb1]">
+              <button className="w-8 h-8 flex items-center justify-center rounded-full bg-[#1D4ED8] text-white font-medium shadow-sm border border-[#1D4ED8]">
                 {page}
               </button>
               <button 
                 onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                 disabled={page === totalPages}
-                className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-[#1cabb1] hover:bg-[#1cabb1] hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-[#1D4ED8] hover:bg-[#1D4ED8] hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <ChevronRight size={16} />
               </button>

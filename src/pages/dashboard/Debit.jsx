@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Search, Edit, Trash2, ChevronRight, SlidersHorizontal, ChevronDown, X, Eye, Download, Loader2 } from 'lucide-react';
+import React, { useRef,  useState, useEffect, useCallback  } from 'react';
+import { Search, Edit, Trash2, ChevronRight, SlidersHorizontal, ChevronDown, X, Eye, Download, Loader2 , Table, FileSpreadsheet, FileText} from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { debitReceiptService } from '../../api/debitReceiptService';
@@ -28,6 +28,7 @@ const GL_HEAD_OPTIONS = [
 ];
 
 const Debit = () => {
+
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -337,16 +338,94 @@ const Debit = () => {
       case 'NEW':
         return <span className="inline-flex items-center justify-center px-3 py-1 text-[13px] font-semibold text-yellow-700 bg-yellow-100/80 rounded-full border border-yellow-200">New</span>;
       case 'APPROVED':
-        return <span className="inline-flex items-center justify-center px-3 py-1 text-[13px] font-semibold text-[#1cabb1] bg-teal-50 rounded-full border border-teal-100">Approved</span>;
+        return <span className="inline-flex items-center justify-center px-3 py-1 text-[13px] font-semibold text-[#1D4ED8] bg-teal-50 rounded-full border border-teal-100">Approved</span>;
       case 'REJECTED':
         return <span className="inline-flex items-center justify-center px-3 py-1 text-[13px] font-semibold text-red-500 bg-red-50 rounded-full border border-red-100">Rejected</span>;
       default:
         return <span className="inline-flex items-center justify-center px-3 py-1 text-[13px] font-semibold text-gray-600 bg-gray-100 rounded-full border border-gray-200">{status || 'APPROVED'}</span>;
     }
   };
+  const tableRef = useRef(null);
+  const [isExportOpen, setIsExportOpen] = useState(false);
+
+  const getSelectedDataFromTable = () => {
+    if (!tableRef.current) return { headers: [], rows: [] };
+    const table = tableRef.current;
+    
+    // Headers (skip last action column)
+    const ths = Array.from(table.querySelectorAll('thead th'));
+    const headers = ths.slice(0, -1).map(th => th.innerText.trim().replace(/\n/g, ' '));
+
+    // Rows (all rows)
+    const trs = Array.from(table.querySelectorAll('tbody tr'));
+    const rows = trs.map(tr => {
+      const tds = Array.from(tr.querySelectorAll('td'));
+      return tds.slice(0, -1).map(td => td.innerText.trim().replace(/\n/g, ' '));
+    });
+
+    return { headers, rows };
+  };
+
+  const exportToCSV = () => {
+    const { headers, rows } = getSelectedDataFromTable();
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.map(v => '"' + v.replace(/"/g, '""') + '"').join(','))
+    ].join('\n');
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'Export.csv';
+    link.click();
+    setIsExportOpen(false);
+  };
+
+  const exportToExcel = () => {
+    const { headers, rows } = getSelectedDataFromTable();
+    const tableHtml = `
+      <table ref={tableRef}  border="1">
+        <thead>
+          <tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr>
+        </thead>
+        <tbody>
+          ${rows.map(row => `<tr>${row.map(c => `<td>${c}</td>`).join('')}</tr>`).join('')}
+        </tbody>
+      </table>
+    `;
+    const blob = new Blob([tableHtml], { type: 'application/vnd.ms-excel' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'Export.xls';
+    link.click();
+    setIsExportOpen(false);
+  };
+
+  const exportToWord = () => {
+    const { headers, rows } = getSelectedDataFromTable();
+    const tableHtml = `
+      <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+      <head><meta charset='utf-8'><title>Export</title></head><body>
+      <table ref={tableRef} border="1">
+        <thead>
+          <tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr>
+        </thead>
+        <tbody>
+          ${rows.map(row => `<tr>${row.map(c => `<td>${c}</td>`).join('')}</tr>`).join('')}
+        </tbody>
+      </table>
+      </body></html>
+    `;
+    const blob = new Blob([tableHtml], { type: 'application/msword' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'Export.doc';
+    link.click();
+    setIsExportOpen(false);
+  };
 
   return (
-    <div className="space-y-6">
+<div className="space-y-6">
       {/* Header and Breadcrumb */}
       <div className="bg-white rounded-lg p-5 shadow-sm border border-gray-100">
         <h1 className="text-2xl font-semibold text-[#1b2559] mb-2">Debit Receipt</h1>
@@ -369,7 +448,7 @@ const Debit = () => {
             </div>
             <input
               type="text"
-              className="block w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#1cabb1] focus:border-[#1cabb1] text-sm bg-white text-gray-700"
+              className="block w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#1D4ED8] focus:border-[#1D4ED8] text-sm bg-white text-gray-700"
               placeholder="Search by name, receipt, or account"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -385,7 +464,7 @@ const Debit = () => {
             >
               <SlidersHorizontal size={18} />
               {(selectedStatus || dateFrom || dateTo) && (
-                <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-[#1b58a6] rounded-full border border-white flex items-center justify-center text-[9px] text-white font-bold">
+                <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-[#1D4ED8] rounded-full border border-white flex items-center justify-center text-[9px] text-white font-bold">
                   {(selectedStatus ? 1 : 0) + (dateFrom || dateTo ? 1 : 0)}
                 </span>
               )}
@@ -407,7 +486,7 @@ const Debit = () => {
                     <select 
                       value={selectedStatus}
                       onChange={(e) => setSelectedStatus(e.target.value)}
-                      className="w-full px-3 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1cabb1] bg-white text-sm text-gray-700"
+                      className="w-full px-3 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1D4ED8] bg-white text-sm text-gray-700"
                     >
                       <option value="">All Statuses</option>
                       <option value="NEW">New</option>
@@ -422,7 +501,7 @@ const Debit = () => {
                       type="date"
                       value={dateFrom}
                       onChange={(e) => setDateFrom(e.target.value)}
-                      className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1cabb1] bg-white text-sm text-gray-700"
+                      className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1D4ED8] bg-white text-sm text-gray-700"
                     />
                   </div>
                   <div>
@@ -431,20 +510,20 @@ const Debit = () => {
                       type="date"
                       value={dateTo}
                       onChange={(e) => setDateTo(e.target.value)}
-                      className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1cabb1] bg-white text-sm text-gray-700"
+                      className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1D4ED8] bg-white text-sm text-gray-700"
                     />
                   </div>
                 </div>
 
                 <div className="flex gap-3">
                   <button 
-                    className="flex-1 py-2 rounded-full border-[1.5px] border-[#1cabb1] text-[#1cabb1] font-semibold hover:bg-teal-50 transition-colors text-sm bg-white"
+                    className="flex-1 py-2 rounded-full border-[1.5px] border-[#1D4ED8] text-[#1D4ED8] font-semibold hover:bg-teal-50 transition-colors text-sm bg-white"
                     onClick={() => { setSelectedStatus(''); setDateFrom(''); setDateTo(''); }}
                   >
                     Reset
                   </button>
                   <button 
-                    className="flex-1 py-2 rounded-full bg-[#1cabb1] text-white font-semibold hover:bg-[#168f94] transition-colors text-sm shadow-sm"
+                    className="flex-1 py-2 rounded-full bg-[#1D4ED8] text-white font-semibold hover:bg-[#168f94] transition-colors text-sm shadow-sm"
                     onClick={() => { setIsFilterOpen(false); setPage(1); }}
                   >
                     Apply Filter
@@ -457,17 +536,38 @@ const Debit = () => {
 
         {/* Action Buttons: Export & Create */}
         <div className="flex items-center gap-3">
-          <button 
-            onClick={handleExportCsv}
-            disabled={exporting}
-            className="flex items-center gap-2 bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 px-4 py-2.5 rounded-full font-semibold transition-colors text-sm shadow-sm flex-shrink-0 disabled:opacity-50"
-          >
-            {exporting ? <Loader2 size={16} className="animate-spin" /> : <Download size={18} />}
-            {exporting ? 'Exporting...' : 'Export'}
-          </button>
+          <div className="relative flex-shrink-0">
+            <button 
+              onClick={() => setIsExportOpen(!isExportOpen)}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-full font-semibold transition-colors text-sm shadow-sm border bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+            >
+              <Download size={18} />
+              Export
+              <ChevronDown size={16} />
+            </button>
+            
+            {isExportOpen && (
+              <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-100 rounded-xl shadow-lg z-50 overflow-hidden">
+                <div className="p-1">
+                  <button onClick={exportToCSV} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors text-left">
+                    <Table size={16} className="text-green-600" />
+                    Export to CSV
+                  </button>
+                  <button onClick={exportToExcel} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors text-left">
+                    <FileSpreadsheet size={16} className="text-green-600" />
+                    Export to Excel
+                  </button>
+                  <button onClick={exportToWord} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors text-left">
+                    <FileText size={16} className="text-blue-600" />
+                    Export to Word
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
           <button 
             onClick={() => { setCreateForm({ name: '', glHead: '410105', glHeadName: 'Loan', accountNumber: '', date: todayISO, status: 'NEW' }); setIsCreateModalOpen(true); }}
-            className="bg-[#1cabb1] hover:bg-[#159a9f] text-white px-5 py-2.5 rounded-full font-semibold transition-colors text-sm shadow-sm flex-shrink-0"
+            className="bg-[#1D4ED8] hover:bg-[#159a9f] text-white px-5 py-2.5 rounded-full font-semibold transition-colors text-sm shadow-sm flex-shrink-0"
           >
             + Create Receipt
           </button>
@@ -477,9 +577,10 @@ const Debit = () => {
       {/* Table */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm whitespace-nowrap">
+          <table ref={tableRef} className="w-full text-left text-sm whitespace-nowrap">
             <thead className="bg-[#f4f3fb] text-[#4b5563] font-bold border-b border-gray-100">
               <tr>
+                
                 <th className="px-6 py-4">Sr.No.</th>
                 <th className="px-6 py-4">Receipt No</th>
                 <th className="px-6 py-4">Name</th>
@@ -497,7 +598,7 @@ const Debit = () => {
                 <tr>
                   <td colSpan="9" className="text-center py-12">
                     <div className="flex items-center justify-center gap-2 text-gray-500">
-                      <Loader2 size={20} className="animate-spin text-[#1cabb1]" />
+                      <Loader2 size={20} className="animate-spin text-[#1D4ED8]" />
                       <span>Loading debit receipts...</span>
                     </div>
                   </td>
@@ -597,7 +698,7 @@ const Debit = () => {
                   <button 
                     key={i}
                     onClick={() => setPage(i)}
-                    className={`w-8 h-8 flex items-center justify-center rounded-full font-medium transition-colors ${page === i ? 'bg-[#1cabb1] text-white shadow-sm' : 'border border-gray-200 text-gray-700 hover:bg-gray-50'}`}
+                    className={`w-8 h-8 flex items-center justify-center rounded-full font-medium transition-colors ${page === i ? 'bg-[#1D4ED8] text-white shadow-sm' : 'border border-gray-200 text-gray-700 hover:bg-gray-50'}`}
                   >
                     {i}
                   </button>
@@ -639,7 +740,7 @@ const Debit = () => {
                   placeholder="e.g. Hillery Moses" 
                   value={createForm.name}
                   onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white text-[15px] text-gray-800" 
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white text-[15px] text-gray-800" 
                 />
               </div>
 
@@ -652,7 +753,7 @@ const Debit = () => {
                     placeholder="e.g. 410105" 
                     value={createForm.glHead}
                     onChange={(e) => setCreateForm({ ...createForm, glHead: e.target.value })}
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white text-[15px] text-gray-800" 
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white text-[15px] text-gray-800" 
                   />
                 </div>
                 <div>
@@ -668,7 +769,7 @@ const Debit = () => {
                           glHead: selectedOption ? selectedOption.code : createForm.glHead
                         });
                       }}
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white appearance-none text-[15px] text-gray-800"
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white appearance-none text-[15px] text-gray-800"
                     >
                       {GL_HEAD_OPTIONS.map((opt) => (
                         <option key={opt.code} value={opt.name}>{opt.name}</option>
@@ -687,7 +788,7 @@ const Debit = () => {
                   placeholder="e.g. 36489745148" 
                   value={createForm.accountNumber}
                   onChange={(e) => setCreateForm({ ...createForm, accountNumber: e.target.value })}
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white text-[15px] text-gray-800 font-mono" 
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white text-[15px] text-gray-800 font-mono" 
                 />
               </div>
 
@@ -699,7 +800,7 @@ const Debit = () => {
                     required
                     value={createForm.date}
                     onChange={(e) => setCreateForm({ ...createForm, date: e.target.value })}
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white text-[15px] text-gray-800" 
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white text-[15px] text-gray-800" 
                   />
                 </div>
                 <div>
@@ -708,7 +809,7 @@ const Debit = () => {
                     <select 
                       value={createForm.status}
                       onChange={(e) => setCreateForm({ ...createForm, status: e.target.value })}
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white appearance-none text-[15px] text-gray-800 font-medium"
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white appearance-none text-[15px] text-gray-800 font-medium"
                     >
                       <option value="APPROVED">APPROVED</option>
                       <option value="NEW">NEW</option>
@@ -725,7 +826,7 @@ const Debit = () => {
                   type="file" 
                   accept=".pdf,.jpg,.jpeg,.png"
                   onChange={(e) => setCreateForm({ ...createForm, file: e.target.files[0] })}
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white text-[15px] text-gray-800 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[#1cabb1]/10 file:text-[#1cabb1] hover:file:bg-[#1cabb1]/20" 
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white text-[15px] text-gray-800 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[#1D4ED8]/10 file:text-[#1D4ED8] hover:file:bg-[#1D4ED8]/20" 
                 />
               </div>
 
@@ -740,7 +841,7 @@ const Debit = () => {
                 <button 
                   type="submit"
                   disabled={submitting}
-                  className="flex items-center gap-2 px-7 py-2.5 rounded-full bg-[#1cabb1] text-white font-bold hover:bg-[#168f94] transition-colors shadow-sm text-[14px] disabled:opacity-50"
+                  className="flex items-center gap-2 px-7 py-2.5 rounded-full bg-[#1D4ED8] text-white font-bold hover:bg-[#168f94] transition-colors shadow-sm text-[14px] disabled:opacity-50"
                 >
                   {submitting && <Loader2 size={16} className="animate-spin" />}
                   {submitting ? 'Creating...' : 'Create Receipt'}
@@ -758,7 +859,7 @@ const Debit = () => {
             <div className="flex justify-between items-center p-6 pb-2 border-b border-gray-200/60 bg-white">
               <div>
                 <h2 className="text-xl font-bold text-[#1b2559]">Modify Debit Receipt</h2>
-                <p className="text-xs text-gray-500 mt-0.5">Receipt: <span className="font-semibold text-[#1cabb1]">{selectedReceipt.receiptNo}</span></p>
+                <p className="text-xs text-gray-500 mt-0.5">Receipt: <span className="font-semibold text-[#1D4ED8]">{selectedReceipt.receiptNo}</span></p>
               </div>
               <button onClick={() => setIsEditModalOpen(false)} className="text-gray-500 hover:text-gray-800 transition-colors">
                 <X size={22} />
@@ -772,7 +873,7 @@ const Debit = () => {
                   required
                   value={editForm.name}
                   onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white text-[15px] text-gray-800" 
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white text-[15px] text-gray-800" 
                 />
               </div>
 
@@ -784,7 +885,7 @@ const Debit = () => {
                     required
                     value={editForm.glHead}
                     onChange={(e) => setEditForm({ ...editForm, glHead: e.target.value })}
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white text-[15px] text-gray-800" 
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white text-[15px] text-gray-800" 
                   />
                 </div>
                 <div>
@@ -800,7 +901,7 @@ const Debit = () => {
                           glHead: selectedOption ? selectedOption.code : editForm.glHead
                         });
                       }}
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white appearance-none text-[15px] text-gray-800"
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white appearance-none text-[15px] text-gray-800"
                     >
                       {GL_HEAD_OPTIONS.map((opt) => (
                         <option key={opt.code} value={opt.name}>{opt.name}</option>
@@ -818,7 +919,7 @@ const Debit = () => {
                   required
                   value={editForm.accountNumber}
                   onChange={(e) => setEditForm({ ...editForm, accountNumber: e.target.value })}
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white text-[15px] text-gray-800 font-mono" 
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white text-[15px] text-gray-800 font-mono" 
                 />
               </div>
 
@@ -830,7 +931,7 @@ const Debit = () => {
                     required
                     value={editForm.date}
                     onChange={(e) => setEditForm({ ...editForm, date: e.target.value })}
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white text-[15px] text-gray-800" 
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white text-[15px] text-gray-800" 
                   />
                 </div>
                 <div>
@@ -839,7 +940,7 @@ const Debit = () => {
                     <select 
                       value={editForm.status}
                       onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white appearance-none text-[15px] text-gray-800 font-semibold"
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white appearance-none text-[15px] text-gray-800 font-semibold"
                     >
                       <option value="APPROVED">APPROVED</option>
                       <option value="NEW">NEW</option>
@@ -855,7 +956,7 @@ const Debit = () => {
                 {selectedReceipt.image && (
                   <div className="mb-3 p-3 bg-gray-50 rounded-xl border border-gray-100 flex items-center justify-between">
                     <span className="text-xs text-gray-500 font-medium">Current Attachment</span>
-                    <a href={selectedReceipt.image} target="_blank" rel="noopener noreferrer" className="text-xs font-bold text-[#1cabb1] hover:text-[#159a9f] flex items-center gap-1 transition-colors">
+                    <a href={selectedReceipt.image} target="_blank" rel="noopener noreferrer" className="text-xs font-bold text-[#1D4ED8] hover:text-[#159a9f] flex items-center gap-1 transition-colors">
                       <Eye size={14} /> View File
                     </a>
                   </div>
@@ -864,7 +965,7 @@ const Debit = () => {
                   type="file" 
                   accept=".pdf,.jpg,.jpeg,.png"
                   onChange={(e) => setEditForm({ ...editForm, file: e.target.files[0] })}
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white text-[15px] text-gray-800 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[#1cabb1]/10 file:text-[#1cabb1] hover:file:bg-[#1cabb1]/20" 
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white text-[15px] text-gray-800 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[#1D4ED8]/10 file:text-[#1D4ED8] hover:file:bg-[#1D4ED8]/20" 
                 />
               </div>
 
@@ -879,7 +980,7 @@ const Debit = () => {
                 <button 
                   type="submit"
                   disabled={submitting}
-                  className="flex items-center gap-2 px-7 py-2.5 rounded-full bg-[#1cabb1] text-white font-bold hover:bg-[#168f94] transition-colors shadow-sm text-[14px] disabled:opacity-50"
+                  className="flex items-center gap-2 px-7 py-2.5 rounded-full bg-[#1D4ED8] text-white font-bold hover:bg-[#168f94] transition-colors shadow-sm text-[14px] disabled:opacity-50"
                 >
                   {submitting && <Loader2 size={16} className="animate-spin" />}
                   {submitting ? 'Saving...' : 'Update Receipt'}

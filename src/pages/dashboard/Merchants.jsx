@@ -12,6 +12,7 @@ const mockMerchants = [
 ];
 
 const Merchants = () => {
+
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   
@@ -112,7 +113,7 @@ const Merchants = () => {
           <ChevronRight size={14} className="mx-2" />
           <span className="hover:text-gray-700">Partner Management</span>
           <ChevronRight size={14} className="mx-2" />
-          <span className="text-[#5a5ce5]">Merchant</span>
+          <span className="text-[#1B58A6]">Merchant</span>
         </div>
       </div>
 
@@ -126,7 +127,7 @@ const Merchants = () => {
               placeholder="Search Merchant"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all shadow-sm text-sm"
+              className="pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all shadow-sm text-sm"
             />
           </div>
 
@@ -139,7 +140,7 @@ const Merchants = () => {
             >
               <SlidersHorizontal size={18} />
               {(selectedStatus) && (
-                <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-[#1b58a6] rounded-full border border-white flex items-center justify-center text-[9px] text-white font-bold">
+                <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-[#1D4ED8] rounded-full border border-white flex items-center justify-center text-[9px] text-white font-bold">
                   {(selectedStatus ? 1 : 0)}
                 </span>
               )}
@@ -161,7 +162,7 @@ const Merchants = () => {
                     <select 
                       value={selectedStatus}
                       onChange={(e) => setSelectedStatus(e.target.value)}
-                      className="w-full px-3 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1cabb1] bg-white text-sm text-gray-700"
+                      className="w-full px-3 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1D4ED8] bg-white text-sm text-gray-700"
                     >
                       <option value="">All Statuses</option>
                       <option value="ACTIVE">Active</option>
@@ -172,13 +173,13 @@ const Merchants = () => {
 
                 <div className="flex gap-3">
                   <button 
-                    className="flex-1 py-2 rounded-full border-[1.5px] border-[#1cabb1] text-[#1cabb1] font-semibold hover:bg-teal-50 transition-colors text-sm bg-white"
+                    className="flex-1 py-2 rounded-full border-[1.5px] border-[#1D4ED8] text-[#1D4ED8] font-semibold hover:bg-teal-50 transition-colors text-sm bg-white"
                     onClick={() => { setSelectedStatus(''); }}
                   >
                     Reset
                   </button>
                   <button 
-                    className="flex-1 py-2 rounded-full bg-[#1cabb1] text-white font-semibold hover:bg-[#168f94] transition-colors text-sm shadow-sm"
+                    className="flex-1 py-2 rounded-full bg-[#1D4ED8] text-white font-semibold hover:bg-[#168f94] transition-colors text-sm shadow-sm"
                     onClick={() => { setIsFilterOpen(false); fetchMerchants(1); }}
                   >
                     Apply Filter
@@ -191,7 +192,7 @@ const Merchants = () => {
 
         <Link 
           to="/merchant/create" 
-          className="bg-[#1cabb1] hover:bg-[#168f94] text-white px-5 py-2.5 rounded-full font-medium transition-colors flex items-center justify-center text-sm shadow-sm w-full sm:w-auto whitespace-nowrap"
+          className="bg-[#1D4ED8] hover:bg-[#168f94] text-white px-5 py-2.5 rounded-full font-medium transition-colors flex items-center justify-center text-sm shadow-sm w-full sm:w-auto whitespace-nowrap"
         >
           + Add New Merchant
         </Link>
@@ -249,10 +250,10 @@ const Merchants = () => {
                     </td>
                     <td className="py-4 px-6">
                       <div className="flex items-center justify-center gap-3">
-                        <Link to={`/merchant/${row.id}/view`} className="text-gray-500 hover:text-[#1cabb1] transition-colors" title="View">
+                        <Link to={`/merchant/${row.id}/view`} className="text-gray-500 hover:text-[#1D4ED8] transition-colors" title="View">
                           <Eye size={18} />
                         </Link>
-                        <Link to={`/merchant/${row.id}/edit`} className="text-gray-500 hover:text-[#5a5ce5] transition-colors" title="Edit">
+                        <Link to={`/merchant/${row.id}/edit`} className="text-gray-500 hover:text-[#1B58A6] transition-colors" title="Edit">
                           <Edit size={18} />
                         </Link>
                         <button 
@@ -285,7 +286,7 @@ const Merchants = () => {
               >
                 Previous
               </button>
-              <button className="px-3 py-1.5 rounded-md bg-[#1cabb1] text-white font-medium shadow-sm">
+              <button className="px-3 py-1.5 rounded-md bg-[#1D4ED8] text-white font-medium shadow-sm">
                 {meta.page}
               </button>
               <button 

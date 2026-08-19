@@ -16,14 +16,14 @@ const FileUploadField = ({ label, id, initialFile }) => {
   return (
     <div className="flex flex-col gap-2">
       <label className="text-[15px] font-semibold text-gray-800">{label}</label>
-      <div className="relative flex items-center justify-center w-full h-24 border-2 border-dashed border-[#1cabb1] rounded-xl bg-teal-50 hover:bg-teal-100 transition-colors cursor-pointer group">
+      <div className="relative flex items-center justify-center w-full h-24 border-2 border-dashed border-[#1D4ED8] rounded-xl bg-teal-50 hover:bg-teal-100 transition-colors cursor-pointer group">
         <input 
           type="file" 
           id={id} 
           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" 
           accept="image/*,.pdf"
         />
-        <div className="flex flex-col items-center gap-1 text-[#1cabb1] transition-colors">
+        <div className="flex flex-col items-center gap-1 text-[#1D4ED8] transition-colors">
           <CheckCircle2 size={24} className="text-[#32c965]" />
           <span className="text-xs font-medium text-gray-700">{initialFile}</span>
           <span className="text-[10px] text-gray-500">Click to change</span>
@@ -134,7 +134,7 @@ const EditCooperativeBank = () => {
           <ChevronRight size={14} className="mx-2" />
           <Link to="/co-operative-bank" className="hover:text-gray-700">Co-operative Bank</Link>
           <ChevronRight size={14} className="mx-2" />
-          <span className="text-[#5a5ce5]">Edit</span>
+          <span className="text-[#1B58A6]">Edit</span>
         </div>
       </div>
 
@@ -151,7 +151,7 @@ const EditCooperativeBank = () => {
                 value={formData.bankName}
                 onChange={e => handleChange('bankName', e.target.value)}
                 placeholder="Enter bank name" 
-                className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm text-[15px]" 
+                className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white shadow-sm text-[15px]" 
               />
             </div>
             
@@ -162,7 +162,7 @@ const EditCooperativeBank = () => {
                 value={formData.authorizedPerson}
                 onChange={e => handleChange('authorizedPerson', e.target.value)}
                 placeholder="Enter authorized person name" 
-                className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm text-[15px]" 
+                className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white shadow-sm text-[15px]" 
               />
             </div>
 
@@ -173,7 +173,7 @@ const EditCooperativeBank = () => {
                 value={formData.email}
                 onChange={e => handleChange('email', e.target.value)}
                 placeholder="Enter email" 
-                className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm text-[15px]" 
+                className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white shadow-sm text-[15px]" 
               />
             </div>
 
@@ -184,7 +184,7 @@ const EditCooperativeBank = () => {
                 value={formData.alternateEmail}
                 onChange={e => handleChange('alternateEmail', e.target.value)}
                 placeholder="Enter alternate mail ID" 
-                className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm text-[15px]" 
+                className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white shadow-sm text-[15px]" 
               />
             </div>
 
@@ -196,7 +196,7 @@ const EditCooperativeBank = () => {
                 onChange={e => handleChange('phoneNumber', sanitizeDigits(e.target.value, 10))}
                 placeholder="10-digit Phone number" 
                 maxLength={10}
-                className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm text-[15px]" 
+                className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white shadow-sm text-[15px]" 
               />
             </div>
             
@@ -208,7 +208,7 @@ const EditCooperativeBank = () => {
                 onChange={e => handleChange('mobileNumber', sanitizeDigits(e.target.value, 10))}
                 placeholder="10-digit Mobile number" 
                 maxLength={10}
-                className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm text-[15px]" 
+                className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white shadow-sm text-[15px]" 
               />
             </div>
             
@@ -220,7 +220,7 @@ const EditCooperativeBank = () => {
                   value={formData.password}
                   onChange={e => handleChange('password', e.target.value)}
                   placeholder="Change password (leave empty to keep current)" 
-                  className="w-full pl-4 pr-11 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm text-[15px]" 
+                  className="w-full pl-4 pr-11 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white shadow-sm text-[15px]" 
                 />
                 <button
                   type="button"
@@ -246,7 +246,7 @@ const EditCooperativeBank = () => {
                 value={formData.accountBankName}
                 onChange={e => handleChange('accountBankName', e.target.value)}
                 placeholder="Enter bank name" 
-                className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm text-[15px]" 
+                className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white shadow-sm text-[15px]" 
               />
             </div>
 
@@ -258,7 +258,7 @@ const EditCooperativeBank = () => {
                 onChange={e => handleChange('accountNumber', sanitizeDigits(e.target.value, 18))}
                 placeholder="Enter account number" 
                 maxLength={18}
-                className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm text-[15px]" 
+                className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white shadow-sm text-[15px]" 
               />
             </div>
 
@@ -270,7 +270,7 @@ const EditCooperativeBank = () => {
                 onChange={e => handleChange('ifsc', sanitizeIFSC(e.target.value))}
                 placeholder="Enter IFSC code" 
                 maxLength={11}
-                className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm text-[15px] uppercase" 
+                className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white shadow-sm text-[15px] uppercase" 
               />
             </div>
 
@@ -281,7 +281,7 @@ const EditCooperativeBank = () => {
                 value={formData.accountHolderName}
                 onChange={e => handleChange('accountHolderName', e.target.value)}
                 placeholder="Enter account holder name" 
-                className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm text-[15px]" 
+                className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white shadow-sm text-[15px]" 
               />
             </div>
           </div>
@@ -303,7 +303,7 @@ const EditCooperativeBank = () => {
           <Link to="/co-operative-bank" className="px-6 py-3 rounded-xl border border-gray-200 text-gray-700 font-medium hover:bg-gray-50 transition-colors shadow-sm text-[15px]">
             Cancel
           </Link>
-          <button type="submit" className="px-8 py-3 rounded-xl bg-[#1cabb1] text-white font-medium hover:bg-[#159499] transition-colors shadow-sm text-[15px]">
+          <button type="submit" className="px-8 py-3 rounded-xl bg-[#1D4ED8] text-white font-medium hover:bg-[#159499] transition-colors shadow-sm text-[15px]">
             Save Changes
           </button>
         </div>

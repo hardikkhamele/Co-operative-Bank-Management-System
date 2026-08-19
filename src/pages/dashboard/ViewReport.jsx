@@ -168,7 +168,7 @@ const ViewReport = () => {
       {/* Breadcrumb */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 shrink-0 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-[22px] font-bold text-[#1b58a6] mb-3">View Report</h1>
+          <h1 className="text-[22px] font-bold text-[#1D4ED8] mb-3">View Report</h1>
           <div className="flex items-center text-[13px] font-medium text-gray-500 flex-wrap gap-y-2">
             <Link to="/dashboard" className="hover:text-gray-800 transition-colors">Dashboard</Link>
             <ChevronRight size={14} className="mx-1" />
@@ -176,7 +176,7 @@ const ViewReport = () => {
             <ChevronRight size={14} className="mx-1" />
             <Link to="/kpa-report" className="hover:text-gray-800 transition-colors">KPA Report</Link>
             <ChevronRight size={14} className="mx-1" />
-            <span className="text-[#1b58a6]">View Report</span>
+            <span className="text-[#1D4ED8]">View Report</span>
           </div>
         </div>
 
@@ -205,18 +205,18 @@ const ViewReport = () => {
         <div className="flex flex-col sm:flex-row sm:items-center gap-6">
           <div className="flex flex-col gap-2">
             <div className="flex items-center gap-2 text-[13px] text-gray-600 font-medium">
-              <Phone size={16} className="text-[#1cabb1]" /> {employee.phoneNumber || employee.phone || '—'}
+              <Phone size={16} className="text-[#1D4ED8]" /> {employee.phoneNumber || employee.phone || '—'}
             </div>
             <div className="flex items-center gap-2 text-[13px] text-gray-600 font-medium">
-              <Mail size={16} className="text-[#1cabb1]" /> {employee.email || '—'}
+              <Mail size={16} className="text-[#1D4ED8]" /> {employee.email || '—'}
             </div>
             <div className="flex items-center gap-2 text-[13px] text-gray-600 font-medium">
-              <MapPin size={16} className="text-[#1cabb1]" /> {employee.branchName || employee.branch || '—'}
+              <MapPin size={16} className="text-[#1D4ED8]" /> {employee.branchName || employee.branch || '—'}
             </div>
           </div>
           <button 
             onClick={() => navigate(`/kpa-report/view/${id}/add-kra`)}
-            className="bg-[#1cabb1] hover:bg-[#159a9f] text-white px-6 py-2.5 rounded-full text-[14px] font-semibold transition-colors shadow-sm self-start sm:self-center"
+            className="bg-[#1D4ED8] hover:bg-[#159a9f] text-white px-6 py-2.5 rounded-full text-[14px] font-semibold transition-colors shadow-sm self-start sm:self-center"
           >
             Add New KRA
           </button>
@@ -228,7 +228,7 @@ const ViewReport = () => {
         
         <div className="p-6 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <Award className="text-[#1cabb1]" size={20} />
+            <Award className="text-[#1D4ED8]" size={20} />
             <h2 className="text-[17px] font-bold text-gray-800">Target Overview</h2>
           </div>
           <div className="flex items-center gap-3 flex-wrap">
@@ -237,7 +237,7 @@ const ViewReport = () => {
               <select 
                 value={selectedYear}
                 onChange={(e) => setSelectedYear(Number(e.target.value))}
-                className="appearance-none pl-4 pr-9 py-2 rounded-lg border border-gray-200 text-[13px] text-gray-700 font-semibold focus:outline-none focus:border-[#1cabb1] bg-white"
+                className="appearance-none pl-4 pr-9 py-2 rounded-lg border border-gray-200 text-[13px] text-gray-700 font-semibold focus:outline-none focus:border-[#1D4ED8] bg-white"
               >
                 {AVAILABLE_YEARS.map(yr => (
                   <option key={yr} value={yr}>FY {yr}-{String(yr + 1).slice(2)}</option>
@@ -251,7 +251,7 @@ const ViewReport = () => {
               <select 
                 value={selectedMonth}
                 onChange={(e) => setSelectedMonth(e.target.value)}
-                className="appearance-none pl-4 pr-9 py-2 rounded-lg border border-gray-200 text-[13px] text-gray-700 font-semibold focus:outline-none focus:border-[#1cabb1] bg-white"
+                className="appearance-none pl-4 pr-9 py-2 rounded-lg border border-gray-200 text-[13px] text-gray-700 font-semibold focus:outline-none focus:border-[#1D4ED8] bg-white"
               >
                 {AVAILABLE_MONTHS.map(m => (
                   <option key={m.label} value={m.value}>{m.label}</option>
@@ -265,7 +265,7 @@ const ViewReport = () => {
               <select 
                 value={selectedProduct}
                 onChange={(e) => setSelectedProduct(e.target.value)}
-                className="appearance-none pl-4 pr-9 py-2 rounded-lg border border-gray-200 text-[13px] text-gray-700 font-semibold focus:outline-none focus:border-[#1cabb1] bg-white"
+                className="appearance-none pl-4 pr-9 py-2 rounded-lg border border-gray-200 text-[13px] text-gray-700 font-semibold focus:outline-none focus:border-[#1D4ED8] bg-white"
               >
                 {AVAILABLE_PRODUCTS.map(prod => (
                   <option key={prod} value={prod}>{prod}</option>
@@ -280,14 +280,14 @@ const ViewReport = () => {
               className="p-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50"
               title="Refresh Targets"
             >
-              <RefreshCw size={16} className={loading ? 'animate-spin text-[#1cabb1]' : ''} />
+              <RefreshCw size={16} className={loading ? 'animate-spin text-[#1D4ED8]' : ''} />
             </button>
           </div>
         </div>
 
         {loading ? (
           <div className="py-20 flex flex-col items-center justify-center gap-3 text-gray-500">
-            <Loader2 className="animate-spin text-[#1cabb1]" size={32} />
+            <Loader2 className="animate-spin text-[#1D4ED8]" size={32} />
             <span className="text-sm font-medium">Loading target details...</span>
           </div>
         ) : (
@@ -398,7 +398,7 @@ const ViewReport = () => {
         
         <div className="p-6 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <TrendingUp className="text-[#1cabb1]" size={20} />
+            <TrendingUp className="text-[#1D4ED8]" size={20} />
             <h2 className="text-[18px] font-bold text-gray-800">Progress Breakdown ({selectedProduct})</h2>
           </div>
           <div className="flex items-center gap-3">
@@ -406,7 +406,7 @@ const ViewReport = () => {
               <select 
                 value={selectedTimeframe}
                 onChange={(e) => setSelectedTimeframe(e.target.value)}
-                className="appearance-none pl-4 pr-10 py-2 rounded-lg border border-gray-200 text-[14px] text-gray-700 font-medium focus:outline-none focus:border-[#1cabb1] bg-white capitalize"
+                className="appearance-none pl-4 pr-10 py-2 rounded-lg border border-gray-200 text-[14px] text-gray-700 font-medium focus:outline-none focus:border-[#1D4ED8] bg-white capitalize"
               >
                 <option value="yearly">Yearly Breakdown</option>
                 <option value="monthly">Monthly Target</option>
@@ -458,7 +458,7 @@ const ViewReport = () => {
                   <div className="h-4 w-px bg-gray-300"></div>
                   <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2">
-                      <div className="w-2.5 h-2.5 rounded-full bg-[#1cabb1]"></div>
+                      <div className="w-2.5 h-2.5 rounded-full bg-[#1D4ED8]"></div>
                       <span className="text-[13px] text-gray-600 font-medium">Target</span>
                     </div>
                     <div className="flex items-center gap-2">
@@ -502,7 +502,7 @@ const ViewReport = () => {
                     <Line 
                       type="monotone" 
                       dataKey="target" 
-                      stroke="#1cabb1" 
+                      stroke="#1D4ED8" 
                       strokeWidth={2}
                       dot={false}
                       activeDot={{ r: 6 }}
@@ -531,7 +531,7 @@ const ViewReport = () => {
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-[14px] text-gray-600 font-medium">Achievement Rate</span>
-                  <span className="text-[14px] font-bold text-[#1b58a6]">{currentPercentage}%</span>
+                  <span className="text-[14px] font-bold text-[#1D4ED8]">{currentPercentage}%</span>
                 </div>
               </div>
             </div>

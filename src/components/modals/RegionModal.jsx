@@ -26,7 +26,7 @@ const RegionModal = ({ isOpen, onClose, mode, initialData }) => {
               type="text" 
               placeholder="Enter Region name" 
               defaultValue={initialData?.name || ''}
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1] focus:border-transparent bg-white text-sm shadow-sm" 
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8] focus:border-transparent bg-white text-sm shadow-sm" 
             />
           </div>
           
@@ -36,7 +36,7 @@ const RegionModal = ({ isOpen, onClose, mode, initialData }) => {
               type="text" 
               placeholder="Enter Manager Name" 
               defaultValue={initialData?.manager || ''}
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1] focus:border-transparent bg-white text-sm shadow-sm" 
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8] focus:border-transparent bg-white text-sm shadow-sm" 
             />
           </div>
         </div>
@@ -45,13 +45,13 @@ const RegionModal = ({ isOpen, onClose, mode, initialData }) => {
         <div className="p-6 bg-[#f4f3fb] border-t border-gray-100 flex justify-end gap-4 rounded-b-2xl">
           <button 
             onClick={onClose}
-            className="py-2 px-8 rounded-full border-2 border-[#1cabb1] text-[#1cabb1] font-semibold hover:bg-teal-50 transition-colors focus:outline-none text-sm"
+            className="py-2 px-8 rounded-full border-2 border-[#1D4ED8] text-[#1D4ED8] font-semibold hover:bg-teal-50 transition-colors focus:outline-none text-sm"
           >
             Cancel
           </button>
           <button 
             onClick={onClose}
-            className="py-2 px-8 rounded-full bg-[#1cabb1] text-white font-semibold hover:bg-[#159a9f] transition-colors focus:outline-none text-sm shadow-sm"
+            className="py-2 px-8 rounded-full bg-[#1D4ED8] text-white font-semibold hover:bg-[#159a9f] transition-colors focus:outline-none text-sm shadow-sm"
           >
             {mode === 'create' ? 'Create' : 'Save'}
           </button>

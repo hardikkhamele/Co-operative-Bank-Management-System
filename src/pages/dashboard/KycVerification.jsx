@@ -133,13 +133,13 @@ const KycVerification = () => {
         <div className="flex flex-col gap-6 w-full">
           {/* Header Card */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <h1 className="text-xl font-bold text-[#1b58a6] mb-2">KYC Verification</h1>
+            <h1 className="text-xl font-bold text-[#1D4ED8] mb-2">KYC Verification</h1>
             <div className="text-sm text-gray-500 flex items-center gap-2">
-              <Link to="/dashboard" className="hover:text-[#1cabb1] transition-colors">Dashboard</Link>
+              <Link to="/dashboard" className="hover:text-[#1D4ED8] transition-colors">Dashboard</Link>
               <span>&gt;</span>
               <span>Verification</span>
               <span>&gt;</span>
-              <span className="text-[#1cabb1] font-medium">KYC Verification</span>
+              <span className="text-[#1D4ED8] font-medium">KYC Verification</span>
             </div>
           </div>
 
@@ -174,7 +174,7 @@ const KycVerification = () => {
           {/* Form Container */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mt-2">
             <div className="bg-[#e6f4f5] px-6 py-4 border-b border-gray-100">
-              <h3 className="text-lg font-bold text-[#1b58a6]">
+              <h3 className="text-lg font-bold text-[#1D4ED8]">
                 {activeTab === 'aadhaar' ? 'Aadhaar Verification' : 'PAN Verification'}
               </h3>
             </div>
@@ -190,7 +190,7 @@ const KycVerification = () => {
                   value={activeTab === 'aadhaar' ? formData.aadhaarNumber : formData.panNumber}
                   onChange={handleInputChange}
                   placeholder={activeTab === 'aadhaar' ? 'Enter 12 digit aadhaar number' : 'Enter 10 char PAN number'}
-                  className={`w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-gray-50/50 ${activeTab === 'pan' ? 'uppercase' : ''}`}
+                  className={`w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-gray-50/50 ${activeTab === 'pan' ? 'uppercase' : ''}`}
                   required
                 />
               </div>
@@ -201,7 +201,7 @@ const KycVerification = () => {
                   id="consent"
                   checked={isConsentChecked}
                   onChange={(e) => setIsConsentChecked(e.target.checked)}
-                  className="w-4 h-4 text-[#1cabb1] border-gray-300 rounded focus:ring-[#1cabb1] cursor-pointer"
+                  className="w-4 h-4 text-[#1D4ED8] border-gray-300 rounded focus:ring-[#1D4ED8] cursor-pointer"
                   required
                 />
                 <label htmlFor="consent" className="text-sm font-medium text-gray-600 cursor-pointer select-none">
@@ -214,14 +214,14 @@ const KycVerification = () => {
                   type="button"
                   onClick={handleReset}
                   disabled={loading}
-                  className="px-8 py-2.5 rounded-full text-[#1cabb1] font-semibold border border-[#1cabb1] hover:bg-[#1cabb1]/5 transition-colors disabled:opacity-50"
+                  className="px-8 py-2.5 rounded-full text-[#1D4ED8] font-semibold border border-[#1D4ED8] hover:bg-[#1D4ED8]/5 transition-colors disabled:opacity-50"
                 >
                   Reset
                 </button>
                 <button
                   type="submit"
                   disabled={!isConsentChecked || loading}
-                  className="px-8 py-2.5 rounded-full bg-[#1cabb1] text-white font-semibold hover:bg-[#159a9f] transition-all shadow-md shadow-[#1cabb1]/20 disabled:opacity-50 disabled:cursor-not-allowed transform active:scale-95 flex items-center gap-2"
+                  className="px-8 py-2.5 rounded-full bg-[#1D4ED8] text-white font-semibold hover:bg-[#159a9f] transition-all shadow-md shadow-[#1D4ED8]/20 disabled:opacity-50 disabled:cursor-not-allowed transform active:scale-95 flex items-center gap-2"
                 >
                   {loading && <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>}
                   Verify with DigiLocker
@@ -234,15 +234,15 @@ const KycVerification = () => {
         <div className="flex flex-col gap-6 w-full">
           {/* Result Header Card */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <h1 className="text-xl font-bold text-[#1b58a6] mb-2">KYC Report</h1>
+            <h1 className="text-xl font-bold text-[#1D4ED8] mb-2">KYC Report</h1>
             <div className="text-sm text-gray-500 flex items-center gap-2">
-              <Link to="/dashboard" className="hover:text-[#1cabb1] transition-colors">Dashboard</Link>
+              <Link to="/dashboard" className="hover:text-[#1D4ED8] transition-colors">Dashboard</Link>
               <span>&gt;</span>
               <span>Verification</span>
               <span>&gt;</span>
-              <span className="text-gray-500 hover:text-[#1cabb1] cursor-pointer transition-colors" onClick={() => { setStep('form'); setReportData(null); setCurrentRefId(null); }}>KYC Verification</span>
+              <span className="text-gray-500 hover:text-[#1D4ED8] cursor-pointer transition-colors" onClick={() => { setStep('form'); setReportData(null); setCurrentRefId(null); }}>KYC Verification</span>
               <span>&gt;</span>
-              <span className="text-[#1cabb1] font-medium">KYC Report</span>
+              <span className="text-[#1D4ED8] font-medium">KYC Report</span>
             </div>
           </div>
 
@@ -275,7 +275,7 @@ const KycVerification = () => {
             {/* Info Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100 flex items-start gap-4 hover:shadow-md transition-shadow">
-                <div className="mt-1 text-[#1cabb1]">
+                <div className="mt-1 text-[#1D4ED8]">
                   <User size={20} />
                 </div>
                 <div>
@@ -285,7 +285,7 @@ const KycVerification = () => {
               </div>
 
               <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100 flex items-start gap-4 hover:shadow-md transition-shadow">
-                <div className="mt-1 text-[#1cabb1]">
+                <div className="mt-1 text-[#1D4ED8]">
                   <Calendar size={20} />
                 </div>
                 <div>
@@ -296,7 +296,7 @@ const KycVerification = () => {
 
               {reportData?.fatherName && (
                 <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100 flex items-start gap-4 hover:shadow-md transition-shadow">
-                  <div className="mt-1 text-[#1cabb1]">
+                  <div className="mt-1 text-[#1D4ED8]">
                     <Users size={20} />
                   </div>
                   <div>
@@ -308,7 +308,7 @@ const KycVerification = () => {
 
               {reportData?.address && (
                 <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100 flex items-start gap-4 hover:shadow-md transition-shadow">
-                  <div className="mt-1 text-[#1cabb1]">
+                  <div className="mt-1 text-[#1D4ED8]">
                     <MapPin size={20} />
                   </div>
                   <div>
@@ -326,7 +326,7 @@ const KycVerification = () => {
               <button 
                 onClick={handleDownload}
                 disabled={loading}
-                className="flex items-center gap-2 px-8 py-2.5 rounded-full bg-[#1cabb1] text-white font-bold hover:bg-[#159a9f] transition-all shadow-md shadow-[#1cabb1]/30 transform hover:-translate-y-0.5 active:scale-95 disabled:opacity-50 disabled:transform-none"
+                className="flex items-center gap-2 px-8 py-2.5 rounded-full bg-[#1D4ED8] text-white font-bold hover:bg-[#159a9f] transition-all shadow-md shadow-[#1D4ED8]/30 transform hover:-translate-y-0.5 active:scale-95 disabled:opacity-50 disabled:transform-none"
               >
                 {loading ? (
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>

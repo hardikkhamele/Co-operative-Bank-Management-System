@@ -19,15 +19,15 @@ const DocumentViewField = ({ label, documentData }) => (
         href={documentData.url} 
         target="_blank" 
         rel="noopener noreferrer"
-        className="flex items-center justify-between p-4 border border-gray-200 rounded-xl bg-gray-50 group hover:bg-white hover:border-[#1cabb1]/30 hover:shadow-sm transition-all"
+        className="flex items-center justify-between p-4 border border-gray-200 rounded-xl bg-gray-50 group hover:bg-white hover:border-[#1D4ED8]/30 hover:shadow-sm transition-all"
       >
         <div className="flex items-center gap-3 overflow-hidden">
-          <div className="p-2 bg-[#1cabb1]/10 text-[#1cabb1] rounded-lg shrink-0">
+          <div className="p-2 bg-[#1D4ED8]/10 text-[#1D4ED8] rounded-lg shrink-0">
             <FileText size={20} />
           </div>
           <span className="text-[15px] font-medium text-gray-700 truncate">{documentData.filename || 'Document'}</span>
         </div>
-        <button className="text-[#1cabb1] hover:bg-[#1cabb1]/10 p-2 rounded-lg transition-colors tooltip-trigger" title="Download/View">
+        <button className="text-[#1D4ED8] hover:bg-[#1D4ED8]/10 p-2 rounded-lg transition-colors tooltip-trigger" title="Download/View">
           <Download size={18} />
         </button>
       </a>
@@ -74,7 +74,7 @@ const ViewMerchant = () => {
     return (
       <div className="p-10 text-center text-gray-500 flex flex-col items-center">
         <p className="mb-4">Merchant not found.</p>
-        <Link to="/merchant" className="text-[#1cabb1] hover:underline">Back to Merchants</Link>
+        <Link to="/merchant" className="text-[#1D4ED8] hover:underline">Back to Merchants</Link>
       </div>
     );
   }
@@ -92,7 +92,7 @@ const ViewMerchant = () => {
             <ChevronRight size={14} className="mx-2" />
             <Link to="/merchant" className="hover:text-gray-700">Merchant</Link>
             <ChevronRight size={14} className="mx-2" />
-            <span className="text-[#5a5ce5]">View</span>
+            <span className="text-[#1B58A6]">View</span>
           </div>
         </div>
       </div>
@@ -137,7 +137,7 @@ const ViewMerchant = () => {
           <Link to="/merchant" className="px-6 py-2.5 rounded-full border border-gray-200 text-gray-700 font-medium hover:bg-gray-50 transition-colors shadow-sm text-[15px] inline-flex">
             Back to List
           </Link>
-          <Link to={`/merchant/${merchant.id}/edit`} className="px-6 py-2.5 rounded-full bg-[#1cabb1] text-white font-medium hover:bg-[#159499] transition-colors shadow-sm text-[15px] inline-flex">
+          <Link to={`/merchant/${merchant.id}/edit`} className="px-6 py-2.5 rounded-full bg-[#1D4ED8] text-white font-medium hover:bg-[#159499] transition-colors shadow-sm text-[15px] inline-flex">
             Edit Merchant
           </Link>
         </div>

@@ -17,12 +17,12 @@ const mockStates = ['Maharashtra', 'Gujarat', 'Karnataka', 'Delhi'];
 const mockEmployees = [
   { id: 1, name: 'Harleen Quinzel', designation: 'Branch Manager', punchIn: '9:07 AM', punchOut: '5:07 PM', totalHrs: '8 hrs', status: 'P', state: 'Maharashtra', branchId: 'b1', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop' },
   { id: 2, name: 'Paula Irving', designation: 'Senior Clerk', punchIn: '—', punchOut: '—', totalHrs: '—', status: 'L', state: 'Maharashtra', branchId: 'b1', avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop' },
-  { id: 3, name: 'Carol Danvers', designation: 'Assistant Branch Manager', punchIn: '9:07 AM', punchOut: '5:07 PM', totalHrs: '8 hrs', status: 'P', state: 'Maharashtra', branchId: 'b2', initials: 'CD', avatarColor: 'bg-[#f4f2ff] text-[#5a5ce5]' },
+  { id: 3, name: 'Carol Danvers', designation: 'Assistant Branch Manager', punchIn: '9:07 AM', punchOut: '5:07 PM', totalHrs: '8 hrs', status: 'P', state: 'Maharashtra', branchId: 'b2', initials: 'CD', avatarColor: 'bg-[#f4f2ff] text-[#1B58A6]' },
   { id: 4, name: 'Lois Lane', designation: 'Clerk', punchIn: '—', punchOut: '—', totalHrs: '—', status: 'A', state: 'Gujarat', branchId: 'b4', avatar: 'https://images.unsplash.com/photo-1531123897727-8f129e1baf8a?w=100&h=100&fit=crop' },
-  { id: 5, name: 'Karen Starr', designation: 'Cashier', punchIn: '9:07 AM', punchOut: '5:07 PM', totalHrs: '8 hrs', status: 'P', state: 'Gujarat', branchId: 'b4', initials: 'KS', avatarColor: 'bg-[#f4f2ff] text-[#5a5ce5]' },
+  { id: 5, name: 'Karen Starr', designation: 'Cashier', punchIn: '9:07 AM', punchOut: '5:07 PM', totalHrs: '8 hrs', status: 'P', state: 'Gujarat', branchId: 'b4', initials: 'KS', avatarColor: 'bg-[#f4f2ff] text-[#1B58A6]' },
   { id: 6, name: 'Wanda Maximoff', designation: 'Peon', punchIn: '—', punchOut: '—', totalHrs: '—', status: 'A', state: 'Karnataka', branchId: 'b6', avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop' },
   { id: 7, name: 'Pepper Potts', designation: 'Clerk', punchIn: '9:07 AM', punchOut: '5:07 PM', totalHrs: '8 hrs', status: 'P', state: 'Delhi', branchId: 'b7', avatar: 'https://images.unsplash.com/photo-1554151228-14d9def656e4?w=100&h=100&fit=crop' },
-  { id: 8, name: 'Natasha Romanoff', designation: 'Human Resource', punchIn: '—', punchOut: '—', totalHrs: '—', status: 'A', state: 'Delhi', branchId: 'b7', initials: 'NR', avatarColor: 'bg-[#f4f2ff] text-[#5a5ce5]' }
+  { id: 8, name: 'Natasha Romanoff', designation: 'Human Resource', punchIn: '—', punchOut: '—', totalHrs: '—', status: 'A', state: 'Delhi', branchId: 'b7', initials: 'NR', avatarColor: 'bg-[#f4f2ff] text-[#1B58A6]' }
 ];
 
 const mockMonthlyAttendance = [
@@ -172,7 +172,7 @@ const AttendanceReport = () => {
           <ChevronRight size={14} className="mx-2" />
           <span className="hover:text-gray-700">Attendance Report</span>
           <ChevronRight size={14} className="mx-2" />
-          <span className="text-[#5a5ce5]">Attendance Report</span>
+          <span className="text-[#1B58A6]">Attendance Report</span>
         </div>
       </div>
 
@@ -190,7 +190,7 @@ const AttendanceReport = () => {
                   setSelectedBranch('');
                   setPage(1); 
                 }}
-                className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1cabb1] focus:border-[#1cabb1] appearance-none text-gray-700 text-[15px] bg-white"
+                className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1D4ED8] focus:border-[#1D4ED8] appearance-none text-gray-700 text-[15px] bg-white"
               >
                 <option value="">All Regions</option>
                 {mockStates.map((state, i) => (
@@ -211,7 +211,7 @@ const AttendanceReport = () => {
                   setSelectedBranch(e.target.value); 
                   setPage(1); 
                 }}
-                className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1cabb1] focus:border-[#1cabb1] appearance-none text-gray-700 text-[15px] bg-white"
+                className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1D4ED8] focus:border-[#1D4ED8] appearance-none text-gray-700 text-[15px] bg-white"
               >
                 <option value="">All Branches</option>
                 {availableBranches.map((branch) => (
@@ -237,7 +237,7 @@ const AttendanceReport = () => {
                   setPage(1);
                 }}
                 placeholder="Search by name or designation" 
-                className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1cabb1] focus:border-[#1cabb1] text-[15px] text-gray-700 bg-white"
+                className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1D4ED8] focus:border-[#1D4ED8] text-[15px] text-gray-700 bg-white"
               />
             </div>
           </div>
@@ -279,7 +279,7 @@ const AttendanceReport = () => {
                   type="date" 
                   value={referenceDate}
                   onChange={(e) => { setReferenceDate(e.target.value); setPage(1); }}
-                  className="px-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1cabb1] text-[15px] text-gray-600 min-w-[160px] bg-white cursor-pointer"
+                  className="px-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1D4ED8] text-[15px] text-gray-600 min-w-[160px] bg-white cursor-pointer"
                 />
               </div>
             </div>
@@ -294,7 +294,7 @@ const AttendanceReport = () => {
                 <select 
                   value={selectedMonth} 
                   onChange={(e) => setSelectedMonth(e.target.value)}
-                  className="pl-4 pr-10 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1cabb1] text-[15px] text-gray-600 appearance-none bg-white min-w-[130px] cursor-pointer"
+                  className="pl-4 pr-10 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1D4ED8] text-[15px] text-gray-600 appearance-none bg-white min-w-[130px] cursor-pointer"
                 >
                   <option value="January">January</option>
                   <option value="February">February</option>
@@ -323,7 +323,7 @@ const AttendanceReport = () => {
                 <select 
                   value={selectedYear}
                   onChange={(e) => setSelectedYear(e.target.value)}
-                  className="pl-4 pr-10 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1cabb1] text-[15px] text-gray-600 appearance-none bg-white min-w-[120px] cursor-pointer"
+                  className="pl-4 pr-10 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1D4ED8] text-[15px] text-gray-600 appearance-none bg-white min-w-[120px] cursor-pointer"
                 >
                   <option value="2026">2026</option>
                   <option value="2025">2025</option>
@@ -371,7 +371,7 @@ const AttendanceReport = () => {
                               className="w-8 h-8 rounded-full object-cover border border-gray-100" 
                             />
                           ) : (
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[13px] font-bold ${row.avatarColor || 'bg-[#f4f2ff] text-[#5a5ce5]'}`}>
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[13px] font-bold ${row.avatarColor || 'bg-[#f4f2ff] text-[#1B58A6]'}`}>
                               {row.initials || (row.name ? row.name.substring(0, 2).toUpperCase() : 'NA')}
                             </div>
                           )}
@@ -534,7 +534,7 @@ const AttendanceReport = () => {
                     <button 
                       key={i}
                       onClick={() => handlePageChange(i)}
-                      className={`w-8 h-8 flex items-center justify-center rounded border font-bold transition-colors ${page === i ? 'border-[#1cabb1] bg-[#1cabb1] text-white shadow-sm' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'}`}
+                      className={`w-8 h-8 flex items-center justify-center rounded border font-bold transition-colors ${page === i ? 'border-[#1D4ED8] bg-[#1D4ED8] text-white shadow-sm' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'}`}
                     >
                       {i}
                     </button>

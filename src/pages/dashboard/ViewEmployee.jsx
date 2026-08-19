@@ -10,7 +10,7 @@ import { employeeService } from '../../api/employeeService';
 
 const InfoCard = ({ icon: Icon, title, value }) => (
   <div className="bg-[#fafafa] rounded-xl p-4 flex items-center gap-4 border border-gray-100/60">
-    <div className="text-[#1cabb1] shrink-0 bg-white p-2.5 rounded-lg shadow-2xs border border-gray-100">
+    <div className="text-[#1D4ED8] shrink-0 bg-white p-2.5 rounded-lg shadow-2xs border border-gray-100">
       <Icon size={20} strokeWidth={2} />
     </div>
     <div className="flex flex-col min-w-0">
@@ -88,7 +88,7 @@ const ViewEmployee = () => {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] gap-3">
-        <Loader2 size={32} className="animate-spin text-[#1cabb1]" />
+        <Loader2 size={32} className="animate-spin text-[#1D4ED8]" />
         <span className="text-gray-500 font-medium text-sm">Loading employee details...</span>
       </div>
     );
@@ -100,7 +100,7 @@ const ViewEmployee = () => {
         <AlertCircle size={40} className="mx-auto text-rose-500 mb-3" />
         <h2 className="text-lg font-bold text-gray-800 mb-1">Employee Details Unavailable</h2>
         <p className="text-sm text-gray-500 mb-4">{errorMsg || 'Could not retrieve employee information.'}</p>
-        <Link to="/employees" className="inline-flex items-center px-4 py-2 bg-[#1cabb1] text-white rounded-lg font-semibold text-sm hover:bg-[#16949a] transition-colors">
+        <Link to="/employees" className="inline-flex items-center px-4 py-2 bg-[#1D4ED8] text-white rounded-lg font-semibold text-sm hover:bg-[#16949a] transition-colors">
           Back to Employee List
         </Link>
       </div>
@@ -142,7 +142,7 @@ const ViewEmployee = () => {
           <ChevronRight size={14} className="mx-2" />
           <Link to="/employees" className="hover:text-gray-700">Employee</Link>
           <ChevronRight size={14} className="mx-2" />
-          <span className="text-[#5a5ce5] font-semibold">{empName}</span>
+          <span className="text-[#1B58A6] font-semibold">{empName}</span>
         </div>
       </div>
 
@@ -150,11 +150,11 @@ const ViewEmployee = () => {
         {/* Profile Banner */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-8 pb-6 border-b border-gray-100">
           <div className="flex items-center gap-5">
-            <div className="w-[76px] h-[76px] rounded-full border-[3px] border-[#1cabb1] overflow-hidden bg-[#f4f2ff] flex items-center justify-center shrink-0 shadow-sm">
+            <div className="w-[76px] h-[76px] rounded-full border-[3px] border-[#1D4ED8] overflow-hidden bg-[#f4f2ff] flex items-center justify-center shrink-0 shadow-sm">
               {avatarUrl ? (
                 <img src={avatarUrl} alt={empName} className="w-full h-full object-cover" />
               ) : (
-                <span className="text-2xl font-bold text-[#5a5ce5]">{getInitials(empName)}</span>
+                <span className="text-2xl font-bold text-[#1B58A6]">{getInitials(empName)}</span>
               )}
             </div>
             <div>
@@ -205,7 +205,7 @@ const ViewEmployee = () => {
               onClick={() => setActiveTab(tab)}
               className={`px-5 py-2.5 rounded-xl font-semibold text-[14px] whitespace-nowrap transition-all ${
                 activeTab === tab 
-                  ? 'bg-[#eef2ff] text-[#4f46e5] shadow-xs' 
+                  ? 'bg-[#eef2ff] text-[#1D4ED8] shadow-xs' 
                   : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
               }`}
             >

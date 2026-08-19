@@ -89,16 +89,16 @@ const VerifyOTP = () => {
       <div className="flex flex-col items-center mb-6 text-center">
         <svg viewBox="0 0 200 180" className="w-16 h-16 mb-2">
           <polygon points="30,100 80,100 110,160 60,160" fill="#ef3b3a" />
-          <polygon points="100,10 180,160 130,160 90,80" fill="#1b58a6" />
+          <polygon points="100,10 180,160 130,160 90,80" fill="#1D4ED8" />
         </svg>
-        <div className="flex flex-col text-center text-[#1b58a6] mb-4">
+        <div className="flex flex-col text-center text-[#1D4ED8] mb-4">
             <span className="font-extrabold text-[15px] leading-tight tracking-wide">ADVITA CREDIT</span>
         </div>
         <h2 className="text-xl font-bold text-gray-800 mb-1">Verify OTP</h2>
         <p className="text-xs text-gray-500">
           A 6 digit OTP has been sent to
           <br />
-          <span className="text-[#1b58a6] font-medium flex items-center justify-center gap-1.5 mt-1">
+          <span className="text-[#1D4ED8] font-medium flex items-center justify-center gap-1.5 mt-1">
             {email}
             <button onClick={() => navigate('/forgot-password')} className="text-[#00bcd4] hover:text-[#00a0b5]">
               <Pencil size={12} />
@@ -111,7 +111,7 @@ const VerifyOTP = () => {
         <div className="flex justify-center gap-2 mb-2 w-full">
           {otp.map((data, index) => (
             <input
-              className="w-10 h-10 md:w-12 md:h-12 border border-gray-200 rounded-lg text-center text-lg font-semibold text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#1b58a6] focus:border-transparent bg-white transition-all shadow-sm"
+              className="w-10 h-10 md:w-12 md:h-12 border border-gray-200 rounded-lg text-center text-lg font-semibold text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8] focus:border-transparent bg-white transition-all shadow-sm"
               type="text"
               inputMode="numeric"
               pattern="[0-9]*"
@@ -138,7 +138,7 @@ const VerifyOTP = () => {
         <button
           type="submit"
           disabled={loading}
-          className="w-full py-3 px-4 mt-2 bg-[#1b58a6] hover:bg-[#154685] disabled:bg-gray-400 text-white font-medium rounded-full transition-colors shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#1b58a6] text-sm"
+          className="w-full py-3 px-4 mt-2 bg-[#1D4ED8] hover:bg-[#154685] disabled:bg-gray-400 text-white font-medium rounded-full transition-colors shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#1D4ED8] text-sm"
         >
           {loading ? 'Verifying...' : 'Verify OTP'}
         </button>

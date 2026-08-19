@@ -110,7 +110,7 @@ const ViewTransferReceipt = () => {
       case 'NEW':
         return <span className="inline-flex items-center justify-center px-4 py-1 text-xs font-bold text-yellow-700 bg-yellow-100 border border-yellow-200 rounded-full">NEW</span>;
       case 'APPROVED':
-        return <span className="inline-flex items-center justify-center px-4 py-1 text-xs font-bold text-[#1cabb1] bg-teal-50 border border-teal-200 rounded-full">APPROVED</span>;
+        return <span className="inline-flex items-center justify-center px-4 py-1 text-xs font-bold text-[#1D4ED8] bg-teal-50 border border-teal-200 rounded-full">APPROVED</span>;
       case 'REJECTED':
         return <span className="inline-flex items-center justify-center px-4 py-1 text-xs font-bold text-red-500 bg-red-50 border border-red-200 rounded-full">REJECTED</span>;
       default:
@@ -121,7 +121,7 @@ const ViewTransferReceipt = () => {
   if (loading) {
     return (
       <div className="p-16 flex flex-col items-center justify-center gap-3 text-gray-500">
-        <Loader2 size={32} className="animate-spin text-[#1cabb1]" />
+        <Loader2 size={32} className="animate-spin text-[#1D4ED8]" />
         <span className="font-medium">Loading transfer receipt details...</span>
       </div>
     );
@@ -133,7 +133,7 @@ const ViewTransferReceipt = () => {
         <p className="text-lg font-semibold mb-4">Receipt not found.</p>
         <button 
           onClick={() => navigate('/transfer')}
-          className="px-6 py-2 bg-[#1cabb1] text-white rounded-full font-medium"
+          className="px-6 py-2 bg-[#1D4ED8] text-white rounded-full font-medium"
         >
           Back to Transfer Receipts
         </button>
@@ -151,15 +151,15 @@ const ViewTransferReceipt = () => {
       {/* Header and Breadcrumb */}
       <div className="bg-white rounded-lg p-5 shadow-sm border border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 print:hidden">
         <div>
-          <h1 className="text-xl font-bold text-[#1b58a6] mb-2">View Receipt</h1>
+          <h1 className="text-xl font-bold text-[#1D4ED8] mb-2">View Receipt</h1>
           <div className="flex items-center text-xs font-medium text-gray-500 uppercase tracking-wide">
-            <Link to="/dashboard" className="hover:text-[#1b58a6] transition-colors">Dashboard</Link>
+            <Link to="/dashboard" className="hover:text-[#1D4ED8] transition-colors">Dashboard</Link>
             <ChevronRight size={14} className="mx-1" />
             <span>Receipt Management</span>
             <ChevronRight size={14} className="mx-1" />
-            <Link to="/transfer" className="hover:text-[#1b58a6] transition-colors">Transfer Receipt</Link>
+            <Link to="/transfer" className="hover:text-[#1D4ED8] transition-colors">Transfer Receipt</Link>
             <ChevronRight size={14} className="mx-1" />
-            <span className="text-[#1cabb1]">View Receipt</span>
+            <span className="text-[#1D4ED8]">View Receipt</span>
           </div>
         </div>
         {!isNew && (
@@ -173,7 +173,7 @@ const ViewTransferReceipt = () => {
             </button>
             <button 
               onClick={() => window.print()}
-              className="flex items-center gap-2 px-4 py-2 bg-[#1cabb1] text-white hover:bg-[#168f94] rounded-lg font-semibold text-sm transition-colors shadow-sm"
+              className="flex items-center gap-2 px-4 py-2 bg-[#1D4ED8] text-white hover:bg-[#168f94] rounded-lg font-semibold text-sm transition-colors shadow-sm"
             >
               <Printer size={16} />
               Print
@@ -188,7 +188,7 @@ const ViewTransferReceipt = () => {
         {/* Document Header */}
         <div className="px-10 py-8 border-b border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-gradient-to-r from-gray-50/50 to-white">
           <div className="flex items-start gap-4">
-            <div className="w-12 h-12 bg-[#1cabb1]/10 rounded-xl flex flex-col items-center justify-center shrink-0 text-[#1cabb1]">
+            <div className="w-12 h-12 bg-[#1D4ED8]/10 rounded-xl flex flex-col items-center justify-center shrink-0 text-[#1D4ED8]">
                <svg viewBox="0 0 24 24" fill="currentColor" className="w-7 h-7">
                  <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
                </svg>
@@ -200,7 +200,7 @@ const ViewTransferReceipt = () => {
             </div>
           </div>
           <div className="text-left md:text-right">
-            <h3 className="text-sm font-bold text-gray-800 uppercase tracking-wider text-[#1cabb1]">TRANSFER RECEIPT</h3>
+            <h3 className="text-sm font-bold text-gray-800 uppercase tracking-wider text-[#1D4ED8]">TRANSFER RECEIPT</h3>
             <p className="text-sm text-gray-600 mt-2">Receipt No: <span className="font-bold text-[#1b2559]">{receipt.receiptNo || 'TR-000001'}</span></p>
             <p className="text-sm text-gray-600 mt-0.5">Receipt Date: <span className="font-medium text-gray-800">{receiptDate}</span></p>
           </div>
@@ -290,7 +290,7 @@ const ViewTransferReceipt = () => {
                 type="button"
                 disabled={updating}
                 onClick={() => handleAction('APPROVED')}
-                className="px-8 py-2.5 rounded-full bg-[#1cabb1] text-white font-semibold hover:bg-[#168f94] transition-colors shadow-sm text-sm disabled:opacity-50 flex items-center gap-2"
+                className="px-8 py-2.5 rounded-full bg-[#1D4ED8] text-white font-semibold hover:bg-[#168f94] transition-colors shadow-sm text-sm disabled:opacity-50 flex items-center gap-2"
              >
                {updating && <Loader2 size={16} className="animate-spin" />}
                Approve Receipt

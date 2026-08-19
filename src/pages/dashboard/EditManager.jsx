@@ -88,7 +88,7 @@ const EditManager = () => {
           <ChevronRight size={14} className="mx-2" />
           <Link to="/managers" className="hover:text-gray-700">Managers</Link>
           <ChevronRight size={14} className="mx-2" />
-          <span className="text-[#5a5ce5]">Edit Manager</span>
+          <span className="text-[#1B58A6]">Edit Manager</span>
         </div>
       </div>
 
@@ -118,7 +118,7 @@ const EditManager = () => {
               
               <div className="mb-8">
                 <div className="relative inline-block group cursor-pointer">
-                  <div className="w-24 h-24 rounded-full border-[3px] border-[#1cabb1] overflow-hidden flex items-center justify-center p-0.5">
+                  <div className="w-24 h-24 rounded-full border-[3px] border-[#1D4ED8] overflow-hidden flex items-center justify-center p-0.5">
                     <img 
                       src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop" 
                       alt="Profile" 
@@ -126,7 +126,7 @@ const EditManager = () => {
                     />
                   </div>
                   <div className="absolute bottom-0 right-1 left-0 flex justify-center translate-y-1/4">
-                    <div className="bg-[#1cabb1] text-white p-1.5 rounded-full border-[2.5px] border-white shadow-sm">
+                    <div className="bg-[#1D4ED8] text-white p-1.5 rounded-full border-[2.5px] border-white shadow-sm">
                       <Camera size={14} />
                     </div>
                   </div>
@@ -141,7 +141,7 @@ const EditManager = () => {
                     value={formData.fullName} 
                     onChange={e => handleChange('fullName', e.target.value)}
                     placeholder="Enter full name" 
-                    className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm text-[15px]" 
+                    className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white shadow-sm text-[15px]" 
                   />
                 </div>
                 
@@ -151,7 +151,7 @@ const EditManager = () => {
                     <select 
                       value={formData.gender}
                       onChange={e => handleChange('gender', e.target.value)}
-                      className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white appearance-none text-gray-500 shadow-sm text-[15px]"
+                      className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white appearance-none text-gray-500 shadow-sm text-[15px]"
                     >
                       <option value="" disabled>Select</option>
                       <option value="male">Male</option>
@@ -170,7 +170,7 @@ const EditManager = () => {
                       value={formData.dob} 
                       onChange={e => handleChange('dob', e.target.value)}
                       placeholder="DD/MM/YYYY" 
-                      className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm text-[15px]" 
+                      className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white shadow-sm text-[15px]" 
                     />
                     <Calendar size={20} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
                   </div>
@@ -184,7 +184,7 @@ const EditManager = () => {
                     onChange={e => handleChange('phone', sanitizeDigits(e.target.value, 10))}
                     placeholder="10-digit Phone Number" 
                     maxLength={10}
-                    className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm text-[15px]" 
+                    className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white shadow-sm text-[15px]" 
                   />
                 </div>
                 
@@ -195,7 +195,7 @@ const EditManager = () => {
                     value={formData.email} 
                     onChange={e => handleChange('email', e.target.value)}
                     placeholder="Enter email" 
-                    className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm text-[15px]" 
+                    className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white shadow-sm text-[15px]" 
                   />
                 </div>
                 
@@ -207,7 +207,7 @@ const EditManager = () => {
                       value={formData.password} 
                       onChange={e => handleChange('password', e.target.value)}
                       placeholder="Change password (leave empty to keep current)" 
-                      className="w-full pl-4 pr-11 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm text-[15px]" 
+                      className="w-full pl-4 pr-11 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white shadow-sm text-[15px]" 
                     />
                     <button
                       type="button"
@@ -226,7 +226,7 @@ const EditManager = () => {
                     value={formData.address} 
                     onChange={e => handleChange('address', e.target.value)}
                     placeholder="Enter address" 
-                    className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm text-[15px]" 
+                    className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white shadow-sm text-[15px]" 
                   />
                 </div>
               </div>
@@ -241,7 +241,7 @@ const EditManager = () => {
               <div>
                 <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">Manager Type</label>
                 <div className="relative">
-                  <select value={managerType} onChange={(e) => setManagerType(e.target.value)} className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white appearance-none text-gray-500 shadow-sm text-[15px]">
+                  <select value={managerType} onChange={(e) => setManagerType(e.target.value)} className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white appearance-none text-gray-500 shadow-sm text-[15px]">
                     <option value="" disabled>Select</option>
                     <option value="regional">Regional Manager</option>
                     <option value="branch">Branch Manager</option>
@@ -257,7 +257,7 @@ const EditManager = () => {
                   <select 
                     value={formData.region}
                     onChange={e => handleChange('region', e.target.value)}
-                    className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white appearance-none text-gray-500 shadow-sm text-[15px]"
+                    className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white appearance-none text-gray-500 shadow-sm text-[15px]"
                   >
                     <option value="" disabled>Select</option>
                     <option value="north">North</option>
@@ -275,7 +275,7 @@ const EditManager = () => {
                   <select 
                     value={formData.branch}
                     onChange={e => handleChange('branch', e.target.value)}
-                    className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white appearance-none text-gray-500 shadow-sm text-[15px]"
+                    className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white appearance-none text-gray-500 shadow-sm text-[15px]"
                   >
                     <option value="" disabled>Select</option>
                     <option value="b1">Branch 1</option>
@@ -294,7 +294,7 @@ const EditManager = () => {
                   value={formData.salary} 
                   onChange={e => handleChange('salary', e.target.value)}
                   placeholder="Rs." 
-                  className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm text-[15px]" 
+                  className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white shadow-sm text-[15px]" 
                 />
               </div>
             </div>
@@ -311,14 +311,14 @@ const EditManager = () => {
                   <div>
                     <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">Punch In Time</label>
                     <div className="relative">
-                      <input type="text" placeholder="HH:MM" className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm text-[15px]" />
+                      <input type="text" placeholder="HH:MM" className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white shadow-sm text-[15px]" />
                       <Clock size={20} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
                     </div>
                   </div>
                   <div>
                     <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">Punch Out Time</label>
                     <div className="relative">
-                      <input type="text" placeholder="HH:MM" className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm text-[15px]" />
+                      <input type="text" placeholder="HH:MM" className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white shadow-sm text-[15px]" />
                       <Clock size={20} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
                     </div>
                   </div>
@@ -332,7 +332,7 @@ const EditManager = () => {
                   <div>
                     <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">Weekly Off Day</label>
                     <div className="relative">
-                      <select className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white appearance-none text-gray-500 shadow-sm text-[15px]">
+                      <select className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white appearance-none text-gray-500 shadow-sm text-[15px]">
                         <option value="" disabled selected>Select</option>
                         <option value="sunday">Sunday</option>
                         <option value="saturday">Saturday</option>
@@ -343,7 +343,7 @@ const EditManager = () => {
 
                   <label className="flex items-center gap-3 px-4 py-3.5 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors">
                     <div className="relative flex items-center justify-center">
-                      <input type="checkbox" defaultChecked className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#1cabb1] checked:border-[#1cabb1] transition-colors cursor-pointer" />
+                      <input type="checkbox" defaultChecked className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#1D4ED8] checked:border-[#1D4ED8] transition-colors cursor-pointer" />
                       <svg className="absolute w-3.5 h-3.5 text-white pointer-events-none hidden peer-checked:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                         <polyline points="20 6 9 17 4 12"></polyline>
                       </svg>
@@ -353,7 +353,7 @@ const EditManager = () => {
 
                   <label className="flex items-center gap-3 px-4 py-3.5 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors">
                     <div className="relative flex items-center justify-center">
-                      <input type="checkbox" className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#1cabb1] checked:border-[#1cabb1] transition-colors cursor-pointer" />
+                      <input type="checkbox" className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#1D4ED8] checked:border-[#1D4ED8] transition-colors cursor-pointer" />
                       <svg className="absolute w-3.5 h-3.5 text-white pointer-events-none hidden peer-checked:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                         <polyline points="20 6 9 17 4 12"></polyline>
                       </svg>
@@ -363,7 +363,7 @@ const EditManager = () => {
 
                   <label className="flex items-center gap-3 px-4 py-3.5 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors">
                     <div className="relative flex items-center justify-center">
-                      <input type="checkbox" className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#1cabb1] checked:border-[#1cabb1] transition-colors cursor-pointer" />
+                      <input type="checkbox" className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#1D4ED8] checked:border-[#1D4ED8] transition-colors cursor-pointer" />
                       <svg className="absolute w-3.5 h-3.5 text-white pointer-events-none hidden peer-checked:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                         <polyline points="20 6 9 17 4 12"></polyline>
                       </svg>
@@ -381,10 +381,10 @@ const EditManager = () => {
                 {/* Late Allowed */}
                 <div>
                   <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">Late Allowed (Mins)</label>
-                  <input type="text" defaultValue="15" className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm text-[15px] mb-4" />
+                  <input type="text" defaultValue="15" className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white shadow-sm text-[15px] mb-4" />
                   <label className="flex items-center gap-2.5 cursor-pointer w-fit">
                     <div className="relative flex items-center justify-center">
-                      <input type="checkbox" defaultChecked className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#1cabb1] checked:border-[#1cabb1] transition-colors cursor-pointer" />
+                      <input type="checkbox" defaultChecked className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#1D4ED8] checked:border-[#1D4ED8] transition-colors cursor-pointer" />
                       <svg className="absolute w-3.5 h-3.5 text-white pointer-events-none hidden peer-checked:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                         <polyline points="20 6 9 17 4 12"></polyline>
                       </svg>
@@ -396,10 +396,10 @@ const EditManager = () => {
                 {/* Early Allowed */}
                 <div>
                   <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">Early Allowed (Mins)</label>
-                  <input type="text" defaultValue="15" className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm text-[15px] mb-4" />
+                  <input type="text" defaultValue="15" className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white shadow-sm text-[15px] mb-4" />
                   <label className="flex items-center gap-2.5 cursor-pointer w-fit">
                     <div className="relative flex items-center justify-center">
-                      <input type="checkbox" className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#1cabb1] checked:border-[#1cabb1] transition-colors cursor-pointer" />
+                      <input type="checkbox" className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#1D4ED8] checked:border-[#1D4ED8] transition-colors cursor-pointer" />
                       <svg className="absolute w-3.5 h-3.5 text-white pointer-events-none hidden peer-checked:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                         <polyline points="20 6 9 17 4 12"></polyline>
                       </svg>
@@ -411,10 +411,10 @@ const EditManager = () => {
                 {/* Half Day */}
                 <div>
                   <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">Half Day (Mins)</label>
-                  <input type="text" defaultValue="240" className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm text-[15px] mb-4" />
+                  <input type="text" defaultValue="240" className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white shadow-sm text-[15px] mb-4" />
                   <label className="flex items-center gap-2.5 cursor-pointer w-fit">
                     <div className="relative flex items-center justify-center">
-                      <input type="checkbox" className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#1cabb1] checked:border-[#1cabb1] transition-colors cursor-pointer" />
+                      <input type="checkbox" className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#1D4ED8] checked:border-[#1D4ED8] transition-colors cursor-pointer" />
                       <svg className="absolute w-3.5 h-3.5 text-white pointer-events-none hidden peer-checked:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                         <polyline points="20 6 9 17 4 12"></polyline>
                       </svg>
@@ -426,10 +426,10 @@ const EditManager = () => {
                 {/* Full Day */}
                 <div>
                   <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">Full Day (Mins)</label>
-                  <input type="text" defaultValue="480" className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm text-[15px] mb-4" />
+                  <input type="text" defaultValue="480" className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white shadow-sm text-[15px] mb-4" />
                   <label className="flex items-center gap-2.5 cursor-pointer w-fit">
                     <div className="relative flex items-center justify-center">
-                      <input type="checkbox" defaultChecked className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#1cabb1] checked:border-[#1cabb1] transition-colors cursor-pointer" />
+                      <input type="checkbox" defaultChecked className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#1D4ED8] checked:border-[#1D4ED8] transition-colors cursor-pointer" />
                       <svg className="absolute w-3.5 h-3.5 text-white pointer-events-none hidden peer-checked:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                         <polyline points="20 6 9 17 4 12"></polyline>
                       </svg>
@@ -454,22 +454,22 @@ const EditManager = () => {
                     <div className="flex items-center gap-5">
                       <label className="flex items-center gap-2 cursor-pointer">
                         <div className="relative flex items-center justify-center">
-                          <input type="radio" name="punchType" value="single" className="peer w-5 h-5 rounded-full border-2 border-gray-400 appearance-none checked:border-[#1cabb1] transition-colors cursor-pointer" />
-                          <div className="absolute w-2.5 h-2.5 bg-[#1cabb1] rounded-full opacity-0 peer-checked:opacity-100 transition-opacity"></div>
+                          <input type="radio" name="punchType" value="single" className="peer w-5 h-5 rounded-full border-2 border-gray-400 appearance-none checked:border-[#1D4ED8] transition-colors cursor-pointer" />
+                          <div className="absolute w-2.5 h-2.5 bg-[#1D4ED8] rounded-full opacity-0 peer-checked:opacity-100 transition-opacity"></div>
                         </div>
                         <span className="text-[15px] text-gray-600">Single</span>
                       </label>
                       <label className="flex items-center gap-2 cursor-pointer">
                         <div className="relative flex items-center justify-center">
-                          <input type="radio" name="punchType" value="double" defaultChecked className="peer w-5 h-5 rounded-full border-2 border-gray-400 appearance-none checked:border-[#1cabb1] transition-colors cursor-pointer" />
-                          <div className="absolute w-2.5 h-2.5 bg-[#1cabb1] rounded-full opacity-0 peer-checked:opacity-100 transition-opacity"></div>
+                          <input type="radio" name="punchType" value="double" defaultChecked className="peer w-5 h-5 rounded-full border-2 border-gray-400 appearance-none checked:border-[#1D4ED8] transition-colors cursor-pointer" />
+                          <div className="absolute w-2.5 h-2.5 bg-[#1D4ED8] rounded-full opacity-0 peer-checked:opacity-100 transition-opacity"></div>
                         </div>
                         <span className="text-[15px] text-gray-600">Double</span>
                       </label>
                       <label className="flex items-center gap-2 cursor-pointer">
                         <div className="relative flex items-center justify-center">
-                          <input type="radio" name="punchType" value="multiple" className="peer w-5 h-5 rounded-full border-2 border-gray-400 appearance-none checked:border-[#1cabb1] transition-colors cursor-pointer" />
-                          <div className="absolute w-2.5 h-2.5 bg-[#1cabb1] rounded-full opacity-0 peer-checked:opacity-100 transition-opacity"></div>
+                          <input type="radio" name="punchType" value="multiple" className="peer w-5 h-5 rounded-full border-2 border-gray-400 appearance-none checked:border-[#1D4ED8] transition-colors cursor-pointer" />
+                          <div className="absolute w-2.5 h-2.5 bg-[#1D4ED8] rounded-full opacity-0 peer-checked:opacity-100 transition-opacity"></div>
                         </div>
                         <span className="text-[15px] text-gray-600">Multiple</span>
                       </label>
@@ -479,7 +479,7 @@ const EditManager = () => {
                   <div>
                     <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">No Out-Punch Found — Action</label>
                     <div className="relative">
-                      <select className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white appearance-none text-gray-500 shadow-sm text-[15px]">
+                      <select className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white appearance-none text-gray-500 shadow-sm text-[15px]">
                         <option value="" disabled selected>Select</option>
                         <option value="mark_half_day">Mark Half Day</option>
                       </select>
@@ -490,7 +490,7 @@ const EditManager = () => {
                   <div>
                     <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">Present On WO / Holiday — Action</label>
                     <div className="relative">
-                      <select className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white appearance-none text-gray-500 shadow-sm text-[15px]">
+                      <select className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white appearance-none text-gray-500 shadow-sm text-[15px]">
                         <option value="" disabled selected>Select</option>
                         <option value="pay_extra">Pay Extra</option>
                       </select>
@@ -507,12 +507,12 @@ const EditManager = () => {
                   <div className="grid grid-cols-2 gap-4 items-end">
                     <div>
                       <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">Lunch Allowed Mins</label>
-                      <input type="text" defaultValue="0" className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm text-[15px]" />
+                      <input type="text" defaultValue="0" className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white shadow-sm text-[15px]" />
                     </div>
                     <div className="pb-3.5">
                       <label className="flex items-center gap-2.5 cursor-pointer w-fit">
                         <div className="relative flex items-center justify-center">
-                          <input type="checkbox" defaultChecked className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#1cabb1] checked:border-[#1cabb1] transition-colors cursor-pointer" />
+                          <input type="checkbox" defaultChecked className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#1D4ED8] checked:border-[#1D4ED8] transition-colors cursor-pointer" />
                           <svg className="absolute w-3.5 h-3.5 text-white pointer-events-none hidden peer-checked:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                         </div>
                         <span className="text-[14px] text-gray-600 font-medium">As Per Shift</span>
@@ -522,7 +522,7 @@ const EditManager = () => {
 
                   <label className="flex items-center gap-3 px-4 py-3.5 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors">
                     <div className="relative flex items-center justify-center">
-                      <input type="checkbox" className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#1cabb1] checked:border-[#1cabb1] transition-colors cursor-pointer" />
+                      <input type="checkbox" className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#1D4ED8] checked:border-[#1D4ED8] transition-colors cursor-pointer" />
                       <svg className="absolute w-3.5 h-3.5 text-white pointer-events-none hidden peer-checked:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                     </div>
                     <span className="text-[15px] text-gray-700 font-medium">Lunch Allowed</span>
@@ -530,7 +530,7 @@ const EditManager = () => {
                   
                   <label className="flex items-center gap-3 px-4 py-3.5 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors">
                     <div className="relative flex items-center justify-center">
-                      <input type="checkbox" className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#1cabb1] checked:border-[#1cabb1] transition-colors cursor-pointer" />
+                      <input type="checkbox" className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#1D4ED8] checked:border-[#1D4ED8] transition-colors cursor-pointer" />
                       <svg className="absolute w-3.5 h-3.5 text-white pointer-events-none hidden peer-checked:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                     </div>
                     <span className="text-[15px] text-gray-700 font-medium">Early Going Allowed</span>
@@ -547,12 +547,12 @@ const EditManager = () => {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">Allowed Days</label>
-                      <input type="text" defaultValue="3" className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm text-[15px]" />
+                      <input type="text" defaultValue="3" className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white shadow-sm text-[15px]" />
                     </div>
                     <div>
                       <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">Action</label>
                       <div className="relative">
-                        <select className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white appearance-none text-gray-500 shadow-sm text-[15px]">
+                        <select className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white appearance-none text-gray-500 shadow-sm text-[15px]">
                           <option value="" disabled selected>Select</option>
                           <option value="deduct">Deduct</option>
                         </select>
@@ -563,7 +563,7 @@ const EditManager = () => {
                   
                   <label className="flex items-center gap-3 px-4 py-3.5 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors">
                     <div className="relative flex items-center justify-center">
-                      <input type="checkbox" className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#1cabb1] checked:border-[#1cabb1] transition-colors cursor-pointer" />
+                      <input type="checkbox" className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#1D4ED8] checked:border-[#1D4ED8] transition-colors cursor-pointer" />
                       <svg className="absolute w-3.5 h-3.5 text-white pointer-events-none hidden peer-checked:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                     </div>
                     <span className="text-[15px] text-gray-700 font-medium">Late Cut Allowed</span>
@@ -571,7 +571,7 @@ const EditManager = () => {
                   
                   <label className="flex items-center gap-3 px-4 py-3.5 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors">
                     <div className="relative flex items-center justify-center">
-                      <input type="checkbox" className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#1cabb1] checked:border-[#1cabb1] transition-colors cursor-pointer" />
+                      <input type="checkbox" className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#1D4ED8] checked:border-[#1D4ED8] transition-colors cursor-pointer" />
                       <svg className="absolute w-3.5 h-3.5 text-white pointer-events-none hidden peer-checked:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                     </div>
                     <span className="text-[15px] text-gray-700 font-medium">Extra Late Cut Deduction</span>
@@ -579,7 +579,7 @@ const EditManager = () => {
                   
                   <label className="flex items-center gap-3 px-4 py-3.5 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors">
                     <div className="relative flex items-center justify-center">
-                      <input type="checkbox" className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#1cabb1] checked:border-[#1cabb1] transition-colors cursor-pointer" />
+                      <input type="checkbox" className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#1D4ED8] checked:border-[#1D4ED8] transition-colors cursor-pointer" />
                       <svg className="absolute w-3.5 h-3.5 text-white pointer-events-none hidden peer-checked:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                     </div>
                     <span className="text-[15px] text-gray-700 font-medium">Additional Late Cut In Leave Balance</span>
@@ -593,7 +593,7 @@ const EditManager = () => {
                 <div className="space-y-5">
                   <label className="flex items-center gap-3 px-4 py-3.5 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors">
                     <div className="relative flex items-center justify-center">
-                      <input type="checkbox" className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#1cabb1] checked:border-[#1cabb1] transition-colors cursor-pointer" />
+                      <input type="checkbox" className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#1D4ED8] checked:border-[#1D4ED8] transition-colors cursor-pointer" />
                       <svg className="absolute w-3.5 h-3.5 text-white pointer-events-none hidden peer-checked:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                     </div>
                     <span className="text-[15px] text-gray-700 font-medium">Overtime Allowed</span>
@@ -602,14 +602,14 @@ const EditManager = () => {
                   <div className="grid grid-cols-2 gap-4">
                     <label className="flex items-center gap-3 px-4 py-3.5 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors">
                       <div className="relative flex items-center justify-center">
-                        <input type="checkbox" className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#1cabb1] checked:border-[#1cabb1] transition-colors cursor-pointer" />
+                        <input type="checkbox" className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#1D4ED8] checked:border-[#1D4ED8] transition-colors cursor-pointer" />
                         <svg className="absolute w-3.5 h-3.5 text-white pointer-events-none hidden peer-checked:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                       </div>
                       <span className="text-[15px] text-gray-700 font-medium">Custom OT</span>
                     </label>
                     <label className="flex items-center gap-3 px-4 py-3.5 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors">
                       <div className="relative flex items-center justify-center">
-                        <input type="checkbox" className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#1cabb1] checked:border-[#1cabb1] transition-colors cursor-pointer" />
+                        <input type="checkbox" className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#1D4ED8] checked:border-[#1D4ED8] transition-colors cursor-pointer" />
                         <svg className="absolute w-3.5 h-3.5 text-white pointer-events-none hidden peer-checked:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                       </div>
                       <span className="text-[15px] text-gray-700 font-medium">Before OT</span>
@@ -619,17 +619,17 @@ const EditManager = () => {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">OT Grace Period (Mins)</label>
-                      <input type="text" defaultValue="5" className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm text-[15px]" />
+                      <input type="text" defaultValue="5" className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white shadow-sm text-[15px]" />
                     </div>
                     <div>
                       <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">1 Day OT Hrs</label>
-                      <input type="text" defaultValue="4" className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm text-[15px]" />
+                      <input type="text" defaultValue="4" className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white shadow-sm text-[15px]" />
                     </div>
                   </div>
 
                   <label className="flex items-center gap-3 px-4 py-3.5 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors">
                     <div className="relative flex items-center justify-center">
-                      <input type="checkbox" className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#1cabb1] checked:border-[#1cabb1] transition-colors cursor-pointer" />
+                      <input type="checkbox" className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#1D4ED8] checked:border-[#1D4ED8] transition-colors cursor-pointer" />
                       <svg className="absolute w-3.5 h-3.5 text-white pointer-events-none hidden peer-checked:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                     </div>
                     <span className="text-[15px] text-gray-700 font-medium">OT As Per Shift</span>
@@ -637,7 +637,7 @@ const EditManager = () => {
                   
                   <label className="flex items-center gap-3 px-4 py-3.5 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors">
                     <div className="relative flex items-center justify-center">
-                      <input type="checkbox" className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#1cabb1] checked:border-[#1cabb1] transition-colors cursor-pointer" />
+                      <input type="checkbox" className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#1D4ED8] checked:border-[#1D4ED8] transition-colors cursor-pointer" />
                       <svg className="absolute w-3.5 h-3.5 text-white pointer-events-none hidden peer-checked:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                     </div>
                     <span className="text-[15px] text-gray-700 font-medium">Consider OT As COFF</span>
@@ -656,7 +656,7 @@ const EditManager = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <label className="flex items-start gap-3 px-4 py-3.5 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors">
                   <div className="relative flex items-center justify-center mt-0.5 shrink-0">
-                    <input type="checkbox" defaultChecked className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#1cabb1] checked:border-[#1cabb1] transition-colors cursor-pointer" />
+                    <input type="checkbox" defaultChecked className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#1D4ED8] checked:border-[#1D4ED8] transition-colors cursor-pointer" />
                     <svg className="absolute w-3.5 h-3.5 text-white pointer-events-none hidden peer-checked:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                   </div>
                   <div className="flex flex-col">
@@ -667,7 +667,7 @@ const EditManager = () => {
 
                 <label className="flex items-start gap-3 px-4 py-3.5 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors">
                   <div className="relative flex items-center justify-center mt-0.5 shrink-0">
-                    <input type="checkbox" defaultChecked className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#1cabb1] checked:border-[#1cabb1] transition-colors cursor-pointer" />
+                    <input type="checkbox" defaultChecked className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#1D4ED8] checked:border-[#1D4ED8] transition-colors cursor-pointer" />
                     <svg className="absolute w-3.5 h-3.5 text-white pointer-events-none hidden peer-checked:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                   </div>
                   <div className="flex flex-col">
@@ -678,7 +678,7 @@ const EditManager = () => {
 
                 <label className="flex items-start gap-3 px-4 py-3.5 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors">
                   <div className="relative flex items-center justify-center mt-0.5 shrink-0">
-                    <input type="checkbox" className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#1cabb1] checked:border-[#1cabb1] transition-colors cursor-pointer" />
+                    <input type="checkbox" className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#1D4ED8] checked:border-[#1D4ED8] transition-colors cursor-pointer" />
                     <svg className="absolute w-3.5 h-3.5 text-white pointer-events-none hidden peer-checked:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                   </div>
                   <div className="flex flex-col">
@@ -689,7 +689,7 @@ const EditManager = () => {
 
                 <label className="flex items-center gap-3 px-4 py-3.5 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors h-fit">
                   <div className="relative flex items-center justify-center shrink-0">
-                    <input type="checkbox" className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#1cabb1] checked:border-[#1cabb1] transition-colors cursor-pointer" />
+                    <input type="checkbox" className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#1D4ED8] checked:border-[#1D4ED8] transition-colors cursor-pointer" />
                     <svg className="absolute w-3.5 h-3.5 text-white pointer-events-none hidden peer-checked:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                   </div>
                   <span className="text-[15px] text-gray-700 font-medium">Add Working Hrs On Weekly Off Day</span>
@@ -697,7 +697,7 @@ const EditManager = () => {
 
                 <label className="flex items-center gap-3 px-4 py-3.5 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors h-fit">
                   <div className="relative flex items-center justify-center shrink-0">
-                    <input type="checkbox" className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#1cabb1] checked:border-[#1cabb1] transition-colors cursor-pointer" />
+                    <input type="checkbox" className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#1D4ED8] checked:border-[#1D4ED8] transition-colors cursor-pointer" />
                     <svg className="absolute w-3.5 h-3.5 text-white pointer-events-none hidden peer-checked:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                   </div>
                   <span className="text-[15px] text-gray-700 font-medium">Late Deduction Not Applied On WO If Present</span>
@@ -711,7 +711,7 @@ const EditManager = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <label className="flex items-center gap-3 px-4 py-3.5 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors h-fit">
                   <div className="relative flex items-center justify-center shrink-0">
-                    <input type="checkbox" className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#1cabb1] checked:border-[#1cabb1] transition-colors cursor-pointer" />
+                    <input type="checkbox" className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#1D4ED8] checked:border-[#1D4ED8] transition-colors cursor-pointer" />
                     <svg className="absolute w-3.5 h-3.5 text-white pointer-events-none hidden peer-checked:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                   </div>
                   <span className="text-[15px] text-gray-700 font-medium">Absent Before Holiday</span>
@@ -719,7 +719,7 @@ const EditManager = () => {
 
                 <label className="flex items-center gap-3 px-4 py-3.5 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors h-fit">
                   <div className="relative flex items-center justify-center shrink-0">
-                    <input type="checkbox" className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#1cabb1] checked:border-[#1cabb1] transition-colors cursor-pointer" />
+                    <input type="checkbox" className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#1D4ED8] checked:border-[#1D4ED8] transition-colors cursor-pointer" />
                     <svg className="absolute w-3.5 h-3.5 text-white pointer-events-none hidden peer-checked:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                   </div>
                   <span className="text-[15px] text-gray-700 font-medium">Absent After Holiday</span>
@@ -727,7 +727,7 @@ const EditManager = () => {
 
                 <label className="flex items-center gap-3 px-4 py-3.5 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors h-fit">
                   <div className="relative flex items-center justify-center shrink-0">
-                    <input type="checkbox" className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#1cabb1] checked:border-[#1cabb1] transition-colors cursor-pointer" />
+                    <input type="checkbox" className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#1D4ED8] checked:border-[#1D4ED8] transition-colors cursor-pointer" />
                     <svg className="absolute w-3.5 h-3.5 text-white pointer-events-none hidden peer-checked:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                   </div>
                   <span className="text-[15px] text-gray-700 font-medium">Absent Before & After Holiday</span>
@@ -735,7 +735,7 @@ const EditManager = () => {
 
                 <label className="flex items-center gap-3 px-4 py-3.5 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors h-fit">
                   <div className="relative flex items-center justify-center shrink-0">
-                    <input type="checkbox" className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#1cabb1] checked:border-[#1cabb1] transition-colors cursor-pointer" />
+                    <input type="checkbox" className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#1D4ED8] checked:border-[#1D4ED8] transition-colors cursor-pointer" />
                     <svg className="absolute w-3.5 h-3.5 text-white pointer-events-none hidden peer-checked:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                   </div>
                   <span className="text-[15px] text-gray-700 font-medium">Add Working Hours On Holiday Day</span>
@@ -743,7 +743,7 @@ const EditManager = () => {
 
                 <label className="flex items-center gap-3 px-4 py-3.5 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors h-fit">
                   <div className="relative flex items-center justify-center shrink-0">
-                    <input type="checkbox" className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#1cabb1] checked:border-[#1cabb1] transition-colors cursor-pointer" />
+                    <input type="checkbox" className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#1D4ED8] checked:border-[#1D4ED8] transition-colors cursor-pointer" />
                     <svg className="absolute w-3.5 h-3.5 text-white pointer-events-none hidden peer-checked:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                   </div>
                   <span className="text-[15px] text-gray-700 font-medium">Late Deduction Not Applied On Holiday If Present</span>
@@ -757,7 +757,7 @@ const EditManager = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <label className="flex items-center gap-3 px-4 py-3.5 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors h-fit">
                   <div className="relative flex items-center justify-center shrink-0">
-                    <input type="checkbox" defaultChecked className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#1cabb1] checked:border-[#1cabb1] transition-colors cursor-pointer" />
+                    <input type="checkbox" defaultChecked className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#1D4ED8] checked:border-[#1D4ED8] transition-colors cursor-pointer" />
                     <svg className="absolute w-3.5 h-3.5 text-white pointer-events-none hidden peer-checked:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                   </div>
                   <span className="text-[15px] text-gray-700 font-medium">Consider "Weekly Off" In Leave Application</span>
@@ -765,7 +765,7 @@ const EditManager = () => {
 
                 <label className="flex items-center gap-3 px-4 py-3.5 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors h-fit">
                   <div className="relative flex items-center justify-center shrink-0">
-                    <input type="checkbox" defaultChecked className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#1cabb1] checked:border-[#1cabb1] transition-colors cursor-pointer" />
+                    <input type="checkbox" defaultChecked className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#1D4ED8] checked:border-[#1D4ED8] transition-colors cursor-pointer" />
                     <svg className="absolute w-3.5 h-3.5 text-white pointer-events-none hidden peer-checked:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                   </div>
                   <span className="text-[15px] text-gray-700 font-medium">Consider "Holiday" In Leave Application</span>
@@ -773,7 +773,7 @@ const EditManager = () => {
 
                 <label className="flex items-center gap-3 px-4 py-3.5 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors h-fit">
                   <div className="relative flex items-center justify-center shrink-0">
-                    <input type="checkbox" defaultChecked className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#1cabb1] checked:border-[#1cabb1] transition-colors cursor-pointer" />
+                    <input type="checkbox" defaultChecked className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#1D4ED8] checked:border-[#1D4ED8] transition-colors cursor-pointer" />
                     <svg className="absolute w-3.5 h-3.5 text-white pointer-events-none hidden peer-checked:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                   </div>
                   <span className="text-[15px] text-gray-700 font-medium">Absent — WO — Leave = WO Absent</span>
@@ -781,7 +781,7 @@ const EditManager = () => {
 
                 <label className="flex items-center gap-3 px-4 py-3.5 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors h-fit">
                   <div className="relative flex items-center justify-center shrink-0">
-                    <input type="checkbox" className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#1cabb1] checked:border-[#1cabb1] transition-colors cursor-pointer" />
+                    <input type="checkbox" className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#1D4ED8] checked:border-[#1D4ED8] transition-colors cursor-pointer" />
                     <svg className="absolute w-3.5 h-3.5 text-white pointer-events-none hidden peer-checked:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                   </div>
                   <span className="text-[15px] text-gray-700 font-medium">Leave — WO — Absent = WO Absent</span>
@@ -789,7 +789,7 @@ const EditManager = () => {
 
                 <label className="flex items-center gap-3 px-4 py-3.5 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors h-fit">
                   <div className="relative flex items-center justify-center shrink-0">
-                    <input type="checkbox" className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#1cabb1] checked:border-[#1cabb1] transition-colors cursor-pointer" />
+                    <input type="checkbox" className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#1D4ED8] checked:border-[#1D4ED8] transition-colors cursor-pointer" />
                     <svg className="absolute w-3.5 h-3.5 text-white pointer-events-none hidden peer-checked:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                   </div>
                   <span className="text-[15px] text-gray-700 font-medium">Absent — Holiday — Leave = Holiday Absent</span>
@@ -797,7 +797,7 @@ const EditManager = () => {
 
                 <label className="flex items-center gap-3 px-4 py-3.5 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors h-fit">
                   <div className="relative flex items-center justify-center shrink-0">
-                    <input type="checkbox" className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#1cabb1] checked:border-[#1cabb1] transition-colors cursor-pointer" />
+                    <input type="checkbox" className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#1D4ED8] checked:border-[#1D4ED8] transition-colors cursor-pointer" />
                     <svg className="absolute w-3.5 h-3.5 text-white pointer-events-none hidden peer-checked:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                   </div>
                   <span className="text-[15px] text-gray-700 font-medium">Leave — Holiday — Absent = Holiday Absent</span>
@@ -812,14 +812,14 @@ const EditManager = () => {
       <div className="flex justify-end items-center gap-4 pt-2">
         <Link
           to="/managers"
-          className="px-10 py-3 rounded-full border-[1.5px] border-[#1cabb1] text-[#1cabb1] bg-white hover:bg-teal-50 font-semibold transition-colors text-[15px]"
+          className="px-10 py-3 rounded-full border-[1.5px] border-[#1D4ED8] text-[#1D4ED8] bg-white hover:bg-teal-50 font-semibold transition-colors text-[15px]"
         >
           Cancel
         </Link>
         <button
           type="button"
           onClick={handleSave}
-          className="px-10 py-3 rounded-full bg-[#1cabb1] hover:bg-[#168f94] text-white font-semibold transition-colors shadow-sm text-[15px]"
+          className="px-10 py-3 rounded-full bg-[#1D4ED8] hover:bg-[#168f94] text-white font-semibold transition-colors shadow-sm text-[15px]"
         >
           Save Changes
         </button>

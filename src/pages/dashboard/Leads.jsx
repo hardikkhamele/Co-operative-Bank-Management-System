@@ -1,14 +1,15 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useRef,  useState, useEffect, useCallback  } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { 
   ChevronRight, Search, ChevronDown, Eye, Trash2, X, 
   SlidersHorizontal, Download, ChevronLeft, Loader2, AlertCircle 
-} from 'lucide-react';
+, Table, FileSpreadsheet, FileText} from 'lucide-react';
 import { leadService } from '../../api/leadService';
 import useBranchStore from '../../store/branchStore';
 
 const getStatusBadge = (status) => {
+
   const normalized = (status || '').toUpperCase();
   switch (normalized) {
     case 'NEW':
@@ -16,7 +17,7 @@ const getStatusBadge = (status) => {
     case 'PENDING_DOWN_PAYMENT':
       return <span className="px-4 py-1.5 rounded-md bg-amber-50 border border-amber-300 text-amber-600 text-xs font-semibold whitespace-nowrap">Pending Down Payment</span>;
     case 'ACTIVE':
-      return <span className="px-4 py-1.5 rounded-md bg-blue-50 border border-blue-200 text-[#5a5ce5] text-xs font-semibold whitespace-nowrap">Active</span>;
+      return <span className="px-4 py-1.5 rounded-md bg-blue-50 border border-blue-200 text-[#1B58A6] text-xs font-semibold whitespace-nowrap">Active</span>;
     case 'COMPLETED':
       return <span className="px-4 py-1.5 rounded-md bg-green-50 border border-green-400 text-[#00c950] text-xs font-semibold whitespace-nowrap">Completed</span>;
     case 'REJECTED':
@@ -184,9 +185,87 @@ const Leads = () => {
   };
 
   const activeFiltersCount = selectedStatus ? 1 : 0;
+  const tableRef = useRef(null);
+  const [isExportOpen, setIsExportOpen] = useState(false);
+
+  const getSelectedDataFromTable = () => {
+    if (!tableRef.current) return { headers: [], rows: [] };
+    const table = tableRef.current;
+    
+    // Headers (skip last action column)
+    const ths = Array.from(table.querySelectorAll('thead th'));
+    const headers = ths.slice(0, -1).map(th => th.innerText.trim().replace(/\n/g, ' '));
+
+    // Rows (all rows)
+    const trs = Array.from(table.querySelectorAll('tbody tr'));
+    const rows = trs.map(tr => {
+      const tds = Array.from(tr.querySelectorAll('td'));
+      return tds.slice(0, -1).map(td => td.innerText.trim().replace(/\n/g, ' '));
+    });
+
+    return { headers, rows };
+  };
+
+  const exportToCSV = () => {
+    const { headers, rows } = getSelectedDataFromTable();
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.map(v => '"' + v.replace(/"/g, '""') + '"').join(','))
+    ].join('\n');
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'Export.csv';
+    link.click();
+    setIsExportOpen(false);
+  };
+
+  const exportToExcel = () => {
+    const { headers, rows } = getSelectedDataFromTable();
+    const tableHtml = `
+      <table ref={tableRef}  border="1">
+        <thead>
+          <tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr>
+        </thead>
+        <tbody>
+          ${rows.map(row => `<tr>${row.map(c => `<td>${c}</td>`).join('')}</tr>`).join('')}
+        </tbody>
+      </table>
+    `;
+    const blob = new Blob([tableHtml], { type: 'application/vnd.ms-excel' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'Export.xls';
+    link.click();
+    setIsExportOpen(false);
+  };
+
+  const exportToWord = () => {
+    const { headers, rows } = getSelectedDataFromTable();
+    const tableHtml = `
+      <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+      <head><meta charset='utf-8'><title>Export</title></head><body>
+      <table border="1">
+        <thead>
+          <tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr>
+        </thead>
+        <tbody>
+          ${rows.map(row => `<tr>${row.map(c => `<td>${c}</td>`).join('')}</tr>`).join('')}
+        </tbody>
+      </table>
+      </body></html>
+    `;
+    const blob = new Blob([tableHtml], { type: 'application/msword' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'Export.doc';
+    link.click();
+    setIsExportOpen(false);
+  };
 
   return (
-    <div className="max-w-[1400px] w-full">
+<div className="max-w-[1400px] w-full">
       {/* Header Card */}
       <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-6">
         <h2 className="text-xl font-bold text-[#1b7ef7] mb-2">Leads</h2>
@@ -209,7 +288,7 @@ const Leads = () => {
             </div>
             <input
               type="text"
-              className="block w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-lg focus:ring-[#1cabb1] focus:border-[#1cabb1] sm:text-sm bg-white"
+              className="block w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-lg focus:ring-[#1D4ED8] focus:border-[#1D4ED8] sm:text-sm bg-white"
               placeholder="Search application no, name, phone..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -228,12 +307,12 @@ const Leads = () => {
           <div className="relative">
             <button
               onClick={() => setIsFilterOpen(!isFilterOpen)}
-              className="relative w-[42px] h-[42px] bg-white border border-gray-200 rounded-lg flex items-center justify-center hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#1cabb1] transition-colors"
+              className="relative w-[42px] h-[42px] bg-white border border-gray-200 rounded-lg flex items-center justify-center hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8] transition-colors"
               title="Filter by status"
             >
               <SlidersHorizontal size={20} className="text-gray-500" />
               {activeFiltersCount > 0 && (
-                <div className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-[#1cabb1] text-white rounded-full flex items-center justify-center text-[10px] font-bold shadow-sm border-[1.5px] border-white">
+                <div className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-[#1D4ED8] text-white rounded-full flex items-center justify-center text-[10px] font-bold shadow-sm border-[1.5px] border-white">
                   {activeFiltersCount}
                 </div>
               )}
@@ -274,14 +353,14 @@ const Leads = () => {
                           ].map(opt => (
                             <div 
                               key={opt.value} 
-                              className={`px-4 py-2 hover:bg-gray-50 cursor-pointer text-[13px] flex items-center justify-between ${selectedStatus === opt.value ? 'font-semibold text-[#1cabb1] bg-teal-50/50' : 'text-gray-700'}`}
+                              className={`px-4 py-2 hover:bg-gray-50 cursor-pointer text-[13px] flex items-center justify-between ${selectedStatus === opt.value ? 'font-semibold text-[#1D4ED8] bg-teal-50/50' : 'text-gray-700'}`}
                               onClick={() => {
                                 setSelectedStatus(opt.value);
                                 setOpenStatusDropdown(false);
                               }}
                             >
                               <span>{opt.label}</span>
-                              {selectedStatus === opt.value && <span className="w-2 h-2 rounded-full bg-[#1cabb1]"></span>}
+                              {selectedStatus === opt.value && <span className="w-2 h-2 rounded-full bg-[#1D4ED8]"></span>}
                             </div>
                           ))}
                         </div>
@@ -292,13 +371,13 @@ const Leads = () => {
 
                 <div className="flex gap-3">
                   <button 
-                    className="flex-1 py-2 rounded-full border-2 border-[#1cabb1] text-[#1cabb1] font-semibold hover:bg-teal-50 transition-colors focus:outline-none text-xs"
+                    className="flex-1 py-2 rounded-full border-2 border-[#1D4ED8] text-[#1D4ED8] font-semibold hover:bg-teal-50 transition-colors focus:outline-none text-xs"
                     onClick={handleResetFilter}
                   >
                     Reset
                   </button>
                   <button 
-                    className="flex-1 py-2 rounded-full bg-[#1cabb1] text-white font-semibold hover:bg-[#159a9f] transition-colors focus:outline-none text-xs shadow-sm"
+                    className="flex-1 py-2 rounded-full bg-[#1D4ED8] text-white font-semibold hover:bg-[#159a9f] transition-colors focus:outline-none text-xs shadow-sm"
                     onClick={handleApplyFilter}
                   >
                     Apply Filter
@@ -311,21 +390,42 @@ const Leads = () => {
 
         {/* Right Side: Export Button */}
         <div className="flex items-center w-full md:w-auto justify-end">
-          <button 
-            onClick={handleExport}
-            disabled={exporting}
-            className="flex items-center justify-center gap-2 bg-[#1cabb1] hover:bg-[#159a9f] text-white py-2.5 px-6 rounded-full text-sm font-medium transition-colors shadow-sm whitespace-nowrap w-full md:w-auto disabled:opacity-50"
-          >
-            {exporting ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
-            {exporting ? 'Exporting...' : 'Export CSV'}
-          </button>
+          <div className="relative flex-shrink-0">
+            <button 
+              onClick={() => setIsExportOpen(!isExportOpen)}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-full font-semibold transition-colors text-sm shadow-sm border bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+            >
+              <Download size={18} />
+              Export
+              <ChevronDown size={16} />
+            </button>
+            
+            {isExportOpen && (
+              <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-100 rounded-xl shadow-lg z-50 overflow-hidden">
+                <div className="p-1">
+                  <button onClick={exportToCSV} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors text-left">
+                    <Table size={16} className="text-green-600" />
+                    Export to CSV
+                  </button>
+                  <button onClick={exportToExcel} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors text-left">
+                    <FileSpreadsheet size={16} className="text-green-600" />
+                    Export to Excel
+                  </button>
+                  <button onClick={exportToWord} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors text-left">
+                    <FileText size={16} className="text-blue-600" />
+                    Export to Word
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
       {/* Table Card */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse min-w-[1000px]">
+          <table ref={tableRef} className="w-full text-left border-collapse min-w-[1000px]">
             <thead>
               <tr className="bg-[#f4f2ff]">
                 <th className="py-4 px-6 font-semibold text-gray-700 text-sm">Sr.No.</th>
@@ -344,7 +444,7 @@ const Leads = () => {
                 <tr>
                   <td colSpan="9" className="py-16 text-center text-gray-500">
                     <div className="flex flex-col items-center justify-center gap-3">
-                      <Loader2 size={32} className="animate-spin text-[#1cabb1]" />
+                      <Loader2 size={32} className="animate-spin text-[#1D4ED8]" />
                       <span className="text-sm font-medium">Loading leads...</span>
                     </div>
                   </td>
@@ -366,7 +466,7 @@ const Leads = () => {
                               onError={(e) => { e.target.style.display = 'none'; }}
                             />
                           ) : (
-                            <div className="w-8 h-8 rounded-full bg-teal-50 border border-teal-100 flex items-center justify-center text-xs font-bold text-[#1cabb1]">
+                            <div className="w-8 h-8 rounded-full bg-teal-50 border border-teal-100 flex items-center justify-center text-xs font-bold text-[#1D4ED8]">
                               {getInitials(lead.customerName)}
                             </div>
                           )}
@@ -387,7 +487,7 @@ const Leads = () => {
                           <Link 
                             to={`/leads/view/${lead.id}`} 
                             state={lead} 
-                            className="p-1 text-gray-500 hover:text-[#1cabb1] transition-colors"
+                            className="p-1 text-gray-500 hover:text-[#1D4ED8] transition-colors"
                             title="View Lead Details"
                           >
                             <Eye size={18} />
@@ -430,7 +530,7 @@ const Leads = () => {
             <button 
               onClick={() => setPage(p => Math.max(p - 1, 1))}
               disabled={!meta.hasPrevPage && page <= 1}
-              className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-[#1cabb1] hover:bg-teal-50 transition-colors bg-white disabled:opacity-40 disabled:hover:bg-white"
+              className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-[#1D4ED8] hover:bg-teal-50 transition-colors bg-white disabled:opacity-40 disabled:hover:bg-white"
             >
               <ChevronLeft size={16} />
             </button>
@@ -447,8 +547,8 @@ const Leads = () => {
                       onClick={() => setPage(p)}
                       className={`w-8 h-8 flex items-center justify-center rounded-full text-xs font-medium transition-colors ${
                         page === p 
-                          ? 'bg-[#1cabb1] text-white shadow-sm' 
-                          : 'border border-gray-200 text-[#1cabb1] hover:bg-teal-50 bg-white'
+                          ? 'bg-[#1D4ED8] text-white shadow-sm' 
+                          : 'border border-gray-200 text-[#1D4ED8] hover:bg-teal-50 bg-white'
                       }`}
                     >
                       {p}
@@ -460,7 +560,7 @@ const Leads = () => {
             <button 
               onClick={() => setPage(p => Math.min(p + 1, meta.totalPages))}
               disabled={!meta.hasNextPage && page >= meta.totalPages}
-              className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-[#1cabb1] hover:bg-teal-50 transition-colors bg-white disabled:opacity-40 disabled:hover:bg-white"
+              className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-[#1D4ED8] hover:bg-teal-50 transition-colors bg-white disabled:opacity-40 disabled:hover:bg-white"
             >
               <ChevronRight size={16} />
             </button>

@@ -28,7 +28,7 @@ const DocumentViewField = ({ label, filename, url, onViewClick }) => {
   return (
     <div className="flex flex-col gap-2">
       <label className="text-sm font-semibold text-gray-500">{label}</label>
-      <div className="flex items-center justify-between p-3 border border-gray-200 rounded-xl bg-gray-50 group hover:bg-white hover:border-[#1cabb1]/30 hover:shadow-sm transition-all">
+      <div className="flex items-center justify-between p-3 border border-gray-200 rounded-xl bg-gray-50 group hover:bg-white hover:border-[#1D4ED8]/30 hover:shadow-sm transition-all">
         <div className="flex items-center gap-3 overflow-hidden">
           <div className="w-12 h-12 rounded-lg bg-gray-100 border border-gray-200 flex items-center justify-center overflow-hidden shrink-0">
             {isImage ? (
@@ -45,12 +45,12 @@ const DocumentViewField = ({ label, filename, url, onViewClick }) => {
           <button 
             type="button"
             onClick={(e) => { e.preventDefault(); onViewClick(fileUrl); }}
-            className="text-gray-500 hover:text-[#1cabb1] hover:bg-[#1cabb1]/10 p-2 rounded-lg transition-colors tooltip-trigger" 
+            className="text-gray-500 hover:text-[#1D4ED8] hover:bg-[#1D4ED8]/10 p-2 rounded-lg transition-colors tooltip-trigger" 
             title="View Fullscreen"
           >
             <Eye size={18} />
           </button>
-          <button className="text-gray-500 hover:text-[#1cabb1] hover:bg-[#1cabb1]/10 p-2 rounded-lg transition-colors tooltip-trigger" title="Download">
+          <button className="text-gray-500 hover:text-[#1D4ED8] hover:bg-[#1D4ED8]/10 p-2 rounded-lg transition-colors tooltip-trigger" title="Download">
             <Download size={18} />
           </button>
         </div>
@@ -75,7 +75,7 @@ const ViewCooperativeBank = () => {
             <ChevronRight size={14} className="mx-2" />
             <Link to="/co-operative-bank" className="hover:text-gray-700">Co-operative Bank</Link>
             <ChevronRight size={14} className="mx-2" />
-            <span className="text-[#5a5ce5]">View</span>
+            <span className="text-[#1B58A6]">View</span>
           </div>
         </div>
       </div>

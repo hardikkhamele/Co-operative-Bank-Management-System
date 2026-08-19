@@ -7,6 +7,7 @@ import { branchService } from '../../api/branchService';
 import { validateEmail, validatePhone, validatePassword, validatePincode, sanitizeDigits, preventInvalidNumberKeys } from '../../utils/validation';
 
 const Branch = () => {
+
   const [branches, setBranches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -408,13 +409,13 @@ const Branch = () => {
     <div className="space-y-6">
       {/* Header and Breadcrumb */}
       <div className="bg-white rounded-lg p-5 shadow-sm border border-gray-100">
-        <h1 className="text-2xl font-semibold text-[#1b58a6] mb-2">Branch</h1>
+        <h1 className="text-2xl font-semibold text-[#1D4ED8] mb-2">Branch</h1>
         <div className="flex items-center text-sm font-medium text-gray-600">
           <Link to="/dashboard" className="hover:text-gray-900 transition-colors">Dashboard</Link>
           <ChevronRight size={16} className="mx-1 text-gray-400" />
           <span>Region & Branch Management</span>
           <ChevronRight size={16} className="mx-1 text-gray-400" />
-          <span className="text-[#1b58a6]">Branch</span>
+          <span className="text-[#1D4ED8]">Branch</span>
         </div>
       </div>
 
@@ -427,7 +428,7 @@ const Branch = () => {
             </div>
             <input
               type="text"
-              className="block w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#1cabb1] focus:border-[#1cabb1] text-sm"
+              className="block w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#1D4ED8] focus:border-[#1D4ED8] text-sm"
               placeholder="Search branches..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -440,7 +441,7 @@ const Branch = () => {
             >
               <SlidersHorizontal size={18} />
               {activeFilters.length > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-[#1b58a6] rounded-full border border-white flex items-center justify-center text-[9px] text-white font-bold">
+                <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-[#1D4ED8] rounded-full border border-white flex items-center justify-center text-[9px] text-white font-bold">
                   {activeFilters.length}
                 </span>
               )}
@@ -475,7 +476,7 @@ const Branch = () => {
                             <div className="relative flex items-center justify-center">
                               <input 
                                 type="checkbox" 
-                                className="w-5 h-5 rounded-[4px] border-2 border-gray-400 appearance-none checked:bg-[#1cabb1] checked:border-[#1cabb1] transition-colors cursor-pointer"
+                                className="w-5 h-5 rounded-[4px] border-2 border-gray-400 appearance-none checked:bg-[#1D4ED8] checked:border-[#1D4ED8] transition-colors cursor-pointer"
                                 checked={filterState.includes(opt)}
                                 onChange={() => toggleFilter(setFilterState, opt)}
                               />
@@ -495,13 +496,13 @@ const Branch = () => {
 
                 <div className="flex gap-3">
                   <button 
-                    className="flex-1 py-2.5 rounded-full border-[1.5px] border-[#1cabb1] text-[#1cabb1] font-semibold hover:bg-teal-50 transition-colors focus:outline-none text-sm bg-white"
+                    className="flex-1 py-2.5 rounded-full border-[1.5px] border-[#1D4ED8] text-[#1D4ED8] font-semibold hover:bg-teal-50 transition-colors focus:outline-none text-sm bg-white"
                     onClick={resetFilters}
                   >
                     Reset Filter
                   </button>
                   <button 
-                    className="flex-1 py-2.5 rounded-full bg-[#1cabb1] text-white font-semibold hover:bg-[#168f94] transition-colors focus:outline-none text-sm shadow-sm"
+                    className="flex-1 py-2.5 rounded-full bg-[#1D4ED8] text-white font-semibold hover:bg-[#168f94] transition-colors focus:outline-none text-sm shadow-sm"
                     onClick={applyFilters}
                   >
                     Set Filter
@@ -514,13 +515,13 @@ const Branch = () => {
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center w-full sm:w-auto gap-3">
           <button 
             onClick={() => setIsCardCreditModalOpen(true)}
-            className="border-[1.5px] border-[#1cabb1] text-[#1cabb1] hover:bg-teal-50 bg-white px-5 py-2.5 rounded-full font-semibold transition-colors text-sm shadow-sm flex-shrink-0"
+            className="border-[1.5px] border-[#1D4ED8] text-[#1D4ED8] hover:bg-teal-50 bg-white px-5 py-2.5 rounded-full font-semibold transition-colors text-sm shadow-sm flex-shrink-0"
           >
             Card & Credit Settings
           </button>
           <button 
             onClick={() => { setCreateStep(1); setIsCreateModalOpen(true); }}
-            className="bg-[#1cabb1] hover:bg-[#159a9f] text-white px-5 py-2.5 rounded-full font-semibold transition-colors text-sm shadow-sm flex-shrink-0"
+            className="bg-[#1D4ED8] hover:bg-[#159a9f] text-white px-5 py-2.5 rounded-full font-semibold transition-colors text-sm shadow-sm flex-shrink-0"
           >
             + Create Branch
           </button>
@@ -616,17 +617,17 @@ const Branch = () => {
               <button 
                 onClick={() => setPage(p => Math.max(1, p - 1))}
                 disabled={page === 1}
-                className="w-8 h-8 flex items-center justify-center rounded-full border border-[#1cabb1] text-[#1cabb1] hover:bg-teal-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="w-8 h-8 flex items-center justify-center rounded-full border border-[#1D4ED8] text-[#1D4ED8] hover:bg-teal-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 <ChevronRight size={16} className="rotate-180" />
               </button>
-              <button className="w-8 h-8 flex items-center justify-center rounded-full bg-[#1cabb1] text-white font-medium shadow-sm">
+              <button className="w-8 h-8 flex items-center justify-center rounded-full bg-[#1D4ED8] text-white font-medium shadow-sm">
                 {page}
               </button>
               <button 
                 onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                 disabled={page === totalPages}
-                className="w-8 h-8 flex items-center justify-center rounded-full border border-[#1cabb1] text-[#1cabb1] hover:bg-teal-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="w-8 h-8 flex items-center justify-center rounded-full border border-[#1D4ED8] text-[#1D4ED8] hover:bg-teal-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 <ChevronRight size={16} />
               </button>
@@ -654,17 +655,17 @@ const Branch = () => {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">Branch Name *</label>
-                      <input type="text" value={createForm.branch.name} onChange={e => handleCreateChange('branch', 'name', e.target.value)} placeholder="e.g. Mumbai Fort" className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1cabb1] text-sm" />
+                      <input type="text" value={createForm.branch.name} onChange={e => handleCreateChange('branch', 'name', e.target.value)} placeholder="e.g. Mumbai Fort" className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1D4ED8] text-sm" />
                     </div>
                     <div>
                       <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">Branch Code *</label>
-                      <input type="text" value={createForm.branch.code} onChange={e => handleCreateChange('branch', 'code', e.target.value)} placeholder="e.g. MUM01" className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1cabb1] text-sm" />
+                      <input type="text" value={createForm.branch.code} onChange={e => handleCreateChange('branch', 'code', e.target.value)} placeholder="e.g. MUM01" className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1D4ED8] text-sm" />
                     </div>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">Email *</label>
-                      <input type="email" value={createForm.branch.email} onChange={e => handleCreateChange('branch', 'email', e.target.value)} placeholder="Branch Email" className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1cabb1] text-sm" />
+                      <input type="email" value={createForm.branch.email} onChange={e => handleCreateChange('branch', 'email', e.target.value)} placeholder="Branch Email" className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1D4ED8] text-sm" />
                     </div>
                     <div>
                       <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">Phone Number</label>
@@ -674,17 +675,17 @@ const Branch = () => {
                         onChange={e => handleCreateChange('branch', 'phoneNumber', sanitizeDigits(e.target.value, 10))} 
                         placeholder="10-digit Phone" 
                         maxLength={10}
-                        className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1cabb1] text-sm" 
+                        className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1D4ED8] text-sm" 
                       />
                     </div>
                   </div>
                   <div>
                     <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">Branch Manager Name *</label>
-                    <input type="text" value={createForm.manager.fullName} onChange={e => handleCreateChange('manager', 'fullName', e.target.value)} placeholder="Manager Full Name" className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1cabb1] text-sm" />
+                    <input type="text" value={createForm.manager.fullName} onChange={e => handleCreateChange('manager', 'fullName', e.target.value)} placeholder="Manager Full Name" className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1D4ED8] text-sm" />
                   </div>
                   <div>
                     <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">State/UT *</label>
-                    <select value={createForm.branch.state} onChange={e => handleCreateChange('branch', 'state', e.target.value)} className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1cabb1] text-sm bg-white">
+                    <select value={createForm.branch.state} onChange={e => handleCreateChange('branch', 'state', e.target.value)} className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1D4ED8] text-sm bg-white">
                       <option value="" disabled>Select State</option>
                       <option value="Maharashtra">Maharashtra</option>
                       <option value="Rajasthan">Rajasthan</option>
@@ -694,12 +695,12 @@ const Branch = () => {
                   </div>
                   <div>
                     <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">Address Line 1</label>
-                    <input type="text" value={createForm.branch.addressLine1} onChange={e => handleCreateChange('branch', 'addressLine1', e.target.value)} placeholder="Address" className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1cabb1] text-sm" />
+                    <input type="text" value={createForm.branch.addressLine1} onChange={e => handleCreateChange('branch', 'addressLine1', e.target.value)} placeholder="Address" className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1D4ED8] text-sm" />
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">City</label>
-                      <input type="text" value={createForm.branch.city} onChange={e => handleCreateChange('branch', 'city', e.target.value)} placeholder="City" className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1cabb1] text-sm" />
+                      <input type="text" value={createForm.branch.city} onChange={e => handleCreateChange('branch', 'city', e.target.value)} placeholder="City" className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1D4ED8] text-sm" />
                     </div>
                     <div>
                       <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">Pincode</label>
@@ -709,7 +710,7 @@ const Branch = () => {
                         onChange={e => handleCreateChange('branch', 'pincode', sanitizeDigits(e.target.value, 6))} 
                         placeholder="6-digit Pincode" 
                         maxLength={6}
-                        className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1cabb1] text-sm" 
+                        className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1D4ED8] text-sm" 
                       />
                     </div>
                   </div>
@@ -721,7 +722,7 @@ const Branch = () => {
                   </div>
                   <div>
                     <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">Email Address (Login ID) *</label>
-                    <input type="email" value={createForm.manager.email} onChange={e => handleCreateChange('manager', 'email', e.target.value)} placeholder="Manager Email" className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1cabb1] text-sm" />
+                    <input type="email" value={createForm.manager.email} onChange={e => handleCreateChange('manager', 'email', e.target.value)} placeholder="Manager Email" className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1D4ED8] text-sm" />
                   </div>
                   <div>
                     <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">Temporary Password *</label>
@@ -731,7 +732,7 @@ const Branch = () => {
                         value={createForm.manager.password} 
                         onChange={e => handleCreateChange('manager', 'password', e.target.value)} 
                         placeholder="Min 6 characters" 
-                        className="w-full pl-3 pr-10 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1cabb1] text-sm" 
+                        className="w-full pl-3 pr-10 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1D4ED8] text-sm" 
                       />
                       <button
                         type="button"
@@ -751,12 +752,12 @@ const Branch = () => {
                         onChange={e => handleCreateChange('manager', 'phoneNumber', sanitizeDigits(e.target.value, 10))} 
                         placeholder="10-digit Phone" 
                         maxLength={10}
-                        className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1cabb1] text-sm" 
+                        className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1D4ED8] text-sm" 
                       />
                     </div>
                     <div>
                       <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">Employee Code</label>
-                      <input type="text" value={createForm.manager.employeeCode} onChange={e => handleCreateChange('manager', 'employeeCode', e.target.value)} placeholder="e.g. BM-001" className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1cabb1] text-sm" />
+                      <input type="text" value={createForm.manager.employeeCode} onChange={e => handleCreateChange('manager', 'employeeCode', e.target.value)} placeholder="e.g. BM-001" className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1D4ED8] text-sm" />
                     </div>
                   </div>
                 </div>
@@ -770,7 +771,7 @@ const Branch = () => {
                   <button 
                     onClick={() => setCreateStep(2)} 
                     disabled={!createForm.branch.name || !createForm.branch.code || !createForm.branch.state || !createForm.branch.email || !createForm.manager.fullName}
-                    className="px-6 py-2 rounded-full bg-[#1cabb1] text-white font-semibold hover:bg-[#168f94] transition-colors shadow-sm text-sm flex items-center gap-2 disabled:opacity-50"
+                    className="px-6 py-2 rounded-full bg-[#1D4ED8] text-white font-semibold hover:bg-[#168f94] transition-colors shadow-sm text-sm flex items-center gap-2 disabled:opacity-50"
                   >
                     Next Step <ArrowRight size={16} />
                   </button>
@@ -785,7 +786,7 @@ const Branch = () => {
                     <button 
                       onClick={submitCreateBranch} 
                       disabled={createSubmitting || !createForm.manager.fullName || !createForm.manager.email || !createForm.manager.password}
-                      className="px-6 py-2 rounded-full bg-[#1cabb1] text-white font-semibold hover:bg-[#168f94] transition-colors shadow-sm text-sm disabled:opacity-50 flex items-center"
+                      className="px-6 py-2 rounded-full bg-[#1D4ED8] text-white font-semibold hover:bg-[#168f94] transition-colors shadow-sm text-sm disabled:opacity-50 flex items-center"
                     >
                       {createSubmitting ? 'Creating...' : 'Finish & Create'}
                     </button>
@@ -816,21 +817,21 @@ const Branch = () => {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">Branch Name *</label>
-                      <input type="text" value={selectedBranch.name || ''} onChange={(e) => setSelectedBranch({...selectedBranch, name: e.target.value})} className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1cabb1] text-sm" />
+                      <input type="text" value={selectedBranch.name || ''} onChange={(e) => setSelectedBranch({...selectedBranch, name: e.target.value})} className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1D4ED8] text-sm" />
                     </div>
                     <div>
                       <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">Branch Code *</label>
-                      <input type="text" value={selectedBranch.code || ''} onChange={(e) => setSelectedBranch({...selectedBranch, code: e.target.value})} className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1cabb1] text-sm" />
+                      <input type="text" value={selectedBranch.code || ''} onChange={(e) => setSelectedBranch({...selectedBranch, code: e.target.value})} className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1D4ED8] text-sm" />
                     </div>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">Email *</label>
-                      <input type="email" value={selectedBranch.email || ''} onChange={(e) => setSelectedBranch({...selectedBranch, email: e.target.value})} className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1cabb1] text-sm" />
+                      <input type="email" value={selectedBranch.email || ''} onChange={(e) => setSelectedBranch({...selectedBranch, email: e.target.value})} className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1D4ED8] text-sm" />
                     </div>
                     <div>
                       <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">Phone Number</label>
-                      <input type="text" value={selectedBranch.phoneNumber || ''} onChange={(e) => setSelectedBranch({...selectedBranch, phoneNumber: e.target.value})} className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1cabb1] text-sm" />
+                      <input type="text" value={selectedBranch.phoneNumber || ''} onChange={(e) => setSelectedBranch({...selectedBranch, phoneNumber: e.target.value})} className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1D4ED8] text-sm" />
                     </div>
                   </div>
                   <div>
@@ -842,12 +843,12 @@ const Branch = () => {
                         ...selectedBranch, 
                         manager: { ...(selectedBranch.manager || {}), fullName: e.target.value }
                       })} 
-                      className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1cabb1] text-sm" 
+                      className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1D4ED8] text-sm" 
                     />
                   </div>
                   <div>
                     <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">State/UT</label>
-                    <select value={selectedBranch.state || ''} onChange={(e) => setSelectedBranch({...selectedBranch, state: e.target.value})} className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1cabb1] text-sm bg-white">
+                    <select value={selectedBranch.state || ''} onChange={(e) => setSelectedBranch({...selectedBranch, state: e.target.value})} className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1D4ED8] text-sm bg-white">
                       <option value="" disabled>Select State</option>
                       <option value="Maharashtra">Maharashtra</option>
                       <option value="Rajasthan">Rajasthan</option>
@@ -857,16 +858,16 @@ const Branch = () => {
                   </div>
                   <div>
                     <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">Address Line 1</label>
-                    <input type="text" value={selectedBranch.address?.addressLine1 || ''} onChange={(e) => setSelectedBranch({...selectedBranch, address: { ...selectedBranch.address, addressLine1: e.target.value }})} placeholder="Address" className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1cabb1] text-sm" />
+                    <input type="text" value={selectedBranch.address?.addressLine1 || ''} onChange={(e) => setSelectedBranch({...selectedBranch, address: { ...selectedBranch.address, addressLine1: e.target.value }})} placeholder="Address" className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1D4ED8] text-sm" />
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">City</label>
-                      <input type="text" value={selectedBranch.address?.city || ''} onChange={(e) => setSelectedBranch({...selectedBranch, address: { ...selectedBranch.address, city: e.target.value }})} className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1cabb1] text-sm" />
+                      <input type="text" value={selectedBranch.address?.city || ''} onChange={(e) => setSelectedBranch({...selectedBranch, address: { ...selectedBranch.address, city: e.target.value }})} className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1D4ED8] text-sm" />
                     </div>
                     <div>
                       <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">Pincode</label>
-                      <input type="text" value={selectedBranch.address?.pincode || ''} onChange={(e) => setSelectedBranch({...selectedBranch, address: { ...selectedBranch.address, pincode: e.target.value }})} className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1cabb1] text-sm" />
+                      <input type="text" value={selectedBranch.address?.pincode || ''} onChange={(e) => setSelectedBranch({...selectedBranch, address: { ...selectedBranch.address, pincode: e.target.value }})} className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1D4ED8] text-sm" />
                     </div>
                   </div>
                 </>
@@ -881,7 +882,7 @@ const Branch = () => {
                         ...selectedBranch, 
                         manager: { ...(selectedBranch.manager || {}), email: e.target.value }
                       })} 
-                      className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1cabb1] text-sm" 
+                      className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1D4ED8] text-sm" 
                     />
                   </div>
                   <div>
@@ -895,7 +896,7 @@ const Branch = () => {
                         ...selectedBranch, 
                         manager: { ...(selectedBranch.manager || {}), password: e.target.value }
                       })} 
-                      className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1cabb1] text-sm" 
+                      className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1D4ED8] text-sm" 
                     />
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -908,7 +909,7 @@ const Branch = () => {
                           ...selectedBranch, 
                           manager: { ...(selectedBranch.manager || {}), phoneNumber: e.target.value }
                         })} 
-                        className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1cabb1] text-sm" 
+                        className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1D4ED8] text-sm" 
                       />
                     </div>
                     <div>
@@ -920,7 +921,7 @@ const Branch = () => {
                           ...selectedBranch, 
                           manager: { ...(selectedBranch.manager || {}), employeeCode: e.target.value }
                         })} 
-                        className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1cabb1] text-sm" 
+                        className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#1D4ED8] text-sm" 
                       />
                     </div>
                   </div>
@@ -934,7 +935,7 @@ const Branch = () => {
                   <button onClick={() => { setIsEditModalOpen(false); setEditStep(1); }} className="px-6 py-2 rounded-full border border-gray-300 text-gray-700 font-semibold hover:bg-gray-50 transition-colors text-sm">
                     Cancel
                   </button>
-                  <button onClick={() => setEditStep(2)} className="px-6 py-2 rounded-full bg-[#1cabb1] text-white font-semibold hover:bg-[#168f94] transition-colors shadow-sm text-sm flex items-center gap-2">
+                  <button onClick={() => setEditStep(2)} className="px-6 py-2 rounded-full bg-[#1D4ED8] text-white font-semibold hover:bg-[#168f94] transition-colors shadow-sm text-sm flex items-center gap-2">
                     Next Step <ArrowRight size={16} />
                   </button>
                 </div>
@@ -950,7 +951,7 @@ const Branch = () => {
                     <button 
                       onClick={submitEditBranch} 
                       disabled={editSubmitting}
-                      className="px-6 py-2 rounded-full bg-[#1cabb1] text-white font-semibold hover:bg-[#168f94] transition-colors shadow-sm text-sm disabled:opacity-50"
+                      className="px-6 py-2 rounded-full bg-[#1D4ED8] text-white font-semibold hover:bg-[#168f94] transition-colors shadow-sm text-sm disabled:opacity-50"
                     >
                       {editSubmitting ? 'Saving...' : 'Save Changes'}
                     </button>

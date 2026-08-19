@@ -14,6 +14,7 @@ const mockCustomers = [
 ];
 
 const Customers = () => {
+
   const [searchTerm, setSearchTerm] = useState('');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -69,7 +70,7 @@ const Customers = () => {
             </div>
             <input
               type="text"
-              className="block w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-lg focus:ring-[#1cabb1] focus:border-[#1cabb1] sm:text-sm bg-white"
+              className="block w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-lg focus:ring-[#1D4ED8] focus:border-[#1D4ED8] sm:text-sm bg-white"
               placeholder="Search"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -80,7 +81,7 @@ const Customers = () => {
           <div className="relative">
             <button
               onClick={() => setIsFilterOpen(!isFilterOpen)}
-              className="w-[42px] h-[42px] bg-white border border-gray-200 rounded-lg flex items-center justify-center hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#1cabb1] transition-colors"
+              className="w-[42px] h-[42px] bg-white border border-gray-200 rounded-lg flex items-center justify-center hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8] transition-colors"
             >
               <SlidersHorizontal size={20} className="text-gray-500" />
             </button>
@@ -97,7 +98,7 @@ const Customers = () => {
                 <div className="space-y-4 mb-6">
                   {/* Gender Filter */}
                   <div className="relative">
-                    <select className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1cabb1] focus:border-[#1cabb1] bg-white text-[13px] appearance-none text-gray-500 shadow-sm">
+                    <select className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1D4ED8] focus:border-[#1D4ED8] bg-white text-[13px] appearance-none text-gray-500 shadow-sm">
                       <option value="" disabled selected>Gender</option>
                       <option value="male">Male</option>
                       <option value="female">Female</option>
@@ -109,13 +110,13 @@ const Customers = () => {
 
                 <div className="flex gap-3">
                   <button 
-                    className="flex-1 py-2 rounded-full border-2 border-[#1cabb1] text-[#1cabb1] font-semibold hover:bg-teal-50 transition-colors focus:outline-none text-xs"
+                    className="flex-1 py-2 rounded-full border-2 border-[#1D4ED8] text-[#1D4ED8] font-semibold hover:bg-teal-50 transition-colors focus:outline-none text-xs"
                     onClick={() => setIsFilterOpen(false)}
                   >
                     Reset Filter
                   </button>
                   <button 
-                    className="flex-1 py-2 rounded-full bg-[#1cabb1] text-white font-semibold hover:bg-[#159a9f] transition-colors focus:outline-none text-xs shadow-sm"
+                    className="flex-1 py-2 rounded-full bg-[#1D4ED8] text-white font-semibold hover:bg-[#159a9f] transition-colors focus:outline-none text-xs shadow-sm"
                     onClick={() => setIsFilterOpen(false)}
                   >
                     Set Filter
@@ -130,7 +131,7 @@ const Customers = () => {
         <div className="flex items-center w-full md:w-auto justify-end">
           <button 
             onClick={() => setIsAddModalOpen(true)}
-            className="bg-[#1cabb1] hover:bg-[#159a9f] text-white py-2.5 px-6 rounded-full text-sm font-medium transition-colors shadow-sm whitespace-nowrap w-full md:w-auto"
+            className="bg-[#1D4ED8] hover:bg-[#159a9f] text-white py-2.5 px-6 rounded-full text-sm font-medium transition-colors shadow-sm whitespace-nowrap w-full md:w-auto"
           >
             +Add Customer
           </button>
@@ -161,7 +162,7 @@ const Customers = () => {
                       {customer.avatar ? (
                         <img src={customer.avatar} alt={customer.name} className="w-8 h-8 rounded-full object-cover" />
                       ) : (
-                        <div className="w-8 h-8 rounded-full bg-[#f4f2ff] text-[#5a5ce5] flex items-center justify-center text-xs font-bold">
+                        <div className="w-8 h-8 rounded-full bg-[#f4f2ff] text-[#1B58A6] flex items-center justify-center text-xs font-bold">
                           {customer.initials}
                         </div>
                       )}
@@ -182,7 +183,7 @@ const Customers = () => {
                       </button>
                       <button 
                         onClick={() => handleEditClick(customer)}
-                        className="text-gray-500 hover:text-[#5a5ce5] transition-colors"
+                        className="text-gray-500 hover:text-[#1B58A6] transition-colors"
                       >
                         <Edit size={18} />
                       </button>
@@ -210,13 +211,13 @@ const Customers = () => {
           <button className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors">
             <ChevronRight size={16} className="rotate-180" />
           </button>
-          <button className="w-8 h-8 flex items-center justify-center rounded-full bg-[#1cabb1] text-white font-medium shadow-sm">
+          <button className="w-8 h-8 flex items-center justify-center rounded-full bg-[#1D4ED8] text-white font-medium shadow-sm">
             1
           </button>
-          <button className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-[#1cabb1] font-medium hover:bg-teal-50 transition-colors">
+          <button className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-[#1D4ED8] font-medium hover:bg-teal-50 transition-colors">
             2
           </button>
-          <button className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-[#1cabb1] font-medium hover:bg-teal-50 transition-colors">
+          <button className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-[#1D4ED8] font-medium hover:bg-teal-50 transition-colors">
             3
           </button>
           <button className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors">
@@ -277,21 +278,21 @@ const Customers = () => {
               <div className="flex justify-between items-center mb-6">
                 <div className="flex items-center gap-5">
                   {customerToView.avatar ? (
-                    <img src={customerToView.avatar} alt={customerToView.name} className="w-20 h-20 rounded-full border-[3px] border-[#1cabb1] object-cover shadow-sm" />
+                    <img src={customerToView.avatar} alt={customerToView.name} className="w-20 h-20 rounded-full border-[3px] border-[#1D4ED8] object-cover shadow-sm" />
                   ) : (
-                    <div className="w-20 h-20 rounded-full border-[3px] border-[#1cabb1] bg-white text-[#5a5ce5] flex items-center justify-center text-2xl font-bold shadow-sm">
+                    <div className="w-20 h-20 rounded-full border-[3px] border-[#1D4ED8] bg-white text-[#1B58A6] flex items-center justify-center text-2xl font-bold shadow-sm">
                       {customerToView.initials}
                     </div>
                   )}
                   <div>
                     <h3 className="text-[22px] font-bold text-gray-800 mb-2">{customerToView.name}</h3>
-                    <div className="inline-block px-4 py-1.5 bg-[#5a5ce5] text-white text-xs font-semibold rounded-full shadow-sm">
+                    <div className="inline-block px-4 py-1.5 bg-[#1B58A6] text-white text-xs font-semibold rounded-full shadow-sm">
                       Customer
                     </div>
                   </div>
                 </div>
                 
-                <Link to={`/customers/${customerToView.id}/loans`} className="py-2.5 px-6 rounded-full border-2 border-[#1cabb1] text-[#1cabb1] font-semibold bg-white hover:bg-teal-50 transition-colors focus:outline-none text-[15px] shadow-sm block text-center">
+                <Link to={`/customers/${customerToView.id}/loans`} className="py-2.5 px-6 rounded-full border-2 border-[#1D4ED8] text-[#1D4ED8] font-semibold bg-white hover:bg-teal-50 transition-colors focus:outline-none text-[15px] shadow-sm block text-center">
                   See Loans
                 </Link>
               </div>
@@ -303,7 +304,7 @@ const Customers = () => {
                 {/* Gender */}
                 <div className="bg-white p-5 rounded-xl flex items-start gap-4 shadow-sm border border-gray-50">
                   <div className="mt-0.5">
-                    <User size={22} className="text-[#1cabb1]" />
+                    <User size={22} className="text-[#1D4ED8]" />
                   </div>
                   <div>
                     <div className="text-[13px] text-gray-500 font-medium mb-1">Gender</div>
@@ -314,7 +315,7 @@ const Customers = () => {
                 {/* Date of Birth */}
                 <div className="bg-white p-5 rounded-xl flex items-start gap-4 shadow-sm border border-gray-50">
                   <div className="mt-0.5">
-                    <Calendar size={22} className="text-[#1cabb1]" />
+                    <Calendar size={22} className="text-[#1D4ED8]" />
                   </div>
                   <div>
                     <div className="text-[13px] text-gray-500 font-medium mb-1">Date Of Birth</div>
@@ -325,7 +326,7 @@ const Customers = () => {
                 {/* Phone */}
                 <div className="bg-white p-5 rounded-xl flex items-start gap-4 shadow-sm border border-gray-50">
                   <div className="mt-0.5">
-                    <Phone size={22} className="text-[#1cabb1]" />
+                    <Phone size={22} className="text-[#1D4ED8]" />
                   </div>
                   <div>
                     <div className="text-[13px] text-gray-500 font-medium mb-1">Phone</div>
@@ -336,7 +337,7 @@ const Customers = () => {
                 {/* Email */}
                 <div className="bg-white p-5 rounded-xl flex items-start gap-4 shadow-sm border border-gray-50">
                   <div className="mt-0.5">
-                    <Mail size={22} className="text-[#1cabb1]" />
+                    <Mail size={22} className="text-[#1D4ED8]" />
                   </div>
                   <div>
                     <div className="text-[13px] text-gray-500 font-medium mb-1">Email</div>
@@ -348,7 +349,7 @@ const Customers = () => {
               {/* Address */}
               <div className="bg-white p-5 rounded-xl flex items-start gap-4 shadow-sm border border-gray-50 mb-6">
                 <div className="mt-0.5">
-                  <MapPin size={22} className="text-[#1cabb1]" />
+                  <MapPin size={22} className="text-[#1D4ED8]" />
                 </div>
                 <div>
                   <div className="text-[13px] text-gray-500 font-medium mb-1">Address</div>
@@ -361,7 +362,7 @@ const Customers = () => {
               {/* Registered On */}
               <div className="bg-white p-5 rounded-xl flex items-start gap-4 shadow-sm border border-gray-50 w-full md:w-[calc(50%-8px)]">
                 <div className="mt-0.5">
-                  <Calendar size={22} className="text-[#1cabb1]" />
+                  <Calendar size={22} className="text-[#1D4ED8]" />
                 </div>
                 <div>
                   <div className="text-[13px] text-gray-500 font-medium mb-1">Registered On</div>
@@ -392,10 +393,10 @@ const Customers = () => {
                 {/* Avatar Upload */}
               <div className="flex justify-center mb-4 mt-2">
                 <div className="relative">
-                  <div className="w-24 h-24 rounded-full border-[3px] border-[#1cabb1] overflow-hidden bg-gray-100 flex items-center justify-center shadow-sm">
+                  <div className="w-24 h-24 rounded-full border-[3px] border-[#1D4ED8] overflow-hidden bg-gray-100 flex items-center justify-center shadow-sm">
                     <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80" alt="Avatar Preview" className="w-full h-full object-cover" />
                   </div>
-                  <button className="absolute bottom-0 right-1/2 translate-x-1/2 translate-y-1/3 bg-[#1cabb1] text-white p-1.5 rounded-full border-2 border-white hover:bg-[#159a9f] transition-colors shadow-sm">
+                  <button className="absolute bottom-0 right-1/2 translate-x-1/2 translate-y-1/3 bg-[#1D4ED8] text-white p-1.5 rounded-full border-2 border-white hover:bg-[#159a9f] transition-colors shadow-sm">
                     <Camera size={14} />
                   </button>
                 </div>
@@ -404,13 +405,13 @@ const Customers = () => {
               {/* Form Fields */}
               <div>
                 <label className="block text-[15px] font-semibold text-gray-800 mb-1.5">Full Name</label>
-                <input type="text" placeholder="Enter full name" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1cabb1] focus:border-[#1cabb1] bg-white text-[15px] text-gray-700 shadow-sm" />
+                <input type="text" placeholder="Enter full name" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1D4ED8] focus:border-[#1D4ED8] bg-white text-[15px] text-gray-700 shadow-sm" />
               </div>
 
               <div>
                 <label className="block text-[15px] font-semibold text-gray-800 mb-1.5">Gender</label>
                 <div className="relative">
-                  <select className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1cabb1] focus:border-[#1cabb1] bg-white text-[15px] appearance-none text-gray-500 shadow-sm">
+                  <select className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1D4ED8] focus:border-[#1D4ED8] bg-white text-[15px] appearance-none text-gray-500 shadow-sm">
                     <option value="" disabled selected>Select</option>
                     <option value="male">Male</option>
                     <option value="female">Female</option>
@@ -423,7 +424,7 @@ const Customers = () => {
               <div>
                 <label className="block text-[15px] font-semibold text-gray-800 mb-1.5">Date Of Birth</label>
                 <div className="relative">
-                  <input type="text" placeholder="DD/MM/YYYY" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1cabb1] focus:border-[#1cabb1] bg-white text-[15px] text-gray-700 shadow-sm" />
+                  <input type="text" placeholder="DD/MM/YYYY" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1D4ED8] focus:border-[#1D4ED8] bg-white text-[15px] text-gray-700 shadow-sm" />
                   <Calendar size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
                 </div>
               </div>
@@ -436,7 +437,7 @@ const Customers = () => {
                   pattern="\d{10}"
                   onInput={(e) => { e.target.value = e.target.value.replace(/\D/g, '').slice(0, 10) }}
                   placeholder="Enter 10-digit phone Number" 
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1cabb1] focus:border-[#1cabb1] bg-white text-[15px] text-gray-700 shadow-sm" 
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1D4ED8] focus:border-[#1D4ED8] bg-white text-[15px] text-gray-700 shadow-sm" 
                   required
                   title="Please enter a valid 10-digit phone number"
                 />
@@ -448,7 +449,7 @@ const Customers = () => {
                   type="email" 
                   pattern="[^@\s]+@[^@\s]+\.[^@\s]+"
                   placeholder="Enter email address" 
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1cabb1] focus:border-[#1cabb1] bg-white text-[15px] text-gray-700 shadow-sm" 
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1D4ED8] focus:border-[#1D4ED8] bg-white text-[15px] text-gray-700 shadow-sm" 
                   required
                   title="Please enter a valid email address"
                 />
@@ -456,7 +457,7 @@ const Customers = () => {
 
               <div>
                 <label className="block text-[15px] font-semibold text-gray-800 mb-1.5">Address</label>
-                <input type="text" placeholder="Enter address" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1cabb1] focus:border-[#1cabb1] bg-white text-[15px] text-gray-700 shadow-sm" />
+                <input type="text" placeholder="Enter address" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1D4ED8] focus:border-[#1D4ED8] bg-white text-[15px] text-gray-700 shadow-sm" />
               </div>
             </div>
             
@@ -465,13 +466,13 @@ const Customers = () => {
               <button 
                 type="button"
                 onClick={() => setIsAddModalOpen(false)}
-                className="py-2.5 px-8 rounded-full border-2 border-[#1cabb1] text-[#1cabb1] font-semibold hover:bg-teal-50 transition-colors focus:outline-none text-[15px]"
+                className="py-2.5 px-8 rounded-full border-2 border-[#1D4ED8] text-[#1D4ED8] font-semibold hover:bg-teal-50 transition-colors focus:outline-none text-[15px]"
               >
                 Cancel
               </button>
               <button 
                 type="submit"
-                className="py-2.5 px-8 rounded-full bg-[#1cabb1] text-white font-semibold hover:bg-[#159a9f] transition-colors focus:outline-none text-[15px] shadow-sm"
+                className="py-2.5 px-8 rounded-full bg-[#1D4ED8] text-white font-semibold hover:bg-[#159a9f] transition-colors focus:outline-none text-[15px] shadow-sm"
               >
                 Create
               </button>
@@ -498,14 +499,14 @@ const Customers = () => {
               {/* Avatar Upload */}
               <div className="flex justify-center mb-4 mt-2">
                 <div className="relative">
-                  <div className="w-24 h-24 rounded-full border-[3px] border-[#1cabb1] overflow-hidden bg-gray-100 flex items-center justify-center shadow-sm text-[#5a5ce5] text-2xl font-bold">
+                  <div className="w-24 h-24 rounded-full border-[3px] border-[#1D4ED8] overflow-hidden bg-gray-100 flex items-center justify-center shadow-sm text-[#1B58A6] text-2xl font-bold">
                     {customerToEdit.avatar ? (
                       <img src={customerToEdit.avatar} alt="Avatar Preview" className="w-full h-full object-cover" />
                     ) : (
                       customerToEdit.initials
                     )}
                   </div>
-                  <button className="absolute bottom-0 right-1/2 translate-x-1/2 translate-y-1/3 bg-[#1cabb1] text-white p-1.5 rounded-full border-2 border-white hover:bg-[#159a9f] transition-colors shadow-sm">
+                  <button className="absolute bottom-0 right-1/2 translate-x-1/2 translate-y-1/3 bg-[#1D4ED8] text-white p-1.5 rounded-full border-2 border-white hover:bg-[#159a9f] transition-colors shadow-sm">
                     <Camera size={14} />
                   </button>
                 </div>
@@ -514,13 +515,13 @@ const Customers = () => {
               {/* Form Fields */}
               <div>
                 <label className="block text-[15px] font-semibold text-gray-800 mb-1.5">Full Name</label>
-                <input type="text" defaultValue={customerToEdit.name} placeholder="Enter full name" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1cabb1] focus:border-[#1cabb1] bg-white text-[15px] text-gray-700 shadow-sm" />
+                <input type="text" defaultValue={customerToEdit.name} placeholder="Enter full name" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1D4ED8] focus:border-[#1D4ED8] bg-white text-[15px] text-gray-700 shadow-sm" />
               </div>
 
               <div>
                 <label className="block text-[15px] font-semibold text-gray-800 mb-1.5">Gender</label>
                 <div className="relative">
-                  <select defaultValue={customerToEdit.gender.toLowerCase()} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1cabb1] focus:border-[#1cabb1] bg-white text-[15px] appearance-none text-gray-700 shadow-sm">
+                  <select defaultValue={customerToEdit.gender.toLowerCase()} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1D4ED8] focus:border-[#1D4ED8] bg-white text-[15px] appearance-none text-gray-700 shadow-sm">
                     <option value="" disabled>Select</option>
                     <option value="male">Male</option>
                     <option value="female">Female</option>
@@ -533,24 +534,24 @@ const Customers = () => {
               <div>
                 <label className="block text-[15px] font-semibold text-gray-800 mb-1.5">Date Of Birth</label>
                 <div className="relative">
-                  <input type="text" defaultValue={customerToEdit.dob} placeholder="DD/MM/YYYY" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1cabb1] focus:border-[#1cabb1] bg-white text-[15px] text-gray-700 shadow-sm" />
+                  <input type="text" defaultValue={customerToEdit.dob} placeholder="DD/MM/YYYY" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1D4ED8] focus:border-[#1D4ED8] bg-white text-[15px] text-gray-700 shadow-sm" />
                   <Calendar size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
                 </div>
               </div>
 
               <div>
                 <label className="block text-[15px] font-semibold text-gray-800 mb-1.5">Phone</label>
-                <input type="tel" defaultValue={customerToEdit.phone} placeholder="Enter phone Number" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1cabb1] focus:border-[#1cabb1] bg-white text-[15px] text-gray-700 shadow-sm" />
+                <input type="tel" defaultValue={customerToEdit.phone} placeholder="Enter phone Number" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1D4ED8] focus:border-[#1D4ED8] bg-white text-[15px] text-gray-700 shadow-sm" />
               </div>
 
               <div>
                 <label className="block text-[15px] font-semibold text-gray-800 mb-1.5">Email</label>
-                <input type="email" defaultValue={customerToEdit.email !== '-' ? customerToEdit.email : ''} placeholder="Enter email" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1cabb1] focus:border-[#1cabb1] bg-white text-[15px] text-gray-700 shadow-sm" />
+                <input type="email" defaultValue={customerToEdit.email !== '-' ? customerToEdit.email : ''} placeholder="Enter email" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1D4ED8] focus:border-[#1D4ED8] bg-white text-[15px] text-gray-700 shadow-sm" />
               </div>
 
               <div>
                 <label className="block text-[15px] font-semibold text-gray-800 mb-1.5">Address</label>
-                <input type="text" defaultValue="2464 Royal Ln. Mesa, New Jersey 45463" placeholder="Enter address" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1cabb1] focus:border-[#1cabb1] bg-white text-[15px] text-gray-700 shadow-sm" />
+                <input type="text" defaultValue="2464 Royal Ln. Mesa, New Jersey 45463" placeholder="Enter address" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#1D4ED8] focus:border-[#1D4ED8] bg-white text-[15px] text-gray-700 shadow-sm" />
               </div>
             </div>
             
@@ -558,13 +559,13 @@ const Customers = () => {
             <div className="p-6 pt-4 bg-[#f4f3fb] flex justify-end gap-4 rounded-b-2xl">
               <button 
                 onClick={() => setIsEditModalOpen(false)}
-                className="py-2.5 px-8 rounded-full border-2 border-[#1cabb1] text-[#1cabb1] font-semibold hover:bg-teal-50 transition-colors focus:outline-none text-[15px]"
+                className="py-2.5 px-8 rounded-full border-2 border-[#1D4ED8] text-[#1D4ED8] font-semibold hover:bg-teal-50 transition-colors focus:outline-none text-[15px]"
               >
                 Cancel
               </button>
               <button 
                 onClick={() => setIsEditModalOpen(false)}
-                className="py-2.5 px-8 rounded-full bg-[#1cabb1] text-white font-semibold hover:bg-[#159a9f] transition-colors focus:outline-none text-[15px] shadow-sm"
+                className="py-2.5 px-8 rounded-full bg-[#1D4ED8] text-white font-semibold hover:bg-[#159a9f] transition-colors focus:outline-none text-[15px] shadow-sm"
               >
                 Update
               </button>

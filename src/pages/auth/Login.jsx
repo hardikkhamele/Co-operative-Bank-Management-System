@@ -89,7 +89,7 @@ const Login = () => {
             required
             value={formData.email}
             onChange={handleChange}
-            className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#5a5ce5] focus:border-transparent transition-all bg-white text-sm placeholder-gray-500"
+            className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1B58A6] focus:border-transparent transition-all bg-white text-sm placeholder-gray-500"
             placeholder="Enter email"
           />
         </div>
@@ -103,7 +103,7 @@ const Login = () => {
               required
               value={formData.password}
               onChange={handleChange}
-              className="w-full pl-4 pr-12 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#5a5ce5] focus:border-transparent transition-all bg-white text-sm placeholder-gray-500"
+              className="w-full pl-4 pr-12 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1B58A6] focus:border-transparent transition-all bg-white text-sm placeholder-gray-500"
               placeholder="Enter Password"
             />
             <button

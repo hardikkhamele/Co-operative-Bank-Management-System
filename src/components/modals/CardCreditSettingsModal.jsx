@@ -45,8 +45,8 @@ const CardCreditSettingsModal = ({ isOpen, onClose }) => {
           {/* Radio Buttons */}
           <div className="flex items-center gap-6">
             <label className="flex items-center gap-2 cursor-pointer">
-              <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${selectedType === 'add' ? 'border-[#1cabb1]' : 'border-gray-500'}`}>
-                {selectedType === 'add' && <div className="w-3 h-3 rounded-full bg-[#1cabb1]" />}
+              <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${selectedType === 'add' ? 'border-[#1D4ED8]' : 'border-gray-500'}`}>
+                {selectedType === 'add' && <div className="w-3 h-3 rounded-full bg-[#1D4ED8]" />}
               </div>
               <span className="text-[15px] text-gray-700">Add Card & Credit</span>
               <input 
@@ -59,8 +59,8 @@ const CardCreditSettingsModal = ({ isOpen, onClose }) => {
               />
             </label>
             <label className="flex items-center gap-2 cursor-pointer">
-              <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${selectedType === 'transfer' ? 'border-[#1cabb1]' : 'border-gray-500'}`}>
-                {selectedType === 'transfer' && <div className="w-3 h-3 rounded-full bg-[#1cabb1]" />}
+              <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${selectedType === 'transfer' ? 'border-[#1D4ED8]' : 'border-gray-500'}`}>
+                {selectedType === 'transfer' && <div className="w-3 h-3 rounded-full bg-[#1D4ED8]" />}
               </div>
               <span className="text-[15px] text-gray-700">Transfer Card & Credit</span>
               <input 
@@ -80,7 +80,7 @@ const CardCreditSettingsModal = ({ isOpen, onClose }) => {
               <div>
                 <label className="block text-[15px] font-semibold text-gray-800 mb-2">State/UT</label>
                 <div className="relative">
-                  <select className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1] focus:border-transparent bg-white text-[15px] text-gray-600 shadow-sm appearance-none cursor-pointer">
+                  <select className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8] focus:border-transparent bg-white text-[15px] text-gray-600 shadow-sm appearance-none cursor-pointer">
                     <option>Maharashtra</option>
                     <option>Gujarat</option>
                     <option>Karnataka</option>
@@ -94,7 +94,7 @@ const CardCreditSettingsModal = ({ isOpen, onClose }) => {
             <div className={selectedType === 'transfer' ? 'col-span-2' : ''}>
               <label className="block text-[15px] font-semibold text-gray-800 mb-2">Branch</label>
               <div className="relative">
-                <select className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1] focus:border-transparent bg-white text-[15px] text-gray-600 shadow-sm appearance-none cursor-pointer">
+                <select className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8] focus:border-transparent bg-white text-[15px] text-gray-600 shadow-sm appearance-none cursor-pointer">
                   <option>Mumbai</option>
                   <option>Pune</option>
                   <option>Nagpur</option>
@@ -118,8 +118,8 @@ const CardCreditSettingsModal = ({ isOpen, onClose }) => {
               <h4 className="text-[14px] font-semibold text-gray-800 mb-3">Transfer Type</h4>
               <div className="flex items-center gap-6">
                 <label className="flex items-center gap-2 cursor-pointer">
-                  <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-colors ${transferSelection === 'emi' ? 'border-[#1cabb1]' : 'border-gray-400'}`}>
-                    {transferSelection === 'emi' && <div className="w-2 h-2 rounded-full bg-[#1cabb1]" />}
+                  <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-colors ${transferSelection === 'emi' ? 'border-[#1D4ED8]' : 'border-gray-400'}`}>
+                    {transferSelection === 'emi' && <div className="w-2 h-2 rounded-full bg-[#1D4ED8]" />}
                   </div>
                   <span className="text-[14px] font-medium text-gray-700">EMI Card</span>
                   <input 
@@ -131,8 +131,8 @@ const CardCreditSettingsModal = ({ isOpen, onClose }) => {
                   />
                 </label>
                 <label className="flex items-center gap-2 cursor-pointer">
-                  <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-colors ${transferSelection === 'verification' ? 'border-[#1cabb1]' : 'border-gray-400'}`}>
-                    {transferSelection === 'verification' && <div className="w-2 h-2 rounded-full bg-[#1cabb1]" />}
+                  <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-colors ${transferSelection === 'verification' ? 'border-[#1D4ED8]' : 'border-gray-400'}`}>
+                    {transferSelection === 'verification' && <div className="w-2 h-2 rounded-full bg-[#1D4ED8]" />}
                   </div>
                   <span className="text-[14px] font-medium text-gray-700">Verification Credit</span>
                   <input 
@@ -144,8 +144,8 @@ const CardCreditSettingsModal = ({ isOpen, onClose }) => {
                   />
                 </label>
                 <label className="flex items-center gap-2 cursor-pointer">
-                  <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-colors ${transferSelection === 'both' ? 'border-[#1cabb1]' : 'border-gray-400'}`}>
-                    {transferSelection === 'both' && <div className="w-2 h-2 rounded-full bg-[#1cabb1]" />}
+                  <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-colors ${transferSelection === 'both' ? 'border-[#1D4ED8]' : 'border-gray-400'}`}>
+                    {transferSelection === 'both' && <div className="w-2 h-2 rounded-full bg-[#1D4ED8]" />}
                   </div>
                   <span className="text-[14px] font-medium text-gray-700">Both</span>
                   <input 
@@ -173,7 +173,7 @@ const CardCreditSettingsModal = ({ isOpen, onClose }) => {
                     onChange={(e) => setEmiQuantity(e.target.value)}
                     onKeyDown={preventInvalidNumberKeys}
                     placeholder="Enter quantity" 
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1] focus:border-transparent bg-white text-[15px] shadow-sm appearance-none" 
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8] focus:border-transparent bg-white text-[15px] shadow-sm appearance-none" 
                     style={{ MozAppearance: 'textfield' }} // hides standard arrows in firefox
                   />
                 </div>
@@ -190,7 +190,7 @@ const CardCreditSettingsModal = ({ isOpen, onClose }) => {
                     onChange={(e) => setCreditQuantity(e.target.value)}
                     onKeyDown={preventInvalidNumberKeys}
                     placeholder="Enter quantity" 
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1] focus:border-transparent bg-white text-[15px] shadow-sm appearance-none" 
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8] focus:border-transparent bg-white text-[15px] shadow-sm appearance-none" 
                     style={{ MozAppearance: 'textfield' }}
                   />
                 </div>
@@ -204,13 +204,13 @@ const CardCreditSettingsModal = ({ isOpen, onClose }) => {
         <div className="p-6 pt-2 pb-6 flex justify-end gap-4 rounded-b-2xl">
           <button 
             onClick={onClose}
-            className="py-2.5 px-8 rounded-full border-2 border-[#1cabb1] text-[#1cabb1] font-semibold hover:bg-teal-50 transition-colors focus:outline-none text-[15px]"
+            className="py-2.5 px-8 rounded-full border-2 border-[#1D4ED8] text-[#1D4ED8] font-semibold hover:bg-teal-50 transition-colors focus:outline-none text-[15px]"
           >
             Cancel
           </button>
           <button 
             onClick={handleSave}
-            className="py-2.5 px-8 rounded-full bg-[#1cabb1] text-white font-semibold hover:bg-[#159a9f] transition-colors focus:outline-none text-[15px] shadow-sm"
+            className="py-2.5 px-8 rounded-full bg-[#1D4ED8] text-white font-semibold hover:bg-[#159a9f] transition-colors focus:outline-none text-[15px] shadow-sm"
           >
             {selectedType === 'add' ? 'Add' : 'Transfer'}
           </button>

@@ -78,10 +78,10 @@ const HistoryIcon = ({ type, action }) => {
   }
 
   return (
-    <div className="w-10 h-10 shrink-0 rounded-xl bg-blue-50 text-[#1cabb1] flex items-center justify-center relative shadow-sm border border-blue-100/60">
+    <div className="w-10 h-10 shrink-0 rounded-xl bg-blue-50 text-[#1D4ED8] flex items-center justify-center relative shadow-sm border border-blue-100/60">
       <CreditCard size={20} strokeWidth={1.7} />
       <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 shadow">
-        <RefreshCcw size={11} className="text-[#1cabb1]" strokeWidth={2.5} />
+        <RefreshCcw size={11} className="text-[#1D4ED8]" strokeWidth={2.5} />
       </div>
     </div>
   );
@@ -491,7 +491,7 @@ const CardsAndCredit = () => {
             confirm_close: true,
           },
           theme: {
-            color: "#1cabb1",
+            color: "#1D4ED8",
           },
         };
 
@@ -634,11 +634,11 @@ const CardsAndCredit = () => {
             EMI Cards & Verification Credits
           </h1>
           <div className="flex items-center text-sm font-medium text-gray-500">
-            <Link to="/dashboard" className="hover:text-[#1cabb1] transition-colors">Dashboard</Link>
+            <Link to="/dashboard" className="hover:text-[#1D4ED8] transition-colors">Dashboard</Link>
             <ChevronRight size={15} className="mx-1 text-gray-400" />
             <span>EMI Cards & Verification Credits</span>
             <ChevronRight size={15} className="mx-1 text-gray-400" />
-            <span className="text-[#1cabb1] font-semibold">Cards & Credit</span>
+            <span className="text-[#1D4ED8] font-semibold">Cards & Credit</span>
           </div>
         </div>
 
@@ -647,20 +647,20 @@ const CardsAndCredit = () => {
           <button
             onClick={fetchDashboardData}
             title="Refresh Metrics"
-            className="p-2.5 rounded-xl border border-gray-200 text-gray-600 hover:text-[#1cabb1] hover:bg-teal-50/50 transition-colors shadow-sm"
+            className="p-2.5 rounded-xl border border-gray-200 text-gray-600 hover:text-[#1D4ED8] hover:bg-teal-50/50 transition-colors shadow-sm"
           >
-            <RefreshCcw size={18} className={dashboardLoading ? 'animate-spin text-[#1cabb1]' : ''} />
+            <RefreshCcw size={18} className={dashboardLoading ? 'animate-spin text-[#1D4ED8]' : ''} />
           </button>
           <button 
             onClick={() => setIsDistributeModalOpen(true)}
-            className="px-5 py-2.5 rounded-xl border-[1.5px] border-[#1cabb1] text-[#1cabb1] font-semibold hover:bg-[#1cabb1]/10 transition-all text-sm bg-white shadow-sm flex items-center gap-2 active:scale-98 cursor-pointer"
+            className="px-5 py-2.5 rounded-xl border-[1.5px] border-[#1D4ED8] text-[#1D4ED8] font-semibold hover:bg-[#1D4ED8]/10 transition-all text-sm bg-white shadow-sm flex items-center gap-2 active:scale-98 cursor-pointer"
           >
             <Send size={16} />
             <span>Distribute / Transfer Stock</span>
           </button>
           <button 
             onClick={() => setIsPurchaseModalOpen(true)}
-            className="px-5 py-2.5 rounded-xl bg-[#1cabb1] hover:bg-[#159a9f] text-white font-semibold transition-all text-sm shadow-sm flex items-center gap-2 active:scale-98 cursor-pointer"
+            className="px-5 py-2.5 rounded-xl bg-[#1D4ED8] hover:bg-[#159a9f] text-white font-semibold transition-all text-sm shadow-sm flex items-center gap-2 active:scale-98 cursor-pointer"
           >
             <ShoppingCart size={16} />
             <span>Purchase Card & Credit</span>
@@ -725,7 +725,7 @@ const CardsAndCredit = () => {
                 </span>
                 <h3 className="text-lg font-bold text-gray-800 mt-2">Verification Credits</h3>
               </div>
-              <div className="w-12 h-12 rounded-2xl bg-[#1cabb1] text-white flex items-center justify-center shadow-lg shadow-teal-500/20">
+              <div className="w-12 h-12 rounded-2xl bg-[#1D4ED8] text-white flex items-center justify-center shadow-lg shadow-teal-500/20">
                 <ShieldCheck size={24} />
               </div>
             </div>
@@ -763,7 +763,7 @@ const CardsAndCredit = () => {
           onClick={() => setActiveTab('overview')}
           className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all cursor-pointer ${
             activeTab === 'overview'
-              ? 'bg-[#1cabb1] text-white shadow-sm'
+              ? 'bg-[#1D4ED8] text-white shadow-sm'
               : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
           }`}
         >
@@ -773,7 +773,7 @@ const CardsAndCredit = () => {
           onClick={() => setActiveTab('purchases')}
           className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all cursor-pointer ${
             activeTab === 'purchases'
-              ? 'bg-[#1cabb1] text-white shadow-sm'
+              ? 'bg-[#1D4ED8] text-white shadow-sm'
               : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
           }`}
         >
@@ -783,7 +783,7 @@ const CardsAndCredit = () => {
           onClick={() => setActiveTab('transfers')}
           className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all cursor-pointer ${
             activeTab === 'transfers'
-              ? 'bg-[#1cabb1] text-white shadow-sm'
+              ? 'bg-[#1D4ED8] text-white shadow-sm'
               : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
           }`}
         >
@@ -793,7 +793,7 @@ const CardsAndCredit = () => {
           onClick={() => setActiveTab('branchWallet')}
           className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all cursor-pointer ${
             activeTab === 'branchWallet'
-              ? 'bg-[#1cabb1] text-white shadow-sm'
+              ? 'bg-[#1D4ED8] text-white shadow-sm'
               : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
           }`}
         >
@@ -838,7 +838,7 @@ const CardsAndCredit = () => {
                           <Clock size={12} />
                           <span>{item.createdAt ? new Date(item.createdAt).toLocaleDateString('en-GB') : 'Recent'}</span>
                           {item.branch && (
-                            <span className="text-[#1cabb1] font-semibold truncate">• {item.branch.name || item.branch}</span>
+                            <span className="text-[#1D4ED8] font-semibold truncate">• {item.branch.name || item.branch}</span>
                           )}
                         </div>
                       </div>
@@ -861,11 +861,11 @@ const CardsAndCredit = () => {
                     setEmiPage(newP);
                     fetchEmiHistory(newP);
                   }}
-                  className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:border-[#1cabb1] hover:text-[#1cabb1] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:border-[#1D4ED8] hover:text-[#1D4ED8] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                 >
                   <ChevronLeft size={16} />
                 </button>
-                <span className="text-xs font-bold text-[#1cabb1] px-2">{emiPage}</span>
+                <span className="text-xs font-bold text-[#1D4ED8] px-2">{emiPage}</span>
                 <button
                   disabled={emiPage >= emiTotalPages}
                   onClick={() => {
@@ -873,7 +873,7 @@ const CardsAndCredit = () => {
                     setEmiPage(newP);
                     fetchEmiHistory(newP);
                   }}
-                  className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:border-[#1cabb1] hover:text-[#1cabb1] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:border-[#1D4ED8] hover:text-[#1D4ED8] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                 >
                   <ChevronRight size={16} />
                 </button>
@@ -915,7 +915,7 @@ const CardsAndCredit = () => {
                           <Clock size={12} />
                           <span>{item.createdAt ? new Date(item.createdAt).toLocaleDateString('en-GB') : 'Recent'}</span>
                           {item.branch && (
-                            <span className="text-[#1cabb1] font-semibold truncate">• {item.branch.name || item.branch}</span>
+                            <span className="text-[#1D4ED8] font-semibold truncate">• {item.branch.name || item.branch}</span>
                           )}
                         </div>
                       </div>
@@ -938,11 +938,11 @@ const CardsAndCredit = () => {
                     setVerificationPage(newP);
                     fetchVerificationHistory(newP);
                   }}
-                  className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:border-[#1cabb1] hover:text-[#1cabb1] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:border-[#1D4ED8] hover:text-[#1D4ED8] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                 >
                   <ChevronLeft size={16} />
                 </button>
-                <span className="text-xs font-bold text-[#1cabb1] px-2">{verificationPage}</span>
+                <span className="text-xs font-bold text-[#1D4ED8] px-2">{verificationPage}</span>
                 <button
                   disabled={verificationPage >= verificationTotalPages}
                   onClick={() => {
@@ -950,7 +950,7 @@ const CardsAndCredit = () => {
                     setVerificationPage(newP);
                     fetchVerificationHistory(newP);
                   }}
-                  className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:border-[#1cabb1] hover:text-[#1cabb1] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:border-[#1D4ED8] hover:text-[#1D4ED8] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                 >
                   <ChevronRight size={16} />
                 </button>
@@ -978,7 +978,7 @@ const CardsAndCredit = () => {
                   value={purchaseSearch}
                   onChange={(e) => setPurchaseSearch(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && fetchPurchaseHistory(1)}
-                  className="w-full pl-9 pr-4 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1]"
+                  className="w-full pl-9 pr-4 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8]"
                 />
               </div>
 
@@ -988,7 +988,7 @@ const CardsAndCredit = () => {
                   setPurchaseStatusFilter(e.target.value);
                   setPurchaseHistoryPage(1);
                 }}
-                className="px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#1cabb1] bg-white text-gray-700 font-medium"
+                className="px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#1D4ED8] bg-white text-gray-700 font-medium"
               >
                 <option value="ALL">All Statuses</option>
                 <option value="SUCCESS">Success</option>
@@ -1017,7 +1017,7 @@ const CardsAndCredit = () => {
                 {historyLoading ? (
                   <tr>
                     <td colSpan={8} className="py-8 text-center text-gray-400">
-                      <RefreshCcw size={20} className="animate-spin mx-auto mb-2 text-[#1cabb1]" />
+                      <RefreshCcw size={20} className="animate-spin mx-auto mb-2 text-[#1D4ED8]" />
                       Loading purchase history...
                     </td>
                   </tr>
@@ -1074,7 +1074,7 @@ const CardsAndCredit = () => {
                         <td className="py-3.5 px-4 text-right">
                           <button
                             onClick={() => setSelectedOrderDetails(po)}
-                            className="px-3 py-1 rounded-lg border border-gray-200 text-xs font-semibold text-gray-600 hover:border-[#1cabb1] hover:text-[#1cabb1] transition-colors"
+                            className="px-3 py-1 rounded-lg border border-gray-200 text-xs font-semibold text-gray-600 hover:border-[#1D4ED8] hover:text-[#1D4ED8] transition-colors"
                           >
                             View Invoice
                           </button>
@@ -1100,11 +1100,11 @@ const CardsAndCredit = () => {
                   setPurchaseHistoryPage(newP);
                   fetchPurchaseHistory(newP);
                 }}
-                className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:border-[#1cabb1] hover:text-[#1cabb1] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:border-[#1D4ED8] hover:text-[#1D4ED8] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               >
                 <ChevronLeft size={16} />
               </button>
-              <span className="text-xs font-bold text-[#1cabb1] px-2">{purchaseHistoryPage}</span>
+              <span className="text-xs font-bold text-[#1D4ED8] px-2">{purchaseHistoryPage}</span>
               <button
                 disabled={purchaseHistoryPage >= purchaseHistoryTotalPages}
                 onClick={() => {
@@ -1112,7 +1112,7 @@ const CardsAndCredit = () => {
                   setPurchaseHistoryPage(newP);
                   fetchPurchaseHistory(newP);
                 }}
-                className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:border-[#1cabb1] hover:text-[#1cabb1] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:border-[#1D4ED8] hover:text-[#1D4ED8] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               >
                 <ChevronRight size={16} />
               </button>
@@ -1138,7 +1138,7 @@ const CardsAndCredit = () => {
                 value={transferSearch}
                 onChange={(e) => setTransferSearch(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && fetchTransferHistory(1)}
-                className="w-full pl-9 pr-4 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1]"
+                className="w-full pl-9 pr-4 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8]"
               />
             </div>
           </div>
@@ -1161,7 +1161,7 @@ const CardsAndCredit = () => {
                 {historyLoading ? (
                   <tr>
                     <td colSpan={7} className="py-8 text-center text-gray-400">
-                      <RefreshCcw size={20} className="animate-spin mx-auto mb-2 text-[#1cabb1]" />
+                      <RefreshCcw size={20} className="animate-spin mx-auto mb-2 text-[#1D4ED8]" />
                       Loading transfer history...
                     </td>
                   </tr>
@@ -1223,11 +1223,11 @@ const CardsAndCredit = () => {
                   setTransferHistoryPage(newP);
                   fetchTransferHistory(newP);
                 }}
-                className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:border-[#1cabb1] hover:text-[#1cabb1] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:border-[#1D4ED8] hover:text-[#1D4ED8] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               >
                 <ChevronLeft size={16} />
               </button>
-              <span className="text-xs font-bold text-[#1cabb1] px-2">{transferHistoryPage}</span>
+              <span className="text-xs font-bold text-[#1D4ED8] px-2">{transferHistoryPage}</span>
               <button
                 disabled={transferHistoryPage >= transferHistoryTotalPages}
                 onClick={() => {
@@ -1235,7 +1235,7 @@ const CardsAndCredit = () => {
                   setTransferHistoryPage(newP);
                   fetchTransferHistory(newP);
                 }}
-                className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:border-[#1cabb1] hover:text-[#1cabb1] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:border-[#1D4ED8] hover:text-[#1D4ED8] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               >
                 <ChevronRight size={16} />
               </button>
@@ -1262,7 +1262,7 @@ const CardsAndCredit = () => {
                     setSelectedBranchForInspection(e.target.value);
                     fetchBranchWalletDetails(e.target.value);
                   }}
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] appearance-none"
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] appearance-none"
                 >
                   <option value="">-- Choose a branch --</option>
                   {branches.map((b) => (
@@ -1278,7 +1278,7 @@ const CardsAndCredit = () => {
 
           {branchWalletLoading ? (
             <div className="py-12 text-center text-gray-400">
-              <RefreshCcw size={24} className="animate-spin mx-auto mb-2 text-[#1cabb1]" />
+              <RefreshCcw size={24} className="animate-spin mx-auto mb-2 text-[#1D4ED8]" />
               Loading branch wallet metrics...
             </div>
           ) : !branchWalletData ? (
@@ -1380,7 +1380,7 @@ const CardsAndCredit = () => {
                     type="checkbox" 
                     checked={purchaseEmi}
                     onChange={(e) => setPurchaseEmi(e.target.checked)}
-                    className="w-4 h-4 rounded border-gray-300 text-[#1cabb1] focus:ring-[#1cabb1]"
+                    className="w-4 h-4 rounded border-gray-300 text-[#1D4ED8] focus:ring-[#1D4ED8]"
                   />
                   <span className="text-sm font-semibold text-gray-700">EMI Cards</span>
                 </label>
@@ -1389,7 +1389,7 @@ const CardsAndCredit = () => {
                     type="checkbox" 
                     checked={purchaseVerification}
                     onChange={(e) => setPurchaseVerification(e.target.checked)}
-                    className="w-4 h-4 rounded border-gray-300 text-[#1cabb1] focus:ring-[#1cabb1]"
+                    className="w-4 h-4 rounded border-gray-300 text-[#1D4ED8] focus:ring-[#1D4ED8]"
                   />
                   <span className="text-sm font-semibold text-gray-700">Verification Credits</span>
                 </label>
@@ -1406,7 +1406,7 @@ const CardsAndCredit = () => {
                     value={emiQty}
                     onChange={(e) => setEmiQty(e.target.value)}
                     disabled={!purchaseEmi}
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white text-sm disabled:bg-gray-100 disabled:text-gray-400" 
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white text-sm disabled:bg-gray-100 disabled:text-gray-400" 
                   />
                   <span className="text-[11px] text-gray-400 block mt-1">
                     {isCalculatingPrice ? 'Calculating...' : (pricingData?.emiCard?.unitPrice ? `Estimated @ ₹${pricingData.emiCard.unitPrice}/card` : 'Enter quantity')}
@@ -1422,7 +1422,7 @@ const CardsAndCredit = () => {
                     value={verificationQty}
                     onChange={(e) => setVerificationQty(e.target.value)}
                     disabled={!purchaseVerification}
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white text-sm disabled:bg-gray-100 disabled:text-gray-400" 
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white text-sm disabled:bg-gray-100 disabled:text-gray-400" 
                   />
                   <span className="text-[11px] text-gray-400 block mt-1">
                     {isCalculatingPrice ? 'Calculating...' : (pricingData?.verificationCredit?.unitPrice ? `Estimated @ ₹${pricingData.verificationCredit.unitPrice}/credit` : 'Enter quantity')}
@@ -1434,15 +1434,15 @@ const CardsAndCredit = () => {
               <div className="bg-white rounded-xl p-5 border border-gray-200 shadow-sm space-y-2.5 relative">
                 {isCalculatingPrice && (
                   <div className="absolute inset-0 bg-white/70 backdrop-blur-[1px] flex items-center justify-center z-10 rounded-xl">
-                    <RefreshCcw size={20} className="animate-spin text-[#1cabb1]" />
+                    <RefreshCcw size={20} className="animate-spin text-[#1D4ED8]" />
                   </div>
                 )}
                 <div className="flex items-center justify-between border-b border-gray-100 pb-2 mb-1">
                   <h3 className="font-bold text-[#1b2559] text-sm flex items-center gap-1.5">
-                    <Receipt size={16} className="text-[#1cabb1]" />
+                    <Receipt size={16} className="text-[#1D4ED8]" />
                     Estimated Price Breakdown
                   </h3>
-                  <span className="text-[11px] bg-teal-50 text-[#1cabb1] font-semibold px-2 py-0.5 rounded">
+                  <span className="text-[11px] bg-teal-50 text-[#1D4ED8] font-semibold px-2 py-0.5 rounded">
                     Total Amount Includes Applicable Taxes
                   </span>
                 </div>
@@ -1497,7 +1497,7 @@ const CardsAndCredit = () => {
                   type="button"
                   disabled={submittingPurchase || (!purchaseEmi && !purchaseVerification) || isCalculatingPrice || polling}
                   onClick={handleInitiatePurchase} 
-                  className="px-6 py-2.5 rounded-xl bg-[#1cabb1] text-white font-semibold hover:bg-[#168f94] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm text-sm flex items-center gap-2"
+                  className="px-6 py-2.5 rounded-xl bg-[#1D4ED8] text-white font-semibold hover:bg-[#168f94] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm text-sm flex items-center gap-2"
                 >
                   {submittingPurchase || polling ? (
                     <>
@@ -1541,7 +1541,7 @@ const CardsAndCredit = () => {
                     <span>Credits: {walletMetrics?.verificationCredits?.available ?? 0}</span>
                   </div>
                 </div>
-                <Building2 size={24} className="text-[#1cabb1]" />
+                <Building2 size={24} className="text-[#1D4ED8]" />
               </div>
 
               {/* Target Branch Selection */}
@@ -1553,7 +1553,7 @@ const CardsAndCredit = () => {
                   <select 
                     value={targetBranchId}
                     onChange={(e) => setTargetBranchId(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white text-sm text-gray-700 appearance-none font-medium"
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white text-sm text-gray-700 appearance-none font-medium"
                   >
                     <option value="">-- Select Target Branch --</option>
                     {branches.map((b) => (
@@ -1577,7 +1577,7 @@ const CardsAndCredit = () => {
                     placeholder="Enter quantity"
                     value={distributeEmiQty}
                     onChange={(e) => setDistributeEmiQty(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white text-sm" 
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white text-sm" 
                   />
                   <span className="text-[11px] text-gray-400 block mt-1">
                     Max: {walletMetrics?.emiCards?.available || 0}
@@ -1592,7 +1592,7 @@ const CardsAndCredit = () => {
                     placeholder="Enter quantity"
                     value={distributeVerificationQty}
                     onChange={(e) => setDistributeVerificationQty(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white text-sm" 
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white text-sm" 
                   />
                   <span className="text-[11px] text-gray-400 block mt-1">
                     Max: {walletMetrics?.verificationCredits?.available || 0}
@@ -1608,7 +1608,7 @@ const CardsAndCredit = () => {
                   placeholder="e.g. Monthly branch allocation, initial batch..."
                   value={transferRemarks}
                   onChange={(e) => setTransferRemarks(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white text-sm" 
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white text-sm" 
                 />
               </div>
 
@@ -1624,7 +1624,7 @@ const CardsAndCredit = () => {
                   type="button"
                   disabled={submittingTransfer || !targetBranchId}
                   onClick={handleTransferStock} 
-                  className="px-6 py-2.5 rounded-xl bg-[#1cabb1] text-white font-semibold hover:bg-[#168f94] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm text-sm flex items-center gap-2"
+                  className="px-6 py-2.5 rounded-xl bg-[#1D4ED8] text-white font-semibold hover:bg-[#168f94] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm text-sm flex items-center gap-2"
                 >
                   {submittingTransfer ? (
                     <>
@@ -1647,7 +1647,7 @@ const CardsAndCredit = () => {
           <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden flex flex-col border border-gray-100">
             <div className="flex justify-between items-center p-6 pb-4 bg-gray-50/60 border-b border-gray-100">
               <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-teal-50 text-[#1cabb1] flex items-center justify-center">
+                <div className="w-9 h-9 rounded-xl bg-teal-50 text-[#1D4ED8] flex items-center justify-center">
                   <FileText size={18} />
                 </div>
                 <div>
@@ -1714,7 +1714,7 @@ const CardsAndCredit = () => {
                 <button
                   type="button"
                   onClick={() => setSelectedOrderDetails(null)}
-                  className="px-6 py-2.5 rounded-xl bg-[#1cabb1] text-white font-semibold hover:bg-[#168f94] transition-colors text-sm"
+                  className="px-6 py-2.5 rounded-xl bg-[#1D4ED8] text-white font-semibold hover:bg-[#168f94] transition-colors text-sm"
                 >
                   Close
                 </button>

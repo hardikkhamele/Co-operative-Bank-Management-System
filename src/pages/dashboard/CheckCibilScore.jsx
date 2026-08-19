@@ -215,12 +215,12 @@ const CheckCibilScore = () => {
             {step === 'form' ? 'Check CIBIL / Experian Credit Score' : 'Credit Bureau Report'}
           </h1>
           <div className="text-sm text-gray-500 flex items-center gap-2">
-            <Link to="/dashboard" className="hover:text-[#1cabb1] transition-colors">Dashboard</Link>
+            <Link to="/dashboard" className="hover:text-[#1D4ED8] transition-colors">Dashboard</Link>
             <span>&gt;</span>
             <span>Verification</span>
             <span>&gt;</span>
             <span 
-              className={step === 'form' ? "text-[#1cabb1] font-medium" : "text-gray-500 cursor-pointer hover:text-[#1cabb1]"} 
+              className={step === 'form' ? "text-[#1D4ED8] font-medium" : "text-gray-500 cursor-pointer hover:text-[#1D4ED8]"} 
               onClick={() => step === 'result' && handleReset()}
             >
               Check CIBIL Score
@@ -228,7 +228,7 @@ const CheckCibilScore = () => {
             {step === 'result' && (
               <>
                 <span>&gt;</span>
-                <span className="text-[#1cabb1] font-medium">Bureau Report</span>
+                <span className="text-[#1D4ED8] font-medium">Bureau Report</span>
               </>
             )}
           </div>
@@ -252,7 +252,7 @@ const CheckCibilScore = () => {
                   window.print();
                 }
               }}
-              className="flex items-center gap-2 px-5 py-2 rounded-lg bg-[#1cabb1] text-white font-semibold hover:bg-[#159a9f] transition-all text-sm shadow-md shadow-[#1cabb1]/20"
+              className="flex items-center gap-2 px-5 py-2 rounded-lg bg-[#1D4ED8] text-white font-semibold hover:bg-[#159a9f] transition-all text-sm shadow-md shadow-[#1D4ED8]/20"
             >
               <Printer size={16} />
               Print / Save Report
@@ -264,10 +264,10 @@ const CheckCibilScore = () => {
       {step === 'form' ? (
         <div className="flex flex-col gap-6 w-full max-w-5xl mx-auto">
           {/* Hero Banner */}
-          <div className="bg-gradient-to-r from-[#1b58a6] to-[#154685] rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-6 shadow-md relative overflow-hidden text-white">
+          <div className="bg-gradient-to-r from-[#1D4ED8] to-[#154685] rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-6 shadow-md relative overflow-hidden text-white">
             <div className="flex items-center gap-5 z-10">
               <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shrink-0 shadow-lg">
-                <ShieldCheck size={36} className="text-[#1cabb1]" />
+                <ShieldCheck size={36} className="text-[#1D4ED8]" />
               </div>
               <div>
                 <h2 className="text-2xl font-extrabold tracking-tight">Experian &amp; CIBIL Bureau Verification</h2>
@@ -300,7 +300,7 @@ const CheckCibilScore = () => {
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
             <div className="bg-[#e6f4f5] px-6 py-4 border-b border-gray-100 flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <FileText size={20} className="text-[#1b58a6]" />
+                <FileText size={20} className="text-[#1D4ED8]" />
                 <h3 className="text-lg font-bold text-gray-800">Applicant Information</h3>
               </div>
               <span className="text-xs font-semibold text-gray-500 bg-white px-3 py-1 rounded-full border border-gray-200">
@@ -322,7 +322,7 @@ const CheckCibilScore = () => {
                     value={formData.fullName}
                     onChange={handleInputChange}
                     placeholder="e.g. Rahul Sharma"
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-gray-50/50 text-gray-800 font-medium"
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-gray-50/50 text-gray-800 font-medium"
                     required
                     disabled={loading}
                   />
@@ -331,7 +331,7 @@ const CheckCibilScore = () => {
                 {/* 2. Mobile Number */}
                 <div className="space-y-1.5">
                   <label className="text-sm font-semibold text-gray-700 flex items-center gap-1">
-                    <Phone size={14} className="text-[#1cabb1]" />
+                    <Phone size={14} className="text-[#1D4ED8]" />
                     Mobile Number
                   </label>
                   <div className="relative flex items-center">
@@ -345,7 +345,7 @@ const CheckCibilScore = () => {
                       value={formData.mobileNumber}
                       onChange={handleInputChange}
                       placeholder="9876543210"
-                      className="w-full pl-11 pr-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-gray-50/50 text-gray-800 font-medium font-mono"
+                      className="w-full pl-11 pr-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-gray-50/50 text-gray-800 font-medium font-mono"
                       disabled={loading}
                     />
                   </div>
@@ -364,7 +364,7 @@ const CheckCibilScore = () => {
                     value={formData.panNumber}
                     onChange={handleInputChange}
                     placeholder="ABCDE1234F"
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-gray-50/50 uppercase font-mono font-bold tracking-wider text-gray-800"
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-gray-50/50 uppercase font-mono font-bold tracking-wider text-gray-800"
                     required
                     disabled={loading}
                   />
@@ -381,7 +381,7 @@ const CheckCibilScore = () => {
                     name="dob"
                     value={formData.dob}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-gray-50/50 text-gray-800 font-medium"
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-gray-50/50 text-gray-800 font-medium"
                     required
                     disabled={loading}
                   />
@@ -408,7 +408,7 @@ const CheckCibilScore = () => {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="px-8 py-2.5 rounded-xl bg-[#1cabb1] text-white font-bold hover:bg-[#159a9f] transition-all shadow-md shadow-[#1cabb1]/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transform active:scale-95"
+                  className="px-8 py-2.5 rounded-xl bg-[#1D4ED8] text-white font-bold hover:bg-[#159a9f] transition-all shadow-md shadow-[#1D4ED8]/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transform active:scale-95"
                 >
                   {loading ? (
                     <>
@@ -433,7 +433,7 @@ const CheckCibilScore = () => {
           {/* Top Status & Bureau Banner */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-2xl bg-[#1cabb1]/10 flex items-center justify-center text-[#1cabb1] shrink-0 font-bold text-xl border border-[#1cabb1]/20">
+              <div className="w-14 h-14 rounded-2xl bg-[#1D4ED8]/10 flex items-center justify-center text-[#1D4ED8] shrink-0 font-bold text-xl border border-[#1D4ED8]/20">
                 {(creditReport.name || formData.fullName)?.charAt(0) || 'C'}
               </div>
               <div>
@@ -524,7 +524,7 @@ const CheckCibilScore = () => {
               <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 flex flex-col justify-between">
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Total Outstanding</span>
-                  <div className="w-9 h-9 rounded-xl bg-blue-50 text-[#1b58a6] flex items-center justify-center">
+                  <div className="w-9 h-9 rounded-xl bg-blue-50 text-[#1D4ED8] flex items-center justify-center">
                     <DollarSign size={18} />
                   </div>
                 </div>
@@ -543,7 +543,7 @@ const CheckCibilScore = () => {
               <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 flex flex-col justify-between">
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Credit Accounts</span>
-                  <div className="w-9 h-9 rounded-xl bg-teal-50 text-[#1cabb1] flex items-center justify-center">
+                  <div className="w-9 h-9 rounded-xl bg-teal-50 text-[#1D4ED8] flex items-center justify-center">
                     <CreditCard size={18} />
                   </div>
                 </div>
@@ -606,7 +606,7 @@ const CheckCibilScore = () => {
               onClick={() => setActiveTab('overview')}
               className={`px-5 py-3 text-sm font-bold border-b-2 transition-all flex items-center gap-2 ${
                 activeTab === 'overview'
-                  ? 'border-[#1cabb1] text-[#1cabb1]'
+                  ? 'border-[#1D4ED8] text-[#1D4ED8]'
                   : 'border-transparent text-gray-500 hover:text-gray-800'
               }`}
             >
@@ -617,7 +617,7 @@ const CheckCibilScore = () => {
               onClick={() => setActiveTab('inquiries')}
               className={`px-5 py-3 text-sm font-bold border-b-2 transition-all flex items-center gap-2 ${
                 activeTab === 'inquiries'
-                  ? 'border-[#1cabb1] text-[#1cabb1]'
+                  ? 'border-[#1D4ED8] text-[#1D4ED8]'
                   : 'border-transparent text-gray-500 hover:text-gray-800'
               }`}
             >
@@ -628,7 +628,7 @@ const CheckCibilScore = () => {
               onClick={() => setActiveTab('demographics')}
               className={`px-5 py-3 text-sm font-bold border-b-2 transition-all flex items-center gap-2 ${
                 activeTab === 'demographics'
-                  ? 'border-[#1cabb1] text-[#1cabb1]'
+                  ? 'border-[#1D4ED8] text-[#1D4ED8]'
                   : 'border-transparent text-gray-500 hover:text-gray-800'
               }`}
             >
@@ -677,7 +677,7 @@ const CheckCibilScore = () => {
                           <td className="px-6 py-4 font-bold text-gray-900">
                             {formatCurrency(acc.Highest_Credit_or_Original_Loan_Amount)}
                           </td>
-                          <td className="px-6 py-4 font-bold text-[#1b58a6]">
+                          <td className="px-6 py-4 font-bold text-[#1D4ED8]">
                             {formatCurrency(acc.CurrentBalance || acc.Current_Balance)}
                           </td>
                           <td className="px-6 py-4">
@@ -762,7 +762,7 @@ const CheckCibilScore = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <div className="p-4 rounded-xl bg-gray-50 border border-gray-100 flex items-start gap-3.5">
-                  <UserCheck className="text-[#1cabb1] shrink-0 mt-0.5" size={20} />
+                  <UserCheck className="text-[#1D4ED8] shrink-0 mt-0.5" size={20} />
                   <div>
                     <span className="text-xs text-gray-400 font-semibold uppercase block">Applicant Full Name</span>
                     <span className="text-sm font-bold text-gray-800">
@@ -772,7 +772,7 @@ const CheckCibilScore = () => {
                 </div>
 
                 <div className="p-4 rounded-xl bg-gray-50 border border-gray-100 flex items-start gap-3.5">
-                  <Calendar className="text-[#1cabb1] shrink-0 mt-0.5" size={20} />
+                  <Calendar className="text-[#1D4ED8] shrink-0 mt-0.5" size={20} />
                   <div>
                     <span className="text-xs text-gray-400 font-semibold uppercase block">Date of Birth</span>
                     <span className="text-sm font-bold text-gray-800">
@@ -782,7 +782,7 @@ const CheckCibilScore = () => {
                 </div>
 
                 <div className="p-4 rounded-xl bg-gray-50 border border-gray-100 flex items-start gap-3.5">
-                  <CreditCard className="text-[#1cabb1] shrink-0 mt-0.5" size={20} />
+                  <CreditCard className="text-[#1D4ED8] shrink-0 mt-0.5" size={20} />
                   <div>
                     <span className="text-xs text-gray-400 font-semibold uppercase block">Income Tax PAN</span>
                     <span className="text-sm font-mono font-bold text-gray-800">
@@ -793,7 +793,7 @@ const CheckCibilScore = () => {
 
                 {(formData.phoneNumber || applicantDetails.MobilePhoneNumber || applicantDetails.Telephone_Number) && (
                   <div className="p-4 rounded-xl bg-gray-50 border border-gray-100 flex items-start gap-3.5">
-                    <Phone className="text-[#1cabb1] shrink-0 mt-0.5" size={20} />
+                    <Phone className="text-[#1D4ED8] shrink-0 mt-0.5" size={20} />
                     <div>
                       <span className="text-xs text-gray-400 font-semibold uppercase block">Phone Number</span>
                       <span className="text-sm font-mono font-bold text-gray-800">
@@ -805,7 +805,7 @@ const CheckCibilScore = () => {
 
                 {applicantDetails.EMailId && (
                   <div className="p-4 rounded-xl bg-gray-50 border border-gray-100 flex items-start gap-3.5">
-                    <Mail className="text-[#1cabb1] shrink-0 mt-0.5" size={20} />
+                    <Mail className="text-[#1D4ED8] shrink-0 mt-0.5" size={20} />
                     <div>
                       <span className="text-xs text-gray-400 font-semibold uppercase block">Bureau Email</span>
                       <span className="text-sm font-bold text-gray-800">
@@ -816,7 +816,7 @@ const CheckCibilScore = () => {
                 )}
 
                 <div className="p-4 rounded-xl bg-gray-50 border border-gray-100 flex items-start gap-3.5 md:col-span-2">
-                  <MapPin className="text-[#1cabb1] shrink-0 mt-0.5" size={20} />
+                  <MapPin className="text-[#1D4ED8] shrink-0 mt-0.5" size={20} />
                   <div>
                     <span className="text-xs text-gray-400 font-semibold uppercase block">Reported Address</span>
                     <span className="text-sm font-bold text-gray-800">

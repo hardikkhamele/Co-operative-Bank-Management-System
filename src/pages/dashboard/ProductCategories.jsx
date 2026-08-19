@@ -32,7 +32,7 @@ const ProductCategories = () => {
           <ChevronRight size={14} className="mx-2" />
           <span className="hover:text-gray-700">Product Management</span>
           <ChevronRight size={14} className="mx-2" />
-          <span className="text-[#5a5ce5]">Product Categories</span>
+          <span className="text-[#1B58A6]">Product Categories</span>
         </div>
       </div>
 
@@ -45,13 +45,13 @@ const ProductCategories = () => {
             placeholder="Search"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-lg w-64 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all shadow-sm"
+            className="pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-lg w-64 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all shadow-sm"
           />
         </div>
         
         <button 
           onClick={() => setIsCreateModalOpen(true)}
-          className="bg-[#1cabb1] hover:bg-[#168f94] text-white px-4 py-2 rounded-full font-medium transition-colors flex items-center text-sm shadow-sm"
+          className="bg-[#1D4ED8] hover:bg-[#168f94] text-white px-4 py-2 rounded-full font-medium transition-colors flex items-center text-sm shadow-sm"
         >
           + Create Category
         </button>
@@ -108,19 +108,19 @@ const ProductCategories = () => {
       <div className="flex items-center justify-between text-sm text-gray-500 shrink-0">
         <div>Showing {filteredData.length > 0 ? 1 : 0} to {filteredData.length} of 30 Entries</div>
         <div className="flex items-center gap-2">
-          <button className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 bg-white text-[#1cabb1] hover:bg-[#1cabb1] hover:text-white transition-colors shadow-sm">
+          <button className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 bg-white text-[#1D4ED8] hover:bg-[#1D4ED8] hover:text-white transition-colors shadow-sm">
             <ChevronLeft size={16} />
           </button>
-          <button className="w-8 h-8 flex items-center justify-center rounded-full bg-[#1cabb1] text-white border border-[#1cabb1] shadow-sm">
+          <button className="w-8 h-8 flex items-center justify-center rounded-full bg-[#1D4ED8] text-white border border-[#1D4ED8] shadow-sm">
             1
           </button>
-          <button className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 bg-white text-[#1cabb1] hover:bg-[#1cabb1] hover:text-white transition-colors shadow-sm">
+          <button className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 bg-white text-[#1D4ED8] hover:bg-[#1D4ED8] hover:text-white transition-colors shadow-sm">
             2
           </button>
-          <button className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 bg-white text-[#1cabb1] hover:bg-[#1cabb1] hover:text-white transition-colors shadow-sm">
+          <button className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 bg-white text-[#1D4ED8] hover:bg-[#1D4ED8] hover:text-white transition-colors shadow-sm">
             3
           </button>
-          <button className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 bg-white text-[#1cabb1] hover:bg-[#1cabb1] hover:text-white transition-colors shadow-sm">
+          <button className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 bg-white text-[#1D4ED8] hover:bg-[#1D4ED8] hover:text-white transition-colors shadow-sm">
             <ChevronRight size={16} />
           </button>
         </div>
@@ -165,14 +165,14 @@ const CategoryModal = ({ title, submitText, onClose, initialData = null }) => {
 
           <div className="flex justify-center mb-8">
             <div className="relative">
-              <div className="w-28 h-28 rounded-full border-2 border-[#1cabb1] p-1 bg-white overflow-hidden shadow-sm flex items-center justify-center">
+              <div className="w-28 h-28 rounded-full border-2 border-[#1D4ED8] p-1 bg-white overflow-hidden shadow-sm flex items-center justify-center">
                 <img 
                   src={initialData?.image || "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=150&h=150&fit=crop"} 
                   alt="Category preview" 
                   className="w-full h-full object-cover rounded-full"
                 />
               </div>
-              <button className="absolute bottom-0 right-0 translate-x-1 translate-y-1 bg-[#1cabb1] text-white p-2 rounded-full border-2 border-white hover:bg-[#168f94] transition-colors shadow-md">
+              <button className="absolute bottom-0 right-0 translate-x-1 translate-y-1 bg-[#1D4ED8] text-white p-2 rounded-full border-2 border-white hover:bg-[#168f94] transition-colors shadow-md">
                 <Camera size={16} />
               </button>
             </div>
@@ -185,20 +185,20 @@ const CategoryModal = ({ title, submitText, onClose, initialData = null }) => {
               placeholder="Enter category name"
               value={categoryName}
               onChange={(e) => setCategoryName(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm"
+              className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white shadow-sm"
             />
           </div>
 
           <div className="flex justify-end items-center gap-4">
             <button
               onClick={onClose}
-              className="px-6 py-2.5 rounded-full border border-[#1cabb1] text-[#1cabb1] bg-white hover:bg-teal-50 font-medium transition-colors"
+              className="px-6 py-2.5 rounded-full border border-[#1D4ED8] text-[#1D4ED8] bg-white hover:bg-teal-50 font-medium transition-colors"
             >
               Cancel
             </button>
             <button
               onClick={onClose}
-              className="px-6 py-2.5 rounded-full bg-[#1cabb1] hover:bg-[#168f94] text-white font-medium transition-colors"
+              className="px-6 py-2.5 rounded-full bg-[#1D4ED8] hover:bg-[#168f94] text-white font-medium transition-colors"
             >
               {submitText}
             </button>

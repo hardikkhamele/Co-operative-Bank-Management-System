@@ -7,13 +7,13 @@ const PriceSettings = () => {
     <div className="space-y-6 max-w-5xl mx-auto w-full pb-10">
       {/* Header Card */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <h1 className="text-xl font-bold text-[#1b58a6] mb-2">Price Settings</h1>
+        <h1 className="text-xl font-bold text-[#1D4ED8] mb-2">Price Settings</h1>
         <div className="flex items-center text-sm font-medium">
           <Link to="/dashboard" className="text-gray-600 hover:text-gray-800">Dashboard</Link>
           <ChevronRight size={16} className="mx-1 text-gray-400" />
           <span className="text-gray-600">Settings</span>
           <ChevronRight size={16} className="mx-1 text-gray-400" />
-          <span className="text-[#1b58a6]">Price Settings</span>
+          <span className="text-[#1D4ED8]">Price Settings</span>
         </div>
       </div>
 
@@ -58,7 +58,7 @@ const PriceSettings = () => {
         </div>
 
         <div className="flex justify-end pt-4 border-t border-gray-100">
-          <button className="flex items-center gap-2 bg-[#1cabb1] text-white px-6 py-2.5 rounded-full text-sm font-medium hover:bg-teal-600 transition-colors shadow-sm">
+          <button className="flex items-center gap-2 bg-[#1D4ED8] text-white px-6 py-2.5 rounded-full text-sm font-medium hover:bg-teal-600 transition-colors shadow-sm">
             <Edit size={16} />
             Edit
           </button>

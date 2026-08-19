@@ -2,11 +2,11 @@ import React from 'react';
 
 const AuthLayout = ({ children, illustration }) => {
   return (
-    <div className="min-h-screen bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-[#0f4b86] via-[#1cabb1] to-[#60c5c9] flex items-center justify-center p-4 relative overflow-hidden font-sans">
+    <div className="min-h-screen bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-[#0f4b86] via-[#1D4ED8] to-[#60c5c9] flex items-center justify-center p-4 relative overflow-hidden font-sans">
       
       {/* Premium Ambient Background Effects */}
       <div className="absolute top-[-15%] right-[-10%] w-[500px] h-[500px] bg-[#00f2fe]/20 rounded-full blur-[120px] pointer-events-none mix-blend-screen animate-pulse duration-10000"></div>
-      <div className="absolute bottom-[-15%] left-[-10%] w-[600px] h-[600px] bg-[#1cabb1]/20 rounded-full blur-[140px] pointer-events-none mix-blend-screen"></div>
+      <div className="absolute bottom-[-15%] left-[-10%] w-[600px] h-[600px] bg-[#1D4ED8]/20 rounded-full blur-[140px] pointer-events-none mix-blend-screen"></div>
       <div className="absolute top-[40%] left-[20%] w-[300px] h-[300px] bg-[#4facfe]/10 rounded-full blur-[100px] pointer-events-none mix-blend-screen"></div>
 
       <div className="w-full max-w-5xl flex flex-col md:flex-row items-center justify-between gap-12 z-10 relative">
@@ -27,7 +27,7 @@ const AuthLayout = ({ children, illustration }) => {
         <div className="w-full max-w-[440px] bg-white/95 backdrop-blur-xl border border-white/60 rounded-[2rem] shadow-[0_40px_80px_-20px_rgba(0,0,0,0.2)] p-10 relative overflow-hidden transition-all duration-500 hover:shadow-[0_40px_80px_-20px_rgba(0,0,0,0.3)]">
           {/* Subtle card inset highlight */}
           <div className="absolute inset-0 border border-white/80 rounded-[2rem] pointer-events-none"></div>
-          <div className="absolute -top-32 -right-32 w-64 h-64 bg-gradient-to-br from-[#1cabb1]/10 to-transparent rounded-full blur-2xl pointer-events-none"></div>
+          <div className="absolute -top-32 -right-32 w-64 h-64 bg-gradient-to-br from-[#1D4ED8]/10 to-transparent rounded-full blur-2xl pointer-events-none"></div>
           
           <div className="relative z-10">
             {children}

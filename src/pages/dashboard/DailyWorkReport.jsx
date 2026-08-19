@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useRef,  useState, useEffect, useMemo  } from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { 
@@ -18,7 +18,7 @@ import {
   User,
   Package,
   IndianRupee
-} from 'lucide-react';
+, Table, ChevronDown} from 'lucide-react';
 import { workReportService } from '../../api/workReportService';
 import { branchService } from '../../api/branchService';
 import { employeeService } from '../../api/employeeService';
@@ -82,6 +82,7 @@ const AVAILABLE_PRODUCTS = [
 ];
 
 const DailyWorkReport = () => {
+
   const { user } = useAuthStore();
 
   // Data States
@@ -482,7 +483,7 @@ const DailyWorkReport = () => {
           onClick={() => setPage(p)}
           className={`w-8 h-8 flex items-center justify-center rounded-full text-[13px] font-bold transition-colors ${
             p === current
-              ? 'bg-[#1cabb1] text-white shadow-sm'
+              ? 'bg-[#1D4ED8] text-white shadow-sm'
               : 'border border-gray-200 text-gray-600 hover:bg-gray-50'
           }`}
         >
@@ -491,27 +492,105 @@ const DailyWorkReport = () => {
       );
     });
   };
+  const tableRef = useRef(null);
+  const [isExportOpen, setIsExportOpen] = useState(false);
+
+  const getSelectedDataFromTable = () => {
+    if (!tableRef.current) return { headers: [], rows: [] };
+    const table = tableRef.current;
+    
+    // Headers (skip last action column)
+    const ths = Array.from(table.querySelectorAll('thead th'));
+    const headers = ths.slice(0, -1).map(th => th.innerText.trim().replace(/\n/g, ' '));
+
+    // Rows (all rows)
+    const trs = Array.from(table.querySelectorAll('tbody tr'));
+    const rows = trs.map(tr => {
+      const tds = Array.from(tr.querySelectorAll('td'));
+      return tds.slice(0, -1).map(td => td.innerText.trim().replace(/\n/g, ' '));
+    });
+
+    return { headers, rows };
+  };
+
+  const exportToCSV = () => {
+    const { headers, rows } = getSelectedDataFromTable();
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.map(v => '"' + v.replace(/"/g, '""') + '"').join(','))
+    ].join('\n');
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'Export.csv';
+    link.click();
+    setIsExportOpen(false);
+  };
+
+  const exportToExcel = () => {
+    const { headers, rows } = getSelectedDataFromTable();
+    const tableHtml = `
+      <table ref={tableRef}  border="1">
+        <thead>
+          <tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr>
+        </thead>
+        <tbody>
+          ${rows.map(row => `<tr>${row.map(c => `<td>${c}</td>`).join('')}</tr>`).join('')}
+        </tbody>
+      </table>
+    `;
+    const blob = new Blob([tableHtml], { type: 'application/vnd.ms-excel' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'Export.xls';
+    link.click();
+    setIsExportOpen(false);
+  };
+
+  const exportToWord = () => {
+    const { headers, rows } = getSelectedDataFromTable();
+    const tableHtml = `
+      <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+      <head><meta charset='utf-8'><title>Export</title></head><body>
+      <table ref={tableRef} border="1">
+        <thead>
+          <tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr>
+        </thead>
+        <tbody>
+          ${rows.map(row => `<tr>${row.map(c => `<td>${c}</td>`).join('')}</tr>`).join('')}
+        </tbody>
+      </table>
+      </body></html>
+    `;
+    const blob = new Blob([tableHtml], { type: 'application/msword' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'Export.doc';
+    link.click();
+    setIsExportOpen(false);
+  };
 
   return (
-    <div className="flex flex-col gap-6 w-full max-w-7xl mx-auto pb-10">
+<div className="flex flex-col gap-6 w-full max-w-7xl mx-auto pb-10">
       
       {/* Breadcrumb & Header Card */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 shrink-0 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-[22px] font-bold text-[#1b58a6] mb-3">Daily Work Report</h1>
+          <h1 className="text-[22px] font-bold text-[#1D4ED8] mb-3">Daily Work Report</h1>
           <div className="flex items-center text-[13px] font-medium text-gray-500 flex-wrap gap-y-2">
             <Link to="/dashboard" className="hover:text-gray-800 transition-colors">Dashboard</Link>
             <ChevronRight size={14} className="mx-1" />
             <span>HR Management</span>
             <ChevronRight size={14} className="mx-1" />
-            <span className="text-[#1b58a6]">Daily Work Report</span>
+            <span className="text-[#1D4ED8]">Daily Work Report</span>
           </div>
         </div>
 
         {/* Log Work Report Button */}
         <button 
           onClick={() => setIsLogModalOpen(true)}
-          className="flex items-center gap-2 bg-[#1cabb1] hover:bg-[#159a9f] text-white px-5 py-2.5 rounded-full text-[14px] font-semibold transition-colors shadow-sm self-start sm:self-center"
+          className="flex items-center gap-2 bg-[#1D4ED8] hover:bg-[#159a9f] text-white px-5 py-2.5 rounded-full text-[14px] font-semibold transition-colors shadow-sm self-start sm:self-center"
         >
           <Plus size={18} />
           <span>Log Work Report</span>
@@ -531,7 +610,7 @@ const DailyWorkReport = () => {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search employee, branch, product..." 
-                className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 text-[14px] focus:outline-none focus:border-[#1cabb1] bg-gray-50/50"
+                className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 text-[14px] focus:outline-none focus:border-[#1D4ED8] bg-gray-50/50"
               />
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
               {search && (
@@ -552,7 +631,7 @@ const DailyWorkReport = () => {
             >
               <SlidersHorizontal size={20} />
               {activeFilterCount > 0 && (
-                <span className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-[#1b58a6] text-white text-[11px] font-bold flex items-center justify-center shadow-sm">
+                <span className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-[#1D4ED8] text-white text-[11px] font-bold flex items-center justify-center shadow-sm">
                   {activeFilterCount}
                 </span>
               )}
@@ -565,28 +644,40 @@ const DailyWorkReport = () => {
               className="w-11 h-11 flex items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors shadow-sm shrink-0 bg-white"
               title="Refresh Data"
             >
-              <RefreshCw size={18} className={loading ? 'animate-spin text-[#1cabb1]' : ''} />
+              <RefreshCw size={18} className={loading ? 'animate-spin text-[#1D4ED8]' : ''} />
             </button>
           </div>
           
           {/* Export Report Button */}
-          <button 
-            onClick={handleExport}
-            disabled={exporting}
-            className="w-full sm:w-auto flex items-center justify-center gap-2 bg-[#1cabb1] hover:bg-[#159a9f] text-white px-6 py-2.5 rounded-full text-[14px] font-semibold transition-colors shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
-          >
-            {exporting ? (
-              <>
-                <Loader2 size={18} className="animate-spin" />
-                <span>Exporting...</span>
-              </>
-            ) : (
-              <>
-                <Download size={18} />
-                <span>Export Report</span>
-              </>
+          <div className="relative flex-shrink-0">
+            <button 
+              onClick={() => setIsExportOpen(!isExportOpen)}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-full font-semibold transition-colors text-sm shadow-sm border bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+            >
+              <Download size={18} />
+              Export
+              <ChevronDown size={16} />
+            </button>
+            
+            {isExportOpen && (
+              <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-100 rounded-xl shadow-lg z-50 overflow-hidden">
+                <div className="p-1">
+                  <button onClick={exportToCSV} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors text-left">
+                    <Table size={16} className="text-green-600" />
+                    Export to CSV
+                  </button>
+                  <button onClick={exportToExcel} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors text-left">
+                    <FileSpreadsheet size={16} className="text-green-600" />
+                    Export to Excel
+                  </button>
+                  <button onClick={exportToWord} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors text-left">
+                    <FileText size={16} className="text-blue-600" />
+                    Export to Word
+                  </button>
+                </div>
+              </div>
             )}
-          </button>
+          </div>
         </div>
 
         {/* Active Filters Display Bar */}
@@ -662,10 +753,11 @@ const DailyWorkReport = () => {
 
         {/* Table View */}
         <div className="overflow-x-auto min-h-[320px] relative">
-          <table className="w-full min-w-[900px]">
+          <table ref={tableRef} className="w-full min-w-[900px]">
             <thead>
               <tr className="border-b border-gray-100 bg-[#f8f9fb]">
-                <th className="py-4 px-6 text-left text-[13px] font-bold text-gray-700 whitespace-nowrap w-20">Sr.No.</th>
+                
+                <th className="px-6 py-4">Sr.No.</th>
                 <th className="py-4 px-6 text-left text-[13px] font-bold text-gray-700 whitespace-nowrap">Employee Name</th>
                 <th className="py-4 px-6 text-left text-[13px] font-bold text-gray-700 whitespace-nowrap">Designation</th>
                 <th className="py-4 px-6 text-left text-[13px] font-bold text-gray-700 whitespace-nowrap">Branch</th>
@@ -680,7 +772,7 @@ const DailyWorkReport = () => {
                 <tr>
                   <td colSpan="8" className="py-16 text-center text-gray-500">
                     <div className="flex flex-col items-center justify-center gap-3">
-                      <Loader2 className="animate-spin text-[#1cabb1]" size={32} />
+                      <Loader2 className="animate-spin text-[#1D4ED8]" size={32} />
                       <span className="text-sm font-medium">Loading daily work reports...</span>
                     </div>
                   </td>
@@ -778,7 +870,7 @@ const DailyWorkReport = () => {
             {/* Modal Header */}
             <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
               <div className="flex items-center gap-2">
-                <FileText size={20} className="text-[#1cabb1]" />
+                <FileText size={20} className="text-[#1D4ED8]" />
                 <h3 className="text-[18px] font-bold text-gray-800">Log Daily Work Report</h3>
               </div>
               <button 
@@ -796,13 +888,13 @@ const DailyWorkReport = () => {
                 {/* Employee Selection */}
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[13px] font-semibold text-gray-700 flex items-center gap-1.5">
-                    <User size={14} className="text-[#1cabb1]" /> Employee *
+                    <User size={14} className="text-[#1D4ED8]" /> Employee *
                   </label>
                   <select 
                     required
                     value={logFormData.employeeId}
                     onChange={(e) => setLogFormData(prev => ({ ...prev, employeeId: e.target.value }))}
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#1cabb1] bg-white"
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#1D4ED8] bg-white"
                   >
                     <option value="">Select Employee</option>
                     {employeeOptions.map((emp) => {
@@ -821,13 +913,13 @@ const DailyWorkReport = () => {
                 {/* Product / Service */}
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[13px] font-semibold text-gray-700 flex items-center gap-1.5">
-                    <Package size={14} className="text-[#1cabb1]" /> Product / Category *
+                    <Package size={14} className="text-[#1D4ED8]" /> Product / Category *
                   </label>
                   <select 
                     required
                     value={logFormData.product}
                     onChange={(e) => setLogFormData(prev => ({ ...prev, product: e.target.value }))}
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#1cabb1] bg-white"
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#1D4ED8] bg-white"
                   >
                     {AVAILABLE_PRODUCTS.map((prod) => (
                       <option key={prod} value={prod}>{prod}</option>
@@ -838,7 +930,7 @@ const DailyWorkReport = () => {
                 {/* Amount */}
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[13px] font-semibold text-gray-700 flex items-center gap-1.5">
-                    <IndianRupee size={14} className="text-[#1cabb1]" /> Achievement Amount (₹) *
+                    <IndianRupee size={14} className="text-[#1D4ED8]" /> Achievement Amount (₹) *
                   </label>
                   <input 
                     type="number"
@@ -848,7 +940,7 @@ const DailyWorkReport = () => {
                     value={logFormData.amount}
                     onChange={(e) => setLogFormData(prev => ({ ...prev, amount: e.target.value }))}
                     placeholder="e.g. 200000"
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#1cabb1] bg-white"
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#1D4ED8] bg-white"
                   />
                 </div>
 
@@ -863,7 +955,7 @@ const DailyWorkReport = () => {
                         required
                         value={logFormData.date}
                         onChange={(e) => setLogFormData(prev => ({ ...prev, date: e.target.value }))}
-                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#1cabb1] bg-white"
+                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#1D4ED8] bg-white"
                       />
                       <Calendar className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={16} />
                     </div>
@@ -880,7 +972,7 @@ const DailyWorkReport = () => {
                       value={logFormData.hoursSpent}
                       onChange={(e) => setLogFormData(prev => ({ ...prev, hoursSpent: e.target.value }))}
                       placeholder="e.g. 8"
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#1cabb1] bg-white"
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#1D4ED8] bg-white"
                     />
                   </div>
                 </div>
@@ -897,7 +989,7 @@ const DailyWorkReport = () => {
                       remarks: e.target.value 
                     }))}
                     placeholder="e.g. Completed target documentation and verified loan files."
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#1cabb1] bg-white resize-none"
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#1D4ED8] bg-white resize-none"
                   ></textarea>
                 </div>
 
@@ -915,7 +1007,7 @@ const DailyWorkReport = () => {
                 <button 
                   type="submit"
                   disabled={submittingLog}
-                  className="flex-1 px-4 py-2.5 rounded-full bg-[#1cabb1] hover:bg-[#159a9f] text-white text-[14px] font-bold transition-colors shadow-sm flex items-center justify-center gap-2 disabled:opacity-60"
+                  className="flex-1 px-4 py-2.5 rounded-full bg-[#1D4ED8] hover:bg-[#159a9f] text-white text-[14px] font-bold transition-colors shadow-sm flex items-center justify-center gap-2 disabled:opacity-60"
                 >
                   {submittingLog ? (
                     <>
@@ -941,7 +1033,7 @@ const DailyWorkReport = () => {
             {/* Modal Header */}
             <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
               <div className="flex items-center gap-2">
-                <SlidersHorizontal size={18} className="text-[#1cabb1]" />
+                <SlidersHorizontal size={18} className="text-[#1D4ED8]" />
                 <h3 className="text-[18px] font-bold text-gray-800">Filter Reports</h3>
               </div>
               <button 
@@ -963,7 +1055,7 @@ const DailyWorkReport = () => {
                     type="date" 
                     value={tempFilters.startDate}
                     onChange={(e) => setTempFilters(prev => ({ ...prev, startDate: e.target.value }))}
-                    className="w-full px-3 py-2 rounded-xl border border-gray-200 text-[13px] text-gray-700 focus:outline-none focus:border-[#1cabb1] bg-white" 
+                    className="w-full px-3 py-2 rounded-xl border border-gray-200 text-[13px] text-gray-700 focus:outline-none focus:border-[#1D4ED8] bg-white" 
                   />
                 </div>
                 <div className="flex flex-col gap-1.5">
@@ -972,7 +1064,7 @@ const DailyWorkReport = () => {
                     type="date" 
                     value={tempFilters.endDate}
                     onChange={(e) => setTempFilters(prev => ({ ...prev, endDate: e.target.value }))}
-                    className="w-full px-3 py-2 rounded-xl border border-gray-200 text-[13px] text-gray-700 focus:outline-none focus:border-[#1cabb1] bg-white" 
+                    className="w-full px-3 py-2 rounded-xl border border-gray-200 text-[13px] text-gray-700 focus:outline-none focus:border-[#1D4ED8] bg-white" 
                   />
                 </div>
               </div>
@@ -983,7 +1075,7 @@ const DailyWorkReport = () => {
                 <select 
                   value={tempFilters.branchId || tempFilters.branchIds}
                   onChange={(e) => setTempFilters(prev => ({ ...prev, branchId: e.target.value, branchIds: e.target.value }))}
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#1cabb1] bg-white appearance-none"
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#1D4ED8] bg-white appearance-none"
                 >
                   <option value="">All Branches</option>
                   {branchOptions.map((branch) => {
@@ -1005,7 +1097,7 @@ const DailyWorkReport = () => {
                   <select 
                     value={tempFilters.employeeId}
                     onChange={(e) => setTempFilters(prev => ({ ...prev, employeeId: e.target.value }))}
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#1cabb1] bg-white appearance-none"
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#1D4ED8] bg-white appearance-none"
                   >
                     <option value="">All Employees</option>
                     {employeeOptions.map((emp) => {
@@ -1027,7 +1119,7 @@ const DailyWorkReport = () => {
                 <select 
                   value={tempFilters.designations}
                   onChange={(e) => setTempFilters(prev => ({ ...prev, designations: e.target.value }))}
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#1cabb1] bg-white appearance-none"
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#1D4ED8] bg-white appearance-none"
                 >
                   <option value="">All Designations</option>
                   {roleOptions.length > 0 ? (
@@ -1050,7 +1142,7 @@ const DailyWorkReport = () => {
                 <select 
                   value={tempFilters.states}
                   onChange={(e) => setTempFilters(prev => ({ ...prev, states: e.target.value }))}
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#1cabb1] bg-white appearance-none"
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#1D4ED8] bg-white appearance-none"
                 >
                   <option value="">All States / UT</option>
                   {INDIAN_STATES.map((state) => (
@@ -1071,7 +1163,7 @@ const DailyWorkReport = () => {
               </button>
               <button 
                 onClick={handleApplyFilter}
-                className="flex-1 px-4 py-2.5 rounded-full bg-[#1cabb1] hover:bg-[#159a9f] text-white text-[14px] font-bold transition-colors shadow-sm"
+                className="flex-1 px-4 py-2.5 rounded-full bg-[#1D4ED8] hover:bg-[#159a9f] text-white text-[14px] font-bold transition-colors shadow-sm"
               >
                 Set Filter
               </button>

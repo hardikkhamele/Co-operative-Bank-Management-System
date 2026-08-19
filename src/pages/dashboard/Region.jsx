@@ -33,13 +33,13 @@ const Region = () => {
     <div className="space-y-6">
       {/* Header and Breadcrumb */}
       <div className="bg-white rounded-lg p-5 shadow-sm border border-gray-100">
-        <h1 className="text-2xl font-semibold text-[#5a5ce5] mb-2">Region</h1>
+        <h1 className="text-2xl font-semibold text-[#1B58A6] mb-2">Region</h1>
         <div className="flex items-center text-sm text-gray-600 gap-2">
           <Link to="/dashboard" className="hover:text-gray-900 transition-colors">Dashboard</Link>
           <ChevronRight size={16} className="text-gray-400" />
           <span>Region & Branch Management</span>
           <ChevronRight size={16} className="text-gray-400" />
-          <span className="text-[#5a5ce5]">Region</span>
+          <span className="text-[#1B58A6]">Region</span>
         </div>
       </div>
 
@@ -51,7 +51,7 @@ const Region = () => {
           </div>
           <input
             type="text"
-            className="block w-full pl-10 pr-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#1cabb1] focus:border-[#1cabb1] text-sm"
+            className="block w-full pl-10 pr-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#1D4ED8] focus:border-[#1D4ED8] text-sm"
             placeholder="Search"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -59,7 +59,7 @@ const Region = () => {
         </div>
         <button 
           onClick={handleCreateClick}
-          className="bg-[#1cabb1] hover:bg-[#159a9f] text-white px-5 py-2.5 rounded-full font-medium transition-colors text-sm shadow-sm flex-shrink-0"
+          className="bg-[#1D4ED8] hover:bg-[#159a9f] text-white px-5 py-2.5 rounded-full font-medium transition-colors text-sm shadow-sm flex-shrink-0"
         >
           + Create Region
         </button>
@@ -126,13 +126,13 @@ const Region = () => {
             Showing 1 to 5 of 5 Entries
           </div>
           <div className="flex items-center gap-2">
-            <button className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-[#1cabb1] hover:bg-gray-50 transition-colors">
+            <button className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-[#1D4ED8] hover:bg-gray-50 transition-colors">
               <ChevronRight size={16} className="rotate-180" />
             </button>
-            <button className="w-8 h-8 flex items-center justify-center rounded-full bg-[#1cabb1] text-white font-medium shadow-sm">
+            <button className="w-8 h-8 flex items-center justify-center rounded-full bg-[#1D4ED8] text-white font-medium shadow-sm">
               1
             </button>
-            <button className="w-8 h-8 flex items-center justify-center rounded-full border border-[#1cabb1] text-[#1cabb1] hover:bg-gray-50 transition-colors">
+            <button className="w-8 h-8 flex items-center justify-center rounded-full border border-[#1D4ED8] text-[#1D4ED8] hover:bg-gray-50 transition-colors">
               <ChevronRight size={16} />
             </button>
           </div>

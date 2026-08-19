@@ -38,14 +38,14 @@ const BankDashboardLayout = () => {
       {/* Sidebar Placeholder */}
       <aside className="w-64 bg-white border-r border-gray-200 flex flex-col h-full shrink-0 shadow-sm z-20">
         <div className="p-6 border-b border-gray-100 flex items-center justify-center">
-            <h1 className="text-xl font-bold text-[#5a5ce5]">Co-Op Bank</h1>
+            <h1 className="text-xl font-bold text-[#1B58A6]">Co-Op Bank</h1>
         </div>
         <nav className="flex-1 overflow-y-auto py-4 space-y-1">
             {bankNavItems.map((item) => (
                 <NavLink 
                   key={item.name} 
                   to={item.path} 
-                  className={({ isActive }) => `flex items-center gap-3 px-6 py-3 text-[15px] font-medium transition-colors border-l-4 ${isActive ? 'border-[#5a5ce5] bg-[#5a5ce5]/10 text-[#5a5ce5]' : 'border-transparent text-gray-700 hover:bg-gray-100/50 hover:text-gray-900'}`}
+                  className={({ isActive }) => `flex items-center gap-3 px-6 py-3 text-[15px] font-medium transition-colors border-l-4 ${isActive ? 'border-[#1B58A6] bg-[#1B58A6]/10 text-[#1B58A6]' : 'border-transparent text-gray-700 hover:bg-gray-100/50 hover:text-gray-900'}`}
                 >
                     <item.icon size={20} className="shrink-0" />
                     <span>{item.name}</span>
@@ -54,7 +54,7 @@ const BankDashboardLayout = () => {
         </nav>
         <div className="p-4 border-t border-gray-100">
              <div className="flex items-center gap-3 px-4 py-3 bg-gray-50 rounded-xl">
-                 <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-[#5a5ce5] font-bold">
+                 <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-[#1B58A6] font-bold">
                     A
                  </div>
                  <div className="flex-1 overflow-hidden">
@@ -84,7 +84,7 @@ const BankDashboardLayout = () => {
                 onClick={() => setIsProfileOpen(!isProfileOpen)}
                 className="flex items-center gap-2 bg-gray-50 text-gray-800 py-1.5 px-2 pr-3 rounded-full cursor-pointer hover:bg-gray-100 transition-colors shadow-sm border border-gray-200"
               >
-                <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-[#5a5ce5] font-bold">
+                <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-[#1B58A6] font-bold">
                   A
                 </div>
                 <span className="text-sm font-medium">Admin</span>

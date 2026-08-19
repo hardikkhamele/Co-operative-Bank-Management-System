@@ -4,7 +4,7 @@ import { ChevronRight, Calendar, Phone, Mail, Lock, Map, MapPin, Clock, Banknote
 
 const DetailCard = ({ icon: Icon, label, value }) => (
   <div className="bg-[#f8f9fa] rounded-xl p-4 flex items-center gap-4">
-    <div className="text-[#1cabb1] flex-shrink-0">
+    <div className="text-[#1D4ED8] flex-shrink-0">
       <Icon size={20} strokeWidth={2} />
     </div>
     <div>
@@ -45,7 +45,7 @@ const ViewManager = () => {
           <ChevronRight size={16} className="mx-2 text-gray-400" />
           <Link to="/managers" className="hover:text-gray-800">Managers</Link>
           <ChevronRight size={16} className="mx-2 text-gray-400" />
-          <span className="text-[#1b58a6]">Manager Details</span>
+          <span className="text-[#1D4ED8]">Manager Details</span>
         </div>
       </div>
 
@@ -53,18 +53,18 @@ const ViewManager = () => {
         {/* Profile Banner */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="flex items-center gap-5">
-            <div className="w-[72px] h-[72px] rounded-full border-[3px] border-[#1cabb1] overflow-hidden bg-gray-100 flex items-center justify-center shadow-sm shrink-0">
+            <div className="w-[72px] h-[72px] rounded-full border-[3px] border-[#1D4ED8] overflow-hidden bg-gray-100 flex items-center justify-center shadow-sm shrink-0">
               {managerData.hasImage ? (
                 <img src={managerData.avatar} alt="Profile" className="w-full h-full object-cover" />
               ) : (
-                <div className="w-full h-full bg-[#f4f2ff] text-[#5a5ce5] flex items-center justify-center text-2xl font-bold">
+                <div className="w-full h-full bg-[#f4f2ff] text-[#1B58A6] flex items-center justify-center text-2xl font-bold">
                   {managerData.initials || 'CK'}
                 </div>
               )}
             </div>
             <div>
               <h2 className="text-[22px] font-bold text-[#1b2559] mb-1.5">{managerData.name}</h2>
-              <span className="inline-block px-3.5 py-1 bg-[#5a5ce5] text-white text-[12px] font-semibold rounded-full">
+              <span className="inline-block px-3.5 py-1 bg-[#1B58A6] text-white text-[12px] font-semibold rounded-full">
                 {managerData.type}
               </span>
             </div>
@@ -132,15 +132,15 @@ const ViewManager = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <DetailCard icon={Calendar} label="Weekly Off Days" value="Saturday, Sunday" />
               <div className="bg-[#f8f9fa] rounded-xl p-4 flex items-center gap-4">
-                <div className="text-[#1cabb1] flex-shrink-0"><Check size={20} strokeWidth={2.5} /></div>
+                <div className="text-[#1D4ED8] flex-shrink-0"><Check size={20} strokeWidth={2.5} /></div>
                 <p className="text-[#1b2559] font-bold text-[14px]">Weekly Of Payable</p>
               </div>
               <div className="bg-[#f8f9fa] rounded-xl p-4 flex items-center gap-4">
-                <div className="text-[#1cabb1] flex-shrink-0"><Check size={20} strokeWidth={2.5} /></div>
+                <div className="text-[#1D4ED8] flex-shrink-0"><Check size={20} strokeWidth={2.5} /></div>
                 <p className="text-[#1b2559] font-bold text-[14px]">Variable Weekly Off</p>
               </div>
               <div className="bg-[#f8f9fa] rounded-xl p-4 flex items-center gap-4">
-                <div className="text-[#1cabb1] flex-shrink-0"><Check size={20} strokeWidth={2.5} /></div>
+                <div className="text-[#1D4ED8] flex-shrink-0"><Check size={20} strokeWidth={2.5} /></div>
                 <p className="text-[#1b2559] font-bold text-[14px]">Second weekly off</p>
               </div>
             </div>
@@ -178,15 +178,15 @@ const ViewManager = () => {
               <DetailCard icon={Calendar} label="Allowed Day" value="3" />
               <DetailCard icon={ArrowLeftRight} label="Action" value="Half Day" />
               <div className="bg-[#f8f9fa] rounded-xl p-4 flex items-center gap-4">
-                <div className="text-[#1cabb1] flex-shrink-0"><Check size={20} strokeWidth={2.5} /></div>
+                <div className="text-[#1D4ED8] flex-shrink-0"><Check size={20} strokeWidth={2.5} /></div>
                 <p className="text-[#1b2559] font-bold text-[14px]">Late Cut Allowed</p>
               </div>
               <div className="bg-[#f8f9fa] rounded-xl p-4 flex items-center gap-4">
-                <div className="text-[#1cabb1] flex-shrink-0"><Check size={20} strokeWidth={2.5} /></div>
+                <div className="text-[#1D4ED8] flex-shrink-0"><Check size={20} strokeWidth={2.5} /></div>
                 <p className="text-[#1b2559] font-bold text-[14px]">Extra Late Cut Deduction</p>
               </div>
               <div className="bg-[#f8f9fa] rounded-xl p-4 flex items-center gap-4">
-                <div className="text-[#1cabb1] flex-shrink-0"><Check size={20} strokeWidth={2.5} /></div>
+                <div className="text-[#1D4ED8] flex-shrink-0"><Check size={20} strokeWidth={2.5} /></div>
                 <p className="text-[#1b2559] font-bold text-[14px]">Additional Late Cut In Leave Balance</p>
               </div>
             </div>
@@ -197,11 +197,11 @@ const ViewManager = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <DetailCard icon={Clock} label="Lunch Allowed (Mins)" value="15 (As Per Shift)" />
               <div className="bg-[#f8f9fa] rounded-xl p-4 flex items-center gap-4">
-                <div className="text-[#1cabb1] flex-shrink-0"><Check size={20} strokeWidth={2.5} /></div>
+                <div className="text-[#1D4ED8] flex-shrink-0"><Check size={20} strokeWidth={2.5} /></div>
                 <p className="text-[#1b2559] font-bold text-[14px]">Lunch Allowed</p>
               </div>
               <div className="bg-[#f8f9fa] rounded-xl p-4 flex items-center gap-4">
-                <div className="text-[#1cabb1] flex-shrink-0"><Check size={20} strokeWidth={2.5} /></div>
+                <div className="text-[#1D4ED8] flex-shrink-0"><Check size={20} strokeWidth={2.5} /></div>
                 <p className="text-[#1b2559] font-bold text-[14px]">Early Going Allowed</p>
               </div>
             </div>
@@ -211,17 +211,17 @@ const ViewManager = () => {
             <h3 className="text-[16px] font-bold text-[#333] mb-4">Overtime</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="bg-[#f8f9fa] rounded-xl p-4 flex items-center gap-4">
-                <div className="text-[#1cabb1] flex-shrink-0"><Check size={20} strokeWidth={2.5} /></div>
+                <div className="text-[#1D4ED8] flex-shrink-0"><Check size={20} strokeWidth={2.5} /></div>
                 <p className="text-[#1b2559] font-bold text-[14px]">Overtime Allowed</p>
               </div>
               <div className="hidden md:block"></div>
               
               <div className="bg-[#f8f9fa] rounded-xl p-4 flex items-center gap-4">
-                <div className="text-[#1cabb1] flex-shrink-0"><Check size={20} strokeWidth={2.5} /></div>
+                <div className="text-[#1D4ED8] flex-shrink-0"><Check size={20} strokeWidth={2.5} /></div>
                 <p className="text-[#1b2559] font-bold text-[14px]">Custom OT</p>
               </div>
               <div className="bg-[#f8f9fa] rounded-xl p-4 flex items-center gap-4">
-                <div className="text-[#1cabb1] flex-shrink-0"><Check size={20} strokeWidth={2.5} /></div>
+                <div className="text-[#1D4ED8] flex-shrink-0"><Check size={20} strokeWidth={2.5} /></div>
                 <p className="text-[#1b2559] font-bold text-[14px]">Before OT</p>
               </div>
               
@@ -229,11 +229,11 @@ const ViewManager = () => {
               <DetailCard icon={Clock} label="1 day OT Hrs" value="4" />
               
               <div className="bg-[#f8f9fa] rounded-xl p-4 flex items-center gap-4">
-                <div className="text-[#1cabb1] flex-shrink-0"><Check size={20} strokeWidth={2.5} /></div>
+                <div className="text-[#1D4ED8] flex-shrink-0"><Check size={20} strokeWidth={2.5} /></div>
                 <p className="text-[#1b2559] font-bold text-[14px]">OT As Per Shift</p>
               </div>
               <div className="bg-[#f8f9fa] rounded-xl p-4 flex items-center gap-4">
-                <div className="text-[#1cabb1] flex-shrink-0"><Check size={20} strokeWidth={2.5} /></div>
+                <div className="text-[#1D4ED8] flex-shrink-0"><Check size={20} strokeWidth={2.5} /></div>
                 <p className="text-[#1b2559] font-bold text-[14px]">Consider OT As COFF</p>
               </div>
             </div>
@@ -250,23 +250,23 @@ const ViewManager = () => {
             <h3 className="text-[16px] font-bold text-[#333] mb-4">Sandwich Absence Rules - Weekly Off</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="bg-[#f8f9fa] rounded-xl p-4 flex items-center gap-4">
-                <div className="text-[#1cabb1] flex-shrink-0"><Check size={20} strokeWidth={2.5} /></div>
+                <div className="text-[#1D4ED8] flex-shrink-0"><Check size={20} strokeWidth={2.5} /></div>
                 <p className="text-[#1b2559] font-bold text-[14px]">Absent Before Weekly Off</p>
               </div>
               <div className="bg-[#f8f9fa] rounded-xl p-4 flex items-center gap-4">
-                <div className="text-[#1cabb1] flex-shrink-0"><Check size={20} strokeWidth={2.5} /></div>
+                <div className="text-[#1D4ED8] flex-shrink-0"><Check size={20} strokeWidth={2.5} /></div>
                 <p className="text-[#1b2559] font-bold text-[14px]">Absent After Weekly Off</p>
               </div>
               <div className="bg-[#f8f9fa] rounded-xl p-4 flex items-center gap-4">
-                <div className="text-[#1cabb1] flex-shrink-0"><Check size={20} strokeWidth={2.5} /></div>
+                <div className="text-[#1D4ED8] flex-shrink-0"><Check size={20} strokeWidth={2.5} /></div>
                 <p className="text-[#1b2559] font-bold text-[14px]">Absent Before Or After Weekly Off</p>
               </div>
               <div className="bg-[#f8f9fa] rounded-xl p-4 flex items-center gap-4">
-                <div className="text-[#1cabb1] flex-shrink-0"><Check size={20} strokeWidth={2.5} /></div>
+                <div className="text-[#1D4ED8] flex-shrink-0"><Check size={20} strokeWidth={2.5} /></div>
                 <p className="text-[#1b2559] font-bold text-[14px]">Add Working Hrs On Weekly Off Day</p>
               </div>
               <div className="bg-[#f8f9fa] rounded-xl p-4 flex items-center gap-4">
-                <div className="text-[#1cabb1] flex-shrink-0"><Check size={20} strokeWidth={2.5} /></div>
+                <div className="text-[#1D4ED8] flex-shrink-0"><Check size={20} strokeWidth={2.5} /></div>
                 <p className="text-[#1b2559] font-bold text-[14px]">Late Deduction Not Applied On WO If Present</p>
               </div>
             </div>
@@ -276,23 +276,23 @@ const ViewManager = () => {
             <h3 className="text-[16px] font-bold text-[#333] mb-4">Sandwich Absence Rules - Holidays</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="bg-[#f8f9fa] rounded-xl p-4 flex items-center gap-4">
-                <div className="text-[#1cabb1] flex-shrink-0"><Check size={20} strokeWidth={2.5} /></div>
+                <div className="text-[#1D4ED8] flex-shrink-0"><Check size={20} strokeWidth={2.5} /></div>
                 <p className="text-[#1b2559] font-bold text-[14px]">Absent Before Holiday</p>
               </div>
               <div className="bg-[#f8f9fa] rounded-xl p-4 flex items-center gap-4">
-                <div className="text-[#1cabb1] flex-shrink-0"><Check size={20} strokeWidth={2.5} /></div>
+                <div className="text-[#1D4ED8] flex-shrink-0"><Check size={20} strokeWidth={2.5} /></div>
                 <p className="text-[#1b2559] font-bold text-[14px]">Absent After Holiday</p>
               </div>
               <div className="bg-[#f8f9fa] rounded-xl p-4 flex items-center gap-4">
-                <div className="text-[#1cabb1] flex-shrink-0"><Check size={20} strokeWidth={2.5} /></div>
+                <div className="text-[#1D4ED8] flex-shrink-0"><Check size={20} strokeWidth={2.5} /></div>
                 <p className="text-[#1b2559] font-bold text-[14px]">Absent Before & After Holiday</p>
               </div>
               <div className="bg-[#f8f9fa] rounded-xl p-4 flex items-center gap-4">
-                <div className="text-[#1cabb1] flex-shrink-0"><Check size={20} strokeWidth={2.5} /></div>
+                <div className="text-[#1D4ED8] flex-shrink-0"><Check size={20} strokeWidth={2.5} /></div>
                 <p className="text-[#1b2559] font-bold text-[14px]">Add Working Hours On Holiday Day</p>
               </div>
               <div className="bg-[#f8f9fa] rounded-xl p-4 flex items-center gap-4">
-                <div className="text-[#1cabb1] flex-shrink-0"><Check size={20} strokeWidth={2.5} /></div>
+                <div className="text-[#1D4ED8] flex-shrink-0"><Check size={20} strokeWidth={2.5} /></div>
                 <p className="text-[#1b2559] font-bold text-[14px]">Late Deduction Not Applied On Holiday If Present</p>
               </div>
             </div>
@@ -302,27 +302,27 @@ const ViewManager = () => {
             <h3 className="text-[16px] font-bold text-[#333] mb-4">Leave Between Holiday Or Weekly Off</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="bg-[#f8f9fa] rounded-xl p-4 flex items-center gap-4">
-                <div className="text-[#1cabb1] flex-shrink-0"><Check size={20} strokeWidth={2.5} /></div>
+                <div className="text-[#1D4ED8] flex-shrink-0"><Check size={20} strokeWidth={2.5} /></div>
                 <p className="text-[#1b2559] font-bold text-[14px]">Consider "Weekly Off" In Leave Application</p>
               </div>
               <div className="bg-[#f8f9fa] rounded-xl p-4 flex items-center gap-4">
-                <div className="text-[#1cabb1] flex-shrink-0"><Check size={20} strokeWidth={2.5} /></div>
+                <div className="text-[#1D4ED8] flex-shrink-0"><Check size={20} strokeWidth={2.5} /></div>
                 <p className="text-[#1b2559] font-bold text-[14px]">Consider "Holiday" In Leave Application</p>
               </div>
               <div className="bg-[#f8f9fa] rounded-xl p-4 flex items-center gap-4">
-                <div className="text-[#1cabb1] flex-shrink-0"><Check size={20} strokeWidth={2.5} /></div>
+                <div className="text-[#1D4ED8] flex-shrink-0"><Check size={20} strokeWidth={2.5} /></div>
                 <p className="text-[#1b2559] font-bold text-[14px]">Absent - WO - Leave = WO Absent</p>
               </div>
               <div className="bg-[#f8f9fa] rounded-xl p-4 flex items-center gap-4">
-                <div className="text-[#1cabb1] flex-shrink-0"><Check size={20} strokeWidth={2.5} /></div>
+                <div className="text-[#1D4ED8] flex-shrink-0"><Check size={20} strokeWidth={2.5} /></div>
                 <p className="text-[#1b2559] font-bold text-[14px]">Leave - WO - Absent = WO Absent</p>
               </div>
               <div className="bg-[#f8f9fa] rounded-xl p-4 flex items-center gap-4">
-                <div className="text-[#1cabb1] flex-shrink-0"><Check size={20} strokeWidth={2.5} /></div>
+                <div className="text-[#1D4ED8] flex-shrink-0"><Check size={20} strokeWidth={2.5} /></div>
                 <p className="text-[#1b2559] font-bold text-[14px]">Absent - Holiday - Leave = Holiday Absent</p>
               </div>
               <div className="bg-[#f8f9fa] rounded-xl p-4 flex items-center gap-4">
-                <div className="text-[#1cabb1] flex-shrink-0"><Check size={20} strokeWidth={2.5} /></div>
+                <div className="text-[#1D4ED8] flex-shrink-0"><Check size={20} strokeWidth={2.5} /></div>
                 <p className="text-[#1b2559] font-bold text-[14px]">Leave - Holiday - Absent = Holiday Absent</p>
               </div>
             </div>

@@ -75,9 +75,9 @@ const ResetPassword = () => {
         <div className="flex flex-col items-center mb-6 text-center">
           <svg viewBox="0 0 200 180" className="w-16 h-16 mb-2">
             <polygon points="30,100 80,100 110,160 60,160" fill="#ef3b3a" />
-            <polygon points="100,10 180,160 130,160 90,80" fill="#1b58a6" />
+            <polygon points="100,10 180,160 130,160 90,80" fill="#1D4ED8" />
           </svg>
-          <div className="flex flex-col text-center text-[#1b58a6] mb-4">
+          <div className="flex flex-col text-center text-[#1D4ED8] mb-4">
               <span className="font-extrabold text-[15px] leading-tight tracking-wide">ADVITA CREDIT</span>
           </div>
           <h2 className="text-xl font-bold text-gray-800 mb-1">Reset Password ?</h2>
@@ -100,7 +100,7 @@ const ResetPassword = () => {
                 required
                 value={passwords.newPassword}
                 onChange={handleChange}
-                className="w-full pl-4 pr-10 py-2.5 text-sm rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1b58a6] focus:border-transparent transition-all bg-white"
+                className="w-full pl-4 pr-10 py-2.5 text-sm rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8] focus:border-transparent transition-all bg-white"
                 placeholder="Minimum 6 characters"
               />
               <button
@@ -122,7 +122,7 @@ const ResetPassword = () => {
                 required
                 value={passwords.confirmPassword}
                 onChange={handleChange}
-                className="w-full pl-4 pr-10 py-2.5 text-sm rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1b58a6] focus:border-transparent transition-all bg-white"
+                className="w-full pl-4 pr-10 py-2.5 text-sm rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8] focus:border-transparent transition-all bg-white"
                 placeholder="Confirm new password"
               />
               <button
@@ -138,7 +138,7 @@ const ResetPassword = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 px-4 mt-4 bg-[#1b58a6] hover:bg-[#154685] disabled:bg-gray-400 text-white font-medium rounded-full transition-colors shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#1b58a6] text-sm"
+            className="w-full py-3 px-4 mt-4 bg-[#1D4ED8] hover:bg-[#154685] disabled:bg-gray-400 text-white font-medium rounded-full transition-colors shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#1D4ED8] text-sm"
           >
             {loading ? 'Setting...' : 'Set Password'}
           </button>
@@ -172,7 +172,7 @@ const ResetPassword = () => {
 
             <Link
               to="/login"
-              className="w-full inline-block py-3 px-4 bg-[#1b58a6] hover:bg-[#154685] text-white font-medium text-sm rounded-full transition-colors shadow-lg hover:shadow-xl focus:outline-none"
+              className="w-full inline-block py-3 px-4 bg-[#1D4ED8] hover:bg-[#154685] text-white font-medium text-sm rounded-full transition-colors shadow-lg hover:shadow-xl focus:outline-none"
             >
               Login Now
             </Link>

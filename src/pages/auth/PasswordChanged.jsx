@@ -21,7 +21,7 @@ const PasswordChanged = () => {
 
         <Link
           to="/login"
-          className="w-full inline-block py-3 px-4 bg-[#1b58a6] hover:bg-[#154685] text-white font-medium text-sm rounded-full transition-colors shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#1b58a6]"
+          className="w-full inline-block py-3 px-4 bg-[#1D4ED8] hover:bg-[#154685] text-white font-medium text-sm rounded-full transition-colors shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#1D4ED8]"
         >
           Login Now
         </Link>

@@ -413,7 +413,7 @@ const SetupLoan = () => {
     ctx.moveTo(x, y);
     ctx.lineWidth = 2.5;
     ctx.lineCap = 'round';
-    ctx.strokeStyle = '#1b58a6';
+    ctx.strokeStyle = '#1D4ED8';
     isDrawing.current = true;
   };
 
@@ -467,7 +467,7 @@ const SetupLoan = () => {
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, 300, 100);
     ctx.font = 'italic bold 22px cursive';
-    ctx.fillStyle = '#1b58a6';
+    ctx.fillStyle = '#1D4ED8';
     ctx.fillText(loanData.customer?.fullName || 'Customer Signature', 20, 55);
     return canvas.toDataURL('image/png');
   };
@@ -694,7 +694,7 @@ const SetupLoan = () => {
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 shrink-0">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-[22px] font-bold text-[#1b58a6] mb-2">Setup Consumer Loan & EMI Slabs</h1>
+            <h1 className="text-[22px] font-bold text-[#1D4ED8] mb-2">Setup Consumer Loan & EMI Slabs</h1>
             <div className="flex items-center text-[13px] font-medium text-gray-500 flex-wrap gap-y-2">
               <Link to="/dashboard" className="hover:text-gray-800 transition-colors">Dashboard</Link>
               <ChevronRight size={14} className="mx-1" />
@@ -708,7 +708,7 @@ const SetupLoan = () => {
                   <ChevronRight size={14} className="mx-1" />
                 </>
               )}
-              <span className="text-[#1b58a6] font-semibold">Loan Setup</span>
+              <span className="text-[#1D4ED8] font-semibold">Loan Setup</span>
             </div>
           </div>
           
@@ -716,7 +716,7 @@ const SetupLoan = () => {
             {loanData.applicationId && (
               <div className="text-right">
                 <span className="text-xs text-gray-400 block font-medium">Application ID</span>
-                <span className="text-sm font-bold text-[#1b58a6]">{loanData.applicationId}</span>
+                <span className="text-sm font-bold text-[#1D4ED8]">{loanData.applicationId}</span>
               </div>
             )}
             {loanData.customer?.fullName && (
@@ -739,12 +739,12 @@ const SetupLoan = () => {
           </div>
           <h2 className="text-2xl font-bold text-gray-800 mb-2">Loan Setup & Mandate Activated Successfully!</h2>
           <p className="text-gray-600 max-w-lg mb-6 text-sm">
-            The consumer loan for application <span className="font-semibold text-gray-800">{loanData.applicationId}</span> has been authorized, repayment mandate linked with <span className="font-semibold text-gray-800">{bankForm.bankName}</span>, and down payment of <span className="font-bold text-[#1cabb1]">₹{formatCurrency(breakdown.downPayment)}</span> collected.
+            The consumer loan for application <span className="font-semibold text-gray-800">{loanData.applicationId}</span> has been authorized, repayment mandate linked with <span className="font-semibold text-gray-800">{bankForm.bankName}</span>, and down payment of <span className="font-bold text-[#1D4ED8]">₹{formatCurrency(breakdown.downPayment)}</span> collected.
           </p>
           <div className="p-4 bg-gray-50 border border-gray-200 rounded-2xl max-w-md w-full mb-6 text-left text-xs space-y-2">
             <div className="flex justify-between">
               <span className="text-gray-500">Monthly EMI:</span>
-              <span className="font-bold text-[#1b58a6] text-sm">₹{formatCurrency(breakdown.monthlyEmi || breakdown.emiAmount)} / month</span>
+              <span className="font-bold text-[#1D4ED8] text-sm">₹{formatCurrency(breakdown.monthlyEmi || breakdown.emiAmount)} / month</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-500">Tenure:</span>
@@ -762,7 +762,7 @@ const SetupLoan = () => {
           <div className="flex gap-4">
             <button 
               onClick={() => navigate('/leads')}
-              className="bg-[#1cabb1] hover:bg-[#159a9f] text-white px-8 py-3 rounded-full font-semibold transition-colors shadow-sm text-sm"
+              className="bg-[#1D4ED8] hover:bg-[#159a9f] text-white px-8 py-3 rounded-full font-semibold transition-colors shadow-sm text-sm"
             >
               Back to Leads List
             </button>
@@ -788,7 +788,7 @@ const SetupLoan = () => {
               <div className="w-full h-52 rounded-xl overflow-hidden flex items-center justify-center mb-4 border border-gray-200 bg-[#f8f9fb] relative">
                 {imageLoading ? (
                   <div className="flex flex-col items-center justify-center text-gray-400 gap-2">
-                    <Loader2 size={24} className="animate-spin text-[#1cabb1]" />
+                    <Loader2 size={24} className="animate-spin text-[#1D4ED8]" />
                     <span className="text-xs font-medium">Loading backend image...</span>
                   </div>
                 ) : loanData.productImage ? (
@@ -802,7 +802,7 @@ const SetupLoan = () => {
                   />
                 ) : (
                   <div className="flex flex-col items-center justify-center text-center p-4">
-                    <div className="w-16 h-16 rounded-2xl bg-white border border-gray-200 flex items-center justify-center text-[#1b58a6] mb-2 shadow-xs">
+                    <div className="w-16 h-16 rounded-2xl bg-white border border-gray-200 flex items-center justify-center text-[#1D4ED8] mb-2 shadow-xs">
                       <Smartphone size={32} />
                     </div>
                     <span className="text-xs font-bold text-gray-700">{loanData.productName}</span>
@@ -810,7 +810,7 @@ const SetupLoan = () => {
                   </div>
                 )}
                 <div className="absolute top-2 right-2">
-                  <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-[#1b58a6] text-white shadow-xs">
+                  <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-[#1D4ED8] text-white shadow-xs">
                     {loanData.status}
                   </span>
                 </div>
@@ -834,7 +834,7 @@ const SetupLoan = () => {
                 
                 <div className="mt-4 pt-3 border-t border-gray-100 flex justify-between items-center">
                   <span className="text-xs text-gray-500 font-medium">Decided Product Price</span>
-                  <span className="text-lg font-bold text-[#1b58a6]">₹{formatCurrency(editablePrice)}</span>
+                  <span className="text-lg font-bold text-[#1D4ED8]">₹{formatCurrency(editablePrice)}</span>
                 </div>
               </div>
             </div>
@@ -843,10 +843,10 @@ const SetupLoan = () => {
             <div className="bg-[#f8f9fb] border border-gray-200 rounded-2xl p-5 text-xs space-y-2.5">
               <div className="flex items-center justify-between pb-2 border-b border-gray-200/60">
                 <h4 className="font-bold text-gray-700 text-[13px] flex items-center gap-1.5">
-                  <User size={15} className="text-[#1cabb1]" />
+                  <User size={15} className="text-[#1D4ED8]" />
                   Applicant Summary
                 </h4>
-                <span className="px-2 py-0.5 rounded bg-blue-50 text-[#1b58a6] font-bold text-[10px]">
+                <span className="px-2 py-0.5 rounded bg-blue-50 text-[#1D4ED8] font-bold text-[10px]">
                   {loanData.status}
                 </span>
               </div>
@@ -874,7 +874,7 @@ const SetupLoan = () => {
             </div>
 
             {/* Smart EMI Card Banner */}
-            <div className="p-5 rounded-2xl bg-gradient-to-br from-[#1b58a6] to-[#1cabb1] text-white shadow-md relative overflow-hidden">
+            <div className="p-5 rounded-2xl bg-gradient-to-br from-[#1D4ED8] to-[#1D4ED8] text-white shadow-md relative overflow-hidden">
               <div className="flex justify-between items-start mb-6">
                 <div>
                   <span className="text-[10px] tracking-wider uppercase opacity-80 font-medium">Advita Co-op Bank</span>
@@ -900,7 +900,7 @@ const SetupLoan = () => {
               <div className="bg-white p-5 rounded-2xl border border-gray-200/80 shadow-2xs space-y-3">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <label className="text-sm font-bold text-gray-800 flex items-center gap-2">
-                    <Tag size={16} className="text-[#1cabb1]" />
+                    <Tag size={16} className="text-[#1D4ED8]" />
                     Product Price (Decide / Enter Loan Value)
                   </label>
                   <span className="text-xs text-gray-500 font-medium">
@@ -919,13 +919,13 @@ const SetupLoan = () => {
                       onChange={(e) => handlePriceChange(e.target.value)}
                       onFocus={(e) => { if (editablePrice === 0) e.target.select(); }}
                       placeholder="0"
-                      className="w-full pl-9 pr-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#1cabb1] focus:ring-4 focus:ring-[#1cabb1]/10 bg-white text-gray-800 font-bold text-lg outline-none transition-all"
+                      className="w-full pl-9 pr-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#1D4ED8] focus:ring-4 focus:ring-[#1D4ED8]/10 bg-white text-gray-800 font-bold text-lg outline-none transition-all"
                     />
                   </div>
                   
                   <button 
                     onClick={() => setShowEmis(!showEmis)}
-                    className="px-5 py-3 rounded-xl border border-[#1cabb1] text-[#1cabb1] font-semibold hover:bg-teal-50 transition-colors whitespace-nowrap text-sm flex items-center gap-1.5"
+                    className="px-5 py-3 rounded-xl border border-[#1D4ED8] text-[#1D4ED8] font-semibold hover:bg-teal-50 transition-colors whitespace-nowrap text-sm flex items-center gap-1.5"
                   >
                     {loadingSlabs ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={15} />}
                     {showEmis ? "Hide Slabs" : "View Slabs"}
@@ -942,7 +942,7 @@ const SetupLoan = () => {
                       onClick={() => handlePriceChange(String(preset))}
                       className={`text-xs px-2.5 py-1 rounded-lg border font-semibold transition-all ${
                         editablePrice === preset
-                          ? 'bg-[#1b58a6] text-white border-[#1b58a6]'
+                          ? 'bg-[#1D4ED8] text-white border-[#1D4ED8]'
                           : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100'
                       }`}
                     >
@@ -964,8 +964,8 @@ const SetupLoan = () => {
                 <div className="pt-2 animate-in fade-in slide-in-from-top-4 duration-300">
                   <div className="flex justify-between items-center mb-3">
                     <div>
-                      <h4 className="text-[#1b58a6] font-bold text-[15px] flex items-center gap-1.5">
-                        <Sparkles size={16} className="text-[#1cabb1]" />
+                      <h4 className="text-[#1D4ED8] font-bold text-[15px] flex items-center gap-1.5">
+                        <Sparkles size={16} className="text-[#1D4ED8]" />
                         Eligible Month-wise EMI Slabs
                       </h4>
                       <p className="text-xs text-gray-500 mt-0.5">
@@ -973,7 +973,7 @@ const SetupLoan = () => {
                       </p>
                     </div>
                     {loadingSlabs && (
-                      <span className="flex items-center gap-1.5 text-xs text-[#1cabb1] font-semibold">
+                      <span className="flex items-center gap-1.5 text-xs text-[#1D4ED8] font-semibold">
                         <Loader2 size={14} className="animate-spin" />
                         Fetching slabs...
                       </span>
@@ -998,13 +998,13 @@ const SetupLoan = () => {
                             onClick={() => setSelectedEmi(tenure)}
                             className={`p-4 border-2 rounded-2xl cursor-pointer transition-all ${
                               isSelected 
-                                ? 'border-[#1cabb1] bg-teal-50/70 ring-4 ring-[#1cabb1]/10 shadow-xs' 
-                                : 'border-gray-200 bg-white hover:border-[#1cabb1]/60 hover:bg-teal-50/20'
+                                ? 'border-[#1D4ED8] bg-teal-50/70 ring-4 ring-[#1D4ED8]/10 shadow-xs' 
+                                : 'border-gray-200 bg-white hover:border-[#1D4ED8]/60 hover:bg-teal-50/20'
                             }`}
                           >
                             <div className="flex justify-between items-center mb-1.5">
                               <span className="font-bold text-gray-900 text-sm">{tenure} Months</span>
-                              <span className="text-sm font-bold text-[#1cabb1]">₹{formatCurrency(emiAmt)}/mo</span>
+                              <span className="text-sm font-bold text-[#1D4ED8]">₹{formatCurrency(emiAmt)}/mo</span>
                             </div>
                             <div className="flex justify-between items-center text-[11px] text-gray-500 pt-2 border-t border-gray-100">
                               <span>Interest: <strong className="text-gray-800 font-semibold">{interestRate}%</strong></span>
@@ -1022,7 +1022,7 @@ const SetupLoan = () => {
                     <div className="flex justify-end mt-6">
                       <button 
                         onClick={() => setShowFinalAmount(true)} 
-                        className="bg-[#1b58a6] hover:bg-[#154685] text-white px-8 py-3 rounded-full text-sm font-bold transition-all shadow-sm flex items-center gap-2"
+                        className="bg-[#1D4ED8] hover:bg-[#154685] text-white px-8 py-3 rounded-full text-sm font-bold transition-all shadow-sm flex items-center gap-2"
                       >
                         Next: Preview Breakdown
                         <ArrowRight size={16} />
@@ -1046,7 +1046,7 @@ const SetupLoan = () => {
                           <label className="flex items-center gap-3 cursor-pointer select-none p-3 rounded-xl border border-gray-100 hover:bg-gray-50 transition-colors">
                             <input 
                               type="checkbox" 
-                              className="w-5 h-5 text-[#1b58a6] rounded border-gray-300 focus:ring-[#1b58a6]" 
+                              className="w-5 h-5 text-[#1D4ED8] rounded border-gray-300 focus:ring-[#1D4ED8]" 
                               checked={purchaseEmiCard}
                               onChange={(e) => setPurchaseEmiCard(e.target.checked)}
                             />
@@ -1059,7 +1059,7 @@ const SetupLoan = () => {
                           <label className="flex items-center gap-3 cursor-pointer select-none p-3 rounded-xl border border-gray-100 hover:bg-gray-50 transition-colors">
                             <input 
                               type="checkbox" 
-                              className="w-5 h-5 text-[#1b58a6] rounded border-gray-300 focus:ring-[#1b58a6]" 
+                              className="w-5 h-5 text-[#1D4ED8] rounded border-gray-300 focus:ring-[#1D4ED8]" 
                               checked={purchaseInsurance}
                               onChange={(e) => setPurchaseInsurance(e.target.checked)}
                             />
@@ -1072,7 +1072,7 @@ const SetupLoan = () => {
                       </div>
 
                       <div className="p-3 bg-teal-50/60 rounded-xl border border-teal-100 flex items-center gap-3">
-                        <ShieldCheck size={22} className="text-[#1cabb1] shrink-0" />
+                        <ShieldCheck size={22} className="text-[#1D4ED8] shrink-0" />
                         <span className="text-xs text-teal-900 font-medium">
                           Selected tenure: <strong className="font-bold text-teal-950">{selectedEmi} Months</strong>. Rates locked as per RBI & Society rules.
                         </span>
@@ -1083,7 +1083,7 @@ const SetupLoan = () => {
                     <div className="bg-white rounded-2xl border border-gray-200/80 p-5 shadow-2xs">
                       <div className="flex justify-between items-center mb-4">
                         <h4 className="font-bold text-gray-800 text-[15px]">Amount Breakdown</h4>
-                        {calculatingBreakdown && <Loader2 size={16} className="animate-spin text-[#1cabb1]" />}
+                        {calculatingBreakdown && <Loader2 size={16} className="animate-spin text-[#1D4ED8]" />}
                       </div>
 
                       <div className="space-y-2 mb-3 border-b border-gray-100 pb-3 text-[13px]">
@@ -1137,9 +1137,9 @@ const SetupLoan = () => {
                       </div>
 
                       <div className="pt-1">
-                        <div className="flex justify-between items-center text-sm font-bold text-[#1b58a6] bg-indigo-50/60 p-2.5 rounded-xl border border-indigo-100/60">
+                        <div className="flex justify-between items-center text-sm font-bold text-[#1D4ED8] bg-indigo-50/60 p-2.5 rounded-xl border border-indigo-100/60">
                           <span>Monthly EMI ({selectedEmi} Mo):</span>
-                          <span className="text-base text-[#1b58a6]">₹{formatCurrency(breakdown.monthlyEmi || breakdown.emiAmount)}/Mo</span>
+                          <span className="text-base text-[#1D4ED8]">₹{formatCurrency(breakdown.monthlyEmi || breakdown.emiAmount)}/Mo</span>
                         </div>
                       </div>
                     </div>
@@ -1149,7 +1149,7 @@ const SetupLoan = () => {
                     <div className="flex justify-end pt-4 border-t border-gray-200">
                       <button 
                         onClick={() => setShowBankDetails(true)} 
-                        className="bg-[#1b58a6] hover:bg-[#154685] text-white px-8 py-3 rounded-full text-sm font-bold transition-all shadow-sm flex items-center gap-2"
+                        className="bg-[#1D4ED8] hover:bg-[#154685] text-white px-8 py-3 rounded-full text-sm font-bold transition-all shadow-sm flex items-center gap-2"
                       >
                         Next: Repayment Bank & Digital Signature
                         <ArrowRight size={16} />
@@ -1167,7 +1167,7 @@ const SetupLoan = () => {
                   <div className="flex items-center justify-between">
                     <div>
                       <h4 className="text-gray-800 font-bold text-[15px] flex items-center gap-2">
-                        <Landmark size={18} className="text-[#1cabb1]" />
+                        <Landmark size={18} className="text-[#1D4ED8]" />
                         Repayment Bank Account (Mandate Setup)
                       </h4>
                       <p className="text-xs text-gray-500 mt-0.5">
@@ -1196,7 +1196,7 @@ const SetupLoan = () => {
                         className={`w-full px-4 py-2.5 bg-white border rounded-xl text-sm focus:outline-none focus:ring-2 font-medium transition-colors ${
                           bankErrors.bankName 
                             ? 'border-rose-400 focus:border-rose-500 focus:ring-rose-200' 
-                            : 'border-gray-200 focus:border-[#1cabb1] focus:ring-[#1cabb1]/20'
+                            : 'border-gray-200 focus:border-[#1D4ED8] focus:ring-[#1D4ED8]/20'
                         }`}
                       />
                       {bankErrors.bankName && (
@@ -1225,7 +1225,7 @@ const SetupLoan = () => {
                               ? 'border-rose-400 focus:border-rose-500 focus:ring-rose-200' 
                               : bankForm.accountNumber && validateAccountNumber(bankForm.accountNumber).isValid
                                 ? 'border-emerald-400 focus:border-emerald-500 focus:ring-emerald-200'
-                                : 'border-gray-200 focus:border-[#1cabb1] focus:ring-[#1cabb1]/20'
+                                : 'border-gray-200 focus:border-[#1D4ED8] focus:ring-[#1D4ED8]/20'
                           }`}
                         />
                         {bankForm.accountNumber && validateAccountNumber(bankForm.accountNumber).isValid && (
@@ -1260,7 +1260,7 @@ const SetupLoan = () => {
                               ? 'border-rose-400 focus:border-rose-500 focus:ring-rose-200' 
                               : bankForm.ifsc && validateIFSC(bankForm.ifsc).isValid
                                 ? 'border-emerald-400 focus:border-emerald-500 focus:ring-emerald-200'
-                                : 'border-gray-200 focus:border-[#1cabb1] focus:ring-[#1cabb1]/20'
+                                : 'border-gray-200 focus:border-[#1D4ED8] focus:ring-[#1D4ED8]/20'
                           }`}
                         />
                         {bankForm.ifsc && validateIFSC(bankForm.ifsc).isValid && (
@@ -1293,7 +1293,7 @@ const SetupLoan = () => {
                         className={`w-full px-4 py-2.5 bg-white border rounded-xl text-sm focus:outline-none focus:ring-2 font-medium transition-colors ${
                           bankErrors.accountHolder 
                             ? 'border-rose-400 focus:border-rose-500 focus:ring-rose-200' 
-                            : 'border-gray-200 focus:border-[#1cabb1] focus:ring-[#1cabb1]/20'
+                            : 'border-gray-200 focus:border-[#1D4ED8] focus:ring-[#1D4ED8]/20'
                         }`}
                       />
                       {bankErrors.accountHolder && (
@@ -1307,7 +1307,7 @@ const SetupLoan = () => {
                     <div className="flex items-center justify-between">
                       <div>
                         <label className="text-sm font-bold text-gray-800 flex items-center gap-2">
-                          <PenTool size={16} className="text-[#1cabb1]" />
+                          <PenTool size={16} className="text-[#1D4ED8]" />
                           Customer Digital Signature (Mandatory for EMI Contract)
                         </label>
                         <p className="text-xs text-gray-500">
@@ -1320,7 +1320,7 @@ const SetupLoan = () => {
                           type="button"
                           onClick={() => setSignatureMode('draw')}
                           className={`px-3 py-1 rounded-lg transition-all ${
-                            signatureMode === 'draw' ? 'bg-white text-[#1b58a6] shadow-xs' : 'text-gray-500'
+                            signatureMode === 'draw' ? 'bg-white text-[#1D4ED8] shadow-xs' : 'text-gray-500'
                           }`}
                         >
                           Draw Pad
@@ -1329,7 +1329,7 @@ const SetupLoan = () => {
                           type="button"
                           onClick={() => setSignatureMode('upload')}
                           className={`px-3 py-1 rounded-lg transition-all ${
-                            signatureMode === 'upload' ? 'bg-white text-[#1b58a6] shadow-xs' : 'text-gray-500'
+                            signatureMode === 'upload' ? 'bg-white text-[#1D4ED8] shadow-xs' : 'text-gray-500'
                           }`}
                         >
                           Upload File
@@ -1387,13 +1387,13 @@ const SetupLoan = () => {
                                 <span className="text-[11px] text-emerald-600 font-semibold">✓ Ready for authorization</span>
                               </div>
                             </div>
-                            <label className="cursor-pointer text-xs font-semibold text-[#1cabb1] hover:underline">
+                            <label className="cursor-pointer text-xs font-semibold text-[#1D4ED8] hover:underline">
                               Change
                               <input type="file" className="hidden" accept="image/*" onChange={(e) => handleSignatureUpload(e.target.files[0])} />
                             </label>
                           </div>
                         ) : (
-                          <label className="border-2 border-dashed border-gray-300 rounded-2xl p-6 flex flex-col items-center justify-center cursor-pointer hover:border-[#1cabb1] bg-[#fafbfc] transition-colors">
+                          <label className="border-2 border-dashed border-gray-300 rounded-2xl p-6 flex flex-col items-center justify-center cursor-pointer hover:border-[#1D4ED8] bg-[#fafbfc] transition-colors">
                             <UploadCloud size={30} className="text-gray-400 mb-2" />
                             <span className="text-sm font-semibold text-gray-700">Click to upload signature image</span>
                             <span className="text-xs text-gray-400 mt-1">PNG or JPG (auto-converted to Base64)</span>
@@ -1413,7 +1413,7 @@ const SetupLoan = () => {
                     <button 
                       onClick={handleInitiateDownPayment}
                       disabled={submittingBank || sendingOtp}
-                      className="bg-[#1cabb1] hover:bg-[#159a9f] disabled:opacity-60 text-white px-10 py-3.5 rounded-full font-bold transition-all shadow-md text-sm flex items-center gap-2"
+                      className="bg-[#1D4ED8] hover:bg-[#159a9f] disabled:opacity-60 text-white px-10 py-3.5 rounded-full font-bold transition-all shadow-md text-sm flex items-center gap-2"
                     >
                       {submittingBank || sendingOtp ? (
                         <>
@@ -1450,7 +1450,7 @@ const SetupLoan = () => {
             </button>
             
             <div className="text-center mb-6">
-              <div className="w-14 h-14 bg-teal-50 text-[#1cabb1] rounded-full flex items-center justify-center mx-auto mb-3">
+              <div className="w-14 h-14 bg-teal-50 text-[#1D4ED8] rounded-full flex items-center justify-center mx-auto mb-3">
                 <Smartphone size={28} />
               </div>
               <h3 className="text-lg font-bold text-gray-800">Disbursal Authorization OTP</h3>
@@ -1475,7 +1475,7 @@ const SetupLoan = () => {
                   maxLength={1}
                   value={otp[index]}
                   onChange={(e) => handleOtpChange(index, e.target.value)}
-                  className="w-11 h-13 text-center text-lg font-bold border-2 border-gray-200 rounded-xl focus:outline-none focus:border-[#1cabb1] focus:ring-4 focus:ring-[#1cabb1]/10 bg-gray-50 font-mono"
+                  className="w-11 h-13 text-center text-lg font-bold border-2 border-gray-200 rounded-xl focus:outline-none focus:border-[#1D4ED8] focus:ring-4 focus:ring-[#1D4ED8]/10 bg-gray-50 font-mono"
                 />
               ))}
             </div>
@@ -1486,7 +1486,7 @@ const SetupLoan = () => {
                 type="button"
                 onClick={handleResendOtp}
                 disabled={sendingOtp}
-                className="text-xs text-[#1b58a6] hover:underline font-semibold"
+                className="text-xs text-[#1D4ED8] hover:underline font-semibold"
               >
                 {sendingOtp ? "Resending OTP..." : "Didn't receive? Resend Disbursal OTP"}
               </button>
@@ -1502,7 +1502,7 @@ const SetupLoan = () => {
               <button 
                 onClick={handleVerifyAndSubmitEmi}
                 disabled={submittingEmi}
-                className="flex-1 py-3 bg-[#1cabb1] hover:bg-[#159a9f] disabled:opacity-60 text-white rounded-full font-bold text-sm transition-colors shadow-sm flex items-center justify-center gap-2"
+                className="flex-1 py-3 bg-[#1D4ED8] hover:bg-[#159a9f] disabled:opacity-60 text-white rounded-full font-bold text-sm transition-colors shadow-sm flex items-center justify-center gap-2"
               >
                 {submittingEmi ? (
                   <>
@@ -1534,7 +1534,7 @@ const SetupLoan = () => {
             <div className="text-center mb-6">
               <h3 className="text-lg font-bold text-gray-800">Collect Down Payment</h3>
               <p className="text-xs text-gray-500 mt-1">Amount to be collected</p>
-              <div className="text-2xl font-bold text-[#1cabb1] mt-1">
+              <div className="text-2xl font-bold text-[#1D4ED8] mt-1">
                 ₹{formatCurrency(breakdown.downPayment)}
               </div>
             </div>
@@ -1544,40 +1544,40 @@ const SetupLoan = () => {
               <label 
                 onClick={() => setSelectedPaymentMethod('UPI')}
                 className={`flex items-center gap-3 p-3.5 border rounded-2xl cursor-pointer transition-all ${
-                  selectedPaymentMethod === 'UPI' ? 'border-[#1cabb1] bg-teal-50 ring-2 ring-[#1cabb1]/20' : 'border-gray-200 hover:bg-gray-50'
+                  selectedPaymentMethod === 'UPI' ? 'border-[#1D4ED8] bg-teal-50 ring-2 ring-[#1D4ED8]/20' : 'border-gray-200 hover:bg-gray-50'
                 }`}
               >
-                <Smartphone size={20} className="text-[#1cabb1]" />
+                <Smartphone size={20} className="text-[#1D4ED8]" />
                 <span className="text-sm font-semibold text-gray-700">UPI / QR Code</span>
               </label>
 
               <label 
                 onClick={() => setSelectedPaymentMethod('CARD')}
                 className={`flex items-center gap-3 p-3.5 border rounded-2xl cursor-pointer transition-all ${
-                  selectedPaymentMethod === 'CARD' ? 'border-[#1cabb1] bg-teal-50 ring-2 ring-[#1cabb1]/20' : 'border-gray-200 hover:bg-gray-50'
+                  selectedPaymentMethod === 'CARD' ? 'border-[#1D4ED8] bg-teal-50 ring-2 ring-[#1D4ED8]/20' : 'border-gray-200 hover:bg-gray-50'
                 }`}
               >
-                <CreditCard size={20} className="text-[#1cabb1]" />
+                <CreditCard size={20} className="text-[#1D4ED8]" />
                 <span className="text-sm font-semibold text-gray-700">Debit / Credit Card (POS)</span>
               </label>
 
               <label 
                 onClick={() => setSelectedPaymentMethod('NETBANKING')}
                 className={`flex items-center gap-3 p-3.5 border rounded-2xl cursor-pointer transition-all ${
-                  selectedPaymentMethod === 'NETBANKING' ? 'border-[#1cabb1] bg-teal-50 ring-2 ring-[#1cabb1]/20' : 'border-gray-200 hover:bg-gray-50'
+                  selectedPaymentMethod === 'NETBANKING' ? 'border-[#1D4ED8] bg-teal-50 ring-2 ring-[#1D4ED8]/20' : 'border-gray-200 hover:bg-gray-50'
                 }`}
               >
-                <Landmark size={20} className="text-[#1cabb1]" />
+                <Landmark size={20} className="text-[#1D4ED8]" />
                 <span className="text-sm font-semibold text-gray-700">Net Banking / IMPS</span>
               </label>
 
               <label 
                 onClick={() => setSelectedPaymentMethod('CASH')}
                 className={`flex items-center gap-3 p-3.5 border rounded-2xl cursor-pointer transition-all ${
-                  selectedPaymentMethod === 'CASH' ? 'border-[#1cabb1] bg-teal-50 ring-2 ring-[#1cabb1]/20' : 'border-gray-200 hover:bg-gray-50'
+                  selectedPaymentMethod === 'CASH' ? 'border-[#1D4ED8] bg-teal-50 ring-2 ring-[#1D4ED8]/20' : 'border-gray-200 hover:bg-gray-50'
                 }`}
               >
-                <Banknote size={20} className="text-[#1cabb1]" />
+                <Banknote size={20} className="text-[#1D4ED8]" />
                 <span className="text-sm font-semibold text-gray-700">Cash Collection at Branch</span>
               </label>
             </div>
@@ -1591,7 +1591,7 @@ const SetupLoan = () => {
               </button>
               <button 
                 onClick={handleConfirmPayment}
-                className="flex-1 py-3 bg-[#1cabb1] hover:bg-[#159a9f] text-white rounded-full font-bold text-sm transition-colors shadow-sm"
+                className="flex-1 py-3 bg-[#1D4ED8] hover:bg-[#159a9f] text-white rounded-full font-bold text-sm transition-colors shadow-sm"
               >
                 Confirm Payment & Complete
               </button>

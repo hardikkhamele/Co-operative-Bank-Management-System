@@ -93,10 +93,10 @@ const CustomerLoans = () => {
           {/* Top Stat */}
           <div>
             <div className="text-[15px] font-semibold text-gray-600 mb-1">Total Outstanding</div>
-            <div className="text-[32px] md:text-[40px] font-bold text-[#5a5ce5] leading-tight tracking-tight mb-2">
+            <div className="text-[32px] md:text-[40px] font-bold text-[#1B58A6] leading-tight tracking-tight mb-2">
               ₹51,500
             </div>
-            <div className="text-[13px] font-bold text-[#1cabb1]">
+            <div className="text-[13px] font-bold text-[#1D4ED8]">
               2 Active Loans
             </div>
           </div>
@@ -131,7 +131,7 @@ const CustomerLoans = () => {
             onClick={() => setActiveTab(tab)}
             className={`px-5 py-2.5 rounded-lg text-sm font-medium transition-colors ${
               activeTab === tab 
-                ? 'bg-[#1cabb1] text-white shadow-sm' 
+                ? 'bg-[#1D4ED8] text-white shadow-sm' 
                 : 'text-gray-600 hover:bg-gray-200/50'
             }`}
           >
@@ -161,7 +161,7 @@ const CustomerLoans = () => {
               
               <div className="flex flex-col items-end gap-3 self-end md:self-start">
                 {getStatusBadge(loan.status)}
-                <Link to={`/customers/1/loans/${loan.id}`} className="text-[#1cabb1] font-semibold text-[15px] hover:text-[#159a9f] transition-colors">
+                <Link to={`/customers/1/loans/${loan.id}`} className="text-[#1D4ED8] font-semibold text-[15px] hover:text-[#159a9f] transition-colors">
                   View Details
                 </Link>
               </div>
@@ -199,7 +199,7 @@ const CustomerLoans = () => {
                   </div>
                   <div className="w-full bg-[#f4f3fb] rounded-full h-1.5">
                     <div 
-                      className="bg-[#5a5ce5] h-1.5 rounded-full" 
+                      className="bg-[#1B58A6] h-1.5 rounded-full" 
                       style={{ width: `${loan.progressPercent}%` }}
                     ></div>
                   </div>
@@ -216,19 +216,19 @@ const CustomerLoans = () => {
           Showing 1 to 4 of 30 Entries
         </div>
         <div className="flex items-center gap-2">
-          <button className="w-10 h-10 flex items-center justify-center rounded-full border-2 border-[#1cabb1] text-[#1cabb1] hover:bg-teal-50 transition-colors">
+          <button className="w-10 h-10 flex items-center justify-center rounded-full border-2 border-[#1D4ED8] text-[#1D4ED8] hover:bg-teal-50 transition-colors">
             <ChevronLeft size={18} />
           </button>
-          <button className="w-10 h-10 flex items-center justify-center rounded-full bg-[#1cabb1] text-white font-medium shadow-sm">
+          <button className="w-10 h-10 flex items-center justify-center rounded-full bg-[#1D4ED8] text-white font-medium shadow-sm">
             1
           </button>
-          <button className="w-10 h-10 flex items-center justify-center rounded-full border-2 border-[#1cabb1] text-[#1cabb1] font-medium hover:bg-teal-50 transition-colors">
+          <button className="w-10 h-10 flex items-center justify-center rounded-full border-2 border-[#1D4ED8] text-[#1D4ED8] font-medium hover:bg-teal-50 transition-colors">
             2
           </button>
-          <button className="w-10 h-10 flex items-center justify-center rounded-full border-2 border-[#1cabb1] text-[#1cabb1] font-medium hover:bg-teal-50 transition-colors">
+          <button className="w-10 h-10 flex items-center justify-center rounded-full border-2 border-[#1D4ED8] text-[#1D4ED8] font-medium hover:bg-teal-50 transition-colors">
             3
           </button>
-          <button className="w-10 h-10 flex items-center justify-center rounded-full border-2 border-[#1cabb1] text-[#1cabb1] hover:bg-teal-50 transition-colors">
+          <button className="w-10 h-10 flex items-center justify-center rounded-full border-2 border-[#1D4ED8] text-[#1D4ED8] hover:bg-teal-50 transition-colors">
             <ChevronRight size={18} />
           </button>
         </div>

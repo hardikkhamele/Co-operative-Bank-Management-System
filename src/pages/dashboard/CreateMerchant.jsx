@@ -10,7 +10,7 @@ const FileUploadField = ({ label, id, name, onChange, selectedFile }) => {
     <div className="flex flex-col gap-2">
       <label className="text-[15px] font-semibold text-gray-800">{label}</label>
       <div className={`relative flex items-center justify-center w-full h-24 border-2 border-dashed rounded-xl transition-colors cursor-pointer group ${
-        selectedFile ? 'border-[#1cabb1] bg-teal-50 hover:bg-teal-100' : 'border-gray-300 bg-gray-50 hover:bg-gray-100'
+        selectedFile ? 'border-[#1D4ED8] bg-teal-50 hover:bg-teal-100' : 'border-gray-300 bg-gray-50 hover:bg-gray-100'
       }`}>
         <input 
           type="file" 
@@ -21,13 +21,13 @@ const FileUploadField = ({ label, id, name, onChange, selectedFile }) => {
           accept="image/*,.pdf"
         />
         {selectedFile ? (
-          <div className="flex flex-col items-center gap-1 text-[#1cabb1] transition-colors px-2 text-center w-full">
+          <div className="flex flex-col items-center gap-1 text-[#1D4ED8] transition-colors px-2 text-center w-full">
             <CheckCircle2 size={24} className="text-[#32c965]" />
             <span className="text-xs font-medium text-gray-700 truncate w-full px-2">{selectedFile.name}</span>
             <span className="text-[10px] text-gray-500">Click to change</span>
           </div>
         ) : (
-          <div className="flex flex-col items-center gap-1 text-gray-500 group-hover:text-[#1cabb1] transition-colors">
+          <div className="flex flex-col items-center gap-1 text-gray-500 group-hover:text-[#1D4ED8] transition-colors">
             <UploadCloud size={24} />
             <span className="text-xs font-medium">Click to upload (PDF/Image)</span>
           </div>
@@ -126,7 +126,7 @@ const CreateMerchant = () => {
           <ChevronRight size={14} className="mx-2" />
           <Link to="/merchant" className="hover:text-gray-700">Merchant</Link>
           <ChevronRight size={14} className="mx-2" />
-          <span className="text-[#5a5ce5]">Create</span>
+          <span className="text-[#1B58A6]">Create</span>
         </div>
       </div>
 
@@ -139,17 +139,17 @@ const CreateMerchant = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-8">
               <div>
                 <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">Shop Name *</label>
-                <input type="text" name="shopName" required placeholder="Enter shop name" className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm text-[15px]" />
+                <input type="text" name="shopName" required placeholder="Enter shop name" className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white shadow-sm text-[15px]" />
               </div>
               
               <div>
                 <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">Shop Owner Name *</label>
-                <input type="text" name="ownerName" required placeholder="Enter owner name" className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm text-[15px]" />
+                <input type="text" name="ownerName" required placeholder="Enter owner name" className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white shadow-sm text-[15px]" />
               </div>
 
               <div>
                 <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">Email *</label>
-                <input type="email" name="email" required placeholder="Enter email address" className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm text-[15px]" />
+                <input type="email" name="email" required placeholder="Enter email address" className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white shadow-sm text-[15px]" />
               </div>
 
               <div>
@@ -162,14 +162,14 @@ const CreateMerchant = () => {
                   pattern="\d{10}"
                   onInput={(e) => { e.target.value = e.target.value.replace(/\D/g, '').slice(0, 10) }}
                   placeholder="Enter phone number" 
-                  className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm text-[15px]" 
+                  className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white shadow-sm text-[15px]" 
                 />
               </div>
 
               <div>
                 <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">Branch</label>
                 <div className="relative">
-                  <select name="branchId" defaultValue="" className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white appearance-none text-gray-500 shadow-sm text-[15px]">
+                  <select name="branchId" defaultValue="" className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white appearance-none text-gray-500 shadow-sm text-[15px]">
                     <option value="" disabled>Select Branch (Optional)</option>
                     {branches.map(branch => (
                       <option key={branch.id || branch._id} value={branch.id || branch._id}>{branch.name}</option>
@@ -181,17 +181,17 @@ const CreateMerchant = () => {
 
               <div>
                 <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">Owner Aadhar Number</label>
-                <input type="text" name="aadhaarNumber" placeholder="Enter Aadhar number" className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm text-[15px]" />
+                <input type="text" name="aadhaarNumber" placeholder="Enter Aadhar number" className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white shadow-sm text-[15px]" />
               </div>
               
               <div>
                 <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">Owner PAN Number</label>
-                <input type="text" name="panNumber" placeholder="Enter PAN number" className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm text-[15px]" />
+                <input type="text" name="panNumber" placeholder="Enter PAN number" className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white shadow-sm text-[15px]" />
               </div>
 
               <div>
                 <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">GSTIN Number</label>
-                <input type="text" name="gstinNumber" placeholder="Enter GSTIN" className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm text-[15px]" />
+                <input type="text" name="gstinNumber" placeholder="Enter GSTIN" className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white shadow-sm text-[15px]" />
               </div>
               
               <div>
@@ -201,7 +201,7 @@ const CreateMerchant = () => {
                     type={showPassword ? "text" : "password"} 
                     name="password" 
                     placeholder="Create password" 
-                    className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1cabb1]/20 focus:border-[#1cabb1] transition-all bg-white shadow-sm text-[15px]" 
+                    className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white shadow-sm text-[15px]" 
                   />
                   <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                     {showPassword ? <Eye size={18} /> : <EyeOff size={18} />}
@@ -226,7 +226,7 @@ const CreateMerchant = () => {
             <Link to="/merchant" className="px-6 py-3 rounded-full border border-gray-200 text-gray-700 font-medium hover:bg-gray-50 transition-colors shadow-sm text-[15px]">
               Cancel
             </Link>
-            <button type="submit" disabled={isSubmitting} className="px-8 py-3 rounded-full bg-[#1cabb1] text-white font-medium hover:bg-[#159499] transition-colors shadow-sm text-[15px] disabled:opacity-70 flex items-center justify-center">
+            <button type="submit" disabled={isSubmitting} className="px-8 py-3 rounded-full bg-[#1D4ED8] text-white font-medium hover:bg-[#159499] transition-colors shadow-sm text-[15px] disabled:opacity-70 flex items-center justify-center">
               {isSubmitting ? (
                  <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
               ) : (
