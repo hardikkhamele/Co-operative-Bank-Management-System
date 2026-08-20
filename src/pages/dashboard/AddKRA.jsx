@@ -9,17 +9,15 @@ const AddKRA = () => {
   const navigate = useNavigate();
 
   const [employee, setEmployee] = useState({
-    fullName: 'Clark Kent',
-    designation: 'Branch Manager',
-    phoneNumber: '9876543210',
-    email: 'example@gmail.com',
-    branchName: 'Mumbai Branch',
+    fullName: '',
+    designation: '',
+    phoneNumber: '',
+    email: '',
+    branchName: '',
   });
 
   const [kraRows, setKraRows] = useState([
-    { id: 1, product: 'Fixed Deposit', target: '500000' },
-    { id: 2, product: 'Loan Disbursement', target: '300000' },
-    { id: 3, product: 'Savings Account', target: '200' },
+    { id: 1, product: '', target: '' },
   ]);
 
   useEffect(() => {
@@ -65,7 +63,7 @@ const AddKRA = () => {
       {/* Breadcrumb */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 shrink-0 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-[22px] font-bold text-[#1D4ED8] mb-3">Add New KRA</h1>
+          <h1 className="text-[22px] font-bold text-[#225091] mb-3">Add New KRA</h1>
           <div className="flex items-center text-[13px] font-medium text-gray-500 flex-wrap gap-y-2">
             <Link to="/dashboard" className="hover:text-gray-800 transition-colors">Dashboard</Link>
             <ChevronRight size={14} className="mx-1" />
@@ -75,7 +73,7 @@ const AddKRA = () => {
             <ChevronRight size={14} className="mx-1" />
             <Link to={`/kpa-report/view/${id}`} className="hover:text-gray-800 transition-colors">View Report</Link>
             <ChevronRight size={14} className="mx-1" />
-            <span className="text-[#1D4ED8]">Add New KRA</span>
+            <span className="text-[#225091]">Add New KRA</span>
           </div>
         </div>
 
@@ -104,13 +102,13 @@ const AddKRA = () => {
         <div className="flex flex-col sm:flex-row sm:items-center gap-6">
           <div className="flex flex-col gap-2">
             <div className="flex items-center gap-2 text-[13px] text-gray-600 font-medium">
-              <Phone size={16} className="text-[#1D4ED8]" /> {employee.phoneNumber || '—'}
+              <Phone size={16} className="text-[#225091]" /> {employee.phoneNumber || '—'}
             </div>
             <div className="flex items-center gap-2 text-[13px] text-gray-600 font-medium">
-              <Mail size={16} className="text-[#1D4ED8]" /> {employee.email || '—'}
+              <Mail size={16} className="text-[#225091]" /> {employee.email || '—'}
             </div>
             <div className="flex items-center gap-2 text-[13px] text-gray-600 font-medium">
-              <MapPin size={16} className="text-[#1D4ED8]" /> {employee.branchName || '—'}
+              <MapPin size={16} className="text-[#225091]" /> {employee.branchName || '—'}
             </div>
           </div>
         </div>
@@ -128,7 +126,7 @@ const AddKRA = () => {
                 <select 
                   value={row.product}
                   onChange={(e) => handleRowChange(row.id, 'product', e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#1D4ED8] bg-white"
+                  className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#225091] bg-white"
                 >
                   <option value="">Select Product</option>
                   <option value="Fixed Deposit">Fixed Deposit</option>
@@ -146,7 +144,7 @@ const AddKRA = () => {
                   value={row.target}
                   onChange={(e) => handleRowChange(row.id, 'target', e.target.value)}
                   placeholder="e.g. 500000"
-                  className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-[14px] focus:outline-none focus:border-[#1D4ED8]"
+                  className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-[14px] focus:outline-none focus:border-[#225091]"
                 />
               </div>
               <div className="md:col-span-1 flex items-end justify-center pt-5">
@@ -166,7 +164,7 @@ const AddKRA = () => {
             <button 
               type="button" 
               onClick={handleAddRow}
-              className="text-[#1D4ED8] hover:text-[#159a9f] text-[14px] font-semibold flex items-center gap-1.5 transition-colors px-3 py-1.5 rounded-lg hover:bg-teal-50"
+              className="text-[#225091] hover:text-[#159a9f] text-[14px] font-semibold flex items-center gap-1.5 transition-colors px-3 py-1.5 rounded-lg hover:bg-teal-50"
             >
               <Plus size={16} /> Add More Target
             </button>
@@ -178,13 +176,13 @@ const AddKRA = () => {
       <div className="flex items-center justify-end gap-4 mt-2">
         <button 
           onClick={() => navigate(`/kpa-report/view/${id}`)}
-          className="px-8 py-2.5 rounded-full border border-[#1D4ED8] text-[#1D4ED8] hover:bg-teal-50 text-[14px] font-semibold transition-colors"
+          className="px-8 py-2.5 rounded-full border border-[#225091] text-[#225091] hover:bg-teal-50 text-[14px] font-semibold transition-colors"
         >
           Cancel
         </button>
         <button 
           onClick={handleSave}
-          className="px-8 py-2.5 rounded-full bg-[#1D4ED8] hover:bg-[#159a9f] text-white text-[14px] font-semibold transition-colors shadow-sm"
+          className="px-8 py-2.5 rounded-full bg-[#225091] hover:bg-[#159a9f] text-white text-[14px] font-semibold transition-colors shadow-sm"
         >
           Save Changes
         </button>

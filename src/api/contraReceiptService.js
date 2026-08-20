@@ -1,6 +1,16 @@
 import axiosInstance from './axiosConfig';
 
 export const contraReceiptService = {
+
+  getLocations: async () => {
+    try {
+      const response = await axiosInstance.get('/v1/society/contra-receipts/locations');
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
   /**
    * 4.1 Export Contra Receipts
    * GET /v1/society/contra-receipts/export?search=...&status=...&dateFrom=...&dateTo=...
@@ -82,6 +92,36 @@ export const contraReceiptService = {
    * 4.6 Delete Contra Receipt
    * DELETE /v1/society/contra-receipts/:id
    */
+  
+  /**
+   * Approve Receipt
+   * PUT /v1/society/contra-receipts/:id/approve
+   * @param {string|number} id - Receipt ID
+   */
+  approve: async (id) => {
+    try {
+      const response = await axiosInstance.put(`/v1/society/contra-receipts/${id}/approve`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  /**
+   * Reject Receipt
+   * PUT /v1/society/contra-receipts/:id/reject
+   * @param {string|number} id - Receipt ID
+   * @param {string} rejectionReason - Reason for rejection
+   */
+  reject: async (id, rejectionReason) => {
+    try {
+      const response = await axiosInstance.put(`/v1/society/contra-receipts/${id}/reject`, { rejectionReason });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
   delete: async (id) => {
     try {
       const response = await axiosInstance.delete(`/v1/society/contra-receipts/${id}`);

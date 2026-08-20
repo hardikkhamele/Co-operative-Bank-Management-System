@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ChevronRight, Calendar, ChevronDown, Upload, X } from 'lucide-react';
+import { ArrowLeft,  ChevronRight, Calendar, ChevronDown, Upload, X } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { 
   validatePhone, 
@@ -104,15 +104,24 @@ const CreateLead = () => {
     <div className="flex flex-col gap-6 w-full">
       {/* Header Card */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 shrink-0">
-        <h1 className="text-xl font-bold text-[#4285F4] mb-2">Create Lead</h1>
-        <div className="flex items-center text-sm text-gray-500">
+        <div className="flex items-center gap-3 mb-2">
+            <button 
+            onClick={() => navigate(-1)}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors shrink-0"
+            type="button"
+          >
+            <ArrowLeft size={16} /> Back
+          </button>
+            <h1 className="text-xl font-bold text-[#225091] m-0">Create Lead</h1>
+          </div>
+        <div className="flex items-center text-sm text-gray-500 pl-[40px]">
           <Link to="/dashboard" className="hover:text-gray-700">Dashboard</Link>
           <ChevronRight size={14} className="mx-2" />
           <span className="hover:text-gray-700">Lead Management</span>
           <ChevronRight size={14} className="mx-2" />
           <Link to="/leads" className="hover:text-gray-700">Leads</Link>
           <ChevronRight size={14} className="mx-2" />
-          <span className="text-[#1B58A6]">Create Lead</span>
+          <span className="text-[#225091]">Create Lead</span>
         </div>
       </div>
 
@@ -129,7 +138,7 @@ const CreateLead = () => {
                   placeholder="Enter full name" 
                   value={formData.fullName}
                   onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white shadow-sm" 
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all bg-white shadow-sm" 
                   required 
                 />
               </div>
@@ -140,7 +149,7 @@ const CreateLead = () => {
                   <select 
                     value={formData.gender}
                     onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white appearance-none text-gray-700 shadow-sm" 
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all bg-white appearance-none text-gray-700 shadow-sm" 
                     required
                   >
                     <option value="">Select</option>
@@ -159,7 +168,7 @@ const CreateLead = () => {
                     type="date" 
                     value={formData.dob}
                     onChange={(e) => setFormData({ ...formData, dob: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white shadow-sm text-gray-700" 
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all bg-white shadow-sm text-gray-700" 
                     required 
                   />
                 </div>
@@ -173,7 +182,7 @@ const CreateLead = () => {
                   maxLength={10}
                   value={formData.mobileNumber}
                   onChange={(e) => setFormData({ ...formData, mobileNumber: sanitizeDigits(e.target.value, 10) })}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white shadow-sm" 
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all bg-white shadow-sm" 
                   required 
                 />
               </div>
@@ -192,7 +201,7 @@ const CreateLead = () => {
                   maxLength={10}
                   value={formData.panNumber}
                   onChange={(e) => setFormData({ ...formData, panNumber: sanitizePAN(e.target.value) })}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white shadow-sm uppercase" 
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all bg-white shadow-sm uppercase" 
                   required 
                 />
               </div>
@@ -211,7 +220,7 @@ const CreateLead = () => {
                   type="tel" 
                   placeholder="12-digit Aadhaar number" 
                   maxLength={12}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white shadow-sm" 
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all bg-white shadow-sm" 
                   value={formData.aadhaarNumber}
                   onChange={(e) => setFormData({ ...formData, aadhaarNumber: sanitizeDigits(e.target.value, 12) })}
                   required 
@@ -240,7 +249,7 @@ const CreateLead = () => {
                   maxLength={6}
                   value={formData.pinCode}
                   onChange={(e) => setFormData({ ...formData, pinCode: sanitizeDigits(e.target.value, 6) })}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white shadow-sm" 
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all bg-white shadow-sm" 
                   required 
                 />
               </div>
@@ -252,7 +261,7 @@ const CreateLead = () => {
                 id="terms" 
                 checked={formData.termsAccepted}
                 onChange={(e) => setFormData({ ...formData, termsAccepted: e.target.checked })}
-                className="mt-1 w-5 h-5 rounded border-gray-300 text-[#1D4ED8] focus:ring-[#1D4ED8]" 
+                className="mt-1 w-5 h-5 rounded border-gray-300 text-[#225091] focus:ring-[#225091]" 
                 required 
               />
               <label htmlFor="terms" className="text-[15px] text-gray-600 leading-relaxed cursor-pointer">
@@ -266,13 +275,13 @@ const CreateLead = () => {
           <div className="flex justify-end items-center gap-4 pt-6 mt-4 border-t border-gray-100">
             <Link
               to="/leads"
-              className="px-8 py-2.5 rounded-full border-2 border-[#1D4ED8] text-[#1D4ED8] bg-white hover:bg-teal-50 font-semibold transition-colors"
+              className="px-8 py-2.5 rounded-full border-2 border-[#225091] text-[#225091] bg-white hover:bg-teal-50 font-semibold transition-colors"
             >
               Cancel
             </Link>
             <button
               type="submit"
-              className="px-8 py-2.5 rounded-full bg-[#1D4ED8] hover:bg-[#168f94] text-white font-semibold transition-colors shadow-sm"
+              className="px-8 py-2.5 rounded-full bg-[#225091] hover:bg-[#168f94] text-white font-semibold transition-colors shadow-sm"
             >
               Next
             </button>
@@ -284,7 +293,7 @@ const CreateLead = () => {
       {isOtpModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 transition-opacity">
           <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden flex flex-col">
-            <div className="flex items-center p-4 bg-[#1B58A6] text-white">
+            <div className="flex items-center p-4 bg-[#225091] text-white">
               <button onClick={() => setIsOtpModalOpen(false)} className="mr-3 text-white hover:text-gray-200 transition-colors">
                 <ChevronRight size={24} className="rotate-180" />
               </button>
@@ -310,7 +319,7 @@ const CreateLead = () => {
                     />
                   </div>
 
-                  <div className="bg-[#f4f2ff] p-4 rounded-lg border-l-4 border-[#1D4ED8] mb-8">
+                  <div className="bg-[#f4f2ff] p-4 rounded-lg border-l-4 border-[#225091] mb-8">
                     <p className="text-sm text-gray-700 font-medium">
                       An OTP will be sent to the mobile number and Email ID linked to your Aadhaar card.
                     </p>
@@ -319,7 +328,7 @@ const CreateLead = () => {
                   <button 
                     onClick={handleGetOtp}
                     type="button"
-                    className="w-full py-3.5 rounded-full bg-[#1D4ED8] text-white font-semibold hover:bg-[#168f94] transition-colors"
+                    className="w-full py-3.5 rounded-full bg-[#225091] text-white font-semibold hover:bg-[#168f94] transition-colors"
                   >
                     Get OTP
                   </button>
@@ -347,7 +356,7 @@ const CreateLead = () => {
                           maxLength={1}
                           value={digit}
                           onChange={(e) => handleOtpDigitChange(e.target.value, i)}
-                          className="w-12 h-12 text-center border border-gray-200 rounded-lg text-lg font-semibold focus:outline-none focus:border-[#1D4ED8] focus:ring-1 focus:ring-[#1D4ED8]" 
+                          className="w-12 h-12 text-center border border-gray-200 rounded-lg text-lg font-semibold focus:outline-none focus:border-[#225091] focus:ring-1 focus:ring-[#225091]" 
                         />
                       ))}
                     </div>
@@ -363,7 +372,7 @@ const CreateLead = () => {
                   <button 
                     onClick={handleVerifyOtp}
                     type="button"
-                    className="w-full py-3.5 rounded-full bg-[#1D4ED8] text-white font-semibold hover:bg-[#168f94] transition-colors mt-6"
+                    className="w-full py-3.5 rounded-full bg-[#225091] text-white font-semibold hover:bg-[#168f94] transition-colors mt-6"
                   >
                     Verify
                   </button>
@@ -379,7 +388,7 @@ const CreateLead = () => {
                   <div className="border border-gray-200 rounded-xl p-5 mb-8 bg-white shadow-sm">
                     <div className="flex items-start gap-4">
                       <div className="mt-1">
-                        <input type="radio" className="w-5 h-5 text-[#1D4ED8] border-[#1D4ED8] focus:ring-[#1D4ED8] accent-[#1D4ED8]" defaultChecked />
+                        <input type="radio" className="w-5 h-5 text-[#225091] border-[#225091] focus:ring-[#225091] accent-[#225091]" defaultChecked />
                       </div>
                       <div>
                         <h4 className="font-bold text-gray-900 text-[15px] mb-3">Yes, this is current residential address</h4>
@@ -394,7 +403,7 @@ const CreateLead = () => {
 
                   <Link 
                     to="/leads"
-                    className="block text-center w-full py-3.5 rounded-full bg-[#1D4ED8] text-white font-semibold hover:bg-[#168f94] transition-colors"
+                    className="block text-center w-full py-3.5 rounded-full bg-[#225091] text-white font-semibold hover:bg-[#168f94] transition-colors"
                   >
                     ADD Customer
                   </Link>

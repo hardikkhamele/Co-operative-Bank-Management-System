@@ -4,51 +4,6 @@ import { Link, useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { creditReceiptService } from '../../api/creditReceiptService';
 
-const fallbackReceipts = [
-  { 
-    id: '1',
-    _id: '1', 
-    receiptNo: 'CR-000001', 
-    date: '2026-07-20', 
-    name: 'Mamta Lodhi',
-    bankName: 'Advita Co-operative Bank', 
-    address: 'Pune, Maharashtra',
-    phone: '9876543210',
-    accountNumber: '36489745148',
-    accountNo: '36489745148', 
-    amount: '12,500.00', 
-    status: 'NEW', 
-    glHead: '410105',
-    glHeadName: 'Loan',
-    narration: 'Credit receipt deposit against account loan repayment.', 
-    preparedBy: 'Mamta Lodhi', 
-    approvedBy: null, 
-    rejectedBy: null,
-    receivedBy: 'Bank Officer' 
-  },
-  { 
-    id: '2',
-    _id: '2', 
-    receiptNo: 'CR-000002', 
-    date: '2026-07-20', 
-    name: 'Hillery Moses',
-    bankName: 'Advita Co-operative Bank', 
-    address: 'Mumbai, Maharashtra',
-    phone: '9876543210',
-    accountNumber: '36489745148',
-    accountNo: '36489745148', 
-    amount: '8,000.00', 
-    status: 'APPROVED', 
-    glHead: '410105',
-    glHeadName: 'Loan',
-    narration: 'Credit receipt verified and accepted.', 
-    preparedBy: 'Hillery Moses', 
-    approvedBy: 'Bank Manager', 
-    rejectedBy: null,
-    receivedBy: 'Bank Cashier' 
-  }
-];
-
 const ViewCreditReceipt = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -67,13 +22,8 @@ const ViewCreditReceipt = () => {
           throw new Error(res?.message || 'Receipt not found');
         }
       } catch (err) {
-        console.warn('Could not fetch receipt details from API, using fallback data:', err.message);
-        const found = fallbackReceipts.find(r => r.id === id || r._id === id);
-        if (found) {
-          setReceipt(found);
-        } else {
-          setReceipt(fallbackReceipts[0]);
-        }
+        console.warn('Could not fetch receipt details from API:', err.message);
+        toast.error(err.message || 'Failed to load receipt details.');
       } finally {
         setLoading(false);
       }
@@ -111,7 +61,7 @@ const ViewCreditReceipt = () => {
       case 'NEW':
         return <span className="inline-flex items-center justify-center px-4 py-1 text-xs font-bold text-yellow-700 bg-yellow-100 border border-yellow-200 rounded-full">NEW</span>;
       case 'APPROVED':
-        return <span className="inline-flex items-center justify-center px-4 py-1 text-xs font-bold text-[#1D4ED8] bg-teal-50 border border-teal-200 rounded-full">APPROVED</span>;
+        return <span className="inline-flex items-center justify-center px-4 py-1 text-xs font-bold text-[#225091] bg-teal-50 border border-teal-200 rounded-full">APPROVED</span>;
       case 'REJECTED':
         return <span className="inline-flex items-center justify-center px-4 py-1 text-xs font-bold text-red-500 bg-red-50 border border-red-200 rounded-full">REJECTED</span>;
       default:
@@ -130,7 +80,7 @@ const ViewCreditReceipt = () => {
   if (loading) {
     return (
       <div className="p-16 flex flex-col items-center justify-center gap-3 text-gray-500">
-        <Loader2 size={32} className="animate-spin text-[#1D4ED8]" />
+        <Loader2 size={32} className="animate-spin text-[#225091]" />
         <span className="font-medium">Loading receipt details...</span>
       </div>
     );
@@ -142,7 +92,7 @@ const ViewCreditReceipt = () => {
         <p className="text-lg font-semibold mb-4">Receipt not found.</p>
         <button 
           onClick={() => navigate('/credit')}
-          className="px-6 py-2 bg-[#1D4ED8] text-white rounded-full font-medium"
+          className="px-6 py-2 bg-[#225091] text-white rounded-full font-medium"
         >
           Back to Credit Receipts
         </button>
@@ -160,15 +110,24 @@ const ViewCreditReceipt = () => {
       {/* Header and Breadcrumb */}
       <div className="bg-white rounded-lg p-5 shadow-sm border border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 print:hidden">
         <div>
-          <h1 className="text-xl font-bold text-[#1D4ED8] mb-2">View Receipt</h1>
-          <div className="flex items-center text-xs font-medium text-gray-500 uppercase tracking-wide">
-            <Link to="/dashboard" className="hover:text-[#1D4ED8] transition-colors">Dashboard</Link>
+          <div className="flex items-center gap-3 mb-2">
+            <button 
+              onClick={() => navigate('/credit')}
+              className="p-1.5 -ml-1.5 rounded-lg text-gray-500 hover:text-[#225091] hover:bg-blue-50 transition-colors"
+              title="Go Back"
+            >
+              <ArrowLeft size={20} />
+            </button>
+            <h1 className="text-xl font-bold text-[#225091]">View Receipt</h1>
+          </div>
+          <div className="flex items-center text-xs font-medium text-gray-500 uppercase tracking-wide pl-[40px]">
+            <Link to="/dashboard" className="hover:text-[#225091] transition-colors">Dashboard</Link>
             <ChevronRight size={14} className="mx-1" />
             <span>Receipt Management</span>
             <ChevronRight size={14} className="mx-1" />
-            <Link to="/credit" className="hover:text-[#1D4ED8] transition-colors">Credit Receipt</Link>
+            <Link to="/credit" className="hover:text-[#225091] transition-colors">Credit Receipt</Link>
             <ChevronRight size={14} className="mx-1" />
-            <span className="text-[#1D4ED8]">View Receipt</span>
+            <span className="text-[#225091]">View Receipt</span>
           </div>
         </div>
         {!isNew && (
@@ -182,7 +141,7 @@ const ViewCreditReceipt = () => {
             </button>
             <button 
               onClick={handlePrint}
-              className="flex items-center gap-2 px-4 py-2 bg-[#1D4ED8] text-white hover:bg-[#168f94] rounded-lg font-semibold text-sm transition-colors shadow-sm"
+              className="flex items-center gap-2 px-4 py-2 bg-[#225091] text-white hover:bg-[#168f94] rounded-lg font-semibold text-sm transition-colors shadow-sm"
             >
               <Printer size={16} />
               Print
@@ -197,7 +156,7 @@ const ViewCreditReceipt = () => {
         {/* Document Header */}
         <div className="px-10 py-8 border-b border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-gradient-to-r from-gray-50/50 to-white">
           <div className="flex items-start gap-4">
-            <div className="w-12 h-12 bg-[#1D4ED8]/10 rounded-xl flex flex-col items-center justify-center shrink-0 text-[#1D4ED8]">
+            <div className="w-12 h-12 bg-[#225091]/10 rounded-xl flex flex-col items-center justify-center shrink-0 text-[#225091]">
                <svg viewBox="0 0 24 24" fill="currentColor" className="w-7 h-7">
                  <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
                </svg>
@@ -209,7 +168,7 @@ const ViewCreditReceipt = () => {
             </div>
           </div>
           <div className="text-left md:text-right">
-            <h3 className="text-sm font-bold text-gray-800 uppercase tracking-wider text-[#1D4ED8]">CREDIT RECEIPT</h3>
+            <h3 className="text-sm font-bold text-gray-800 uppercase tracking-wider text-[#225091]">CREDIT RECEIPT</h3>
             <p className="text-sm text-gray-600 mt-2">Receipt No: <span className="font-bold text-[#1b2559]">{receipt.receiptNo || 'CR-000001'}</span></p>
             <p className="text-sm text-gray-600 mt-0.5">Receipt Date: <span className="font-medium text-gray-800">{receiptDate}</span></p>
           </div>
@@ -299,7 +258,7 @@ const ViewCreditReceipt = () => {
                 type="button"
                 disabled={updating}
                 onClick={() => handleAction('APPROVED')}
-                className="px-8 py-2.5 rounded-full bg-[#1D4ED8] text-white font-semibold hover:bg-[#168f94] transition-colors shadow-sm text-sm disabled:opacity-50 flex items-center gap-2"
+                className="px-8 py-2.5 rounded-full bg-[#225091] text-white font-semibold hover:bg-[#168f94] transition-colors shadow-sm text-sm disabled:opacity-50 flex items-center gap-2"
              >
                {updating && <Loader2 size={16} className="animate-spin" />}
                Approve Receipt
@@ -308,16 +267,7 @@ const ViewCreditReceipt = () => {
         )}
       </div>
       
-      {/* Back Button */}
-      <div className="print:hidden">
-        <button 
-          onClick={() => navigate('/credit')}
-          className="flex items-center gap-2 text-gray-600 hover:text-[#1b2559] font-medium transition-colors text-sm"
-        >
-          <ArrowLeft size={16} />
-          Back to Credit Receipts
-        </button>
-      </div>
+      
 
     </div>
   );

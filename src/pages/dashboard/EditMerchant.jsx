@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ChevronRight, UploadCloud, CheckCircle2, Eye, EyeOff, Store, MapPin, Building, CreditCard, X } from 'lucide-react';
+import { ArrowLeft,  ChevronRight, UploadCloud, CheckCircle2, Eye, EyeOff, Store, MapPin, Building, CreditCard, X } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { merchantService } from '../../api/merchantService';
 import { branchService } from '../../api/branchService';
@@ -10,7 +10,7 @@ const FileUploadField = ({ label, id, name, onChange, selectedFile, initialFileU
     <div className="flex flex-col gap-2">
       <label className="text-[15px] font-semibold text-gray-800">{label}</label>
       <div className={`relative flex items-center justify-center w-full h-24 border-2 border-dashed rounded-xl transition-colors cursor-pointer group ${
-        selectedFile || initialFileName ? 'border-[#1D4ED8] bg-teal-50 hover:bg-teal-100' : 'border-gray-300 bg-gray-50 hover:bg-gray-100'
+        selectedFile || initialFileName ? 'border-[#225091] bg-teal-50 hover:bg-teal-100' : 'border-gray-300 bg-gray-50 hover:bg-gray-100'
       }`}>
         <input 
           type="file" 
@@ -21,7 +21,7 @@ const FileUploadField = ({ label, id, name, onChange, selectedFile, initialFileU
           accept="image/*,.pdf"
         />
         {selectedFile || initialFileName ? (
-          <div className="flex flex-col items-center gap-1 text-[#1D4ED8] transition-colors px-2 text-center w-full">
+          <div className="flex flex-col items-center gap-1 text-[#225091] transition-colors px-2 text-center w-full">
             <CheckCircle2 size={24} className="text-[#32c965]" />
             <span className="text-xs font-medium text-gray-700 truncate w-full px-2">
               {selectedFile ? selectedFile.name : initialFileName}
@@ -29,7 +29,7 @@ const FileUploadField = ({ label, id, name, onChange, selectedFile, initialFileU
             <span className="text-[10px] text-gray-500">Click to change</span>
           </div>
         ) : (
-          <div className="flex flex-col items-center gap-1 text-gray-500 group-hover:text-[#1D4ED8] transition-colors">
+          <div className="flex flex-col items-center gap-1 text-gray-500 group-hover:text-[#225091] transition-colors">
             <UploadCloud size={24} />
             <span className="text-xs font-medium">Click to upload (PDF/Image)</span>
           </div>
@@ -160,15 +160,24 @@ const EditMerchant = () => {
     <div className="flex flex-col gap-6 w-full pb-10">
       {/* Header Card */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 shrink-0">
-        <h1 className="text-xl font-bold text-[#4285F4] mb-2">Edit Merchant</h1>
-        <div className="flex items-center text-sm text-gray-500">
+        <div className="flex items-center gap-3 mb-2">
+            <button 
+            onClick={() => navigate(-1)}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors shrink-0"
+            type="button"
+          >
+            <ArrowLeft size={16} /> Back
+          </button>
+            <h1 className="text-xl font-bold text-[#225091] m-0">Edit Merchant</h1>
+          </div>
+        <div className="flex items-center text-sm text-gray-500 pl-[40px]">
           <Link to="/dashboard" className="hover:text-gray-700">Dashboard</Link>
           <ChevronRight size={14} className="mx-2" />
           <span className="hover:text-gray-700">Partner Management</span>
           <ChevronRight size={14} className="mx-2" />
           <Link to="/merchant" className="hover:text-gray-700">Merchant</Link>
           <ChevronRight size={14} className="mx-2" />
-          <span className="text-[#1B58A6]">Edit</span>
+          <span className="text-[#225091]">Edit</span>
         </div>
       </div>
 
@@ -181,17 +190,17 @@ const EditMerchant = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-8">
               <div>
                 <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">Shop Name *</label>
-                <input type="text" name="shopName" defaultValue={merchant.shopName} required placeholder="Enter shop name" className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white shadow-sm text-[15px]" />
+                <input type="text" name="shopName" defaultValue={merchant.shopName} required placeholder="Enter shop name" className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all bg-white shadow-sm text-[15px]" />
               </div>
               
               <div>
                 <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">Shop Owner Name *</label>
-                <input type="text" name="ownerName" defaultValue={merchant.ownerName || merchant.shopOwnerName} required placeholder="Enter owner name" className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white shadow-sm text-[15px]" />
+                <input type="text" name="ownerName" defaultValue={merchant.ownerName || merchant.shopOwnerName} required placeholder="Enter owner name" className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all bg-white shadow-sm text-[15px]" />
               </div>
 
               <div>
                 <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">Email *</label>
-                <input type="email" name="email" defaultValue={merchant.email} required placeholder="Enter email address" className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white shadow-sm text-[15px]" />
+                <input type="email" name="email" defaultValue={merchant.email} required placeholder="Enter email address" className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all bg-white shadow-sm text-[15px]" />
               </div>
 
               <div>
@@ -205,14 +214,14 @@ const EditMerchant = () => {
                   pattern="\d{10}"
                   onInput={(e) => { e.target.value = e.target.value.replace(/\D/g, '').slice(0, 10) }}
                   placeholder="Enter phone number" 
-                  className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white shadow-sm text-[15px]" 
+                  className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all bg-white shadow-sm text-[15px]" 
                 />
               </div>
 
               <div>
                 <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">Branch</label>
                 <div className="relative">
-                  <select name="branchId" defaultValue={merchant.branchId || ""} className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white appearance-none text-gray-500 shadow-sm text-[15px]">
+                  <select name="branchId" defaultValue={merchant.branchId || ""} className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all bg-white appearance-none text-gray-500 shadow-sm text-[15px]">
                     <option value="" disabled>Select Branch (Optional)</option>
                     {branches.map(branch => (
                       <option key={branch.id || branch._id} value={branch.id || branch._id}>{branch.name}</option>
@@ -224,17 +233,17 @@ const EditMerchant = () => {
 
               <div>
                 <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">Owner Aadhar Number</label>
-                <input type="text" name="aadhaarNumber" defaultValue={merchant.aadhaarNumber || merchant.ownerAadharNumber} placeholder="Enter Aadhar number" className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white shadow-sm text-[15px]" />
+                <input type="text" name="aadhaarNumber" defaultValue={merchant.aadhaarNumber || merchant.ownerAadharNumber} placeholder="Enter Aadhar number" className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all bg-white shadow-sm text-[15px]" />
               </div>
               
               <div>
                 <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">Owner PAN Number</label>
-                <input type="text" name="panNumber" defaultValue={merchant.panNumber || merchant.ownerPanNumber} placeholder="Enter PAN number" className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white shadow-sm text-[15px]" />
+                <input type="text" name="panNumber" defaultValue={merchant.panNumber || merchant.ownerPanNumber} placeholder="Enter PAN number" className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all bg-white shadow-sm text-[15px]" />
               </div>
 
               <div>
                 <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">GSTIN Number</label>
-                <input type="text" name="gstinNumber" defaultValue={merchant.gstinNumber || merchant.gstin} placeholder="Enter GSTIN" className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white shadow-sm text-[15px]" />
+                <input type="text" name="gstinNumber" defaultValue={merchant.gstinNumber || merchant.gstin} placeholder="Enter GSTIN" className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all bg-white shadow-sm text-[15px]" />
               </div>
               
               <div>
@@ -244,7 +253,7 @@ const EditMerchant = () => {
                     type={showPassword ? "text" : "password"} 
                     name="password" 
                     placeholder="Change password (leave empty to keep current)" 
-                    className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white shadow-sm text-[15px]" 
+                    className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all bg-white shadow-sm text-[15px]" 
                   />
                   <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                     {showPassword ? <Eye size={18} /> : <EyeOff size={18} />}
@@ -254,7 +263,7 @@ const EditMerchant = () => {
               
               <div>
                 <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">Status</label>
-                <select name="status" defaultValue={merchant.status} className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white shadow-sm text-[15px] appearance-none">
+                <select name="status" defaultValue={merchant.status} className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all bg-white shadow-sm text-[15px] appearance-none">
                   <option value="ACTIVE">ACTIVE</option>
                   <option value="INACTIVE">INACTIVE</option>
                   <option value="BLOCKED">BLOCKED</option>
@@ -298,7 +307,7 @@ const EditMerchant = () => {
             <Link to="/merchant" className="px-6 py-3 rounded-full border border-gray-200 text-gray-700 font-medium hover:bg-gray-50 transition-colors shadow-sm text-[15px]">
               Cancel
             </Link>
-            <button type="submit" disabled={isSubmitting} className="px-8 py-3 rounded-full bg-[#1D4ED8] text-white font-medium hover:bg-[#159499] transition-colors shadow-sm text-[15px] disabled:opacity-70 flex items-center justify-center">
+            <button type="submit" disabled={isSubmitting} className="px-8 py-3 rounded-full bg-[#225091] text-white font-medium hover:bg-[#159499] transition-colors shadow-sm text-[15px] disabled:opacity-70 flex items-center justify-center">
               {isSubmitting ? (
                  <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
               ) : (

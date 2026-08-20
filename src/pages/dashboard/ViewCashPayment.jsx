@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { 
+import { useNavigate, useParams, Link } from 'react-router-dom';
+import { ArrowLeft,  
   ChevronRight, 
   ChevronLeft, 
   Phone, 
@@ -17,6 +17,7 @@ import { toast } from 'react-toastify';
 import { cashPaymentService } from '../../api/cashPaymentService';
 
 const ViewCashPayment = () => {
+  const navigate = useNavigate();
   const { id } = useParams(); // employeeId
   const [loading, setLoading] = useState(false);
   const [employee, setEmployee] = useState(null);
@@ -167,7 +168,16 @@ const ViewCashPayment = () => {
     <div className="space-y-6">
       {/* Header and Breadcrumb */}
       <div className="bg-white rounded-lg p-5 shadow-sm border border-gray-100">
-        <h1 className="text-2xl font-semibold text-[#1b2559] mb-2">View Details</h1>
+        <div className="flex items-center gap-3 mb-2">
+            <button 
+            onClick={() => navigate(-1)}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors shrink-0"
+            type="button"
+          >
+            <ArrowLeft size={16} /> Back
+          </button>
+            <h1 className="text-2xl font-semibold text-[#1b2559] m-0">View Details</h1>
+          </div>
         <div className="flex items-center text-sm font-medium text-gray-500">
           <Link to="/dashboard" className="hover:text-[#1b2559] transition-colors">Dashboard</Link>
           <ChevronRight size={16} className="mx-1" />
@@ -189,15 +199,15 @@ const ViewCashPayment = () => {
           </div>
           <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 font-medium">
             <div className="flex items-center gap-1.5">
-              <Phone size={16} className="text-[#1D4ED8]" />
+              <Phone size={16} className="text-[#225091]" />
               <span>{empPhone}</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <Mail size={16} className="text-[#1D4ED8]" />
+              <Mail size={16} className="text-[#225091]" />
               <span>{empEmail}</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <MapPin size={16} className="text-[#1D4ED8]" />
+              <MapPin size={16} className="text-[#225091]" />
               <span>{empBranch}</span>
             </div>
           </div>
@@ -234,7 +244,7 @@ const ViewCashPayment = () => {
       <div className="flex justify-end">
         <button 
           onClick={() => setIsSubmitModalOpen(true)}
-          className="bg-[#1D4ED8] hover:bg-[#154685] text-white px-6 py-2.5 rounded-full font-semibold transition-colors text-sm shadow-sm"
+          className="bg-[#225091] hover:bg-[#154685] text-white px-6 py-2.5 rounded-full font-semibold transition-colors text-sm shadow-sm"
         >
           Submit Cash
         </button>
@@ -251,7 +261,7 @@ const ViewCashPayment = () => {
                 type="date"
                 value={fromDate}
                 onChange={(e) => { setFromDate(e.target.value); setPage(1); }}
-                className="px-3 py-1.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#1D4ED8] focus:border-[#1D4ED8] text-sm text-[#4b5563] bg-white font-medium"
+                className="px-3 py-1.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#225091] focus:border-[#225091] text-sm text-[#4b5563] bg-white font-medium"
               />
             </div>
             <div className="flex items-center gap-2">
@@ -260,7 +270,7 @@ const ViewCashPayment = () => {
                 type="date"
                 value={toDate}
                 onChange={(e) => { setToDate(e.target.value); setPage(1); }}
-                className="px-3 py-1.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#1D4ED8] focus:border-[#1D4ED8] text-sm text-[#4b5563] bg-white font-medium"
+                className="px-3 py-1.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#225091] focus:border-[#225091] text-sm text-[#4b5563] bg-white font-medium"
               />
             </div>
             {(fromDate || toDate) && (
@@ -277,12 +287,12 @@ const ViewCashPayment = () => {
         
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm whitespace-nowrap">
-            <thead className="bg-[#f4f3fb] text-[#4b5563] font-bold border-b border-gray-100">
+            <thead className="bg-white text-gray-400 text-[11px] uppercase tracking-wider font-bold border-b border-gray-100">
               <tr>
-                <th className="px-6 py-4">Sr. No.</th>
-                <th className="px-6 py-4">Date</th>
-                <th className="px-6 py-4">Amount Submitted</th>
-                <th className="px-6 py-4">Remarks</th>
+                <th className="px-6 py-4 font-bold">Sr. No.</th>
+                <th className="px-6 py-4 font-bold">Date</th>
+                <th className="px-6 py-4 font-bold">Amount Submitted</th>
+                <th className="px-6 py-4 font-bold">Remarks</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -290,7 +300,7 @@ const ViewCashPayment = () => {
                 <tr>
                   <td colSpan="4" className="text-center py-12">
                     <div className="flex items-center justify-center gap-2 text-gray-500">
-                      <Loader2 size={20} className="animate-spin text-[#1D4ED8]" />
+                      <Loader2 size={20} className="animate-spin text-[#225091]" />
                       <span>Loading submission history...</span>
                     </div>
                   </td>
@@ -332,7 +342,7 @@ const ViewCashPayment = () => {
             <button 
               onClick={() => setPage(p => Math.max(1, p - 1))}
               disabled={page <= 1}
-              className="w-8 h-8 flex items-center justify-center rounded-full border border-[#1D4ED8] text-[#1D4ED8] hover:bg-teal-50 transition-colors disabled:opacity-40"
+              className="w-8 h-8 flex items-center justify-center rounded-full border border-[#225091] text-[#225091] hover:bg-teal-50 transition-colors disabled:opacity-40"
             >
               <ChevronLeft size={16} />
             </button>
@@ -351,7 +361,7 @@ const ViewCashPayment = () => {
                   <button 
                     key={i}
                     onClick={() => setPage(i)}
-                    className={`w-8 h-8 flex items-center justify-center rounded-full font-bold transition-colors ${page === i ? 'bg-[#1D4ED8] text-white shadow-sm border border-[#1D4ED8]' : 'border border-gray-200 text-gray-700 hover:bg-gray-50'}`}
+                    className={`w-8 h-8 flex items-center justify-center rounded-full font-bold transition-colors ${page === i ? 'bg-[#225091] text-white shadow-sm border border-[#225091]' : 'border border-gray-200 text-gray-700 hover:bg-gray-50'}`}
                   >
                     {i}
                   </button>
@@ -363,7 +373,7 @@ const ViewCashPayment = () => {
             <button 
               onClick={() => setPage(p => Math.min(meta.totalPages || 1, p + 1))}
               disabled={page >= (meta.totalPages || 1)}
-              className="w-8 h-8 flex items-center justify-center rounded-full border border-[#1D4ED8] text-[#1D4ED8] hover:bg-teal-50 transition-colors disabled:opacity-40"
+              className="w-8 h-8 flex items-center justify-center rounded-full border border-[#225091] text-[#225091] hover:bg-teal-50 transition-colors disabled:opacity-40"
             >
               <ChevronRight size={16} />
             </button>
@@ -378,7 +388,7 @@ const ViewCashPayment = () => {
             <div className="flex justify-between items-center p-6 pb-3 border-b border-gray-100">
               <div>
                 <h2 className="text-xl font-bold text-[#1b2559]">Submit Cash</h2>
-                <p className="text-xs text-gray-500 mt-0.5">Deposit cash collected by <span className="font-semibold text-[#1D4ED8]">{empName}</span></p>
+                <p className="text-xs text-gray-500 mt-0.5">Deposit cash collected by <span className="font-semibold text-[#225091]">{empName}</span></p>
               </div>
               <button onClick={() => setIsSubmitModalOpen(false)} className="text-gray-500 hover:text-gray-800 transition-colors">
                 <X size={24} />
@@ -394,7 +404,7 @@ const ViewCashPayment = () => {
                   required
                   value={submitForm.date}
                   onChange={(e) => setSubmitForm({ ...submitForm, date: e.target.value })}
-                  className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white text-[15px] text-gray-800" 
+                  className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all bg-white text-[15px] text-gray-800" 
                 />
               </div>
               
@@ -410,7 +420,7 @@ const ViewCashPayment = () => {
                   placeholder="Enter Amount (e.g. 5000)"
                   value={submitForm.amountSubmitted}
                   onChange={(e) => setSubmitForm({ ...submitForm, amountSubmitted: e.target.value })}
-                  className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white text-[15px] text-gray-800 appearance-none font-medium" 
+                  className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all bg-white text-[15px] text-gray-800 appearance-none font-medium" 
                 />
               </div>
               
@@ -421,7 +431,7 @@ const ViewCashPayment = () => {
                   placeholder="Enter remarks (e.g. Cash deposited successfully)..." 
                   value={submitForm.remarks}
                   onChange={(e) => setSubmitForm({ ...submitForm, remarks: e.target.value })}
-                  className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white text-[15px] text-gray-800 resize-none"
+                  className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all bg-white text-[15px] text-gray-800 resize-none"
                 ></textarea>
               </div>
               
@@ -436,7 +446,7 @@ const ViewCashPayment = () => {
                 <button 
                   type="submit"
                   disabled={submitting}
-                  className="flex items-center gap-2 px-7 py-2.5 rounded-full bg-[#1D4ED8] text-white font-semibold hover:bg-[#168f94] transition-colors shadow-sm text-[14px] disabled:opacity-50"
+                  className="flex items-center gap-2 px-7 py-2.5 rounded-full bg-[#225091] text-white font-semibold hover:bg-[#168f94] transition-colors shadow-sm text-[14px] disabled:opacity-50"
                 >
                   {submitting && <Loader2 size={16} className="animate-spin" />}
                   {submitting ? 'Submitting...' : 'Submit Cash'}

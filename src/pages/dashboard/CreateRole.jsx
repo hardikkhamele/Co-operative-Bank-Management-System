@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import { Link, useNavigate } from 'react-router-dom';
-import { ChevronRight } from 'lucide-react';
+import { ArrowLeft,  ChevronRight } from 'lucide-react';
 import { roleService } from '../../api/roleService';
 
 const CreateRole = () => {
@@ -104,15 +104,24 @@ const CreateRole = () => {
     <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6 flex flex-col min-h-full">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-[#4285F4] mb-2">Create Roles & Permissions</h1>
-        <div className="flex items-center text-sm text-gray-500 flex-wrap gap-y-2">
-          <Link to="/dashboard" className="hover:text-[#1D4ED8]">Dashboard</Link>
+        <div className="flex items-center gap-3 mb-2">
+            <button 
+            onClick={() => navigate(-1)}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors shrink-0"
+            type="button"
+          >
+            <ArrowLeft size={16} /> Back
+          </button>
+            <h1 className="text-2xl font-bold text-[#225091] m-0">Create Roles & Permissions</h1>
+          </div>
+        <div className="flex items-center text-sm text-gray-500 flex-wrap gap-y-2 pl-[40px]">
+          <Link to="/dashboard" className="hover:text-[#225091]">Dashboard</Link>
           <ChevronRight size={14} className="mx-2" />
           <span>Roles & Permissions</span>
           <ChevronRight size={14} className="mx-2" />
-          <Link to="/roles-permissions" className="hover:text-[#1D4ED8]">Roles & Permissions</Link>
+          <Link to="/roles-permissions" className="hover:text-[#225091]">Roles & Permissions</Link>
           <ChevronRight size={14} className="mx-2" />
-          <span className="text-[#1B58A6]">Create Roles & Permissions</span>
+          <span className="text-[#225091]">Create Roles & Permissions</span>
         </div>
       </div>
 
@@ -127,7 +136,7 @@ const CreateRole = () => {
               placeholder="Enter role name"
               value={roleName}
               onChange={(e) => setRoleName(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all text-sm"
+              className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all text-sm"
             />
           </div>
           <div>
@@ -137,7 +146,7 @@ const CreateRole = () => {
               placeholder="Role description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all text-sm"
+              className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all text-sm"
             />
           </div>
         </div>
@@ -147,7 +156,7 @@ const CreateRole = () => {
       <div className="flex-1 mb-8">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold text-gray-800">Permissions</h2>
-          <span className="text-sm font-medium text-[#1D4ED8] bg-teal-50 px-3 py-1 rounded-full border border-teal-100">
+          <span className="text-sm font-medium text-[#225091] bg-teal-50 px-3 py-1 rounded-full border border-teal-100">
             Selected: {permissions.size}
           </span>
         </div>
@@ -172,7 +181,7 @@ const CreateRole = () => {
                           <div className="relative flex items-center">
                             <input
                               type="checkbox"
-                              className={`peer appearance-none w-5 h-5 border-2 border-gray-400 rounded-md checked:bg-[#1D4ED8] checked:border-[#1D4ED8] transition-colors ${disabled ? 'cursor-not-allowed bg-gray-200' : 'cursor-pointer'}`}
+                              className={`peer appearance-none w-5 h-5 border-2 border-gray-400 rounded-md checked:bg-[#225091] checked:border-[#225091] transition-colors ${disabled ? 'cursor-not-allowed bg-gray-200' : 'cursor-pointer'}`}
                               checked={permissions.has(perm.key)}
                               onChange={() => {
                                 if (!disabled) togglePermission(mod, perm.key);
@@ -216,7 +225,7 @@ const CreateRole = () => {
         <button
           onClick={handleCreate}
           disabled={submitting || !roleName || permissions.size === 0}
-          className="px-8 py-2.5 rounded-full bg-[#1D4ED8] hover:bg-[#168f94] text-white font-medium transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed text-sm flex items-center gap-2"
+          className="px-8 py-2.5 rounded-full bg-[#225091] hover:bg-[#168f94] text-white font-medium transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed text-sm flex items-center gap-2"
         >
           {submitting ? 'Creating...' : 'Create Role'}
         </button>

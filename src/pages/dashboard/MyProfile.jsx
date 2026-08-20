@@ -361,17 +361,17 @@ const MyProfile = () => {
       {/* Header Breadcrumb Card */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-[#1D4ED8] mb-1">My Profile</h1>
+          <h1 className="text-xl font-bold text-[#225091] mb-1">My Profile</h1>
           <div className="flex items-center text-sm font-medium">
             <Link to="/dashboard" className="text-gray-500 hover:text-gray-800 transition-colors">Dashboard</Link>
             <ChevronRight size={16} className="mx-1 text-gray-400" />
-            <span className="text-[#1D4ED8]">My Profile</span>
+            <span className="text-[#225091]">My Profile</span>
           </div>
         </div>
         
         <button
           onClick={handleOpenEdit}
-          className="flex items-center gap-2 bg-[#1D4ED8] text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-[#17969b] transition-all shadow-sm active:scale-95"
+          className="flex items-center gap-2 bg-[#225091] text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-[#17969b] transition-all shadow-sm active:scale-95"
         >
           <Edit size={16} />
           Edit Profile
@@ -379,7 +379,7 @@ const MyProfile = () => {
       </div>
 
       {/* Profile Banner */}
-      <div className="bg-gradient-to-r from-[#4a34b8] via-[#2f75b8] to-[#1D4ED8] rounded-xl p-6 md:p-8 flex flex-col md:flex-row items-start md:items-center justify-between text-white shadow-md relative overflow-hidden gap-6">
+      <div className="bg-gradient-to-r from-[#4a34b8] via-[#2f75b8] to-[#225091] rounded-xl p-6 md:p-8 flex flex-col md:flex-row items-start md:items-center justify-between text-white shadow-md relative overflow-hidden gap-6">
         <div className="flex items-center gap-6 relative z-10">
           <div className="relative group">
             <div className="w-20 h-20 md:w-24 md:h-24 rounded-full overflow-hidden shrink-0 bg-white/20 border-2 border-white shadow-lg flex items-center justify-center">
@@ -400,7 +400,7 @@ const MyProfile = () => {
               onClick={() => fileInputRef.current?.click()}
               disabled={uploadingAvatar}
               title="Change Profile Photo"
-              className="absolute bottom-0 right-0 bg-white text-[#1D4ED8] p-1.5 rounded-full shadow-lg hover:bg-gray-100 transition-all border border-gray-200 cursor-pointer group-hover:scale-110 active:scale-95"
+              className="absolute bottom-0 right-0 bg-white text-[#225091] p-1.5 rounded-full shadow-lg hover:bg-gray-100 transition-all border border-gray-200 cursor-pointer group-hover:scale-110 active:scale-95"
             >
               <Camera size={14} />
             </button>
@@ -437,7 +437,7 @@ const MyProfile = () => {
           onClick={() => setActiveTab('general')}
           className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-semibold transition-all ${
             activeTab === 'general'
-              ? 'bg-[#1D4ED8] text-white shadow-sm'
+              ? 'bg-[#225091] text-white shadow-sm'
               : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
           }`}
         >
@@ -448,7 +448,7 @@ const MyProfile = () => {
           onClick={() => setActiveTab('security')}
           className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-semibold transition-all ${
             activeTab === 'security'
-              ? 'bg-[#1D4ED8] text-white shadow-sm'
+              ? 'bg-[#225091] text-white shadow-sm'
               : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
           }`}
         >
@@ -461,7 +461,7 @@ const MyProfile = () => {
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 md:p-8">
         {loading ? (
           <div className="py-16 flex flex-col items-center justify-center gap-3">
-            <Loader2 size={36} className="animate-spin text-[#1D4ED8]" />
+            <Loader2 size={36} className="animate-spin text-[#225091]" />
             <p className="text-sm text-gray-500 font-medium">Loading profile information...</p>
           </div>
         ) : activeTab === 'general' ? (
@@ -475,7 +475,7 @@ const MyProfile = () => {
                 </div>
                 <button 
                   onClick={handleOpenEdit}
-                  className="flex items-center gap-1.5 text-sm font-semibold text-[#1D4ED8] hover:text-[#17969b] transition-colors"
+                  className="flex items-center gap-1.5 text-sm font-semibold text-[#225091] hover:text-[#17969b] transition-colors"
                 >
                   <Edit size={15} /> Edit Details
                 </button>
@@ -484,21 +484,21 @@ const MyProfile = () => {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="p-4 bg-gray-50/70 rounded-xl border border-gray-100">
                   <div className="flex items-center gap-2 text-gray-500 text-xs font-semibold uppercase tracking-wider mb-1.5">
-                    <User size={14} className="text-[#1D4ED8]" /> Full Name
+                    <User size={14} className="text-[#225091]" /> Full Name
                   </div>
                   <div className="text-base font-bold text-gray-800">{displayName}</div>
                 </div>
 
                 <div className="p-4 bg-gray-50/70 rounded-xl border border-gray-100">
                   <div className="flex items-center gap-2 text-gray-500 text-xs font-semibold uppercase tracking-wider mb-1.5">
-                    <Phone size={14} className="text-[#1D4ED8]" /> Phone Number
+                    <Phone size={14} className="text-[#225091]" /> Phone Number
                   </div>
                   <div className="text-base font-bold text-gray-800">{profileData.phoneNumber || profileData.phone || '—'}</div>
                 </div>
 
                 <div className="p-4 bg-gray-50/70 rounded-xl border border-gray-100">
                   <div className="flex items-center gap-2 text-gray-500 text-xs font-semibold uppercase tracking-wider mb-1.5">
-                    <Mail size={14} className="text-[#1D4ED8]" /> Email Address
+                    <Mail size={14} className="text-[#225091]" /> Email Address
                   </div>
                   <div className="text-base font-bold text-gray-800 break-all">{profileData.email || '—'}</div>
                 </div>
@@ -510,7 +510,7 @@ const MyProfile = () => {
               <div className="pt-4 border-t border-gray-100">
                 <div className="mb-4">
                   <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
-                    <Building size={20} className="text-[#1D4ED8]" />
+                    <Building size={20} className="text-[#225091]" />
                     Associated Bank Information
                   </h3>
                   <p className="text-gray-500 text-sm">Tenant bank organization details linked to this account</p>
@@ -519,9 +519,9 @@ const MyProfile = () => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div className="p-4 bg-[#f8fafc] rounded-xl border border-slate-200/80">
                     <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Bank Name</div>
-                    <div className="text-base font-bold text-[#1D4ED8]">{profileData.bank.name || 'Advita Co-operative Bank'}</div>
+                    <div className="text-base font-bold text-[#225091]">{profileData.bank.name || 'Advita Co-operative Bank'}</div>
                     {profileData.bank.code && (
-                      <span className="inline-block mt-1 text-xs px-2 py-0.5 bg-blue-50 text-[#1D4ED8] font-mono font-semibold rounded">
+                      <span className="inline-block mt-1 text-xs px-2 py-0.5 bg-blue-50 text-[#225091] font-mono font-semibold rounded">
                         CODE: {profileData.bank.code}
                       </span>
                     )}
@@ -553,19 +553,19 @@ const MyProfile = () => {
             {/* Account Metadata Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 pt-4 border-t border-gray-100 text-xs text-gray-500">
               <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
-                <ShieldCheck size={16} className="text-[#1D4ED8]" />
+                <ShieldCheck size={16} className="text-[#225091]" />
                 <div>
                   <span className="font-semibold text-gray-700">Role:</span> {profileData.roleName}
                 </div>
               </div>
               <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
-                <Clock size={16} className="text-[#1D4ED8]" />
+                <Clock size={16} className="text-[#225091]" />
                 <div>
                   <span className="font-semibold text-gray-700">Last Login:</span> {profileData.lastLoginAt ? new Date(profileData.lastLoginAt).toLocaleString() : 'Active session'}
                 </div>
               </div>
               <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
-                <Building2 size={16} className="text-[#1D4ED8]" />
+                <Building2 size={16} className="text-[#225091]" />
                 <div>
                   <span className="font-semibold text-gray-700">Context:</span> Society Panel
                 </div>
@@ -590,7 +590,7 @@ const MyProfile = () => {
                     value={passwords.currentPassword}
                     onChange={(e) => setPasswords({ ...passwords, currentPassword: e.target.value })}
                     placeholder="Enter current password"
-                    className="w-full bg-white border border-gray-300 text-gray-800 rounded-lg px-4 py-2.5 pr-11 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all text-sm"
+                    className="w-full bg-white border border-gray-300 text-gray-800 rounded-lg px-4 py-2.5 pr-11 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all text-sm"
                     required
                   />
                   <button
@@ -613,7 +613,7 @@ const MyProfile = () => {
                     value={passwords.newPassword}
                     onChange={(e) => setPasswords({ ...passwords, newPassword: e.target.value })}
                     placeholder="Enter new password (min 6 characters)"
-                    className="w-full bg-white border border-gray-300 text-gray-800 rounded-lg px-4 py-2.5 pr-11 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all text-sm"
+                    className="w-full bg-white border border-gray-300 text-gray-800 rounded-lg px-4 py-2.5 pr-11 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all text-sm"
                     required
                   />
                   <button
@@ -637,7 +637,7 @@ const MyProfile = () => {
                     value={passwords.confirmPassword}
                     onChange={(e) => setPasswords({ ...passwords, confirmPassword: e.target.value })}
                     placeholder="Confirm new password"
-                    className="w-full bg-white border border-gray-300 text-gray-800 rounded-lg px-4 py-2.5 pr-11 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all text-sm"
+                    className="w-full bg-white border border-gray-300 text-gray-800 rounded-lg px-4 py-2.5 pr-11 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all text-sm"
                     required
                   />
                   <button
@@ -654,7 +654,7 @@ const MyProfile = () => {
                 <button 
                   type="submit"
                   disabled={savingPassword}
-                  className="flex items-center justify-center gap-2 bg-[#1D4ED8] text-white px-7 py-2.5 rounded-lg text-sm font-bold hover:bg-[#17969b] transition-all shadow-md active:scale-95 disabled:opacity-60"
+                  className="flex items-center justify-center gap-2 bg-[#225091] text-white px-7 py-2.5 rounded-lg text-sm font-bold hover:bg-[#17969b] transition-all shadow-md active:scale-95 disabled:opacity-60"
                 >
                   {savingPassword ? (
                     <>
@@ -698,7 +698,7 @@ const MyProfile = () => {
                   accept="image/*" 
                   className="hidden" 
                 />
-                <div className="w-16 h-16 rounded-full overflow-hidden bg-gray-100 border-2 border-[#1D4ED8] shrink-0">
+                <div className="w-16 h-16 rounded-full overflow-hidden bg-gray-100 border-2 border-[#225091] shrink-0">
                   <img 
                     src={editForm.avatarPreview || displayAvatar} 
                     alt="Preview" 
@@ -709,7 +709,7 @@ const MyProfile = () => {
                   <button
                     type="button"
                     onClick={() => modalFileInputRef.current?.click()}
-                    className="flex items-center gap-1.5 text-xs font-bold text-[#1D4ED8] bg-[#1D4ED8]/10 px-3 py-1.5 rounded-md hover:bg-[#1D4ED8]/20 transition-colors"
+                    className="flex items-center gap-1.5 text-xs font-bold text-[#225091] bg-[#225091]/10 px-3 py-1.5 rounded-md hover:bg-[#225091]/20 transition-colors"
                   >
                     <UploadCloud size={14} /> Upload New Photo
                   </button>
@@ -726,7 +726,7 @@ const MyProfile = () => {
                   value={editForm.name}
                   onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
                   placeholder="e.g. Chen Sophia"
-                  className="w-full bg-white border border-gray-300 text-gray-800 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/30 focus:border-[#1D4ED8] transition-all text-sm"
+                  className="w-full bg-white border border-gray-300 text-gray-800 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#225091]/30 focus:border-[#225091] transition-all text-sm"
                   required
                 />
               </div>
@@ -741,7 +741,7 @@ const MyProfile = () => {
                   value={editForm.phone}
                   onChange={(e) => setEditForm({ ...editForm, phone: sanitizeDigits(e.target.value, 10) })}
                   placeholder="e.g. 9876543210"
-                  className="w-full bg-white border border-gray-300 text-gray-800 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/30 focus:border-[#1D4ED8] transition-all text-sm"
+                  className="w-full bg-white border border-gray-300 text-gray-800 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#225091]/30 focus:border-[#225091] transition-all text-sm"
                   required
                 />
               </div>
@@ -755,7 +755,7 @@ const MyProfile = () => {
                   value={editForm.email}
                   onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
                   placeholder="e.g. staff@company.com"
-                  className="w-full bg-white border border-gray-300 text-gray-800 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/30 focus:border-[#1D4ED8] transition-all text-sm"
+                  className="w-full bg-white border border-gray-300 text-gray-800 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#225091]/30 focus:border-[#225091] transition-all text-sm"
                   required
                 />
               </div>
@@ -772,7 +772,7 @@ const MyProfile = () => {
                 <button 
                   type="submit"
                   disabled={savingProfile}
-                  className="flex items-center gap-2 bg-[#1D4ED8] text-white px-6 py-2.5 rounded-lg text-sm font-bold hover:bg-[#17969b] transition-all shadow-md active:scale-95 disabled:opacity-60"
+                  className="flex items-center gap-2 bg-[#225091] text-white px-6 py-2.5 rounded-lg text-sm font-bold hover:bg-[#17969b] transition-all shadow-md active:scale-95 disabled:opacity-60"
                 >
                   {savingProfile ? (
                     <>

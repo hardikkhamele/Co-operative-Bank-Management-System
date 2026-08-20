@@ -7,23 +7,60 @@ import useBranchStore from '../../store/branchStore';
 import GlobalLoader from '../GlobalLoader';
 
 const SidebarGroup = ({ title, children, defaultOpen = false }) => {
-  const [isOpen, setIsOpen] = useState(defaultOpen);
+  const location = useLocation();
+  const childArray = React.Children.toArray(children);
+
+  // Check if current route matches any child NavLink
+  const hasActiveChild = childArray.some(child => {
+    if (!React.isValidElement(child)) return false;
+    const to = child.props?.to;
+    if (!to) return false;
+    return location.pathname === to || location.pathname.startsWith(to + '/');
+  });
+
+  const [isOpen, setIsOpen] = useState(() => defaultOpen || hasActiveChild);
+
+  // Automatically open when route changes to a child within this group
+  useEffect(() => {
+    if (hasActiveChild) {
+      setIsOpen(true);
+    }
+  }, [location.pathname, hasActiveChild]);
 
   return (
     <div className="mb-1">
       <div 
         onClick={() => setIsOpen(!isOpen)}
         className={`px-6 py-3.5 flex items-center justify-between cursor-pointer transition-all duration-200 border-l-4 ${
-          isOpen ? 'border-brand-primary bg-brand-light' : 'border-transparent hover:bg-brand-surface'
+          hasActiveChild
+            ? isOpen 
+              ? 'border-brand-primary bg-brand-light' 
+              : 'border-brand-primary bg-brand-primary/10'
+            : isOpen 
+              ? 'border-gray-200 bg-gray-50/60' 
+              : 'border-transparent hover:bg-brand-surface'
         }`}
       >
-        <h3 className={`text-[14.5px] font-semibold transition-colors duration-200 m-0 select-none ${
-          isOpen ? 'text-brand-primary' : 'text-text-body'
-        }`}>
-          {title}
-        </h3>
+        <div className="flex items-center gap-2">
+          {hasActiveChild && !isOpen && (
+            <span className="w-2 h-2 rounded-full bg-brand-primary animate-pulse" title="Active module" />
+          )}
+          <h3 className={`text-[14.5px] transition-colors duration-200 m-0 select-none ${
+            hasActiveChild 
+              ? 'font-bold text-brand-primary' 
+              : isOpen 
+                ? 'font-semibold text-text-heading' 
+                : 'font-semibold text-text-body'
+          }`}>
+            {title}
+          </h3>
+        </div>
         <ChevronDown size={16} className={`transition-transform duration-300 ease-out ${
-          isOpen ? 'rotate-180 text-brand-primary' : 'text-text-muted'
+          isOpen 
+            ? 'rotate-180 text-brand-primary' 
+            : hasActiveChild 
+              ? 'text-brand-primary font-bold' 
+              : 'text-text-muted'
         }`} />
       </div>
       
@@ -247,15 +284,29 @@ const DashboardLayout = () => {
           <div className="mb-4 mt-2">
             <div 
               onClick={() => setShowMore(!showMore)}
-              className="px-6 py-3.5 flex items-center justify-between cursor-pointer transition-all duration-200 border-l-4 border-transparent hover:bg-brand-surface group"
+              className={`px-6 py-3.5 flex items-center justify-between cursor-pointer transition-all duration-200 border-l-4 group ${
+                !showMore && hiddenRoutes.some(route => location.pathname.startsWith(route))
+                  ? 'border-brand-primary bg-brand-primary/10'
+                  : 'border-transparent hover:bg-brand-surface'
+              }`}
             >
               <div className="flex items-center gap-3">
-                <MoreHorizontal size={18} className="text-text-muted group-hover:text-brand-primary transition-colors" />
-                <h3 className="text-[14.5px] font-semibold text-text-body group-hover:text-brand-primary transition-colors m-0 select-none">
+                {!showMore && hiddenRoutes.some(route => location.pathname.startsWith(route)) ? (
+                  <span className="w-2 h-2 rounded-full bg-brand-primary animate-pulse" />
+                ) : (
+                  <MoreHorizontal size={18} className="text-text-muted group-hover:text-brand-primary transition-colors" />
+                )}
+                <h3 className={`text-[14.5px] m-0 select-none transition-colors ${
+                  !showMore && hiddenRoutes.some(route => location.pathname.startsWith(route))
+                    ? 'font-bold text-brand-primary'
+                    : 'font-semibold text-text-body group-hover:text-brand-primary'
+                }`}>
                   {showMore ? 'Show Less' : 'Show More'}
                 </h3>
               </div>
-              <ChevronDown size={16} className={`text-text-muted transition-transform duration-300 ease-out ${showMore ? 'rotate-180' : ''}`} />
+              <ChevronDown size={16} className={`transition-transform duration-300 ease-out ${
+                showMore ? 'rotate-180 text-brand-primary' : !showMore && hiddenRoutes.some(route => location.pathname.startsWith(route)) ? 'text-brand-primary' : 'text-text-muted'
+              }`} />
             </div>
           </div>
         </div>
@@ -264,13 +315,12 @@ const DashboardLayout = () => {
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden relative">
         {/* Topbar */}
-        <header className="h-16 bg-brand-header text-white flex items-center justify-between px-8 shadow-sm shrink-0 print:hidden">
+        <header className="h-[76px] bg-brand-header text-white flex items-center justify-between px-8 shadow-sm shrink-0 print:hidden">
           <div className="flex items-center gap-8">
             <div>
               <div className="text-xs text-white/80 font-medium">Welcome</div>
               <div className="text-lg font-semibold tracking-wide">{userName}</div>
             </div>
-            
           </div>
           
           <div className="flex items-center gap-5 relative">
@@ -317,25 +367,7 @@ const DashboardLayout = () => {
         {/* Page Content */}
         <main className="flex-1 overflow-y-auto bg-bg-page p-6 relative">
           
-          {/* Navigation Controls */}
-          {location.pathname !== '/dashboard' && location.pathname !== '/' && (
-            <div className="flex items-center gap-2 mb-4 print:hidden">
-              <button 
-                onClick={() => navigate(-1)}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-semibold text-text-muted hover:text-brand-primary hover:bg-brand-surface rounded-lg transition-colors border border-transparent hover:border-border-default bg-white shadow-sm"
-              >
-                <ArrowLeft size={16} />
-                Back
-              </button>
-              <button 
-                onClick={() => navigate(1)}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-semibold text-text-muted hover:text-brand-primary hover:bg-brand-surface rounded-lg transition-colors border border-transparent hover:border-border-default bg-white shadow-sm"
-              >
-                Next
-                <ArrowRight size={16} />
-              </button>
-            </div>
-          )}
+          
           <GlobalLoader />
           <Outlet />
         </main>

@@ -276,7 +276,7 @@ const ImportantDates = () => {
       const monthName = selectedMonth ? AVAILABLE_MONTHS.find(m => m.value === selectedMonth)?.label : '';
       return (
         <div className="flex items-center gap-1.5 font-semibold text-gray-800">
-          <Calendar size={13} className="text-[#1D4ED8]" />
+          <Calendar size={13} className="text-[#225091]" />
           <span>{dayNum}{dayNum === 1 ? 'st' : dayNum === 2 ? 'nd' : dayNum === 3 ? 'rd' : 'th'} {monthName}</span>
         </div>
       );
@@ -285,7 +285,7 @@ const ImportantDates = () => {
       const dStr = row.date || row.eventDate;
       return (
         <div className="flex items-center gap-1.5 font-semibold text-gray-800">
-          <Calendar size={13} className="text-[#1D4ED8]" />
+          <Calendar size={13} className="text-[#225091]" />
           <span>{dStr}</span>
         </div>
       );
@@ -299,13 +299,13 @@ const ImportantDates = () => {
       {/* Breadcrumb & Header Card */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 shrink-0 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-[22px] font-bold text-[#1D4ED8] mb-3">Important Dates</h1>
+          <h1 className="text-[22px] font-bold text-[#225091] mb-3">Important Dates</h1>
           <div className="flex items-center text-[13px] font-medium text-gray-500 flex-wrap gap-y-2">
             <Link to="/dashboard" className="hover:text-gray-800 transition-colors">Dashboard</Link>
             <ChevronRight size={14} className="mx-1" />
             <span>HR Management</span>
             <ChevronRight size={14} className="mx-1" />
-            <span className="text-[#1D4ED8]">Important Dates</span>
+            <span className="text-[#225091]">Important Dates</span>
           </div>
         </div>
 
@@ -333,7 +333,7 @@ const ImportantDates = () => {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search employee, branch, event..." 
-                className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 text-[14px] focus:outline-none focus:border-[#1D4ED8] bg-gray-50/50"
+                className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 text-[14px] focus:outline-none focus:border-[#225091] bg-gray-50/50"
               />
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
               {search && (
@@ -351,7 +351,7 @@ const ImportantDates = () => {
             >
               <SlidersHorizontal size={20} />
               {activeFilterCount > 0 && (
-                <span className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-[#1D4ED8] text-white text-[11px] font-bold flex items-center justify-center shadow-sm">
+                <span className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-[#225091] text-white text-[11px] font-bold flex items-center justify-center shadow-sm">
                   {activeFilterCount}
                 </span>
               )}
@@ -364,7 +364,7 @@ const ImportantDates = () => {
               className="w-11 h-11 flex items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors shadow-sm shrink-0 bg-white"
               title="Refresh Dates"
             >
-              <RefreshCw size={18} className={loading ? 'animate-spin text-[#1D4ED8]' : ''} />
+              <RefreshCw size={18} className={loading ? 'animate-spin text-[#225091]' : ''} />
             </button>
           </div>
           
@@ -374,7 +374,7 @@ const ImportantDates = () => {
             <select
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(e.target.value ? Number(e.target.value) : '')}
-              className="px-4 py-2.5 rounded-lg border border-gray-200 text-[14px] text-gray-700 font-semibold focus:outline-none focus:border-[#1D4ED8] bg-white shadow-2xs"
+              className="px-4 py-2.5 rounded-lg border border-gray-200 text-[14px] text-gray-700 font-semibold focus:outline-none focus:border-[#225091] bg-white shadow-2xs"
             >
               {AVAILABLE_MONTHS.map(m => (
                 <option key={m.label} value={m.value}>{m.label}</option>
@@ -385,7 +385,7 @@ const ImportantDates = () => {
             <select
               value={selectedYear}
               onChange={(e) => setSelectedYear(Number(e.target.value))}
-              className="px-4 py-2.5 rounded-lg border border-gray-200 text-[14px] text-gray-700 font-semibold focus:outline-none focus:border-[#1D4ED8] bg-white shadow-2xs"
+              className="px-4 py-2.5 rounded-lg border border-gray-200 text-[14px] text-gray-700 font-semibold focus:outline-none focus:border-[#225091] bg-white shadow-2xs"
             >
               {AVAILABLE_YEARS.map(yr => (
                 <option key={yr} value={yr}>{yr}</option>
@@ -462,13 +462,13 @@ const ImportantDates = () => {
           <table className="w-full min-w-[900px]">
             <thead>
               <tr className="border-b border-gray-100 bg-[#f8f9fb]">
-                <th className="py-4 px-6 text-left text-[13px] font-bold text-gray-700 whitespace-nowrap w-20">Sr.No.</th>
-                <th className="py-4 px-6 text-left text-[13px] font-bold text-gray-700 whitespace-nowrap">Employee Name</th>
-                <th className="py-4 px-6 text-left text-[13px] font-bold text-gray-700 whitespace-nowrap">Designation</th>
-                <th className="py-4 px-6 text-left text-[13px] font-bold text-gray-700 whitespace-nowrap">State / UT</th>
-                <th className="py-4 px-6 text-left text-[13px] font-bold text-gray-700 whitespace-nowrap">Branch</th>
-                <th className="py-4 px-6 text-left text-[13px] font-bold text-gray-700 whitespace-nowrap">Day / Date</th>
-                <th className="py-4 px-6 text-left text-[13px] font-bold text-gray-700 whitespace-nowrap">Celebration</th>
+                <th className="py-4 px-6 text-left text-[13px] font-bold whitespace-nowrap w-20">Sr.No.</th>
+                <th className="py-4 px-6 text-left text-[13px] font-bold whitespace-nowrap">Employee Name</th>
+                <th className="py-4 px-6 text-left text-[13px] font-bold whitespace-nowrap">Designation</th>
+                <th className="py-4 px-6 text-left text-[13px] font-bold whitespace-nowrap">State / UT</th>
+                <th className="py-4 px-6 text-left text-[13px] font-bold whitespace-nowrap">Branch</th>
+                <th className="py-4 px-6 text-left text-[13px] font-bold whitespace-nowrap">Day / Date</th>
+                <th className="py-4 px-6 text-left text-[13px] font-bold whitespace-nowrap">Celebration</th>
               </tr>
             </thead>
             <tbody>
@@ -476,7 +476,7 @@ const ImportantDates = () => {
                 <tr>
                   <td colSpan="7" className="py-16 text-center text-gray-500">
                     <div className="flex flex-col items-center justify-center gap-3">
-                      <Loader2 className="animate-spin text-[#1D4ED8]" size={32} />
+                      <Loader2 className="animate-spin text-[#225091]" size={32} />
                       <span className="text-sm font-medium">Loading important dates feed...</span>
                     </div>
                   </td>
@@ -559,7 +559,7 @@ const ImportantDates = () => {
             {/* Modal Header */}
             <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
               <div className="flex items-center gap-2">
-                <SlidersHorizontal size={18} className="text-[#1D4ED8]" />
+                <SlidersHorizontal size={18} className="text-[#225091]" />
                 <h3 className="text-[18px] font-bold text-gray-800">Filter Important Dates</h3>
               </div>
               <button 
@@ -579,7 +579,7 @@ const ImportantDates = () => {
                 <select 
                   value={tempFilters.celebrationTypes}
                   onChange={(e) => setTempFilters(prev => ({ ...prev, celebrationTypes: e.target.value }))}
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#1D4ED8] bg-white"
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#225091] bg-white"
                 >
                   {CELEBRATION_TYPES.map((type) => (
                     <option key={type.label} value={type.value}>{type.label}</option>
@@ -593,7 +593,7 @@ const ImportantDates = () => {
                 <select 
                   value={tempFilters.state}
                   onChange={(e) => setTempFilters(prev => ({ ...prev, state: e.target.value }))}
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#1D4ED8] bg-white"
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#225091] bg-white"
                 >
                   <option value="">All States</option>
                   {INDIAN_STATES.map((st) => (
@@ -608,7 +608,7 @@ const ImportantDates = () => {
                 <select 
                   value={tempFilters.branchId}
                   onChange={(e) => setTempFilters(prev => ({ ...prev, branchId: e.target.value }))}
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#1D4ED8] bg-white"
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#225091] bg-white"
                 >
                   <option value="">All Branches</option>
                   {branches.map((b) => (
@@ -625,7 +625,7 @@ const ImportantDates = () => {
                 <select 
                   value={tempFilters.designation}
                   onChange={(e) => setTempFilters(prev => ({ ...prev, designation: e.target.value }))}
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#1D4ED8] bg-white"
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#225091] bg-white"
                 >
                   <option value="">All Designations</option>
                   {roles.map((r) => (
@@ -643,7 +643,7 @@ const ImportantDates = () => {
                   type="date"
                   value={tempFilters.date}
                   onChange={(e) => setTempFilters(prev => ({ ...prev, date: e.target.value }))}
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#1D4ED8] bg-white"
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#225091] bg-white"
                 />
               </div>
 
@@ -659,7 +659,7 @@ const ImportantDates = () => {
               </button>
               <button 
                 onClick={handleApplyFilter}
-                className="flex-1 px-4 py-2.5 rounded-full bg-[#1D4ED8] hover:bg-[#159a9f] text-white text-[14px] font-bold transition-colors shadow-sm"
+                className="flex-1 px-4 py-2.5 rounded-full bg-[#225091] hover:bg-[#159a9f] text-white text-[14px] font-bold transition-colors shadow-sm"
               >
                 Set Filter
               </button>

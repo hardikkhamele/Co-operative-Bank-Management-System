@@ -1,6 +1,16 @@
 import axiosInstance from './axiosConfig';
 
 export const transferReceiptService = {
+
+  getLocations: async () => {
+    try {
+      const response = await axiosInstance.get('/v1/society/transfer-receipts/locations');
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
   /**
    * 3.1 Export Transfer Receipts
    * GET /v1/society/transfer-receipts/export?dateFrom=...&dateTo=...
@@ -82,6 +92,36 @@ export const transferReceiptService = {
    * 3.6 Delete Transfer Receipt
    * DELETE /v1/society/transfer-receipts/:id
    */
+  
+  /**
+   * Approve Receipt
+   * PUT /v1/society/transfer-receipts/:id/approve
+   * @param {string|number} id - Receipt ID
+   */
+  approve: async (id) => {
+    try {
+      const response = await axiosInstance.put(`/v1/society/transfer-receipts/${id}/approve`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  /**
+   * Reject Receipt
+   * PUT /v1/society/transfer-receipts/:id/reject
+   * @param {string|number} id - Receipt ID
+   * @param {string} rejectionReason - Reason for rejection
+   */
+  reject: async (id, rejectionReason) => {
+    try {
+      const response = await axiosInstance.put(`/v1/society/transfer-receipts/${id}/reject`, { rejectionReason });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
   delete: async (id) => {
     try {
       const response = await axiosInstance.delete(`/v1/society/transfer-receipts/${id}`);

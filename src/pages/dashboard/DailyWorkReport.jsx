@@ -483,7 +483,7 @@ const DailyWorkReport = () => {
           onClick={() => setPage(p)}
           className={`w-8 h-8 flex items-center justify-center rounded-full text-[13px] font-bold transition-colors ${
             p === current
-              ? 'bg-[#1D4ED8] text-white shadow-sm'
+              ? 'bg-[#225091] text-white shadow-sm'
               : 'border border-gray-200 text-gray-600 hover:bg-gray-50'
           }`}
         >
@@ -577,20 +577,20 @@ const DailyWorkReport = () => {
       {/* Breadcrumb & Header Card */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 shrink-0 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-[22px] font-bold text-[#1D4ED8] mb-3">Daily Work Report</h1>
+          <h1 className="text-[22px] font-bold text-[#225091] mb-3">Daily Work Report</h1>
           <div className="flex items-center text-[13px] font-medium text-gray-500 flex-wrap gap-y-2">
             <Link to="/dashboard" className="hover:text-gray-800 transition-colors">Dashboard</Link>
             <ChevronRight size={14} className="mx-1" />
             <span>HR Management</span>
             <ChevronRight size={14} className="mx-1" />
-            <span className="text-[#1D4ED8]">Daily Work Report</span>
+            <span className="text-[#225091]">Daily Work Report</span>
           </div>
         </div>
 
         {/* Log Work Report Button */}
         <button 
           onClick={() => setIsLogModalOpen(true)}
-          className="flex items-center gap-2 bg-[#1D4ED8] hover:bg-[#159a9f] text-white px-5 py-2.5 rounded-full text-[14px] font-semibold transition-colors shadow-sm self-start sm:self-center"
+          className="flex items-center gap-2 bg-[#225091] hover:bg-[#159a9f] text-white px-5 py-2.5 rounded-full text-[14px] font-semibold transition-colors shadow-sm self-start sm:self-center"
         >
           <Plus size={18} />
           <span>Log Work Report</span>
@@ -610,7 +610,7 @@ const DailyWorkReport = () => {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search employee, branch, product..." 
-                className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 text-[14px] focus:outline-none focus:border-[#1D4ED8] bg-gray-50/50"
+                className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 text-[14px] focus:outline-none focus:border-[#225091] bg-gray-50/50"
               />
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
               {search && (
@@ -631,7 +631,7 @@ const DailyWorkReport = () => {
             >
               <SlidersHorizontal size={20} />
               {activeFilterCount > 0 && (
-                <span className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-[#1D4ED8] text-white text-[11px] font-bold flex items-center justify-center shadow-sm">
+                <span className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-[#225091] text-white text-[11px] font-bold flex items-center justify-center shadow-sm">
                   {activeFilterCount}
                 </span>
               )}
@@ -644,7 +644,7 @@ const DailyWorkReport = () => {
               className="w-11 h-11 flex items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors shadow-sm shrink-0 bg-white"
               title="Refresh Data"
             >
-              <RefreshCw size={18} className={loading ? 'animate-spin text-[#1D4ED8]' : ''} />
+              <RefreshCw size={18} className={loading ? 'animate-spin text-[#225091]' : ''} />
             </button>
           </div>
           
@@ -757,14 +757,14 @@ const DailyWorkReport = () => {
             <thead>
               <tr className="border-b border-gray-100 bg-[#f8f9fb]">
                 
-                <th className="px-6 py-4">Sr.No.</th>
-                <th className="py-4 px-6 text-left text-[13px] font-bold text-gray-700 whitespace-nowrap">Employee Name</th>
-                <th className="py-4 px-6 text-left text-[13px] font-bold text-gray-700 whitespace-nowrap">Designation</th>
-                <th className="py-4 px-6 text-left text-[13px] font-bold text-gray-700 whitespace-nowrap">Branch</th>
-                <th className="py-4 px-6 text-left text-[13px] font-bold text-gray-700 whitespace-nowrap">Product / Tasks</th>
-                <th className="py-4 px-6 text-left text-[13px] font-bold text-gray-700 whitespace-nowrap">Amount / Hours</th>
-                <th className="py-4 px-6 text-left text-[13px] font-bold text-gray-700 whitespace-nowrap">Remarks / Details</th>
-                <th className="py-4 px-6 text-left text-[13px] font-bold text-gray-700 whitespace-nowrap">Date</th>
+                <th className="px-6 py-4 font-bold">Sr.No.</th>
+                <th className="py-4 px-6 text-left text-[13px] font-bold whitespace-nowrap">Employee Name</th>
+                <th className="py-4 px-6 text-left text-[13px] font-bold whitespace-nowrap">Designation</th>
+                <th className="py-4 px-6 text-left text-[13px] font-bold whitespace-nowrap">Branch</th>
+                <th className="py-4 px-6 text-left text-[13px] font-bold whitespace-nowrap">Product / Tasks</th>
+                <th className="py-4 px-6 text-left text-[13px] font-bold whitespace-nowrap">Amount / Hours</th>
+                <th className="py-4 px-6 text-left text-[13px] font-bold whitespace-nowrap">Remarks / Details</th>
+                <th className="py-4 px-6 text-left text-[13px] font-bold whitespace-nowrap">Date</th>
               </tr>
             </thead>
             <tbody>
@@ -772,7 +772,7 @@ const DailyWorkReport = () => {
                 <tr>
                   <td colSpan="8" className="py-16 text-center text-gray-500">
                     <div className="flex flex-col items-center justify-center gap-3">
-                      <Loader2 className="animate-spin text-[#1D4ED8]" size={32} />
+                      <Loader2 className="animate-spin text-[#225091]" size={32} />
                       <span className="text-sm font-medium">Loading daily work reports...</span>
                     </div>
                   </td>
@@ -870,7 +870,7 @@ const DailyWorkReport = () => {
             {/* Modal Header */}
             <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
               <div className="flex items-center gap-2">
-                <FileText size={20} className="text-[#1D4ED8]" />
+                <FileText size={20} className="text-[#225091]" />
                 <h3 className="text-[18px] font-bold text-gray-800">Log Daily Work Report</h3>
               </div>
               <button 
@@ -888,13 +888,13 @@ const DailyWorkReport = () => {
                 {/* Employee Selection */}
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[13px] font-semibold text-gray-700 flex items-center gap-1.5">
-                    <User size={14} className="text-[#1D4ED8]" /> Employee *
+                    <User size={14} className="text-[#225091]" /> Employee *
                   </label>
                   <select 
                     required
                     value={logFormData.employeeId}
                     onChange={(e) => setLogFormData(prev => ({ ...prev, employeeId: e.target.value }))}
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#1D4ED8] bg-white"
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#225091] bg-white"
                   >
                     <option value="">Select Employee</option>
                     {employeeOptions.map((emp) => {
@@ -913,13 +913,13 @@ const DailyWorkReport = () => {
                 {/* Product / Service */}
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[13px] font-semibold text-gray-700 flex items-center gap-1.5">
-                    <Package size={14} className="text-[#1D4ED8]" /> Product / Category *
+                    <Package size={14} className="text-[#225091]" /> Product / Category *
                   </label>
                   <select 
                     required
                     value={logFormData.product}
                     onChange={(e) => setLogFormData(prev => ({ ...prev, product: e.target.value }))}
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#1D4ED8] bg-white"
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#225091] bg-white"
                   >
                     {AVAILABLE_PRODUCTS.map((prod) => (
                       <option key={prod} value={prod}>{prod}</option>
@@ -930,7 +930,7 @@ const DailyWorkReport = () => {
                 {/* Amount */}
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[13px] font-semibold text-gray-700 flex items-center gap-1.5">
-                    <IndianRupee size={14} className="text-[#1D4ED8]" /> Achievement Amount (₹) *
+                    <IndianRupee size={14} className="text-[#225091]" /> Achievement Amount (₹) *
                   </label>
                   <input 
                     type="number"
@@ -940,7 +940,7 @@ const DailyWorkReport = () => {
                     value={logFormData.amount}
                     onChange={(e) => setLogFormData(prev => ({ ...prev, amount: e.target.value }))}
                     placeholder="e.g. 200000"
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#1D4ED8] bg-white"
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#225091] bg-white"
                   />
                 </div>
 
@@ -955,7 +955,7 @@ const DailyWorkReport = () => {
                         required
                         value={logFormData.date}
                         onChange={(e) => setLogFormData(prev => ({ ...prev, date: e.target.value }))}
-                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#1D4ED8] bg-white"
+                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#225091] bg-white"
                       />
                       <Calendar className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={16} />
                     </div>
@@ -972,7 +972,7 @@ const DailyWorkReport = () => {
                       value={logFormData.hoursSpent}
                       onChange={(e) => setLogFormData(prev => ({ ...prev, hoursSpent: e.target.value }))}
                       placeholder="e.g. 8"
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#1D4ED8] bg-white"
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#225091] bg-white"
                     />
                   </div>
                 </div>
@@ -989,7 +989,7 @@ const DailyWorkReport = () => {
                       remarks: e.target.value 
                     }))}
                     placeholder="e.g. Completed target documentation and verified loan files."
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#1D4ED8] bg-white resize-none"
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#225091] bg-white resize-none"
                   ></textarea>
                 </div>
 
@@ -1007,7 +1007,7 @@ const DailyWorkReport = () => {
                 <button 
                   type="submit"
                   disabled={submittingLog}
-                  className="flex-1 px-4 py-2.5 rounded-full bg-[#1D4ED8] hover:bg-[#159a9f] text-white text-[14px] font-bold transition-colors shadow-sm flex items-center justify-center gap-2 disabled:opacity-60"
+                  className="flex-1 px-4 py-2.5 rounded-full bg-[#225091] hover:bg-[#159a9f] text-white text-[14px] font-bold transition-colors shadow-sm flex items-center justify-center gap-2 disabled:opacity-60"
                 >
                   {submittingLog ? (
                     <>
@@ -1033,7 +1033,7 @@ const DailyWorkReport = () => {
             {/* Modal Header */}
             <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
               <div className="flex items-center gap-2">
-                <SlidersHorizontal size={18} className="text-[#1D4ED8]" />
+                <SlidersHorizontal size={18} className="text-[#225091]" />
                 <h3 className="text-[18px] font-bold text-gray-800">Filter Reports</h3>
               </div>
               <button 
@@ -1055,7 +1055,7 @@ const DailyWorkReport = () => {
                     type="date" 
                     value={tempFilters.startDate}
                     onChange={(e) => setTempFilters(prev => ({ ...prev, startDate: e.target.value }))}
-                    className="w-full px-3 py-2 rounded-xl border border-gray-200 text-[13px] text-gray-700 focus:outline-none focus:border-[#1D4ED8] bg-white" 
+                    className="w-full px-3 py-2 rounded-xl border border-gray-200 text-[13px] text-gray-700 focus:outline-none focus:border-[#225091] bg-white" 
                   />
                 </div>
                 <div className="flex flex-col gap-1.5">
@@ -1064,7 +1064,7 @@ const DailyWorkReport = () => {
                     type="date" 
                     value={tempFilters.endDate}
                     onChange={(e) => setTempFilters(prev => ({ ...prev, endDate: e.target.value }))}
-                    className="w-full px-3 py-2 rounded-xl border border-gray-200 text-[13px] text-gray-700 focus:outline-none focus:border-[#1D4ED8] bg-white" 
+                    className="w-full px-3 py-2 rounded-xl border border-gray-200 text-[13px] text-gray-700 focus:outline-none focus:border-[#225091] bg-white" 
                   />
                 </div>
               </div>
@@ -1075,7 +1075,7 @@ const DailyWorkReport = () => {
                 <select 
                   value={tempFilters.branchId || tempFilters.branchIds}
                   onChange={(e) => setTempFilters(prev => ({ ...prev, branchId: e.target.value, branchIds: e.target.value }))}
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#1D4ED8] bg-white appearance-none"
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#225091] bg-white appearance-none"
                 >
                   <option value="">All Branches</option>
                   {branchOptions.map((branch) => {
@@ -1097,7 +1097,7 @@ const DailyWorkReport = () => {
                   <select 
                     value={tempFilters.employeeId}
                     onChange={(e) => setTempFilters(prev => ({ ...prev, employeeId: e.target.value }))}
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#1D4ED8] bg-white appearance-none"
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#225091] bg-white appearance-none"
                   >
                     <option value="">All Employees</option>
                     {employeeOptions.map((emp) => {
@@ -1119,7 +1119,7 @@ const DailyWorkReport = () => {
                 <select 
                   value={tempFilters.designations}
                   onChange={(e) => setTempFilters(prev => ({ ...prev, designations: e.target.value }))}
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#1D4ED8] bg-white appearance-none"
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#225091] bg-white appearance-none"
                 >
                   <option value="">All Designations</option>
                   {roleOptions.length > 0 ? (
@@ -1142,7 +1142,7 @@ const DailyWorkReport = () => {
                 <select 
                   value={tempFilters.states}
                   onChange={(e) => setTempFilters(prev => ({ ...prev, states: e.target.value }))}
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#1D4ED8] bg-white appearance-none"
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#225091] bg-white appearance-none"
                 >
                   <option value="">All States / UT</option>
                   {INDIAN_STATES.map((state) => (
@@ -1163,7 +1163,7 @@ const DailyWorkReport = () => {
               </button>
               <button 
                 onClick={handleApplyFilter}
-                className="flex-1 px-4 py-2.5 rounded-full bg-[#1D4ED8] hover:bg-[#159a9f] text-white text-[14px] font-bold transition-colors shadow-sm"
+                className="flex-1 px-4 py-2.5 rounded-full bg-[#225091] hover:bg-[#159a9f] text-white text-[14px] font-bold transition-colors shadow-sm"
               >
                 Set Filter
               </button>

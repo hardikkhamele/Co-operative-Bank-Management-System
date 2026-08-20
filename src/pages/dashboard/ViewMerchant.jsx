@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useParams } from 'react-router-dom';
-import { ChevronRight, FileText, Download } from 'lucide-react';
+import { useNavigate, Link, useParams } from 'react-router-dom';
+import { ArrowLeft,  ChevronRight, FileText, Download } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { merchantService } from '../../api/merchantService';
 
@@ -19,15 +19,15 @@ const DocumentViewField = ({ label, documentData }) => (
         href={documentData.url} 
         target="_blank" 
         rel="noopener noreferrer"
-        className="flex items-center justify-between p-4 border border-gray-200 rounded-xl bg-gray-50 group hover:bg-white hover:border-[#1D4ED8]/30 hover:shadow-sm transition-all"
+        className="flex items-center justify-between p-4 border border-gray-200 rounded-xl bg-gray-50 group hover:bg-white hover:border-[#225091]/30 hover:shadow-sm transition-all"
       >
         <div className="flex items-center gap-3 overflow-hidden">
-          <div className="p-2 bg-[#1D4ED8]/10 text-[#1D4ED8] rounded-lg shrink-0">
+          <div className="p-2 bg-[#225091]/10 text-[#225091] rounded-lg shrink-0">
             <FileText size={20} />
           </div>
           <span className="text-[15px] font-medium text-gray-700 truncate">{documentData.filename || 'Document'}</span>
         </div>
-        <button className="text-[#1D4ED8] hover:bg-[#1D4ED8]/10 p-2 rounded-lg transition-colors tooltip-trigger" title="Download/View">
+        <button className="text-[#225091] hover:bg-[#225091]/10 p-2 rounded-lg transition-colors tooltip-trigger" title="Download/View">
           <Download size={18} />
         </button>
       </a>
@@ -40,6 +40,7 @@ const DocumentViewField = ({ label, documentData }) => (
 );
 
 const ViewMerchant = () => {
+  const navigate = useNavigate();
   const { id } = useParams();
   const [isLoading, setIsLoading] = useState(true);
   const [merchant, setMerchant] = useState(null);
@@ -74,7 +75,7 @@ const ViewMerchant = () => {
     return (
       <div className="p-10 text-center text-gray-500 flex flex-col items-center">
         <p className="mb-4">Merchant not found.</p>
-        <Link to="/merchant" className="text-[#1D4ED8] hover:underline">Back to Merchants</Link>
+        <Link to="/merchant" className="text-[#225091] hover:underline">Back to Merchants</Link>
       </div>
     );
   }
@@ -84,15 +85,24 @@ const ViewMerchant = () => {
       {/* Header Card */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 shrink-0 flex justify-between items-start">
         <div>
-          <h1 className="text-xl font-bold text-[#4285F4] mb-2">View Merchant</h1>
-          <div className="flex items-center text-sm text-gray-500">
+          <div className="flex items-center gap-3 mb-2">
+            <button 
+            onClick={() => navigate(-1)}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors shrink-0"
+            type="button"
+          >
+            <ArrowLeft size={16} /> Back
+          </button>
+            <h1 className="text-xl font-bold text-[#225091] m-0">View Merchant</h1>
+          </div>
+          <div className="flex items-center text-sm text-gray-500 pl-[40px]">
             <Link to="/dashboard" className="hover:text-gray-700">Dashboard</Link>
             <ChevronRight size={14} className="mx-2" />
             <span className="hover:text-gray-700">Partner Management</span>
             <ChevronRight size={14} className="mx-2" />
             <Link to="/merchant" className="hover:text-gray-700">Merchant</Link>
             <ChevronRight size={14} className="mx-2" />
-            <span className="text-[#1B58A6]">View</span>
+            <span className="text-[#225091]">View</span>
           </div>
         </div>
       </div>
@@ -137,7 +147,7 @@ const ViewMerchant = () => {
           <Link to="/merchant" className="px-6 py-2.5 rounded-full border border-gray-200 text-gray-700 font-medium hover:bg-gray-50 transition-colors shadow-sm text-[15px] inline-flex">
             Back to List
           </Link>
-          <Link to={`/merchant/${merchant.id}/edit`} className="px-6 py-2.5 rounded-full bg-[#1D4ED8] text-white font-medium hover:bg-[#159499] transition-colors shadow-sm text-[15px] inline-flex">
+          <Link to={`/merchant/${merchant.id}/edit`} className="px-6 py-2.5 rounded-full bg-[#225091] text-white font-medium hover:bg-[#159499] transition-colors shadow-sm text-[15px] inline-flex">
             Edit Merchant
           </Link>
         </div>

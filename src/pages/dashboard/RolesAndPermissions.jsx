@@ -113,15 +113,15 @@ const RolesAndPermissions = () => {
     <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6 h-full flex flex-col">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-[#4285F4] mb-2">Roles</h1>
+        <h1 className="text-2xl font-bold text-[#225091] mb-2">Roles</h1>
         <div className="flex items-center text-sm text-gray-500">
-          <Link to="/dashboard" className="hover:text-[#1D4ED8]">
+          <Link to="/dashboard" className="hover:text-[#225091]">
             Dashboard
           </Link>
           <ChevronRight size={14} className="mx-2" />
           <span>Roles & Permissions</span>
           <ChevronRight size={14} className="mx-2" />
-          <span className="text-[#1B58A6]">Roles & Permissions</span>
+          <span className="text-[#225091]">Roles & Permissions</span>
         </div>
       </div>
 
@@ -144,17 +144,10 @@ const RolesAndPermissions = () => {
               placeholder="Search roles..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 pr-4 py-2 border border-gray-200 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all"
+              className="pl-10 pr-4 py-2 border border-gray-200 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all"
             />
           </div>
         </div>
-
-        <Link
-          to="/roles-permissions/create"
-          className="bg-[#1D4ED8] hover:bg-[#168f94] text-white px-4 py-2 rounded-full font-medium transition-colors flex items-center text-sm w-full sm:w-auto justify-center shrink-0"
-        >
-          + Create Roles
-        </Link>
       </div>
 
       {/* Table */}
@@ -256,17 +249,17 @@ const RolesAndPermissions = () => {
             <button
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page === 1}
-              className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-[#1D4ED8] hover:bg-[#1D4ED8] hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-[#225091] hover:bg-[#225091] hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <ChevronLeft size={16} />
             </button>
-            <button className="w-8 h-8 flex items-center justify-center rounded-full bg-[#1D4ED8] text-white border border-[#1D4ED8]">
+            <button className="w-8 h-8 flex items-center justify-center rounded-full bg-[#225091] text-white border border-[#225091]">
               {page}
             </button>
             <button
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page === totalPages}
-              className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-[#1D4ED8] hover:bg-[#1D4ED8] hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-[#225091] hover:bg-[#225091] hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <ChevronRight size={16} />
             </button>

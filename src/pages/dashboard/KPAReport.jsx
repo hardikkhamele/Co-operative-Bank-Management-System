@@ -317,7 +317,7 @@ const KPAReport = () => {
           onClick={() => setPage(p)}
           className={`w-8 h-8 flex items-center justify-center rounded-full text-[13px] font-bold transition-colors ${
             p === current
-              ? 'bg-[#1D4ED8] text-white shadow-sm'
+              ? 'bg-[#225091] text-white shadow-sm'
               : 'border border-gray-200 text-gray-600 hover:bg-gray-50'
           }`}
         >
@@ -410,13 +410,13 @@ const KPAReport = () => {
       
       {/* Breadcrumb & Header Card */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 shrink-0">
-        <h1 className="text-[22px] font-bold text-[#1D4ED8] mb-3">KPA Report</h1>
+        <h1 className="text-[22px] font-bold text-[#225091] mb-3">KPA Report</h1>
         <div className="flex items-center text-[13px] font-medium text-gray-500 flex-wrap gap-y-2">
           <Link to="/dashboard" className="hover:text-gray-800 transition-colors">Dashboard</Link>
           <ChevronRight size={14} className="mx-1" />
           <span>HR Management</span>
           <ChevronRight size={14} className="mx-1" />
-          <span className="text-[#1D4ED8]">KPA Report</span>
+          <span className="text-[#225091]">KPA Report</span>
         </div>
       </div>
 
@@ -433,7 +433,7 @@ const KPAReport = () => {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search employee, designation, branch..." 
-                className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 text-[14px] focus:outline-none focus:border-[#1D4ED8] bg-gray-50/50"
+                className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 text-[14px] focus:outline-none focus:border-[#225091] bg-gray-50/50"
               />
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
               {search && (
@@ -454,7 +454,7 @@ const KPAReport = () => {
             >
               <SlidersHorizontal size={20} />
               {activeFilterCount > 0 && (
-                <span className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-[#1D4ED8] text-white text-[11px] font-bold flex items-center justify-center shadow-sm">
+                <span className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-[#225091] text-white text-[11px] font-bold flex items-center justify-center shadow-sm">
                   {activeFilterCount}
                 </span>
               )}
@@ -467,7 +467,7 @@ const KPAReport = () => {
               className="w-11 h-11 flex items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors shadow-sm shrink-0 bg-white"
               title="Refresh Data"
             >
-              <RefreshCw size={18} className={loading ? 'animate-spin text-[#1D4ED8]' : ''} />
+              <RefreshCw size={18} className={loading ? 'animate-spin text-[#225091]' : ''} />
             </button>
           </div>
           
@@ -556,13 +556,13 @@ const KPAReport = () => {
             <thead>
               <tr className="border-b border-gray-100 bg-[#f8f9fb]">
                 
-                <th className="px-6 py-4">Sr.No.</th>
-                <th className="py-4 px-6 text-left text-[13px] font-bold text-gray-700 whitespace-nowrap">Employee Name</th>
-                <th className="py-4 px-6 text-left text-[13px] font-bold text-gray-700 whitespace-nowrap">Designation</th>
-                <th className="py-4 px-6 text-left text-[13px] font-bold text-gray-700 whitespace-nowrap">Branch</th>
-                <th className="py-4 px-6 text-left text-[13px] font-bold text-gray-700 whitespace-nowrap">Phone Number</th>
-                <th className="py-4 px-6 text-left text-[13px] font-bold text-gray-700 whitespace-nowrap">Email</th>
-                <th className="py-4 px-6 text-center text-[13px] font-bold text-gray-700 whitespace-nowrap w-24">Action</th>
+                <th className="px-6 py-4 font-bold">Sr.No.</th>
+                <th className="py-4 px-6 text-left text-[13px] font-bold whitespace-nowrap">Employee Name</th>
+                <th className="py-4 px-6 text-left text-[13px] font-bold whitespace-nowrap">Designation</th>
+                <th className="py-4 px-6 text-left text-[13px] font-bold whitespace-nowrap">Branch</th>
+                <th className="py-4 px-6 text-left text-[13px] font-bold whitespace-nowrap">Phone Number</th>
+                <th className="py-4 px-6 text-left text-[13px] font-bold whitespace-nowrap">Email</th>
+                <th className="py-4 px-6 text-center text-[13px] font-bold whitespace-nowrap w-24">Action</th>
               </tr>
             </thead>
             <tbody>
@@ -570,7 +570,7 @@ const KPAReport = () => {
                 <tr>
                   <td colSpan="7" className="py-16 text-center text-gray-500">
                     <div className="flex flex-col items-center justify-center gap-3">
-                      <Loader2 className="animate-spin text-[#1D4ED8]" size={32} />
+                      <Loader2 className="animate-spin text-[#225091]" size={32} />
                       <span className="text-sm font-medium">Loading KPA employee reports...</span>
                     </div>
                   </td>
@@ -618,7 +618,7 @@ const KPAReport = () => {
                         <div className="flex items-center justify-center">
                           <Link 
                             to={`/kpa-report/view/${empId}`} 
-                            className="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:text-[#1D4ED8] hover:bg-teal-50 transition-colors"
+                            className="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:text-[#225091] hover:bg-teal-50 transition-colors"
                             title="View KPA Targets Detail"
                           >
                             <Eye size={18} />
@@ -669,7 +669,7 @@ const KPAReport = () => {
             {/* Modal Header */}
             <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
               <div className="flex items-center gap-2">
-                <SlidersHorizontal size={18} className="text-[#1D4ED8]" />
+                <SlidersHorizontal size={18} className="text-[#225091]" />
                 <h3 className="text-[18px] font-bold text-gray-800">Filter KPA Reports</h3>
               </div>
               <button 
@@ -689,7 +689,7 @@ const KPAReport = () => {
                 <select 
                   value={tempFilters.designations}
                   onChange={(e) => setTempFilters(prev => ({ ...prev, designations: e.target.value }))}
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#1D4ED8] bg-white appearance-none"
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#225091] bg-white appearance-none"
                 >
                   <option value="">All Designations</option>
                   {roleOptions.length > 0 ? (
@@ -712,7 +712,7 @@ const KPAReport = () => {
                 <select 
                   value={tempFilters.states}
                   onChange={(e) => setTempFilters(prev => ({ ...prev, states: e.target.value }))}
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#1D4ED8] bg-white appearance-none"
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#225091] bg-white appearance-none"
                 >
                   <option value="">All States / UT</option>
                   {INDIAN_STATES.map((state) => (
@@ -727,7 +727,7 @@ const KPAReport = () => {
                 <select 
                   value={tempFilters.branchIds}
                   onChange={(e) => setTempFilters(prev => ({ ...prev, branchIds: e.target.value }))}
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#1D4ED8] bg-white appearance-none"
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#225091] bg-white appearance-none"
                 >
                   <option value="">All Branches</option>
                   {branchOptions.map((branch) => {
@@ -750,7 +750,7 @@ const KPAReport = () => {
                     type="date" 
                     value={tempFilters.date}
                     onChange={(e) => setTempFilters(prev => ({ ...prev, date: e.target.value }))}
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#1D4ED8] bg-white" 
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#225091] bg-white" 
                   />
                   <Calendar className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={16} />
                 </div>
@@ -768,7 +768,7 @@ const KPAReport = () => {
               </button>
               <button 
                 onClick={handleApplyFilter}
-                className="flex-1 px-4 py-2.5 rounded-full bg-[#1D4ED8] hover:bg-[#159a9f] text-white text-[14px] font-bold transition-colors shadow-sm"
+                className="flex-1 px-4 py-2.5 rounded-full bg-[#225091] hover:bg-[#159a9f] text-white text-[14px] font-bold transition-colors shadow-sm"
               >
                 Set Filter
               </button>

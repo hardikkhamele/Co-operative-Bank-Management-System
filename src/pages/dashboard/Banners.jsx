@@ -2,12 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronRight, Search, ChevronDown, Edit, Trash2, X, Upload, Image as ImageIcon } from 'lucide-react';
 
-const mockBanners = [
-  { id: 1, portalType: 'Customer App', bannerType: 'Top Slider', category: 'Home Loan', image: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=400&q=80' },
-  { id: 2, portalType: 'Customer App', bannerType: 'Top Slider', category: 'Personal Loan', image: 'https://images.unsplash.com/photo-1573164713988-8665fc963095?auto=format&fit=crop&w=400&q=80' },
-  { id: 3, portalType: 'Customer App', bannerType: 'Top Slider', category: 'Car Loan', image: 'https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?auto=format&fit=crop&w=400&q=80' },
-  { id: 4, portalType: 'Loan Executive App', bannerType: 'Top Slider', category: 'Home Loan', image: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=400&q=80' },
-];
+const mockBanners = [];
 
 const Banners = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -21,13 +16,13 @@ const Banners = () => {
     <div className="max-w-[1400px] w-full">
       {/* Header Card */}
       <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-6">
-        <h2 className="text-xl font-bold text-[#1b7ef7] mb-2">Banner Management</h2>
+        <h2 className="text-xl font-bold text-[#225091] mb-2">Banner Management</h2>
         <div className="flex items-center text-sm font-medium text-gray-500">
           <Link to="/dashboard" className="hover:text-gray-800 transition-colors">Dashboard</Link>
           <ChevronRight size={16} className="mx-1 text-gray-400" />
           <span>App Management</span>
           <ChevronRight size={16} className="mx-1 text-gray-400" />
-          <span className="text-[#1B58A6]">Banner Management</span>
+          <span className="text-[#225091]">Banner Management</span>
         </div>
       </div>
 
@@ -42,7 +37,7 @@ const Banners = () => {
             </div>
             <input
               type="text"
-              className="block w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-lg focus:ring-[#1D4ED8] focus:border-[#1D4ED8] sm:text-sm bg-white shadow-sm"
+              className="block w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-lg focus:ring-[#225091] focus:border-[#225091] sm:text-sm bg-white shadow-sm"
               placeholder="Search..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -54,7 +49,7 @@ const Banners = () => {
         <div className="flex items-center w-full md:w-auto justify-end">
           <button 
             onClick={() => setIsAddModalOpen(true)}
-            className="bg-[#1D4ED8] hover:bg-[#159a9f] text-white py-2.5 px-6 rounded-full text-sm font-medium transition-colors shadow-sm whitespace-nowrap w-full md:w-auto"
+            className="bg-[#225091] hover:bg-[#159a9f] text-white py-2.5 px-6 rounded-full text-sm font-medium transition-colors shadow-sm whitespace-nowrap w-full md:w-auto"
           >
             + Create Banner
           </button>
@@ -66,12 +61,12 @@ const Banners = () => {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse min-w-[800px]">
             <thead>
-              <tr className="bg-[#f4f2ff]">
-                <th className="py-4 px-6 font-semibold text-gray-700 text-sm">Sr.No.</th>
-                <th className="py-4 px-6 font-semibold text-gray-700 text-sm">Portal Type</th>
-                <th className="py-4 px-6 font-semibold text-gray-700 text-sm">Banner Type</th>
-                <th className="py-4 px-6 font-semibold text-gray-700 text-sm">Product Category</th>
-                <th className="py-4 px-6 font-semibold text-gray-700 text-sm text-right">Action</th>
+              <tr className="bg-gray-50/50 text-gray-500 text-[11px] uppercase tracking-wider font-bold border-b border-gray-100">
+                <th className="py-4 px-6 font-bold">Sr.No.</th>
+                <th className="py-4 px-6 font-bold">Portal Type</th>
+                <th className="py-4 px-6 font-bold">Banner Type</th>
+                <th className="py-4 px-6 font-bold">Product Category</th>
+                <th className="py-4 px-6 font-bold text-right">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -128,19 +123,19 @@ const Banners = () => {
           Showing 1 to 4 of 12 Entries
         </div>
         <div className="flex items-center gap-2">
-          <button className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-[#1D4ED8] hover:bg-teal-50 transition-colors bg-white">
+          <button className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-[#225091] hover:bg-teal-50 transition-colors bg-white">
             <ChevronRight size={16} className="rotate-180" />
           </button>
-          <button className="w-8 h-8 flex items-center justify-center rounded-full bg-[#1D4ED8] text-white font-medium shadow-sm">
+          <button className="w-8 h-8 flex items-center justify-center rounded-full bg-[#225091] text-white font-medium shadow-sm">
             1
           </button>
-          <button className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-[#1D4ED8] hover:bg-teal-50 transition-colors bg-white font-medium">
+          <button className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-[#225091] hover:bg-teal-50 transition-colors bg-white font-medium">
             2
           </button>
-          <button className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-[#1D4ED8] hover:bg-teal-50 transition-colors bg-white font-medium">
+          <button className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-[#225091] hover:bg-teal-50 transition-colors bg-white font-medium">
             3
           </button>
-          <button className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-[#1D4ED8] hover:bg-teal-50 transition-colors bg-white">
+          <button className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-[#225091] hover:bg-teal-50 transition-colors bg-white">
             <ChevronRight size={16} />
           </button>
         </div>
@@ -164,7 +159,7 @@ const Banners = () => {
                 <div>
                   <label className="block text-sm font-semibold text-gray-800 mb-2">Portal Type</label>
                   <div className="relative">
-                    <select className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white appearance-none text-gray-500 shadow-sm text-sm">
+                    <select className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all bg-white appearance-none text-gray-500 shadow-sm text-sm">
                       <option value="" disabled selected>Select</option>
                       <option value="customer">Customer App</option>
                       <option value="executive">Loan Executive App</option>
@@ -175,7 +170,7 @@ const Banners = () => {
                 <div>
                   <label className="block text-sm font-semibold text-gray-800 mb-2">Banner Type</label>
                   <div className="relative">
-                    <select className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-white appearance-none text-gray-500 shadow-sm text-sm">
+                    <select className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all bg-white appearance-none text-gray-500 shadow-sm text-sm">
                       <option value="" disabled selected>Select</option>
                       <option value="top">Top Slider</option>
                       <option value="middle">Middle Banner</option>
@@ -198,14 +193,14 @@ const Banners = () => {
                 <button 
                   type="button" 
                   onClick={() => setIsAddModalOpen(false)}
-                  className="px-6 py-2 rounded-full border border-[#1D4ED8] text-[#1D4ED8] font-semibold hover:bg-teal-50 transition-colors text-sm bg-white"
+                  className="px-6 py-2 rounded-full border border-[#225091] text-[#225091] font-semibold hover:bg-teal-50 transition-colors text-sm bg-white"
                 >
                   Cancel
                 </button>
                 <button 
                   type="button"
                   onClick={() => setIsAddModalOpen(false)}
-                  className="px-6 py-2 rounded-full bg-[#1D4ED8] text-white font-semibold hover:bg-[#168f94] transition-colors shadow-sm text-sm"
+                  className="px-6 py-2 rounded-full bg-[#225091] text-white font-semibold hover:bg-[#168f94] transition-colors shadow-sm text-sm"
                 >
                   Create
                 </button>
@@ -271,7 +266,7 @@ const Banners = () => {
                   <h3 className="text-white text-[40px] font-bold leading-tight mb-6">
                     Get Instant {selectedBanner.category}<br/>at 0% Interest
                   </h3>
-                  <button className="bg-white border-[3px] border-[#1D4ED8] text-[#1D4ED8] text-lg font-bold px-8 py-2.5 rounded-full hover:bg-gray-50 transition-colors shadow-sm">
+                  <button className="bg-white border-[3px] border-[#225091] text-[#225091] text-lg font-bold px-8 py-2.5 rounded-full hover:bg-gray-50 transition-colors shadow-sm">
                     Know More
                   </button>
                 </div>
@@ -280,7 +275,7 @@ const Banners = () => {
               {/* Close Button on Banner */}
               <button 
                 onClick={() => setIsPreviewModalOpen(false)}
-                className="absolute top-4 right-4 w-9 h-9 rounded-full bg-[#1D4ED8] text-white flex items-center justify-center hover:bg-[#168f94] transition-colors shadow-md z-10"
+                className="absolute top-4 right-4 w-9 h-9 rounded-full bg-[#225091] text-white flex items-center justify-center hover:bg-[#168f94] transition-colors shadow-md z-10"
               >
                 <X size={20} strokeWidth={2.5} />
               </button>

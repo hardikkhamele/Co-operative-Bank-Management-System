@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { useNavigate, Link, useParams } from 'react-router-dom';
 import { 
   ChevronRight, Calendar, Phone, Mail, Lock, MapPin, Clock, Check, 
   AlertCircle, Fingerprint, Map, Banknote, UserCircle, ThumbsUp, 
   ArrowLeftRight, ShieldCheck, Briefcase, Building2, Award, 
   Loader2, BadgeCheck, X
-} from 'lucide-react';
+, ArrowLeft} from 'lucide-react';
 import { employeeService } from '../../api/employeeService';
 
 const InfoCard = ({ icon: Icon, title, value }) => (
   <div className="bg-[#fafafa] rounded-xl p-4 flex items-center gap-4 border border-gray-100/60">
-    <div className="text-[#1D4ED8] shrink-0 bg-white p-2.5 rounded-lg shadow-2xs border border-gray-100">
+    <div className="text-[#225091] shrink-0 bg-white p-2.5 rounded-lg shadow-2xs border border-gray-100">
       <Icon size={20} strokeWidth={2} />
     </div>
     <div className="flex flex-col min-w-0">
@@ -30,6 +30,7 @@ const CheckCard = ({ label, active = true }) => (
 );
 
 const ViewEmployee = () => {
+  const navigate = useNavigate();
   const { id } = useParams();
   const [activeTab, setActiveTab] = useState('Personal Details');
   const [loading, setLoading] = useState(true);
@@ -88,7 +89,7 @@ const ViewEmployee = () => {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] gap-3">
-        <Loader2 size={32} className="animate-spin text-[#1D4ED8]" />
+        <Loader2 size={32} className="animate-spin text-[#225091]" />
         <span className="text-gray-500 font-medium text-sm">Loading employee details...</span>
       </div>
     );
@@ -100,7 +101,7 @@ const ViewEmployee = () => {
         <AlertCircle size={40} className="mx-auto text-rose-500 mb-3" />
         <h2 className="text-lg font-bold text-gray-800 mb-1">Employee Details Unavailable</h2>
         <p className="text-sm text-gray-500 mb-4">{errorMsg || 'Could not retrieve employee information.'}</p>
-        <Link to="/employees" className="inline-flex items-center px-4 py-2 bg-[#1D4ED8] text-white rounded-lg font-semibold text-sm hover:bg-[#16949a] transition-colors">
+        <Link to="/employees" className="inline-flex items-center px-4 py-2 bg-[#225091] text-white rounded-lg font-semibold text-sm hover:bg-[#16949a] transition-colors">
           Back to Employee List
         </Link>
       </div>
@@ -134,15 +135,24 @@ const ViewEmployee = () => {
     <div className="flex flex-col gap-6 w-full">
       {/* Header section with Breadcrumbs */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 shrink-0">
-        <h1 className="text-xl font-bold text-[#4285F4] mb-2">Staff Details</h1>
-        <div className="flex items-center text-sm text-gray-500">
+        <div className="flex items-center gap-3 mb-2">
+            <button 
+            onClick={() => navigate(-1)}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors shrink-0"
+            type="button"
+          >
+            <ArrowLeft size={16} /> Back
+          </button>
+            <h1 className="text-xl font-bold text-[#225091] m-0">Staff Details</h1>
+          </div>
+        <div className="flex items-center text-sm text-gray-500 pl-[40px]">
           <Link to="/dashboard" className="hover:text-gray-700">Dashboard</Link>
           <ChevronRight size={14} className="mx-2" />
           <span className="hover:text-gray-700">HR Management</span>
           <ChevronRight size={14} className="mx-2" />
           <Link to="/employees" className="hover:text-gray-700">Employee</Link>
           <ChevronRight size={14} className="mx-2" />
-          <span className="text-[#1B58A6] font-semibold">{empName}</span>
+          <span className="text-[#225091] font-semibold">{empName}</span>
         </div>
       </div>
 
@@ -150,11 +160,11 @@ const ViewEmployee = () => {
         {/* Profile Banner */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-8 pb-6 border-b border-gray-100">
           <div className="flex items-center gap-5">
-            <div className="w-[76px] h-[76px] rounded-full border-[3px] border-[#1D4ED8] overflow-hidden bg-[#f4f2ff] flex items-center justify-center shrink-0 shadow-sm">
+            <div className="w-[76px] h-[76px] rounded-full border-[3px] border-[#225091] overflow-hidden bg-[#f4f2ff] flex items-center justify-center shrink-0 shadow-sm">
               {avatarUrl ? (
                 <img src={avatarUrl} alt={empName} className="w-full h-full object-cover" />
               ) : (
-                <span className="text-2xl font-bold text-[#1B58A6]">{getInitials(empName)}</span>
+                <span className="text-2xl font-bold text-[#225091]">{getInitials(empName)}</span>
               )}
             </div>
             <div>
@@ -205,7 +215,7 @@ const ViewEmployee = () => {
               onClick={() => setActiveTab(tab)}
               className={`px-5 py-2.5 rounded-xl font-semibold text-[14px] whitespace-nowrap transition-all ${
                 activeTab === tab 
-                  ? 'bg-[#eef2ff] text-[#1D4ED8] shadow-xs' 
+                  ? 'bg-[#eef2ff] text-[#225091] shadow-xs' 
                   : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
               }`}
             >
@@ -422,13 +432,13 @@ const ViewEmployee = () => {
                   <table className="w-full text-left border-collapse min-w-[650px] bg-white rounded-xl overflow-hidden shadow-2xs">
                     <thead>
                       <tr className="border-b border-gray-100 bg-[#f4f3fb] text-[14px] text-[#1b2559] font-bold">
-                        <th className="py-4 px-6 font-semibold w-24">Sr. No.</th>
-                        <th className="py-4 px-6 font-semibold">Product Name</th>
-                        <th className="py-4 px-6 font-semibold">Type</th>
-                        <th className="py-4 px-6 font-semibold text-right">Daily</th>
-                        <th className="py-4 px-6 font-semibold text-right">Weekly</th>
-                        <th className="py-4 px-6 font-semibold text-right">Monthly</th>
-                        <th className="py-4 px-6 font-semibold text-right">Yearly Target</th>
+                        <th className="py-4 px-6 font-bold w-24">Sr. No.</th>
+                        <th className="py-4 px-6 font-bold">Product Name</th>
+                        <th className="py-4 px-6 font-bold">Type</th>
+                        <th className="py-4 px-6 font-bold text-right">Daily</th>
+                        <th className="py-4 px-6 font-bold text-right">Weekly</th>
+                        <th className="py-4 px-6 font-bold text-right">Monthly</th>
+                        <th className="py-4 px-6 font-bold text-right">Yearly Target</th>
                       </tr>
                     </thead>
                     <tbody>

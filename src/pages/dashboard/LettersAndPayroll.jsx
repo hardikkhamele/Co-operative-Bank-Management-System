@@ -385,13 +385,13 @@ const LettersAndPayroll = () => {
       
       {/* Breadcrumb & Header Card */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 shrink-0">
-        <h1 className="text-[22px] font-bold text-[#1D4ED8] mb-3">Letters & Payroll</h1>
+        <h1 className="text-[22px] font-bold text-[#225091] mb-3">Letters & Payroll</h1>
         <div className="flex items-center text-[13px] font-medium text-gray-500 flex-wrap gap-y-2">
           <Link to="/dashboard" className="hover:text-gray-800 transition-colors">Dashboard</Link>
           <ChevronRight size={14} className="mx-1" />
           <span>HR Management</span>
           <ChevronRight size={14} className="mx-1" />
-          <span className="text-[#1D4ED8]">Letters & Payroll</span>
+          <span className="text-[#225091]">Letters & Payroll</span>
         </div>
       </div>
 
@@ -409,7 +409,7 @@ const LettersAndPayroll = () => {
                 onClick={() => handleTabChange(tab.label)}
                 className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-[13.5px] font-semibold whitespace-nowrap transition-all ${
                   isActive
-                    ? 'bg-[#1D4ED8] text-white shadow-sm'
+                    ? 'bg-[#225091] text-white shadow-sm'
                     : 'text-gray-600 hover:bg-gray-200/60'
                 }`}
               >
@@ -424,13 +424,13 @@ const LettersAndPayroll = () => {
         <div className="p-8">
           <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
             <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#1D4ED8]"></span>
+              <span className="w-2.5 h-2.5 rounded-full bg-[#225091]"></span>
               {activeTab} Generation
             </h2>
 
             {currentEmployee && (
               <div className="flex items-center gap-3 bg-teal-50/60 border border-teal-200 px-4 py-2 rounded-xl text-xs">
-                <div className="w-7 h-7 rounded-full bg-[#1D4ED8] text-white font-bold flex items-center justify-center text-xs">
+                <div className="w-7 h-7 rounded-full bg-[#225091] text-white font-bold flex items-center justify-center text-xs">
                   {(currentEmployee.fullName || currentEmployee.name || 'E').charAt(0)}
                 </div>
                 <div>
@@ -453,7 +453,7 @@ const LettersAndPayroll = () => {
                 <select 
                   value={selectedState}
                   onChange={(e) => setSelectedState(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#1D4ED8] bg-white"
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#225091] bg-white"
                 >
                   <option value="">All States</option>
                   {INDIAN_STATES.map((state) => (
@@ -468,7 +468,7 @@ const LettersAndPayroll = () => {
                 <select 
                   value={selectedBranch}
                   onChange={(e) => setSelectedBranch(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#1D4ED8] bg-white"
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#225091] bg-white"
                 >
                   <option value="">All Branches</option>
                   {branches.map((b) => (
@@ -485,7 +485,7 @@ const LettersAndPayroll = () => {
                 <select 
                   value={selectedDesignation}
                   onChange={(e) => setSelectedDesignation(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#1D4ED8] bg-white"
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#225091] bg-white"
                 >
                   <option value="">All Designations</option>
                   {roles.length > 0 ? (
@@ -505,13 +505,13 @@ const LettersAndPayroll = () => {
               {/* Target Employee Selection */}
               <div className="flex flex-col gap-1.5">
                 <label className="text-[13px] font-semibold text-gray-700 flex items-center gap-1.5">
-                  <User size={14} className="text-[#1D4ED8]" /> Select Employee *
+                  <User size={14} className="text-[#225091]" /> Select Employee *
                 </label>
                 <select 
                   required
                   value={selectedEmployeeId}
                   onChange={(e) => setSelectedEmployeeId(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-xl border border-teal-300 text-[14px] font-semibold text-gray-800 focus:outline-none focus:border-[#1D4ED8] bg-white"
+                  className="w-full px-4 py-2.5 rounded-xl border border-teal-300 text-[14px] font-semibold text-gray-800 focus:outline-none focus:border-[#225091] bg-white"
                 >
                   <option value="">Select Employee ({filteredEmployees.length} available)</option>
                   {filteredEmployees.map((emp) => {
@@ -533,7 +533,7 @@ const LettersAndPayroll = () => {
               {activeTab === 'Offer Letter' && (
                 <div className="flex flex-col gap-1.5 md:col-span-2">
                   <label className="text-[13px] font-semibold text-gray-700 flex items-center gap-1.5">
-                    <Briefcase size={14} className="text-[#1D4ED8]" /> Offered Designation *
+                    <Briefcase size={14} className="text-[#225091]" /> Offered Designation *
                   </label>
                   <input 
                     type="text"
@@ -541,7 +541,7 @@ const LettersAndPayroll = () => {
                     value={offerDesignation}
                     onChange={(e) => setOfferDesignation(e.target.value)}
                     placeholder="e.g. Senior Loan Officer"
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-800 focus:outline-none focus:border-[#1D4ED8] bg-white"
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-800 focus:outline-none focus:border-[#225091] bg-white"
                   />
                 </div>
               )}
@@ -551,19 +551,19 @@ const LettersAndPayroll = () => {
                 <>
                   <div className="flex flex-col gap-1.5">
                     <label className="text-[13px] font-semibold text-gray-700 flex items-center gap-1.5">
-                      <Calendar size={14} className="text-[#1D4ED8]" /> Confirmation Date *
+                      <Calendar size={14} className="text-[#225091]" /> Confirmation Date *
                     </label>
                     <input 
                       type="date"
                       required
                       value={confirmationDate}
                       onChange={(e) => setConfirmationDate(e.target.value)}
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-800 focus:outline-none focus:border-[#1D4ED8] bg-white"
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-800 focus:outline-none focus:border-[#225091] bg-white"
                     />
                   </div>
                   <div className="flex flex-col gap-1.5">
                     <label className="text-[13px] font-semibold text-gray-700 flex items-center gap-1.5">
-                      <Briefcase size={14} className="text-[#1D4ED8]" /> Confirmed Designation *
+                      <Briefcase size={14} className="text-[#225091]" /> Confirmed Designation *
                     </label>
                     <input 
                       type="text"
@@ -571,7 +571,7 @@ const LettersAndPayroll = () => {
                       value={confirmationDesignation}
                       onChange={(e) => setConfirmationDesignation(e.target.value)}
                       placeholder="e.g. Permanent Loan Officer"
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-800 focus:outline-none focus:border-[#1D4ED8] bg-white"
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-800 focus:outline-none focus:border-[#225091] bg-white"
                     />
                   </div>
                 </>
@@ -581,7 +581,7 @@ const LettersAndPayroll = () => {
               {activeTab === 'Performance Letter' && (
                 <div className="flex flex-col gap-1.5 md:col-span-2">
                   <label className="text-[13px] font-semibold text-gray-700 flex items-center gap-1.5">
-                    <FileText size={14} className="text-[#1D4ED8]" /> Performance Letter Remarks / Review Summary *
+                    <FileText size={14} className="text-[#225091]" /> Performance Letter Remarks / Review Summary *
                   </label>
                   <textarea 
                     rows={4}
@@ -589,7 +589,7 @@ const LettersAndPayroll = () => {
                     value={performanceLetterText}
                     onChange={(e) => setPerformanceLetterText(e.target.value)}
                     placeholder="e.g. Exceeded yearly loan disbursement target by 125%. Promoted to Senior Grade."
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-800 focus:outline-none focus:border-[#1D4ED8] bg-white resize-none"
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-800 focus:outline-none focus:border-[#225091] bg-white resize-none"
                   ></textarea>
                 </div>
               )}
@@ -599,7 +599,7 @@ const LettersAndPayroll = () => {
                 <>
                   <div className="flex flex-col gap-1.5">
                     <label className="text-[13px] font-semibold text-gray-700 flex items-center gap-1.5">
-                      <TrendingUp size={14} className="text-[#1D4ED8]" /> Promoted To Designation *
+                      <TrendingUp size={14} className="text-[#225091]" /> Promoted To Designation *
                     </label>
                     <input 
                       type="text"
@@ -607,19 +607,19 @@ const LettersAndPayroll = () => {
                       value={promotedToDesignation}
                       onChange={(e) => setPromotedToDesignation(e.target.value)}
                       placeholder="e.g. Branch Manager"
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-800 focus:outline-none focus:border-[#1D4ED8] bg-white"
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-800 focus:outline-none focus:border-[#225091] bg-white"
                     />
                   </div>
                   <div className="flex flex-col gap-1.5">
                     <label className="text-[13px] font-semibold text-gray-700 flex items-center gap-1.5">
-                      <Calendar size={14} className="text-[#1D4ED8]" /> Promotion Effective Date *
+                      <Calendar size={14} className="text-[#225091]" /> Promotion Effective Date *
                     </label>
                     <input 
                       type="date"
                       required
                       value={promotionDate}
                       onChange={(e) => setPromotionDate(e.target.value)}
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-800 focus:outline-none focus:border-[#1D4ED8] bg-white"
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-800 focus:outline-none focus:border-[#225091] bg-white"
                     />
                   </div>
                 </>
@@ -630,13 +630,13 @@ const LettersAndPayroll = () => {
                 <>
                   <div className="flex flex-col gap-1.5">
                     <label className="text-[13px] font-semibold text-gray-700 flex items-center gap-1.5">
-                      <Building2 size={14} className="text-[#1D4ED8]" /> Transfer To Branch *
+                      <Building2 size={14} className="text-[#225091]" /> Transfer To Branch *
                     </label>
                     <select 
                       required
                       value={transferToBranchId}
                       onChange={(e) => setTransferToBranchId(e.target.value)}
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-800 focus:outline-none focus:border-[#1D4ED8] bg-white"
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-800 focus:outline-none focus:border-[#225091] bg-white"
                     >
                       <option value="">Select Target Branch</option>
                       {branches.map((b) => (
@@ -648,14 +648,14 @@ const LettersAndPayroll = () => {
                   </div>
                   <div className="flex flex-col gap-1.5">
                     <label className="text-[13px] font-semibold text-gray-700 flex items-center gap-1.5">
-                      <Calendar size={14} className="text-[#1D4ED8]" /> Transfer Date *
+                      <Calendar size={14} className="text-[#225091]" /> Transfer Date *
                     </label>
                     <input 
                       type="date"
                       required
                       value={transferDate}
                       onChange={(e) => setTransferDate(e.target.value)}
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-800 focus:outline-none focus:border-[#1D4ED8] bg-white"
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-800 focus:outline-none focus:border-[#225091] bg-white"
                     />
                   </div>
                 </>
@@ -666,13 +666,13 @@ const LettersAndPayroll = () => {
                 <>
                   <div className="flex flex-col gap-1.5">
                     <label className="text-[13px] font-semibold text-gray-700 flex items-center gap-1.5">
-                      <Calendar size={14} className="text-[#1D4ED8]" /> From Month *
+                      <Calendar size={14} className="text-[#225091]" /> From Month *
                     </label>
                     <select 
                       required
                       value={fromMonth}
                       onChange={(e) => setFromMonth(e.target.value)}
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-800 focus:outline-none focus:border-[#1D4ED8] bg-white"
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-800 focus:outline-none focus:border-[#225091] bg-white"
                     >
                       {monthYearOptions.map((opt) => (
                         <option key={opt} value={opt}>{opt}</option>
@@ -681,13 +681,13 @@ const LettersAndPayroll = () => {
                   </div>
                   <div className="flex flex-col gap-1.5">
                     <label className="text-[13px] font-semibold text-gray-700 flex items-center gap-1.5">
-                      <Calendar size={14} className="text-[#1D4ED8]" /> To Month *
+                      <Calendar size={14} className="text-[#225091]" /> To Month *
                     </label>
                     <select 
                       required
                       value={toMonth}
                       onChange={(e) => setToMonth(e.target.value)}
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-800 focus:outline-none focus:border-[#1D4ED8] bg-white"
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-800 focus:outline-none focus:border-[#225091] bg-white"
                     >
                       {monthYearOptions.map((opt) => (
                         <option key={opt} value={opt}>{opt}</option>
@@ -702,7 +702,7 @@ const LettersAndPayroll = () => {
                 <>
                   <div className="flex flex-col gap-1.5">
                     <label className="text-[13px] font-semibold text-gray-700 flex items-center gap-1.5">
-                      <IndianRupee size={14} className="text-[#1D4ED8]" /> New Revised Monthly Salary (₹) *
+                      <IndianRupee size={14} className="text-[#225091]" /> New Revised Monthly Salary (₹) *
                     </label>
                     <input 
                       type="number"
@@ -712,19 +712,19 @@ const LettersAndPayroll = () => {
                       value={newSalary}
                       onChange={(e) => setNewSalary(e.target.value)}
                       placeholder="e.g. 75000"
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-800 focus:outline-none focus:border-[#1D4ED8] bg-white"
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-800 focus:outline-none focus:border-[#225091] bg-white"
                     />
                   </div>
                   <div className="flex flex-col gap-1.5">
                     <label className="text-[13px] font-semibold text-gray-700 flex items-center gap-1.5">
-                      <Calendar size={14} className="text-[#1D4ED8]" /> Effective Date *
+                      <Calendar size={14} className="text-[#225091]" /> Effective Date *
                     </label>
                     <input 
                       type="date"
                       required
                       value={incrementEffectiveDate}
                       onChange={(e) => setIncrementEffectiveDate(e.target.value)}
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-800 focus:outline-none focus:border-[#1D4ED8] bg-white"
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-800 focus:outline-none focus:border-[#225091] bg-white"
                     />
                   </div>
                 </>
@@ -735,7 +735,7 @@ const LettersAndPayroll = () => {
                 <button 
                   type="submit" 
                   disabled={loading}
-                  className="flex items-center gap-2 bg-[#1D4ED8] hover:bg-[#159a9f] text-white px-8 py-3 rounded-full text-[14px] font-bold transition-all shadow-md hover:shadow-lg disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="flex items-center gap-2 bg-[#225091] hover:bg-[#159a9f] text-white px-8 py-3 rounded-full text-[14px] font-bold transition-all shadow-md hover:shadow-lg disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   {loading ? (
                     <>
@@ -795,14 +795,14 @@ const LettersAndPayroll = () => {
                 <button 
                   type="button" 
                   onClick={handleDownload}
-                  className="flex items-center justify-center gap-2 bg-[#1D4ED8] hover:bg-[#159a9f] text-white px-6 py-2.5 rounded-full text-[13.5px] font-bold transition-all shadow-sm"
+                  className="flex items-center justify-center gap-2 bg-[#225091] hover:bg-[#159a9f] text-white px-6 py-2.5 rounded-full text-[13.5px] font-bold transition-all shadow-sm"
                 >
                   <Download size={16} /> Download PDF
                 </button>
                 <button 
                   type="button" 
                   onClick={handleSend}
-                  className="flex items-center justify-center gap-2 bg-[#1D4ED8] hover:bg-[#154684] text-white px-5 py-2.5 rounded-full text-[13.5px] font-semibold transition-all shadow-sm"
+                  className="flex items-center justify-center gap-2 bg-[#225091] hover:bg-[#154684] text-white px-5 py-2.5 rounded-full text-[13.5px] font-semibold transition-all shadow-sm"
                 >
                   <Send size={16} /> Send Email
                 </button>

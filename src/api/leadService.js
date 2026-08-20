@@ -104,6 +104,16 @@ export const leadService = {
     } catch (error) {
       throw error;
     }
+  },
+
+  // 11. Get Available Cities & States Dropdown List
+  getLocations: async () => {
+    try {
+      const response = await axiosInstance.get('/v1/society/leads/locations');
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   }
 };
 

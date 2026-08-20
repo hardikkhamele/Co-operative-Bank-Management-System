@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Download, CheckCircle2, User, Calendar, Users, MapPin, CreditCard, FileText } from 'lucide-react';
+import { Download, CheckCircle2, User, Calendar, Users, MapPin, CreditCard, FileText, AlertCircle } from 'lucide-react';
 import { kycService } from '../../api/kycService';
 import { toast } from 'react-toastify';
+import { validateAadhaar, validatePAN, sanitizeDigits, sanitizePAN } from '../../utils/validation';
 
 const KycVerification = () => {
   const location = useLocation();
@@ -14,6 +15,11 @@ const KycVerification = () => {
   const [formData, setFormData] = useState({
     aadhaarNumber: '',
     panNumber: '',
+  });
+
+  const [touched, setTouched] = useState({
+    aadhaar: false,
+    pan: false,
   });
   
   const [isConsentChecked, setIsConsentChecked] = useState(false);
@@ -49,23 +55,58 @@ const KycVerification = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    if (name === 'aadhaarNumber') {
+      const clean = sanitizeDigits(value, 12);
+      setFormData((prev) => ({ ...prev, aadhaarNumber: clean }));
+      setTouched((prev) => ({ ...prev, aadhaar: true }));
+    } else if (name === 'panNumber') {
+      const clean = sanitizePAN(value);
+      setFormData((prev) => ({ ...prev, panNumber: clean }));
+      setTouched((prev) => ({ ...prev, pan: true }));
+    }
   };
+
+  const handleBlur = (field) => {
+    setTouched((prev) => ({ ...prev, [field]: true }));
+  };
+
+  // Real-time validation results
+  const aadhaarValidation = validateAadhaar(formData.aadhaarNumber, { required: false });
+  const panValidation = validatePAN(formData.panNumber, { required: false });
+
+  const isCurrentInputValid = activeTab === 'aadhaar'
+    ? formData.aadhaarNumber.length === 12 && aadhaarValidation.isValid
+    : formData.panNumber.length === 10 && panValidation.isValid;
+
+  const currentError = activeTab === 'aadhaar'
+    ? (touched.aadhaar && formData.aadhaarNumber && !aadhaarValidation.isValid ? aadhaarValidation.error : null)
+    : (touched.pan && formData.panNumber && !panValidation.isValid ? panValidation.error : null);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!isConsentChecked) return;
 
-    const idNumber = activeTab === 'aadhaar' ? formData.aadhaarNumber : formData.panNumber;
-    
-    // Basic validation
-    if (activeTab === 'aadhaar' && !/^\d{12}$/.test(idNumber)) {
-      toast.error('Aadhaar number must be exactly 12 digits');
+    if (!isConsentChecked) {
+      toast.warn('Please give your consent to verify identity via DigiLocker.');
       return;
     }
-    if (activeTab === 'pan' && !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/i.test(idNumber)) {
-      toast.error('Invalid PAN number format');
-      return;
+
+    const idNumber = activeTab === 'aadhaar' ? formData.aadhaarNumber : formData.panNumber;
+
+    // Strict frontend validation
+    if (activeTab === 'aadhaar') {
+      const validation = validateAadhaar(idNumber);
+      if (!validation.isValid) {
+        setTouched((prev) => ({ ...prev, aadhaar: true }));
+        toast.error(validation.error || 'Aadhaar number must be exactly 12 digits');
+        return;
+      }
+    } else if (activeTab === 'pan') {
+      const validation = validatePAN(idNumber);
+      if (!validation.isValid) {
+        setTouched((prev) => ({ ...prev, pan: true }));
+        toast.error(validation.error || 'Invalid PAN number format (e.g. ABCDE1234F)');
+        return;
+      }
     }
 
     setLoading(true);
@@ -103,6 +144,10 @@ const KycVerification = () => {
       aadhaarNumber: '',
       panNumber: '',
     });
+    setTouched({
+      aadhaar: false,
+      pan: false,
+    });
     setIsConsentChecked(false);
   };
 
@@ -133,13 +178,13 @@ const KycVerification = () => {
         <div className="flex flex-col gap-6 w-full">
           {/* Header Card */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <h1 className="text-xl font-bold text-[#1D4ED8] mb-2">KYC Verification</h1>
+            <h1 className="text-xl font-bold text-[#225091] mb-2">KYC Verification</h1>
             <div className="text-sm text-gray-500 flex items-center gap-2">
-              <Link to="/dashboard" className="hover:text-[#1D4ED8] transition-colors">Dashboard</Link>
+              <Link to="/dashboard" className="hover:text-[#225091] transition-colors">Dashboard</Link>
               <span>&gt;</span>
               <span>Verification</span>
               <span>&gt;</span>
-              <span className="text-[#1D4ED8] font-medium">KYC Verification</span>
+              <span className="text-[#225091] font-medium">KYC Verification</span>
             </div>
           </div>
 
@@ -148,9 +193,9 @@ const KycVerification = () => {
             <button
               type="button"
               onClick={() => { setActiveTab('aadhaar'); handleReset(); }}
-              className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-medium transition-all ${
+              className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-semibold transition-all ${
                 activeTab === 'aadhaar'
-                  ? 'bg-[#f0f2ff] text-gray-800'
+                  ? 'bg-[#e6f4f5] text-[#225091] shadow-sm'
                   : 'text-gray-500 hover:bg-gray-50'
               }`}
             >
@@ -160,9 +205,9 @@ const KycVerification = () => {
             <button
               type="button"
               onClick={() => { setActiveTab('pan'); handleReset(); }}
-              className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-medium transition-all ${
+              className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-semibold transition-all ${
                 activeTab === 'pan'
-                  ? 'bg-[#f0f2ff] text-gray-800'
+                  ? 'bg-[#e6f4f5] text-[#225091] shadow-sm'
                   : 'text-gray-500 hover:bg-gray-50'
               }`}
             >
@@ -174,38 +219,75 @@ const KycVerification = () => {
           {/* Form Container */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mt-2">
             <div className="bg-[#e6f4f5] px-6 py-4 border-b border-gray-100">
-              <h3 className="text-lg font-bold text-[#1D4ED8]">
+              <h3 className="text-lg font-bold text-[#225091]">
                 {activeTab === 'aadhaar' ? 'Aadhaar Verification' : 'PAN Verification'}
               </h3>
             </div>
             
             <form onSubmit={handleSubmit} className="p-8">
-              <div className="max-w-md space-y-2 mb-8">
-                <label className="text-sm font-semibold text-gray-700 block">
-                  {activeTab === 'aadhaar' ? 'Aadhaar Number' : 'PAN Number'}
-                </label>
-                <input
-                  type="text"
-                  name={activeTab === 'aadhaar' ? 'aadhaarNumber' : 'panNumber'}
-                  value={activeTab === 'aadhaar' ? formData.aadhaarNumber : formData.panNumber}
-                  onChange={handleInputChange}
-                  placeholder={activeTab === 'aadhaar' ? 'Enter 12 digit aadhaar number' : 'Enter 10 char PAN number'}
-                  className={`w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all bg-gray-50/50 ${activeTab === 'pan' ? 'uppercase' : ''}`}
-                  required
-                />
+              <div className="max-w-md space-y-2 mb-6">
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-semibold text-gray-700 block">
+                    {activeTab === 'aadhaar' ? 'Aadhaar Number' : 'PAN Number'}
+                    <span className="text-red-500 ml-1">*</span>
+                  </label>
+                  <span className="text-xs text-gray-400 font-mono">
+                    {activeTab === 'aadhaar' 
+                      ? `${formData.aadhaarNumber.length}/12 digits` 
+                      : `${formData.panNumber.length}/10 chars`}
+                  </span>
+                </div>
+
+                <div className="relative">
+                  <input
+                    type="text"
+                    name={activeTab === 'aadhaar' ? 'aadhaarNumber' : 'panNumber'}
+                    value={activeTab === 'aadhaar' ? formData.aadhaarNumber : formData.panNumber}
+                    onChange={handleInputChange}
+                    onBlur={() => handleBlur(activeTab === 'aadhaar' ? 'aadhaar' : 'pan')}
+                    maxLength={activeTab === 'aadhaar' ? 12 : 10}
+                    placeholder={activeTab === 'aadhaar' ? 'Enter 12-digit Aadhaar (e.g. 123456789012)' : 'Enter 10-char PAN (e.g. ABCDE1234F)'}
+                    className={`w-full px-4 py-2.5 rounded-lg border transition-all bg-gray-50/50 text-sm font-medium ${
+                      currentError
+                        ? 'border-red-400 focus:ring-2 focus:ring-red-100 focus:border-red-500 text-red-900'
+                        : isCurrentInputValid
+                        ? 'border-emerald-400 focus:ring-2 focus:ring-emerald-100 focus:border-emerald-500'
+                        : 'border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091]'
+                    } ${activeTab === 'pan' ? 'uppercase font-mono' : 'font-mono'}`}
+                    required
+                  />
+                  {isCurrentInputValid && (
+                    <CheckCircle2 size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-emerald-500 pointer-events-none" />
+                  )}
+                </div>
+
+                {/* Inline Real-time Error Message */}
+                {currentError && (
+                  <div className="flex items-center gap-1.5 text-xs text-red-600 font-medium pt-1 animate-in fade-in">
+                    <AlertCircle size={14} className="shrink-0" />
+                    <span>{currentError}</span>
+                  </div>
+                )}
+                {!currentError && !isCurrentInputValid && (
+                  <p className="text-[11px] text-gray-400 font-medium">
+                    {activeTab === 'aadhaar'
+                      ? 'Enter standard 12-digit UIDAI Aadhaar number without spaces or symbols.'
+                      : 'Format: 5 letters, 4 digits, 1 letter (e.g., ABCDE1234F).'}
+                  </p>
+                )}
               </div>
 
-              <div className="mb-10 flex items-center gap-3">
+              <div className="mb-8 flex items-center gap-3">
                 <input
                   type="checkbox"
                   id="consent"
                   checked={isConsentChecked}
                   onChange={(e) => setIsConsentChecked(e.target.checked)}
-                  className="w-4 h-4 text-[#1D4ED8] border-gray-300 rounded focus:ring-[#1D4ED8] cursor-pointer"
+                  className="w-4 h-4 text-[#225091] border-gray-300 rounded focus:ring-[#225091] cursor-pointer"
                   required
                 />
                 <label htmlFor="consent" className="text-sm font-medium text-gray-600 cursor-pointer select-none">
-                  I consent to verify my identity using DigiLocker.
+                  I consent to verify my identity securely using DigiLocker.
                 </label>
               </div>
 
@@ -214,14 +296,14 @@ const KycVerification = () => {
                   type="button"
                   onClick={handleReset}
                   disabled={loading}
-                  className="px-8 py-2.5 rounded-full text-[#1D4ED8] font-semibold border border-[#1D4ED8] hover:bg-[#1D4ED8]/5 transition-colors disabled:opacity-50"
+                  className="px-8 py-2.5 rounded-full text-[#225091] font-semibold border border-[#225091] hover:bg-[#225091]/5 transition-colors disabled:opacity-50"
                 >
                   Reset
                 </button>
                 <button
                   type="submit"
-                  disabled={!isConsentChecked || loading}
-                  className="px-8 py-2.5 rounded-full bg-[#1D4ED8] text-white font-semibold hover:bg-[#159a9f] transition-all shadow-md shadow-[#1D4ED8]/20 disabled:opacity-50 disabled:cursor-not-allowed transform active:scale-95 flex items-center gap-2"
+                  disabled={!isConsentChecked || !isCurrentInputValid || loading}
+                  className="px-8 py-2.5 rounded-full bg-[#225091] text-white font-bold hover:bg-[#163a6c] transition-all shadow-md shadow-[#225091]/20 disabled:opacity-50 disabled:cursor-not-allowed transform active:scale-95 flex items-center gap-2"
                 >
                   {loading && <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>}
                   Verify with DigiLocker
@@ -234,15 +316,15 @@ const KycVerification = () => {
         <div className="flex flex-col gap-6 w-full">
           {/* Result Header Card */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <h1 className="text-xl font-bold text-[#1D4ED8] mb-2">KYC Report</h1>
+            <h1 className="text-xl font-bold text-[#225091] mb-2">KYC Report</h1>
             <div className="text-sm text-gray-500 flex items-center gap-2">
-              <Link to="/dashboard" className="hover:text-[#1D4ED8] transition-colors">Dashboard</Link>
+              <Link to="/dashboard" className="hover:text-[#225091] transition-colors">Dashboard</Link>
               <span>&gt;</span>
               <span>Verification</span>
               <span>&gt;</span>
-              <span className="text-gray-500 hover:text-[#1D4ED8] cursor-pointer transition-colors" onClick={() => { setStep('form'); setReportData(null); setCurrentRefId(null); }}>KYC Verification</span>
+              <span className="text-gray-500 hover:text-[#225091] cursor-pointer transition-colors" onClick={() => { setStep('form'); setReportData(null); setCurrentRefId(null); }}>KYC Verification</span>
               <span>&gt;</span>
-              <span className="text-[#1D4ED8] font-medium">KYC Report</span>
+              <span className="text-[#225091] font-medium">KYC Report</span>
             </div>
           </div>
 
@@ -275,7 +357,7 @@ const KycVerification = () => {
             {/* Info Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100 flex items-start gap-4 hover:shadow-md transition-shadow">
-                <div className="mt-1 text-[#1D4ED8]">
+                <div className="mt-1 text-[#225091]">
                   <User size={20} />
                 </div>
                 <div>
@@ -285,7 +367,7 @@ const KycVerification = () => {
               </div>
 
               <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100 flex items-start gap-4 hover:shadow-md transition-shadow">
-                <div className="mt-1 text-[#1D4ED8]">
+                <div className="mt-1 text-[#225091]">
                   <Calendar size={20} />
                 </div>
                 <div>
@@ -296,7 +378,7 @@ const KycVerification = () => {
 
               {reportData?.fatherName && (
                 <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100 flex items-start gap-4 hover:shadow-md transition-shadow">
-                  <div className="mt-1 text-[#1D4ED8]">
+                  <div className="mt-1 text-[#225091]">
                     <Users size={20} />
                   </div>
                   <div>
@@ -308,7 +390,7 @@ const KycVerification = () => {
 
               {reportData?.address && (
                 <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100 flex items-start gap-4 hover:shadow-md transition-shadow">
-                  <div className="mt-1 text-[#1D4ED8]">
+                  <div className="mt-1 text-[#225091]">
                     <MapPin size={20} />
                   </div>
                   <div>
@@ -326,7 +408,7 @@ const KycVerification = () => {
               <button 
                 onClick={handleDownload}
                 disabled={loading}
-                className="flex items-center gap-2 px-8 py-2.5 rounded-full bg-[#1D4ED8] text-white font-bold hover:bg-[#159a9f] transition-all shadow-md shadow-[#1D4ED8]/30 transform hover:-translate-y-0.5 active:scale-95 disabled:opacity-50 disabled:transform-none"
+                className="flex items-center gap-2 px-8 py-2.5 rounded-full bg-[#225091] text-white font-bold hover:bg-[#159a9f] transition-all shadow-md shadow-[#225091]/30 transform hover:-translate-y-0.5 active:scale-95 disabled:opacity-50 disabled:transform-none"
               >
                 {loading ? (
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>

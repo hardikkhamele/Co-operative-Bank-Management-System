@@ -5,52 +5,7 @@ import WalletIllustration from '../../assets/wallet-illustration.png';
 
 const tabs = ['All Loans', 'New Application', 'Active Loans', 'Completed Loans', 'Rejected Applications'];
 
-const mockLoans = [
-  {
-    id: 1,
-    product: 'iPhone 17 - 256GB - Black',
-    image: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=100&q=80', // Phone placeholder
-    appId: 'LN1234567890',
-    disbursedOn: '10 Jan 2026',
-    status: 'New', 
-  },
-  {
-    id: 2,
-    product: 'iPhone 17 - 256GB - Black',
-    image: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=100&q=80',
-    appId: 'LN1234567890',
-    disbursedOn: '10 Jan 2026',
-    status: 'Active',
-    loanAmount: '₹51,500',
-    outstanding: '₹25,750',
-    emiAmount: '₹8583',
-    nextEmiDate: '1st Aug 2026',
-    progressPercent: 50,
-    progressText: '3 of 6 EMI\'s paid'
-  },
-  {
-    id: 3,
-    product: 'iPhone 17 - 256GB - Black',
-    image: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=100&q=80',
-    appId: 'LN1234567890',
-    disbursedOn: '10 Jan 2026',
-    status: 'Completed',
-    loanAmount: '₹51,500',
-    outstanding: '₹0',
-    emiAmount: '₹8583',
-    nextEmiDate: 'NA',
-    progressPercent: 100,
-    progressText: '6 of 12 EMI\'s paid'
-  },
-  {
-    id: 4,
-    product: 'iPhone 17 - 256GB - Black',
-    image: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=100&q=80',
-    appId: 'LN1234567890',
-    disbursedOn: '10 Jan 2026',
-    status: 'Rejected', 
-  }
-];
+const mockLoans = [];
 
 const getStatusBadge = (status) => {
   switch (status) {
@@ -74,7 +29,7 @@ const CustomerLoans = () => {
     <div className="max-w-[1400px] w-full pb-10">
       {/* Header Card */}
       <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-6">
-        <h2 className="text-xl font-bold text-[#1b7ef7] mb-2">Customers</h2>
+        <h2 className="text-xl font-bold text-[#225091] mb-2">Customers</h2>
         <div className="flex items-center text-sm font-medium text-gray-500">
           <Link to="/dashboard" className="hover:text-gray-800 transition-colors">Dashboard</Link>
           <ChevronRight size={16} className="mx-1 text-gray-400" />
@@ -82,7 +37,7 @@ const CustomerLoans = () => {
           <ChevronRight size={16} className="mx-1 text-gray-400" />
           <Link to="/customers" className="hover:text-gray-800 transition-colors">Customers</Link>
           <ChevronRight size={16} className="mx-1 text-gray-400" />
-          <span className="text-[#1b7ef7]">Loans</span>
+          <span className="text-[#225091]">Loans</span>
         </div>
       </div>
 
@@ -93,10 +48,10 @@ const CustomerLoans = () => {
           {/* Top Stat */}
           <div>
             <div className="text-[15px] font-semibold text-gray-600 mb-1">Total Outstanding</div>
-            <div className="text-[32px] md:text-[40px] font-bold text-[#1B58A6] leading-tight tracking-tight mb-2">
+            <div className="text-[32px] md:text-[40px] font-bold text-[#225091] leading-tight tracking-tight mb-2">
               ₹51,500
             </div>
-            <div className="text-[13px] font-bold text-[#1D4ED8]">
+            <div className="text-[13px] font-bold text-[#225091]">
               2 Active Loans
             </div>
           </div>
@@ -131,7 +86,7 @@ const CustomerLoans = () => {
             onClick={() => setActiveTab(tab)}
             className={`px-5 py-2.5 rounded-lg text-sm font-medium transition-colors ${
               activeTab === tab 
-                ? 'bg-[#1D4ED8] text-white shadow-sm' 
+                ? 'bg-[#225091] text-white shadow-sm' 
                 : 'text-gray-600 hover:bg-gray-200/50'
             }`}
           >
@@ -161,7 +116,7 @@ const CustomerLoans = () => {
               
               <div className="flex flex-col items-end gap-3 self-end md:self-start">
                 {getStatusBadge(loan.status)}
-                <Link to={`/customers/1/loans/${loan.id}`} className="text-[#1D4ED8] font-semibold text-[15px] hover:text-[#159a9f] transition-colors">
+                <Link to={`/customers/1/loans/${loan.id}`} className="text-[#225091] font-semibold text-[15px] hover:text-[#159a9f] transition-colors">
                   View Details
                 </Link>
               </div>
@@ -199,7 +154,7 @@ const CustomerLoans = () => {
                   </div>
                   <div className="w-full bg-[#f4f3fb] rounded-full h-1.5">
                     <div 
-                      className="bg-[#1B58A6] h-1.5 rounded-full" 
+                      className="bg-[#225091] h-1.5 rounded-full" 
                       style={{ width: `${loan.progressPercent}%` }}
                     ></div>
                   </div>
@@ -216,19 +171,19 @@ const CustomerLoans = () => {
           Showing 1 to 4 of 30 Entries
         </div>
         <div className="flex items-center gap-2">
-          <button className="w-10 h-10 flex items-center justify-center rounded-full border-2 border-[#1D4ED8] text-[#1D4ED8] hover:bg-teal-50 transition-colors">
+          <button className="w-10 h-10 flex items-center justify-center rounded-full border-2 border-[#225091] text-[#225091] hover:bg-teal-50 transition-colors">
             <ChevronLeft size={18} />
           </button>
-          <button className="w-10 h-10 flex items-center justify-center rounded-full bg-[#1D4ED8] text-white font-medium shadow-sm">
+          <button className="w-10 h-10 flex items-center justify-center rounded-full bg-[#225091] text-white font-medium shadow-sm">
             1
           </button>
-          <button className="w-10 h-10 flex items-center justify-center rounded-full border-2 border-[#1D4ED8] text-[#1D4ED8] font-medium hover:bg-teal-50 transition-colors">
+          <button className="w-10 h-10 flex items-center justify-center rounded-full border-2 border-[#225091] text-[#225091] font-medium hover:bg-teal-50 transition-colors">
             2
           </button>
-          <button className="w-10 h-10 flex items-center justify-center rounded-full border-2 border-[#1D4ED8] text-[#1D4ED8] font-medium hover:bg-teal-50 transition-colors">
+          <button className="w-10 h-10 flex items-center justify-center rounded-full border-2 border-[#225091] text-[#225091] font-medium hover:bg-teal-50 transition-colors">
             3
           </button>
-          <button className="w-10 h-10 flex items-center justify-center rounded-full border-2 border-[#1D4ED8] text-[#1D4ED8] hover:bg-teal-50 transition-colors">
+          <button className="w-10 h-10 flex items-center justify-center rounded-full border-2 border-[#225091] text-[#225091] hover:bg-teal-50 transition-colors">
             <ChevronRight size={18} />
           </button>
         </div>

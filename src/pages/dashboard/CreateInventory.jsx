@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ChevronRight, Loader2 } from 'lucide-react';
+import { ChevronRight, Loader2, ArrowLeft } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { inventoryService } from '../../api/inventoryService';
 import { preventInvalidNumberKeys } from '../../utils/validation';
@@ -67,15 +67,24 @@ const CreateInventory = () => {
     <div className="flex flex-col gap-6 w-full max-w-6xl mx-auto">
       {/* Breadcrumb Card */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 shrink-0 relative">
-        <h1 className="text-[22px] font-bold text-[#1D4ED8] mb-3">Add Inventory</h1>
-        <div className="flex items-center text-sm font-medium text-gray-500">
+        <div className="flex items-center gap-3 mb-3">
+          <button 
+            onClick={() => window.history.back()}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors shrink-0"
+            type="button"
+          >
+            <ArrowLeft size={16} /> Back
+          </button>
+          <h1 className="text-[22px] font-bold text-[#225091] m-0">Add Inventory</h1>
+        </div>
+        <div className="flex items-center text-sm font-medium text-gray-500 pl-[40px]">
           <Link to="/dashboard" className="hover:text-gray-800 transition-colors">Dashboard</Link>
           <ChevronRight size={16} className="mx-1.5 text-gray-400" />
           <span className="hover:text-gray-800 transition-colors">CRM Management</span>
           <ChevronRight size={16} className="mx-1.5 text-gray-400" />
           <Link to="/inventory" className="hover:text-gray-800 transition-colors">Inventory</Link>
           <ChevronRight size={16} className="mx-1.5 text-gray-400" />
-          <span className="text-[#1D4ED8]">Add Inventory</span>
+          <span className="text-[#225091]">Add Inventory</span>
         </div>
       </div>
 
@@ -96,7 +105,7 @@ const CreateInventory = () => {
                   value={formData.assets}
                   onChange={handleChange}
                   placeholder="Enter asset name (e.g., Computer, Laptop)" 
-                  className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]"
+                  className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#225091]"
                   required
                 />
                 <span className="text-[11px] text-gray-400 text-right">{formData.assets.length}/150</span>
@@ -111,7 +120,7 @@ const CreateInventory = () => {
                   onChange={handleChange}
                   onKeyDown={preventInvalidNumberKeys}
                   placeholder="Enter quantity (e.g., 1800)" 
-                  className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]"
+                  className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#225091]"
                   required
                 />
               </div>
@@ -121,7 +130,7 @@ const CreateInventory = () => {
               <button 
                 type="submit" 
                 disabled={submitting}
-                className="bg-[#1D4ED8] hover:bg-[#159a9f] text-white px-8 py-2.5 rounded-full text-[15px] font-semibold transition-colors shadow-sm flex items-center gap-2 disabled:opacity-50"
+                className="bg-[#225091] hover:bg-[#159a9f] text-white px-8 py-2.5 rounded-full text-[15px] font-semibold transition-colors shadow-sm flex items-center gap-2 disabled:opacity-50"
               >
                 {submitting ? <Loader2 size={16} className="animate-spin" /> : null}
                 <span>{submitting ? 'Saving...' : 'Save'}</span>

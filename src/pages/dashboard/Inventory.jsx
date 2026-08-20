@@ -321,13 +321,13 @@ const Inventory = () => {
       
       {/* Breadcrumb Card */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 shrink-0 relative">
-        <h1 className="text-[22px] font-bold text-[#1D4ED8] mb-3">Inventory</h1>
+        <h1 className="text-[22px] font-bold text-[#225091] mb-3">Inventory</h1>
         <div className="flex items-center text-sm font-medium text-gray-500">
           <Link to="/dashboard" className="hover:text-gray-800 transition-colors">Dashboard</Link>
           <ChevronRight size={16} className="mx-1.5 text-gray-400" />
           <span className="hover:text-gray-800 transition-colors">CRM Management</span>
           <ChevronRight size={16} className="mx-1.5 text-gray-400" />
-          <span className="text-[#1D4ED8]">Inventory</span>
+          <span className="text-[#225091]">Inventory</span>
         </div>
       </div>
 
@@ -342,7 +342,7 @@ const Inventory = () => {
               placeholder="Search by asset name..." 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1D4ED8] transition-shadow"
+              className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#225091] transition-shadow"
             />
             {searchTerm && (
               <button 
@@ -360,14 +360,14 @@ const Inventory = () => {
               onClick={() => setIsFilterOpen(!isFilterOpen)}
               className={`flex items-center justify-center w-[42px] h-[42px] rounded-lg border transition-colors relative ${
                 activeFiltersCount > 0 
-                  ? 'bg-teal-50 border-[#1D4ED8] text-[#1D4ED8]' 
+                  ? 'bg-teal-50 border-[#225091] text-[#225091]' 
                   : 'bg-gray-50 border border-gray-200 text-gray-600 hover:bg-gray-100'
               }`}
               title="Filters"
             >
               <SlidersHorizontal size={18} />
               {activeFiltersCount > 0 && (
-                <span className="absolute -top-2 -right-2 bg-[#1D4ED8] text-white text-[10px] font-bold w-[20px] h-[20px] flex items-center justify-center rounded-full border-2 border-white shadow">
+                <span className="absolute -top-2 -right-2 bg-[#225091] text-white text-[10px] font-bold w-[20px] h-[20px] flex items-center justify-center rounded-full border-2 border-white shadow">
                   {activeFiltersCount}
                 </span>
               )}
@@ -394,7 +394,7 @@ const Inventory = () => {
                         placeholder="Min Qty"
                         value={filterMinQuantity}
                         onChange={(e) => setFilterMinQuantity(e.target.value)}
-                        className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]"
+                        className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#225091]"
                       />
                       <input 
                         type="number"
@@ -402,7 +402,7 @@ const Inventory = () => {
                         placeholder="Max Qty"
                         value={filterMaxQuantity}
                         onChange={(e) => setFilterMaxQuantity(e.target.value)}
-                        className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]"
+                        className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#225091]"
                       />
                     </div>
                   </div>
@@ -413,7 +413,7 @@ const Inventory = () => {
                     <select
                       value={filterSortBy}
                       onChange={(e) => setFilterSortBy(e.target.value)}
-                      className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]"
+                      className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#225091]"
                     >
                       <option value="createdAt">Date Created</option>
                       <option value="assets">Asset Name</option>
@@ -427,7 +427,7 @@ const Inventory = () => {
                     <select
                       value={filterSortOrder}
                       onChange={(e) => setFilterSortOrder(e.target.value)}
-                      className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]"
+                      className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#225091]"
                     >
                       <option value="desc">Descending (High to Low / Newest)</option>
                       <option value="asc">Ascending (Low to High / Oldest)</option>
@@ -447,7 +447,7 @@ const Inventory = () => {
                       setIsFilterOpen(false);
                       setPage(1);
                     }}
-                    className="flex-1 py-2.5 px-4 rounded-xl bg-[#1D4ED8] text-white font-semibold hover:bg-[#168f94] transition-colors shadow-sm text-xs"
+                    className="flex-1 py-2.5 px-4 rounded-xl bg-[#225091] text-white font-semibold hover:bg-[#168f94] transition-colors shadow-sm text-xs"
                   >
                     Apply Filter
                   </button>
@@ -490,7 +490,7 @@ const Inventory = () => {
           </div>
           <Link 
             to="/inventory/create"
-            className="flex items-center justify-center gap-1.5 px-6 py-2.5 bg-[#1D4ED8] hover:bg-[#159a9f] text-white rounded-full text-sm font-medium transition-colors shadow-sm whitespace-nowrap"
+            className="flex items-center justify-center gap-1.5 px-6 py-2.5 bg-[#225091] hover:bg-[#159a9f] text-white rounded-full text-sm font-medium transition-colors shadow-sm whitespace-nowrap"
           >
             <Plus size={16} />
             <span>Add Inventory</span>
@@ -503,12 +503,12 @@ const Inventory = () => {
         <div className="overflow-x-auto">
           <table ref={tableRef} className="w-full text-left border-collapse min-w-[800px]">
             <thead>
-              <tr className="bg-[#f4f2ff]">
+              <tr className="bg-gray-50/50 text-gray-500 text-[11px] uppercase tracking-wider font-bold border-b border-gray-100">
                 
-                <th className="px-6 py-4">Sr.No.</th>
-                <th className="py-4 px-6 font-semibold text-gray-700 text-[15px] w-1/2">Assets</th>
-                <th className="py-4 px-6 font-semibold text-gray-700 text-[15px]">Quantity</th>
-                <th className="py-4 px-6 font-semibold text-gray-700 text-[15px] text-right">Action</th>
+                <th className="px-6 py-4 font-bold">Sr.No.</th>
+                <th className="py-4 px-6 font-bold text-[15px] w-1/2">Assets</th>
+                <th className="py-4 px-6 font-bold text-[15px]">Quantity</th>
+                <th className="py-4 px-6 font-bold text-[15px] text-right">Action</th>
               </tr>
             </thead>
             <tbody>
@@ -516,7 +516,7 @@ const Inventory = () => {
                 <tr>
                   <td colSpan="4" className="py-16 text-center text-gray-500">
                     <div className="flex flex-col items-center justify-center gap-3">
-                      <Loader2 size={32} className="animate-spin text-[#1D4ED8]" />
+                      <Loader2 size={32} className="animate-spin text-[#225091]" />
                       <span className="text-sm font-medium">Loading inventory...</span>
                     </div>
                   </td>
@@ -551,7 +551,7 @@ const Inventory = () => {
                         <div className="flex items-center justify-end gap-3">
                           <button 
                             onClick={() => handleOpenEdit(item)}
-                            className="p-1.5 text-gray-600 hover:text-[#1D4ED8] hover:bg-teal-50 rounded-lg transition-colors" 
+                            className="p-1.5 text-gray-600 hover:text-[#225091] hover:bg-teal-50 rounded-lg transition-colors" 
                             title="Edit"
                           >
                             <Edit size={18} />
@@ -603,7 +603,7 @@ const Inventory = () => {
                         onClick={() => setPage(pageNum)}
                         className={`w-10 h-10 flex items-center justify-center rounded-full font-bold transition-all ${
                           page === pageNum 
-                            ? 'bg-[#1D4ED8] text-white shadow-sm' 
+                            ? 'bg-[#225091] text-white shadow-sm' 
                             : 'border border-gray-200 text-gray-700 hover:bg-gray-50 bg-white'
                         }`}
                       >
@@ -649,7 +649,7 @@ const Inventory = () => {
                     value={editFormData.assets}
                     onChange={(e) => setEditFormData({ ...editFormData, assets: e.target.value })}
                     placeholder="Enter asset name (e.g., Computer, Laptop)" 
-                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]"
+                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#225091]"
                     required
                   />
                   <span className="text-[11px] text-gray-400 text-right">{editFormData.assets.length}/150</span>
@@ -662,7 +662,7 @@ const Inventory = () => {
                     value={editFormData.quantity}
                     onChange={(e) => setEditFormData({ ...editFormData, quantity: e.target.value })}
                     placeholder="Enter quantity (e.g., 1800)" 
-                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]"
+                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#225091]"
                     required
                   />
                 </div>
@@ -671,7 +671,7 @@ const Inventory = () => {
                   <button 
                     type="submit" 
                     disabled={editSubmitting}
-                    className="flex-1 bg-[#1D4ED8] hover:bg-[#159a9f] text-white py-2.5 rounded-full text-[15px] font-semibold transition-colors shadow-sm flex items-center justify-center gap-2 disabled:opacity-50"
+                    className="flex-1 bg-[#225091] hover:bg-[#159a9f] text-white py-2.5 rounded-full text-[15px] font-semibold transition-colors shadow-sm flex items-center justify-center gap-2 disabled:opacity-50"
                   >
                     {editSubmitting ? <Loader2 size={16} className="animate-spin" /> : null}
                     <span>{editSubmitting ? 'Updating...' : 'Update'}</span>

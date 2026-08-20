@@ -14,7 +14,7 @@ const CustomTooltip = ({ active, payload, label }) => {
       <div className="bg-white p-3 rounded-lg shadow-lg border border-gray-100">
         <p className="font-semibold text-gray-800 mb-1">{label || payload[0].payload.name || payload[0].payload.rawCategory}</p>
         {payload.map((entry, index) => (
-          <p key={index} style={{ color: entry.color || '#1D4ED8' }} className="text-sm font-medium">
+          <p key={index} style={{ color: entry.color || '#225091' }} className="text-sm font-medium">
             {entry.name}: {typeof entry.value === 'number' ? `₹${entry.value.toLocaleString()}` : entry.value}
           </p>
         ))}
@@ -174,7 +174,7 @@ const Dashboard = () => {
       value: c.amount,
       formattedAmount: c.formattedAmount,
       count: c.count,
-      fill: '#1B58A6'
+      fill: '#225091'
     };
   });
 
@@ -320,7 +320,7 @@ const Dashboard = () => {
               <h3 className="text-[17px] font-bold text-gray-800">Total Revenue Chart <span className="text-gray-300 font-light mx-2">|</span></h3>
               <div className="flex items-center gap-6 text-sm font-medium text-gray-600">
                 <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#1B58A6]"></span>
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#225091]"></span>
                   {revenueLegends.thisYear || 'This year'}
                 </div>
                 <div className="flex items-center gap-2">
@@ -355,7 +355,7 @@ const Dashboard = () => {
                       type="monotone" 
                       name={revenueLegends.thisYear || 'This year'} 
                       dataKey="thisYear" 
-                      stroke="#1B58A6" 
+                      stroke="#225091" 
                       strokeWidth={2.5} 
                       dot={false} 
                       activeDot={{ r: 6 }} 
@@ -434,7 +434,7 @@ const Dashboard = () => {
                     name="Loan Amount"
                     radius={[10, 10, 10, 10]} 
                     barSize={16}
-                    fill="#1B58A6" 
+                    fill="#225091" 
                   >
                     <LabelList 
                       dataKey="value" 
@@ -444,7 +444,7 @@ const Dashboard = () => {
                         if (index === 1) {
                           return (
                             <g>
-                              <rect x={x + width/2 - 16} y={y - 24} width={32} height={18} fill="#1B58A6" rx={9} ry={9} />
+                              <rect x={x + width/2 - 16} y={y - 24} width={32} height={18} fill="#225091" rx={9} ry={9} />
                               <text x={x + width / 2} y={y - 11} fill="white" textAnchor="middle" fontSize={10} fontWeight="bold">
                                 {Math.round(value/1000)}k
                               </text>
@@ -552,8 +552,8 @@ const Dashboard = () => {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr>
-                  <th className="py-3 px-3 font-semibold text-gray-800 text-[15px] border-b border-gray-200 w-1/3">Time</th>
-                  <th className="py-3 px-3 font-semibold text-gray-800 text-[15px] border-b border-gray-200 w-2/3">Actions</th>
+                  <th className="py-3 px-3 font-bold text-[15px] border-b border-gray-200 w-1/3">Time</th>
+                  <th className="py-3 px-3 font-bold text-[15px] border-b border-gray-200 w-2/3">Actions</th>
                 </tr>
               </thead>
               <tbody>

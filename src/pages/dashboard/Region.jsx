@@ -3,13 +3,7 @@ import { Search, Edit, Trash2, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import RegionModal from '../../components/modals/RegionModal';
 
-const mockRegions = [
-  { id: 1, srNo: 1, name: 'Eastern Region', manager: 'Clark Kent', managerInitials: 'CK', managerBg: 'bg-purple-100 text-purple-600', totalBranch: 108, totalEmployee: 1242, avatar: 'https://ui-avatars.com/api/?name=Clark+Kent&background=random' },
-  { id: 3, srNo: 3, name: 'Western Region', manager: 'Bruce Wayne', managerInitials: 'BW', managerBg: 'bg-gray-200 text-gray-700', totalBranch: 117, totalEmployee: 1378, avatar: '' },
-  { id: 5, srNo: 5, name: 'Northern Region', manager: 'Steve Rogers', managerInitials: 'SR', managerBg: 'bg-gray-200 text-gray-700', totalBranch: 194, totalEmployee: 1842, avatar: '' },
-  { id: 7, srNo: 7, name: 'Southern Region', manager: 'Scott Lang', managerInitials: 'SL', managerBg: 'bg-gray-200 text-gray-700', totalBranch: 137, totalEmployee: 1536, avatar: '' },
-  { id: 8, srNo: 8, name: 'Central Region', manager: 'Peter Parker', managerInitials: 'PP', managerBg: 'bg-gray-200 text-gray-700', totalBranch: 175, totalEmployee: 1742, avatar: '' },
-];
+const mockRegions = [];
 
 const Region = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -33,13 +27,13 @@ const Region = () => {
     <div className="space-y-6">
       {/* Header and Breadcrumb */}
       <div className="bg-white rounded-lg p-5 shadow-sm border border-gray-100">
-        <h1 className="text-2xl font-semibold text-[#1B58A6] mb-2">Region</h1>
+        <h1 className="text-2xl font-semibold text-[#225091] mb-2">Region</h1>
         <div className="flex items-center text-sm text-gray-600 gap-2">
           <Link to="/dashboard" className="hover:text-gray-900 transition-colors">Dashboard</Link>
           <ChevronRight size={16} className="text-gray-400" />
           <span>Region & Branch Management</span>
           <ChevronRight size={16} className="text-gray-400" />
-          <span className="text-[#1B58A6]">Region</span>
+          <span className="text-[#225091]">Region</span>
         </div>
       </div>
 
@@ -51,7 +45,7 @@ const Region = () => {
           </div>
           <input
             type="text"
-            className="block w-full pl-10 pr-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#1D4ED8] focus:border-[#1D4ED8] text-sm"
+            className="block w-full pl-10 pr-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#225091] focus:border-[#225091] text-sm"
             placeholder="Search"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -59,7 +53,7 @@ const Region = () => {
         </div>
         <button 
           onClick={handleCreateClick}
-          className="bg-[#1D4ED8] hover:bg-[#159a9f] text-white px-5 py-2.5 rounded-full font-medium transition-colors text-sm shadow-sm flex-shrink-0"
+          className="bg-[#225091] hover:bg-[#159a9f] text-white px-5 py-2.5 rounded-full font-medium transition-colors text-sm shadow-sm flex-shrink-0"
         >
           + Create Region
         </button>
@@ -71,11 +65,11 @@ const Region = () => {
           <table className="w-full text-left text-sm whitespace-nowrap">
             <thead className="bg-[#f8f9ff] text-gray-700 font-semibold border-b border-gray-100">
               <tr>
-                <th className="px-6 py-4">Sr.No.</th>
-                <th className="px-6 py-4">Region Name</th>
-                <th className="px-6 py-4">Region Manager</th>
-                <th className="px-6 py-4">Total Branch</th>
-                <th className="px-6 py-4">Total Employee</th>
+                <th className="px-6 py-4 font-bold">Sr.No.</th>
+                <th className="px-6 py-4 font-bold">Region Name</th>
+                <th className="px-6 py-4 font-bold">Region Manager</th>
+                <th className="px-6 py-4 font-bold">Total Branch</th>
+                <th className="px-6 py-4 font-bold">Total Employee</th>
                 <th className="px-6 py-4 text-center">Action</th>
               </tr>
             </thead>
@@ -126,13 +120,13 @@ const Region = () => {
             Showing 1 to 5 of 5 Entries
           </div>
           <div className="flex items-center gap-2">
-            <button className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-[#1D4ED8] hover:bg-gray-50 transition-colors">
+            <button className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-[#225091] hover:bg-gray-50 transition-colors">
               <ChevronRight size={16} className="rotate-180" />
             </button>
-            <button className="w-8 h-8 flex items-center justify-center rounded-full bg-[#1D4ED8] text-white font-medium shadow-sm">
+            <button className="w-8 h-8 flex items-center justify-center rounded-full bg-[#225091] text-white font-medium shadow-sm">
               1
             </button>
-            <button className="w-8 h-8 flex items-center justify-center rounded-full border border-[#1D4ED8] text-[#1D4ED8] hover:bg-gray-50 transition-colors">
+            <button className="w-8 h-8 flex items-center justify-center rounded-full border border-[#225091] text-[#225091] hover:bg-gray-50 transition-colors">
               <ChevronRight size={16} />
             </button>
           </div>

@@ -90,11 +90,11 @@ const ChoosePaymentMethod = () => {
       <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100/80">
         <h1 className="text-2xl font-bold text-[#1b2559] mb-1">Choose Payment Method</h1>
         <div className="flex items-center text-sm font-medium text-gray-500">
-          <Link to="/dashboard" className="hover:text-[#1D4ED8] transition-colors">Dashboard</Link>
+          <Link to="/dashboard" className="hover:text-[#225091] transition-colors">Dashboard</Link>
           <ChevronRight size={15} className="mx-1 text-gray-400" />
-          <Link to="/cards-credit" className="hover:text-[#1D4ED8] transition-colors">EMI Cards & Verification Credits</Link>
+          <Link to="/cards-credit" className="hover:text-[#225091] transition-colors">EMI Cards & Verification Credits</Link>
           <ChevronRight size={15} className="mx-1 text-gray-400" />
-          <span className="text-[#1D4ED8] font-semibold">Payment Gateway</span>
+          <span className="text-[#225091] font-semibold">Payment Gateway</span>
         </div>
       </div>
 
@@ -157,13 +157,13 @@ const ChoosePaymentMethod = () => {
             <h3 className="text-lg font-bold text-[#1b2559]">Select Payment Option</h3>
 
             {/* Easebuzz Payment Gateway Option */}
-            <div className={`rounded-xl border transition-all overflow-hidden ${expandedSection === 'EASEBUZZ' ? 'border-[#1D4ED8] bg-teal-50/20' : 'border-gray-200'}`}>
+            <div className={`rounded-xl border transition-all overflow-hidden ${expandedSection === 'EASEBUZZ' ? 'border-[#225091] bg-teal-50/20' : 'border-gray-200'}`}>
               <button 
                 onClick={() => setExpandedSection('EASEBUZZ')}
                 className="w-full flex items-center justify-between p-4 focus:outline-none bg-white text-left cursor-pointer"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-teal-50 text-[#1D4ED8] flex items-center justify-center font-bold text-xs">
+                  <div className="w-9 h-9 rounded-xl bg-teal-50 text-[#225091] flex items-center justify-center font-bold text-xs">
                     EB
                   </div>
                   <div>
@@ -172,7 +172,7 @@ const ChoosePaymentMethod = () => {
                   </div>
                 </div>
                 <div className="w-5 h-5 rounded-full border-2 border-gray-300 flex items-center justify-center">
-                  {expandedSection === 'EASEBUZZ' && <div className="w-2.5 h-2.5 bg-[#1D4ED8] rounded-full"></div>}
+                  {expandedSection === 'EASEBUZZ' && <div className="w-2.5 h-2.5 bg-[#225091] rounded-full"></div>}
                 </div>
               </button>
 
@@ -183,7 +183,7 @@ const ChoosePaymentMethod = () => {
                   </p>
                   <button
                     onClick={handleLaunchEasebuzz}
-                    className="w-full py-3 px-4 rounded-xl bg-[#1D4ED8] hover:bg-[#159a9f] text-white font-semibold transition-colors flex items-center justify-center gap-2 text-sm shadow-sm"
+                    className="w-full py-3 px-4 rounded-xl bg-[#225091] hover:bg-[#159a9f] text-white font-semibold transition-colors flex items-center justify-center gap-2 text-sm shadow-sm"
                   >
                     <span>Proceed to Easebuzz Checkout</span>
                     <ExternalLink size={16} />
@@ -193,7 +193,7 @@ const ChoosePaymentMethod = () => {
             </div>
 
             {/* UPI Option */}
-            <div className={`rounded-xl border transition-all overflow-hidden ${expandedSection === 'UPI' ? 'border-[#1D4ED8] bg-teal-50/20' : 'border-gray-200'}`}>
+            <div className={`rounded-xl border transition-all overflow-hidden ${expandedSection === 'UPI' ? 'border-[#225091] bg-teal-50/20' : 'border-gray-200'}`}>
               <button 
                 onClick={() => setExpandedSection('UPI')}
                 className="w-full flex items-center justify-between p-4 focus:outline-none bg-white text-left cursor-pointer"
@@ -208,7 +208,7 @@ const ChoosePaymentMethod = () => {
                   </div>
                 </div>
                 <div className="w-5 h-5 rounded-full border-2 border-gray-300 flex items-center justify-center">
-                  {expandedSection === 'UPI' && <div className="w-2.5 h-2.5 bg-[#1D4ED8] rounded-full"></div>}
+                  {expandedSection === 'UPI' && <div className="w-2.5 h-2.5 bg-[#225091] rounded-full"></div>}
                 </div>
               </button>
 
@@ -221,7 +221,7 @@ const ChoosePaymentMethod = () => {
                         onClick={() => setSelectedUpi(app)}
                         className={`flex items-center justify-center gap-2 p-3 rounded-xl border cursor-pointer transition-all ${
                           selectedUpi === app 
-                            ? 'border-[#1D4ED8] bg-teal-50/30 text-[#1D4ED8] font-bold' 
+                            ? 'border-[#225091] bg-teal-50/30 text-[#225091] font-bold' 
                             : 'border-gray-200 text-gray-600 hover:border-gray-300'
                         }`}
                       >
@@ -234,7 +234,7 @@ const ChoosePaymentMethod = () => {
             </div>
 
             {/* Net Banking */}
-            <div className={`rounded-xl border transition-all overflow-hidden ${expandedSection === 'NETBANKING' ? 'border-[#1D4ED8] bg-teal-50/20' : 'border-gray-200'}`}>
+            <div className={`rounded-xl border transition-all overflow-hidden ${expandedSection === 'NETBANKING' ? 'border-[#225091] bg-teal-50/20' : 'border-gray-200'}`}>
               <button 
                 onClick={() => setExpandedSection('NETBANKING')}
                 className="w-full flex items-center justify-between p-4 focus:outline-none bg-white text-left cursor-pointer"
@@ -249,7 +249,7 @@ const ChoosePaymentMethod = () => {
                   </div>
                 </div>
                 <div className="w-5 h-5 rounded-full border-2 border-gray-300 flex items-center justify-center">
-                  {expandedSection === 'NETBANKING' && <div className="w-2.5 h-2.5 bg-[#1D4ED8] rounded-full"></div>}
+                  {expandedSection === 'NETBANKING' && <div className="w-2.5 h-2.5 bg-[#225091] rounded-full"></div>}
                 </div>
               </button>
             </div>
@@ -268,7 +268,7 @@ const ChoosePaymentMethod = () => {
               <button 
                 disabled={checkingStatus}
                 onClick={handleCheckStatus}
-                className="flex-1 sm:flex-none px-5 py-2.5 rounded-xl border border-[#1D4ED8] text-[#1D4ED8] font-semibold hover:bg-teal-50 transition-colors text-sm flex items-center justify-center gap-2"
+                className="flex-1 sm:flex-none px-5 py-2.5 rounded-xl border border-[#225091] text-[#225091] font-semibold hover:bg-teal-50 transition-colors text-sm flex items-center justify-center gap-2"
               >
                 <RefreshCcw size={15} className={checkingStatus ? 'animate-spin' : ''} />
                 <span>Verify Payment Status</span>
@@ -276,7 +276,7 @@ const ChoosePaymentMethod = () => {
 
               <button 
                 onClick={handleLaunchEasebuzz}
-                className="flex-1 sm:flex-none px-6 py-2.5 rounded-xl bg-[#1D4ED8] hover:bg-[#159a9f] text-white font-semibold transition-all shadow-sm text-sm flex items-center justify-center gap-2"
+                className="flex-1 sm:flex-none px-6 py-2.5 rounded-xl bg-[#225091] hover:bg-[#159a9f] text-white font-semibold transition-all shadow-sm text-sm flex items-center justify-center gap-2"
               >
                 <span>Pay ₹{totalPayable.toLocaleString()}</span>
                 <ArrowRight size={16} />

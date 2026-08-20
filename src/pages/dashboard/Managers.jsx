@@ -2,19 +2,9 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronRight, Search, SlidersHorizontal, Eye, Edit, Trash2, ChevronLeft, X, ChevronDown, Camera, Mail, Phone, Lock, Map, MapPin, Calendar } from 'lucide-react';
 
-const mockManagers = [
-  { id: 1, name: 'Clark Kent', initials: 'CK', avatar: 'https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=100&h=100&fit=crop', hasImage: true, type: 'Regional Manager', region: 'Eastern Region', branch: '—', email: 'example@mail.com', phone: '9876543210', password: 'Password@123' },
-  { id: 2, name: 'Tony Stark', initials: 'TS', type: 'Branch Manager', region: 'Western Region', branch: 'Mumbai Branch', email: 'example@mail.com', phone: '9876543210', password: 'Password@123' },
-  { id: 3, name: 'Bruce Wayne', initials: 'BW', type: 'Collection Manager', region: 'Northern Region', branch: 'Mumbai Branch', email: 'example@mail.com', phone: '9876543210', password: 'Password@123' },
-  { id: 4, name: 'Barry Allen', initials: 'BA', type: 'Regional Manager', region: 'Southern Region', branch: '—', email: 'example@mail.com', phone: '9876543210', password: 'Password@123' },
-  { id: 5, name: 'Steve Rogers', initials: 'SR', type: 'Branch Manager', region: 'Western Region', branch: 'Delhi Branch', email: 'example@mail.com', phone: '9876543210', password: 'Password@123' },
-  { id: 6, name: 'Clinton Barton', initials: 'CB', type: 'Collection Manager', region: 'Southern Region', branch: 'Nagpur Branch', email: 'example@mail.com', phone: '9876543210', password: 'Password@123' },
-  { id: 7, name: 'Scott Lang', initials: 'SL', type: 'Regional Manager', region: 'Eastern Region', branch: '—', email: 'example@mail.com', phone: '9876543210', password: 'Password@123' },
-  { id: 8, name: 'Peter Parker', initials: 'PP', type: 'Branch Manager', region: 'Northern Region', branch: 'Kolkata Branch', email: 'example@mail.com', phone: '9876543210', password: 'Password@123' },
-];
+const mockManagers = [];
 
 const MultiSelectDropdown = ({ label, options, selectedValues, onChange }) => {
-
   const [isOpen, setIsOpen] = useState(false);
   
   const toggleOption = (option) => {
@@ -43,7 +33,7 @@ const MultiSelectDropdown = ({ label, options, selectedValues, onChange }) => {
             <label key={idx} className="flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 rounded-lg cursor-pointer transition-colors">
               <input 
                 type="checkbox" 
-                className="w-4 h-4 rounded border-gray-300 text-[#1D4ED8] focus:ring-[#1D4ED8]"
+                className="w-4 h-4 rounded border-gray-300 text-[#225091] focus:ring-[#225091]"
                 checked={selectedValues.includes(option)}
                 onChange={() => toggleOption(option)}
               />
@@ -90,13 +80,13 @@ const Managers = () => {
     <div className="h-full flex flex-col gap-6">
       {/* Header Card */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 shrink-0">
-        <h1 className="text-xl font-bold text-[#4285F4] mb-2">Managers</h1>
+        <h1 className="text-xl font-bold text-[#225091] mb-2">Managers</h1>
         <div className="flex items-center text-sm text-gray-500">
           <Link to="/dashboard" className="hover:text-gray-700">Dashboard</Link>
           <ChevronRight size={14} className="mx-2" />
           <span className="hover:text-gray-700">User Management</span>
           <ChevronRight size={14} className="mx-2" />
-          <span className="text-[#1B58A6]">Managers</span>
+          <span className="text-[#225091]">Managers</span>
         </div>
       </div>
 
@@ -110,7 +100,7 @@ const Managers = () => {
               placeholder="Search"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-lg w-64 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all shadow-sm"
+              className="pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-lg w-64 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all shadow-sm"
             />
           </div>
           <div className="relative">
@@ -120,7 +110,7 @@ const Managers = () => {
             >
               <SlidersHorizontal size={18} />
               {(selectedTypes.length > 0 || selectedRegions.length > 0 || selectedBranches.length > 0) && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 bg-[#1B58A6] rounded-full border border-white flex items-center justify-center text-[9px] font-bold text-white">
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-[#225091] rounded-full border border-white flex items-center justify-center text-[9px] font-bold text-white">
                   {selectedTypes.length + selectedRegions.length + selectedBranches.length}
                 </span>
               )}
@@ -164,13 +154,13 @@ const Managers = () => {
                       setSelectedRegions([]);
                       setSelectedBranches([]);
                     }}
-                    className="flex-1 py-2.5 px-4 rounded-full border-2 border-[#1D4ED8] text-[#1D4ED8] font-semibold hover:bg-teal-50 transition-colors bg-white text-sm"
+                    className="flex-1 py-2.5 px-4 rounded-full border-2 border-[#225091] text-[#225091] font-semibold hover:bg-teal-50 transition-colors bg-white text-sm"
                   >
                     Reset Filter
                   </button>
                   <button 
                     onClick={() => setIsFilterOpen(false)}
-                    className="flex-1 py-2.5 px-4 rounded-full bg-[#1D4ED8] text-white font-semibold hover:bg-[#168f94] transition-colors shadow-sm text-sm"
+                    className="flex-1 py-2.5 px-4 rounded-full bg-[#225091] text-white font-semibold hover:bg-[#168f94] transition-colors shadow-sm text-sm"
                   >
                     Set Filter
                   </button>
@@ -182,7 +172,7 @@ const Managers = () => {
 
         <Link 
           to="/managers/create"
-          className="bg-[#1D4ED8] hover:bg-[#168f94] text-white px-4 py-2 rounded-full font-medium transition-colors flex items-center text-sm shadow-sm"
+          className="bg-[#225091] hover:bg-[#168f94] text-white px-4 py-2 rounded-full font-medium transition-colors flex items-center text-sm shadow-sm"
         >
           + Create Manager
         </Link>
@@ -260,19 +250,19 @@ const Managers = () => {
       <div className="flex items-center justify-between text-sm text-gray-500 shrink-0">
         <div>Showing {filteredData.length > 0 ? 1 : 0} to {filteredData.length} of 30 Entries</div>
         <div className="flex items-center gap-2">
-          <button className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 bg-white text-[#1D4ED8] hover:bg-[#1D4ED8] hover:text-white transition-colors shadow-sm">
+          <button className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 bg-white text-[#225091] hover:bg-[#225091] hover:text-white transition-colors shadow-sm">
             <ChevronLeft size={16} />
           </button>
-          <button className="w-8 h-8 flex items-center justify-center rounded-full bg-[#1D4ED8] text-white border border-[#1D4ED8] shadow-sm">
+          <button className="w-8 h-8 flex items-center justify-center rounded-full bg-[#225091] text-white border border-[#225091] shadow-sm">
             1
           </button>
-          <button className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 bg-white text-[#1D4ED8] hover:bg-[#1D4ED8] hover:text-white transition-colors shadow-sm">
+          <button className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 bg-white text-[#225091] hover:bg-[#225091] hover:text-white transition-colors shadow-sm">
             2
           </button>
-          <button className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 bg-white text-[#1D4ED8] hover:bg-[#1D4ED8] hover:text-white transition-colors shadow-sm">
+          <button className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 bg-white text-[#225091] hover:bg-[#225091] hover:text-white transition-colors shadow-sm">
             3
           </button>
-          <button className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 bg-white text-[#1D4ED8] hover:bg-[#1D4ED8] hover:text-white transition-colors shadow-sm">
+          <button className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 bg-white text-[#225091] hover:bg-[#225091] hover:text-white transition-colors shadow-sm">
             <ChevronRight size={16} />
           </button>
         </div>

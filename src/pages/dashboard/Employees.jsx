@@ -1,38 +1,49 @@
-import React, { useState, useEffect } from 'react';
-import { toast } from 'react-toastify';
-import { Link, useNavigate } from 'react-router-dom';
-import { ChevronRight, Search, SlidersHorizontal, Eye, Edit, Trash2, ChevronLeft, X, ChevronDown, Calendar } from 'lucide-react';
-import { employeeService } from '../../api/employeeService';
-import { roleService } from '../../api/roleService';
-import useBranchStore from '../../store/branchStore';
+import React, { useState, useEffect } from "react";
+import { toast } from "react-toastify";
+import { Link, useNavigate } from "react-router-dom";
+import {
+  ChevronRight,
+  Search,
+  SlidersHorizontal,
+  Eye,
+  Edit,
+  Trash2,
+  ChevronLeft,
+  X,
+  ChevronDown,
+  Calendar,
+  ArrowLeft,
+} from "lucide-react";
+import { employeeService } from "../../api/employeeService";
+import { roleService } from "../../api/roleService";
+import useBranchStore from "../../store/branchStore";
 
 const Employees = () => {
-
   const navigate = useNavigate();
-  
+
   // Data State
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  
+
   // Pagination State
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
-  
+
   // Filter/Search State
-  const [searchTerm, setSearchTerm] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  
+
   // Dropdown Options State (fetched from APIs)
   const [roleOptions, setRoleOptions] = useState([]);
-  
+
   // Selected Filters
-  const globalBranchId = useBranchStore(state => state.globalBranchId);
-  const [selectedRoleId, setSelectedRoleId] = useState('');
-  const [selectedStatus, setSelectedStatus] = useState('');
-  
+  const globalBranchId = useBranchStore((state) => state.globalBranchId);
+  const [selectedRoleId, setSelectedRoleId] = useState("");
+  const [selectedStatus, setSelectedStatus] = useState("");
+
   // Modals
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [employeeToDelete, setEmployeeToDelete] = useState(null);
@@ -67,19 +78,31 @@ const Employees = () => {
       const params = {
         page,
         limit: 10,
-        includeBranchManagers: true
+        includeBranchManagers: true,
       };
-      
+
       if (debouncedSearch) params.search = debouncedSearch;
       if (globalBranchId) params.branchId = globalBranchId;
       if (selectedRoleId) params.roleId = selectedRoleId;
       if (selectedStatus) params.status = selectedStatus;
-      
+
       const response = await employeeService.list(params);
       if (response.success) {
         setEmployees(response.data);
-        setTotalPages(response.meta?.totalPages || response.pagination?.totalPages || response.data?.meta?.totalPages || response.data?.pagination?.totalPages || 1);
-        setTotalRecords(response.meta?.totalRecords || response.pagination?.totalRecords || response.data?.meta?.totalRecords || response.data?.pagination?.totalRecords || 0);
+        setTotalPages(
+          response.meta?.totalPages ||
+            response.pagination?.totalPages ||
+            response.data?.meta?.totalPages ||
+            response.data?.pagination?.totalPages ||
+            1,
+        );
+        setTotalRecords(
+          response.meta?.totalRecords ||
+            response.pagination?.totalRecords ||
+            response.data?.meta?.totalRecords ||
+            response.data?.pagination?.totalRecords ||
+            0,
+        );
       }
     } catch (err) {
       console.error("Failed to fetch employees", err);
@@ -111,13 +134,18 @@ const Employees = () => {
   };
 
   const getInitials = (name) => {
-    if (!name) return 'U';
-    return name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+    if (!name) return "U";
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .substring(0, 2);
   };
 
   const resetFilters = () => {
-    setSelectedRoleId('');
-    setSelectedStatus('');
+    setSelectedRoleId("");
+    setSelectedStatus("");
     setPage(1);
     setIsFilterOpen(false);
   };
@@ -131,13 +159,22 @@ const Employees = () => {
     <div className="h-full flex flex-col gap-6 w-full">
       {/* Header Card */}
       <div className="bg-white rounded-lg p-5 shadow-sm border border-gray-100 shrink-0">
-        <h1 className="text-2xl font-bold text-[#1D4ED8] mb-2">Employees</h1>
+        <div className="flex items-center gap-3 mb-2">
+          <h1 className="text-2xl font-bold text-[#225091] m-0">Employees</h1>
+        </div>
         <div className="flex items-center text-sm font-medium text-gray-600">
-          <Link to="/dashboard" className="hover:text-gray-900 transition-colors">Dashboard</Link>
+          <Link
+            to="/dashboard"
+            className="hover:text-gray-900 transition-colors"
+          >
+            Dashboard
+          </Link>
           <ChevronRight size={16} className="mx-1 text-gray-400" />
-          <span className="hover:text-gray-900 transition-colors">HR Management</span>
+          <span className="hover:text-gray-900 transition-colors">
+            HR Management
+          </span>
           <ChevronRight size={16} className="mx-1 text-gray-400" />
-          <span className="text-[#1D4ED8]">Employee</span>
+          <span className="text-[#225091]">Employee</span>
         </div>
       </div>
 
@@ -145,7 +182,10 @@ const Employees = () => {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center shrink-0 gap-4">
         <div className="flex items-center gap-4 w-full sm:w-auto">
           <div className="relative w-full sm:w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+            <Search
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+              size={18}
+            />
             <input
               type="text"
               placeholder="Search employees..."
@@ -155,7 +195,7 @@ const Employees = () => {
             />
           </div>
           <div className="relative">
-            <button 
+            <button
               onClick={() => setIsFilterOpen(!isFilterOpen)}
               className="p-2.5 bg-white border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors shadow-sm relative focus:outline-none"
             >
@@ -170,28 +210,37 @@ const Employees = () => {
               <div className="absolute top-full left-0 sm:left-auto sm:right-0 mt-2 z-50 w-72 bg-[#f4f3fb] rounded-2xl shadow-2xl flex flex-col border border-gray-200">
                 <div className="flex justify-between items-center p-5 pb-3">
                   <h2 className="text-xl font-bold text-[#1b2559]">Filter</h2>
-                  <button onClick={() => setIsFilterOpen(false)} className="text-gray-500 hover:text-gray-800 transition-colors focus:outline-none">
+                  <button
+                    onClick={() => setIsFilterOpen(false)}
+                    className="text-gray-500 hover:text-gray-800 transition-colors focus:outline-none"
+                  >
                     <X size={20} />
                   </button>
                 </div>
-                
+
                 <div className="p-5 pt-2 space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
-                    <select 
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Department
+                    </label>
+                    <select
                       value={selectedRoleId}
                       onChange={(e) => setSelectedRoleId(e.target.value)}
                       className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#1D4ED8] bg-white text-sm"
                     >
                       <option value="">All Departments</option>
-                      {roleOptions.map(r => (
-                        <option key={r.id} value={r.id}>{r.name}</option>
+                      {roleOptions.map((r) => (
+                        <option key={r.id} value={r.id}>
+                          {r.name}
+                        </option>
                       ))}
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                    <select 
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Status
+                    </label>
+                    <select
                       value={selectedStatus}
                       onChange={(e) => setSelectedStatus(e.target.value)}
                       className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#1D4ED8] bg-white text-sm"
@@ -202,17 +251,17 @@ const Employees = () => {
                     </select>
                   </div>
                 </div>
-                
+
                 <div className="p-5 pt-2 flex gap-3">
-                  <button 
+                  <button
                     onClick={resetFilters}
-                    className="flex-1 py-2 rounded-full border border-[#1D4ED8] text-[#1D4ED8] font-semibold hover:bg-teal-50 transition-colors bg-white text-sm focus:outline-none"
+                    className="flex-1 py-2 rounded-full border border-[#225091] text-[#225091] font-semibold hover:bg-gray-50 transition-colors bg-white text-sm focus:outline-none"
                   >
                     Reset
                   </button>
-                  <button 
+                  <button
                     onClick={applyFilters}
-                    className="flex-1 py-2 rounded-full bg-[#1D4ED8] text-white font-semibold hover:bg-[#168f94] transition-colors shadow-sm text-sm focus:outline-none"
+                    className="flex-1 py-2 rounded-full bg-[#225091] text-white font-semibold hover:bg-[#163a6c] transition-colors shadow-sm text-sm focus:outline-none"
                   >
                     Apply
                   </button>
@@ -221,10 +270,10 @@ const Employees = () => {
             )}
           </div>
         </div>
-        
-        <Link 
+
+        <Link
           to="/employees/create"
-          className="bg-[#1D4ED8] hover:bg-[#168f94] text-white px-5 py-2.5 rounded-full font-semibold transition-colors shadow-sm flex items-center gap-2 text-sm shrink-0"
+          className="bg-[#225091] hover:bg-[#163a6c] text-white px-5 py-2.5 rounded-full font-semibold transition-colors shadow-sm flex items-center gap-2 text-sm shrink-0"
         >
           + Add Staff
         </Link>
@@ -247,62 +296,91 @@ const Employees = () => {
             </thead>
             <tbody>
               {loading && employees.length === 0 ? null : error ? (
-                <tr><td colSpan="7" className="py-8 text-center text-red-500">{error}</td></tr>
+                <tr>
+                  <td colSpan="7" className="py-8 text-center text-red-500">
+                    {error}
+                  </td>
+                </tr>
               ) : employees.length === 0 ? (
-                <tr><td colSpan="7" className="py-8 text-center text-gray-500">No employees found.</td></tr>
+                <tr>
+                  <td colSpan="7" className="py-8 text-center text-gray-500">
+                    No employees found.
+                  </td>
+                </tr>
               ) : (
                 employees.map((row, index) => (
-                  <tr key={row.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors text-sm group">
-                    <td className="py-4 px-6 text-gray-600">{row.srNo || ((page - 1) * 10 + index + 1)}</td>
+                  <tr
+                    key={row.id}
+                    className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors text-sm group"
+                  >
+                    <td className="py-4 px-6 text-gray-600">
+                      {row.srNo || (page - 1) * 10 + index + 1}
+                    </td>
                     <td className="py-4 px-6">
                       <div className="flex items-center gap-3">
                         <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold shrink-0">
                           {getInitials(row.fullName)}
                         </div>
                         <div className="flex flex-col">
-                          <span className="font-semibold text-gray-800">{row.fullName}</span>
-                          <span className="text-xs text-gray-500">{row.email}</span>
-                          <span className="text-xs text-gray-500">{row.phoneNumber}</span>
+                          <span className="font-semibold text-gray-800">
+                            {row.fullName}
+                          </span>
+                          <span className="text-xs text-gray-500">
+                            {row.email}
+                          </span>
+                          <span className="text-xs text-gray-500">
+                            {row.phoneNumber}
+                          </span>
                         </div>
                       </div>
                     </td>
                     <td className="py-4 px-6">
-                      <span className="text-gray-600 font-medium">{row.employeeCode || '-'}</span>
-                      {row.type === 'MANAGER' && (
-                        <div className="text-[10px] bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full inline-block mt-1">Branch Manager</div>
+                      <span className="text-gray-600 font-medium">
+                        {row.employeeCode || "-"}
+                      </span>
+                      {row.type === "MANAGER" && (
+                        <div className="text-[10px] bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full inline-block mt-1">
+                          Branch Manager
+                        </div>
                       )}
                     </td>
                     <td className="py-4 px-6">
-                      <span className="text-gray-700 font-medium">{row.designation || (row.role?.name || '-')}</span>
+                      <span className="text-gray-700 font-medium">
+                        {row.designation || row.role?.name || "-"}
+                      </span>
                     </td>
                     <td className="py-4 px-6 text-gray-600">
                       <div className="flex flex-col">
-                        <span>{row.branch?.name || '-'}</span>
-                        <span className="text-xs text-gray-400">{row.branch?.code || ''}</span>
+                        <span>{row.branch?.name || "-"}</span>
+                        <span className="text-xs text-gray-400">
+                          {row.branch?.code || ""}
+                        </span>
                       </div>
                     </td>
                     <td className="py-4 px-6">
-                      <span className={`px-2 py-1 rounded-full text-xs font-semibold ${row.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                        {row.status || 'UNKNOWN'}
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs font-semibold ${row.status === "ACTIVE" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}
+                      >
+                        {row.status || "UNKNOWN"}
                       </span>
                     </td>
                     <td className="py-4 px-6">
                       <div className="flex items-center justify-center gap-3">
-                        <button 
+                        <button
                           onClick={() => navigate(`/employees/view/${row.id}`)}
                           className="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center hover:bg-blue-100 transition-colors"
                           title="View"
                         >
                           <Eye size={16} />
                         </button>
-                        <button 
+                        <button
                           onClick={() => navigate(`/employees/edit/${row.id}`)}
                           className="w-8 h-8 rounded-full bg-teal-50 text-teal-600 flex items-center justify-center hover:bg-teal-100 transition-colors"
                           title="Edit"
                         >
                           <Edit size={16} />
                         </button>
-                        <button 
+                        <button
                           onClick={() => handleDeleteClick(row)}
                           className="w-8 h-8 rounded-full bg-red-50 text-red-600 flex items-center justify-center hover:bg-red-100 transition-colors"
                           title="Delete"
@@ -317,7 +395,7 @@ const Employees = () => {
             </tbody>
           </table>
         </div>
-        
+
         {/* Pagination */}
         {!loading && employees.length > 0 && (
           <div className="px-6 py-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4 mt-auto">
@@ -325,8 +403,8 @@ const Employees = () => {
               Showing page {page} of {totalPages} ({totalRecords} total entries)
             </div>
             <div className="flex items-center gap-2">
-              <button 
-                onClick={() => setPage(p => Math.max(1, p - 1))}
+              <button
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
                 className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-[#1D4ED8] hover:bg-[#1D4ED8] hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
@@ -335,8 +413,8 @@ const Employees = () => {
               <button className="w-8 h-8 flex items-center justify-center rounded-full bg-[#1D4ED8] text-white font-medium shadow-sm border border-[#1D4ED8]">
                 {page}
               </button>
-              <button 
-                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              <button
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={page === totalPages}
                 className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-[#1D4ED8] hover:bg-[#1D4ED8] hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
@@ -354,13 +432,22 @@ const Employees = () => {
             <div className="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
               <Trash2 size={32} />
             </div>
-            <h3 className="text-xl font-bold text-gray-800 mb-2">Delete Employee</h3>
+            <h3 className="text-xl font-bold text-gray-800 mb-2">
+              Delete Employee
+            </h3>
             <p className="text-gray-500 text-sm mb-6">
-              Are you sure you want to delete <span className="font-semibold text-gray-700">{employeeToDelete.fullName}</span>? This action cannot be undone.
+              Are you sure you want to delete{" "}
+              <span className="font-semibold text-gray-700">
+                {employeeToDelete.fullName}
+              </span>
+              ? This action cannot be undone.
             </p>
             <div className="flex gap-3">
               <button
-                onClick={() => { setIsDeleteModalOpen(false); setEmployeeToDelete(null); }}
+                onClick={() => {
+                  setIsDeleteModalOpen(false);
+                  setEmployeeToDelete(null);
+                }}
                 className="flex-1 py-2.5 rounded-full border-2 border-gray-200 text-gray-600 font-semibold hover:bg-gray-50 transition-colors"
               >
                 Cancel

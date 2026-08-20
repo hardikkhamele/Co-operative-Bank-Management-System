@@ -1,4 +1,68 @@
-import axiosInstance from './axiosConfig';
+import axios from 'axios';
+import useAuthStore from '../store/authStore';
+
+// Dedicated KYC API URL configured via env
+let kycBaseUrl = import.meta.env.VITE_KYC_API_URL || 'http://api.advitacredit.com';
+if (!kycBaseUrl.match(/\/api\/?$/)) {
+  kycBaseUrl = kycBaseUrl.endsWith('/') ? `${kycBaseUrl}api` : `${kycBaseUrl}/api`;
+}
+
+const kycAxiosInstance = axios.create({
+  baseURL: kycBaseUrl,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Attach auth token if available
+kycAxiosInstance.interceptors.request.use(
+  (config) => {
+    const token = useAuthStore.getState().accessToken;
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+// Response interceptor with 401 token refresh
+kycAxiosInstance.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+    if (!originalRequest) return Promise.reject(error);
+
+    if (error.response && error.response.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+      const refreshToken = useAuthStore.getState().refreshToken;
+
+      if (refreshToken) {
+        try {
+          const res = await axios.post(`${kycBaseUrl}/v1/society/auth/refresh`, {
+            refreshToken,
+          });
+
+          if (res.data && res.data.success && res.data.data) {
+            const newAccessToken = res.data.data.accessToken || res.data.data.tokens?.accessToken || res.data.data.token;
+            const newRefreshToken = res.data.data.refreshToken || res.data.data.tokens?.refreshToken || null;
+
+            useAuthStore.getState().setTokens({
+              accessToken: newAccessToken,
+              refreshToken: newRefreshToken,
+            });
+
+            originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+            return kycAxiosInstance(originalRequest);
+          }
+        } catch (refreshErr) {
+          console.warn('KYC token refresh failed, session expired:', refreshErr);
+        }
+      }
+    }
+    return Promise.reject(error);
+  }
+);
 
 export const kycService = {
   /**
@@ -12,7 +76,7 @@ export const kycService = {
    */
   initiateKyc: async (data) => {
     try {
-      const response = await axiosInstance.post('/v1/society/kyc-verification/initiate', data);
+      const response = await kycAxiosInstance.post('/v1/society/kyc-verification/initiate', data);
       return response.data;
     } catch (error) {
       throw error;
@@ -27,7 +91,7 @@ export const kycService = {
    */
   completeKyc: async (data) => {
     try {
-      const response = await axiosInstance.post('/v1/society/kyc-verification/complete', data);
+      const response = await kycAxiosInstance.post('/v1/society/kyc-verification/complete', data);
       return response.data;
     } catch (error) {
       throw error;
@@ -41,7 +105,7 @@ export const kycService = {
    */
   getKycReport: async (refid) => {
     try {
-      const response = await axiosInstance.get(`/v1/society/kyc-verification/report/${refid}`);
+      const response = await kycAxiosInstance.get(`/v1/society/kyc-verification/report/${refid}`);
       return response.data;
     } catch (error) {
       throw error;
@@ -56,7 +120,7 @@ export const kycService = {
    */
   downloadKycPdf: async (refid, documentType) => {
     try {
-      const response = await axiosInstance.get(`/v1/society/kyc-verification/report/${refid}/download-pdf/${documentType}`, {
+      const response = await kycAxiosInstance.get(`/v1/society/kyc-verification/report/${refid}/download-pdf/${documentType}`, {
         responseType: 'blob',
       });
       return response.data;
