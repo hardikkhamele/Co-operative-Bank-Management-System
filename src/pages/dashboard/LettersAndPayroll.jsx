@@ -7,26 +7,27 @@ import {
   Download, 
   Printer, 
   Eye, 
-  Loader2,
-  Search,
-  Trash2,
-  CheckCircle2,
-  Award,
-  ShieldCheck,
-  TrendingUp,
-  Briefcase,
-  ArrowRightLeft,
-  Receipt,
-  UserMinus,
-  Sparkles,
-  Building2,
-  Calendar,
-  IndianRupee,
-  User,
-  History,
-  FileCheck,
-  RefreshCw,
-  ExternalLink
+  Loader2, 
+  Search, 
+  Trash2, 
+  CheckCircle2, 
+  Award, 
+  ShieldCheck, 
+  TrendingUp, 
+  Briefcase, 
+  ArrowRightLeft, 
+  Receipt, 
+  Sparkles, 
+  Building2, 
+  Calendar, 
+  IndianRupee, 
+  User, 
+  History, 
+  FileCheck, 
+  RefreshCw, 
+  Plus,
+  Layers,
+  FileSpreadsheet
 } from 'lucide-react';
 import { employeeService } from '../../api/employeeService';
 import { branchService } from '../../api/branchService';
@@ -44,7 +45,7 @@ const LETTER_TYPES = [
     code: 'OL',
     icon: Award,
     description: 'New employment offer & terms',
-    color: 'from-blue-500/10 to-indigo-500/10 text-[#1B4E8C] border-blue-200'
+    badgeColor: 'bg-blue-50 text-[#225091] border-blue-200/60'
   },
   { 
     id: 'Confirmation Letter', 
@@ -52,7 +53,7 @@ const LETTER_TYPES = [
     code: 'CL',
     icon: ShieldCheck,
     description: 'Probation completion & confirmation',
-    color: 'from-emerald-500/10 to-teal-500/10 text-emerald-700 border-emerald-200'
+    badgeColor: 'bg-emerald-50 text-emerald-700 border-emerald-200/60'
   },
   { 
     id: 'Salary Slip', 
@@ -60,7 +61,7 @@ const LETTER_TYPES = [
     code: 'SS',
     icon: Receipt,
     description: 'Monthly payroll & earnings statement',
-    color: 'from-purple-500/10 to-pink-500/10 text-purple-700 border-purple-200'
+    badgeColor: 'bg-purple-50 text-purple-700 border-purple-200/60'
   },
   { 
     id: 'Salary Increment', 
@@ -68,7 +69,7 @@ const LETTER_TYPES = [
     code: 'SI',
     icon: TrendingUp,
     description: 'Compensation & CTC appraisal letter',
-    color: 'from-amber-500/10 to-orange-500/10 text-amber-700 border-amber-200'
+    badgeColor: 'bg-amber-50 text-amber-700 border-amber-200/60'
   },
   { 
     id: 'Promotion Letter', 
@@ -76,7 +77,7 @@ const LETTER_TYPES = [
     code: 'PL',
     icon: Briefcase,
     description: 'Designation & role upgrade',
-    color: 'from-cyan-500/10 to-sky-500/10 text-cyan-700 border-cyan-200'
+    badgeColor: 'bg-cyan-50 text-cyan-700 border-cyan-200/60'
   },
   { 
     id: 'Transfer Letter', 
@@ -84,7 +85,7 @@ const LETTER_TYPES = [
     code: 'TL',
     icon: ArrowRightLeft,
     description: 'Branch relocation & movement',
-    color: 'from-indigo-500/10 to-blue-500/10 text-indigo-700 border-indigo-200'
+    badgeColor: 'bg-indigo-50 text-indigo-700 border-indigo-200/60'
   },
   { 
     id: 'Performance Letter', 
@@ -92,50 +93,54 @@ const LETTER_TYPES = [
     code: 'PA',
     icon: Sparkles,
     description: 'Annual performance evaluation',
-    color: 'from-rose-500/10 to-pink-500/10 text-rose-700 border-rose-200'
+    badgeColor: 'bg-rose-50 text-rose-700 border-rose-200/60'
   },
   { 
     id: 'Termination Letter', 
     name: 'Termination Letter', 
     code: 'TM',
-    icon: UserMinus,
+    icon: Trash2,
     description: 'Relieving & exit documentation',
-    color: 'from-red-500/10 to-rose-500/10 text-red-700 border-red-200'
-  },
+    badgeColor: 'bg-red-50 text-red-700 border-red-200/60'
+  }
 ];
 
-const STORAGE_KEY = 'advita_hr_letters_history';
-
-const INITIAL_SAMPLE_HISTORY = [
+const INITIAL_HISTORY = [
   {
-    id: 'hist-1',
-    referenceNumber: 'KHAMLA/HR/OL/2026/001',
+    id: 'HIST-001',
     letterType: 'Offer Letter',
-    employeeId: '65b9d3b2e59df13456789555',
-    employeeName: 'Ayush Kumar',
-    designation: 'Branch Operations Manager',
-    detailsSummary: 'Designation: Branch Operations Manager • CTC: ₹6,00,000/yr',
-    generatedAt: new Date(Date.now() - 2 * 86400000).toISOString(),
-  },
-  {
-    id: 'hist-2',
-    referenceNumber: 'KHAMLA/HR/CL/2026/001',
-    letterType: 'Confirmation Letter',
-    employeeId: '65b9d3b2e59df13456789556',
-    employeeName: 'Priya Sharma',
+    employeeName: 'Aman Sharma',
+    referenceNumber: 'ADV/HR/OL/2026/0142',
     designation: 'Senior Loan Officer',
-    detailsSummary: 'Probation Confirmed • Notice: 60 Days',
-    generatedAt: new Date(Date.now() - 4 * 86400000).toISOString(),
+    generatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(),
+    detailsSummary: 'Designation: Senior Loan Officer | CTC: ₹4,50,000/yr'
   },
   {
-    id: 'hist-3',
-    referenceNumber: 'KHAMLA/HR/SS/2026/08/001',
+    id: 'HIST-002',
     letterType: 'Salary Slip',
-    employeeId: '65b9d3b2e59df13456789557',
-    employeeName: 'Rohan Deshmukh',
-    designation: 'Collection Executive',
-    detailsSummary: 'Period: August 2026 • Working Days: 31',
-    generatedAt: new Date(Date.now() - 6 * 86400000).toISOString(),
+    employeeName: 'Lala Patil',
+    referenceNumber: 'ADV/PAY/SS/2026/0589',
+    designation: 'Branch Manager',
+    generatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(),
+    detailsSummary: 'Month: July 2026 | Net Payable: ₹58,200'
+  },
+  {
+    id: 'HIST-003',
+    letterType: 'Confirmation Letter',
+    employeeName: 'Priya Deshmukh',
+    referenceNumber: 'ADV/HR/CL/2026/0091',
+    designation: 'Cashier / Teller',
+    generatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 8).toISOString(),
+    detailsSummary: 'Confirmation: 01 Aug 2026 | Notice: 60 Days'
+  },
+  {
+    id: 'HIST-004',
+    letterType: 'Salary Increment',
+    employeeName: 'Rahul Verma',
+    referenceNumber: 'ADV/HR/SI/2026/0034',
+    designation: 'Field Recovery Officer',
+    generatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 12).toISOString(),
+    detailsSummary: 'Increment: 15% | Revised CTC: ₹3,80,000/yr'
   }
 ];
 
@@ -143,360 +148,343 @@ const LettersAndPayroll = () => {
   const [activeTab, setActiveTab] = useState('generate'); // 'generate' | 'history'
   const [selectedLetterType, setSelectedLetterType] = useState('Offer Letter');
   const [loading, setLoading] = useState(false);
-
-  // Dropdown Lists
+  const [fetchingEmployees, setFetchingEmployees] = useState(true);
   const [employees, setEmployees] = useState([]);
   const [branches, setBranches] = useState([]);
-
-  // Selected Employee
-  const [selectedEmployeeId, setSelectedEmployeeId] = useState('');
   
-  // 1. Offer Letter Fields
-  const [offerDesignation, setOfferDesignation] = useState('Branch Operations Manager');
-  const [offerJoiningDate, setOfferJoiningDate] = useState(new Date().toISOString().slice(0, 10));
-  const [offerAnnualSalary, setOfferAnnualSalary] = useState('600000');
+  // Selected Employee Context
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState('');
+  const [currentEmployee, setCurrentEmployee] = useState(null);
 
-  // 2. Confirmation Letter Fields
-  const [probationStartDate, setProbationStartDate] = useState(new Date(Date.now() - 180 * 86400000).toISOString().slice(0, 10));
-  const [probationEndDate, setProbationEndDate] = useState(new Date().toISOString().slice(0, 10));
-  const [confirmationDate, setConfirmationDate] = useState(new Date().toISOString().slice(0, 10));
-  const [confirmationNoticePeriod, setConfirmationNoticePeriod] = useState('60');
-
-  // 3. Performance Appraisal Letter Fields
-  const [perfReviewPeriod, setPerfReviewPeriod] = useState('FY 2025–26');
-  const [perfOverallRating, setPerfOverallRating] = useState('4.5 / 5.0 (Exceeds Expectations)');
-  const [perfManagerComments, setPerfManagerComments] = useState('Demonstrated outstanding performance and adhered to all compliance guidelines.');
-  const [perfAppraisalOutcome, setPerfAppraisalOutcome] = useState('Eligible for annual increment of 15% and promotion consideration.');
-
-  // 4. Promotion Letter Fields
-  const [promotedNewRole, setPromotedNewRole] = useState('Senior Branch Manager');
-  const [promotionEffectiveDate, setPromotionEffectiveDate] = useState(new Date().toISOString().slice(0, 10));
-
-  // 5. Transfer Letter Fields
-  const [transferToBranchId, setTransferToBranchId] = useState('');
-  const [transferEffectiveDate, setTransferEffectiveDate] = useState(new Date().toISOString().slice(0, 10));
-  const [transferReportingDate, setTransferReportingDate] = useState(new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10));
-
-  // 6. Salary Increment Letter Fields
-  const [incrReviewPeriod, setIncrReviewPeriod] = useState('FY 2025–26');
-  const [incrEffectiveDate, setIncrEffectiveDate] = useState(new Date().toISOString().slice(0, 10));
-  const [incrPercentage, setIncrPercentage] = useState('15');
-  const [incrCurrentCtc, setIncrCurrentCtc] = useState('600000');
-  const [incrRevisedCtc, setIncrRevisedCtc] = useState('690000');
-
-  // 7. Salary Slip Fields
-  const [salaryDate, setSalaryDate] = useState(new Date().toISOString().slice(0, 10));
-  const [salaryPayDate, setSalaryPayDate] = useState(new Date().toISOString().slice(0, 10));
-  const [salaryPayPeriod, setSalaryPayPeriod] = useState('August 2026');
-  const [salaryWorkingDays, setSalaryWorkingDays] = useState('31');
-  const [salaryPresentDays, setSalaryPresentDays] = useState('29');
-  const [salaryLopDays, setSalaryLopDays] = useState('2');
-  const [salaryAccountNumber, setSalaryAccountNumber] = useState('');
-
-  // 8. Termination Letter Fields
-  const [termDate, setTermDate] = useState(new Date().toISOString().slice(0, 10));
-  const [termReason, setTermReason] = useState('Resignation / Personal Reasons');
-  const [termNoticePeriodDays, setTermNoticePeriodDays] = useState('30');
-  const [termHandoverTo, setTermHandoverTo] = useState('Mr. Amit Verma, Senior Branch Officer');
-
-  // Generated Document State
+  // Result state
   const [generatedPdfBlob, setGeneratedPdfBlob] = useState(null);
-  const [generatedPdfUrl, setGeneratedPdfUrl] = useState(null);
+  const [generatedPdfUrl, setGeneratedPdfUrl] = useState('');
   const [generatedDocTitle, setGeneratedDocTitle] = useState('');
   const [generatedRefNo, setGeneratedRefNo] = useState('');
 
   // History State
   const [historyList, setHistoryList] = useState(() => {
     try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) return JSON.parse(saved);
+      const saved = localStorage.getItem('advita_letters_history');
+      return saved ? JSON.parse(saved) : INITIAL_HISTORY;
     } catch {
-      // ignore
+      return INITIAL_HISTORY;
     }
-    return INITIAL_SAMPLE_HISTORY;
   });
-
-  // History Filters & Pagination
   const [historySearch, setHistorySearch] = useState('');
   const [historyTypeFilter, setHistoryTypeFilter] = useState('ALL');
   const [historyPage, setHistoryPage] = useState(1);
   const historyLimit = 10;
 
-  // Month & Year Generation Options
-  const monthYearOptions = useMemo(() => {
-    const currentYear = new Date().getFullYear();
-    const years = [currentYear, currentYear - 1, currentYear + 1];
-    const options = [];
-    years.forEach((yr) => {
-      MONTHS_LIST.forEach((m) => {
-        options.push(`${m} ${yr}`);
-      });
-    });
-    return options;
-  }, []);
+  // Form Fields - Offer Letter
+  const [offerDesignation, setOfferDesignation] = useState('');
+  const [offerJoiningDate, setOfferJoiningDate] = useState('');
+  const [offerAnnualSalary, setOfferAnnualSalary] = useState('');
 
-  // Save history to localStorage
+  // Form Fields - Confirmation Letter
+  const [probationStartDate, setProbationStartDate] = useState('');
+  const [probationEndDate, setProbationEndDate] = useState('');
+  const [confirmationDate, setConfirmationDate] = useState('');
+  const [confirmationNoticePeriod, setConfirmationNoticePeriod] = useState('60');
+
+  // Form Fields - Performance Appraisal
+  const [perfReviewPeriod, setPerfReviewPeriod] = useState('FY 2025–26');
+  const [perfOverallRating, setPerfOverallRating] = useState('4.5 / 5.0 (Exceeds Expectations)');
+  const [perfManagerComments, setPerfManagerComments] = useState('');
+
+  // Form Fields - Salary Increment
+  const [incCurrentSalary, setIncCurrentSalary] = useState('');
+  const [incNewSalary, setIncNewSalary] = useState('');
+  const [incEffectiveDate, setIncEffectiveDate] = useState('');
+  const [incPercentage, setIncPercentage] = useState('10');
+
+  // Form Fields - Promotion Letter
+  const [promoCurrentDesignation, setPromoCurrentDesignation] = useState('');
+  const [promoNewDesignation, setPromoNewDesignation] = useState('');
+  const [promoEffectiveDate, setPromoEffectiveDate] = useState('');
+  const [promoRevisedSalary, setPromoRevisedSalary] = useState('');
+
+  // Form Fields - Transfer Letter
+  const [transferCurrentBranch, setTransferCurrentBranch] = useState('');
+  const [transferNewBranch, setTransferNewBranch] = useState('');
+  const [transferEffectiveDate, setTransferEffectiveDate] = useState('');
+  const [transferRelocationSupport, setTransferRelocationSupport] = useState('Standard Bank Relocation Allowance as per Society Norms');
+
+  // Form Fields - Salary Slip
+  const [salaryMonth, setSalaryMonth] = useState('August');
+  const [salaryYear, setSalaryYear] = useState('2026');
+  const [salaryBasic, setSalaryBasic] = useState('25000');
+  const [salaryHra, setSalaryHra] = useState('10000');
+  const [salaryConveyance, setSalaryConveyance] = useState('3000');
+  const [salarySpecialAllowance, setSalarySpecialAllowance] = useState('5000');
+  const [salaryPfDeduction, setSalaryPfDeduction] = useState('1800');
+  const [salaryPtDeduction, setSalaryPtDeduction] = useState('200');
+  const [salaryTdsDeduction, setSalaryTdsDeduction] = useState('0');
+  const [salaryPresentDays, setSalaryPresentDays] = useState('30');
+  const [salaryLopDays, setSalaryLopDays] = useState('0');
+  const [salaryAccountNumber, setSalaryAccountNumber] = useState('');
+
+  // Form Fields - Termination Letter
+  const [termDate, setTermDate] = useState('');
+  const [termNoticePeriodDays, setTermNoticePeriodDays] = useState('30');
+  const [termReason, setTermReason] = useState('Resignation / Career Progression');
+  const [termHandoverTo, setTermHandoverTo] = useState('Branch Operations Lead');
+
+  // Sync history to localStorage
   useEffect(() => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(historyList));
+      localStorage.setItem('advita_letters_history', JSON.stringify(historyList));
     } catch (e) {
-      console.warn('Failed to save history to localStorage:', e);
+      console.error('Failed to persist history', e);
     }
   }, [historyList]);
 
-  // Fetch initial dropdown data
+  // Clean blob url on unmount
   useEffect(() => {
-    const loadDropdownData = async () => {
+    return () => {
+      if (generatedPdfUrl) URL.revokeObjectURL(generatedPdfUrl);
+    };
+  }, [generatedPdfUrl]);
+
+  // Fetch initial employees & branches
+  useEffect(() => {
+    const loadInitialData = async () => {
       try {
+        setFetchingEmployees(true);
         const [empRes, branchRes] = await Promise.allSettled([
-          employeeService.list({ limit: 200 }),
-          branchService.list({ limit: 100 }),
+          employeeService.list({ limit: 150 }),
+          branchService.list({ limit: 100 })
         ]);
 
-        if (empRes.status === 'fulfilled' && (empRes.value?.success || Array.isArray(empRes.value?.data))) {
-          const list = Array.isArray(empRes.value.data) ? empRes.value.data : (empRes.value.data?.employees || []);
-          setEmployees(list);
-          if (list.length > 0 && !selectedEmployeeId) {
-            setSelectedEmployeeId(list[0].id || list[0]._id);
+        if (empRes.status === 'fulfilled' && empRes.value && empRes.value.success) {
+          const empList = Array.isArray(empRes.value.data)
+            ? empRes.value.data
+            : empRes.value.data?.items || empRes.value.data?.employees || [];
+          setEmployees(empList);
+          if (empList.length > 0) {
+            setSelectedEmployeeId(empList[0].id || empList[0]._id);
           }
         }
 
-        if (branchRes.status === 'fulfilled' && branchRes.value?.success) {
-          const bList = branchRes.value.data || [];
+        if (branchRes.status === 'fulfilled' && branchRes.value && branchRes.value.success) {
+          const bList = Array.isArray(branchRes.value.data)
+            ? branchRes.value.data
+            : branchRes.value.data?.items || branchRes.value.data?.branches || [];
           setBranches(bList);
-          if (bList.length > 0) {
-            setTransferToBranchId(bList[0].id || bList[0]._id);
-          }
         }
       } catch (err) {
-        console.error('Failed to load initial dropdown data:', err);
+        console.error('Failed to load employee/branch data:', err);
+      } finally {
+        setFetchingEmployees(false);
       }
     };
-
-    loadDropdownData();
+    loadInitialData();
   }, []);
 
-  // Currently Selected Employee Object
-  const currentEmployee = useMemo(() => {
-    return employees.find(e => (e.id || e._id) === selectedEmployeeId) || null;
-  }, [employees, selectedEmployeeId]);
-
-  // Auto-fill sensible fields when selected employee changes
+  // Update current employee details when selection changes
   useEffect(() => {
-    if (currentEmployee) {
-      if (currentEmployee.designation) {
-        setOfferDesignation(currentEmployee.designation);
-        setPromotedNewRole(`Senior ${currentEmployee.designation}`);
+    if (!selectedEmployeeId || employees.length === 0) {
+      setCurrentEmployee(null);
+      return;
+    }
+    const emp = employees.find(e => (e.id || e._id) === selectedEmployeeId);
+    if (emp) {
+      setCurrentEmployee(emp);
+      
+      // Auto fill form fields
+      setOfferDesignation(emp.designation || 'Staff Associate');
+      setPromoCurrentDesignation(emp.designation || 'Staff Associate');
+      setTransferCurrentBranch(emp.branchName || emp.branch?.name || 'Main Branch');
+      if (emp.salary) {
+        setOfferAnnualSalary(String(emp.salary));
+        setIncCurrentSalary(String(emp.salary));
+        const estimatedNew = Math.round(Number(emp.salary) * 1.10);
+        setIncNewSalary(String(estimatedNew));
+        setPromoRevisedSalary(String(estimatedNew));
       }
-      if (currentEmployee.joiningDate) {
-        const jd = new Date(currentEmployee.joiningDate).toISOString().slice(0, 10);
-        setOfferJoiningDate(jd);
-        setProbationStartDate(jd);
-      }
-      if (currentEmployee.salary) {
-        setIncrCurrentCtc(currentEmployee.salary.toString());
-        setOfferAnnualSalary(currentEmployee.salary.toString());
+      if (emp.joiningDate) {
+        try {
+          const jd = new Date(emp.joiningDate).toISOString().split('T')[0];
+          setOfferJoiningDate(jd);
+          setProbationStartDate(jd);
+        } catch {
+          // ignore
+        }
       }
     }
-  }, [currentEmployee]);
+  }, [selectedEmployeeId, employees]);
 
-  // Clean up object URL when blob changes
-  useEffect(() => {
-    if (generatedPdfBlob) {
-      const url = window.URL.createObjectURL(generatedPdfBlob);
-      setGeneratedPdfUrl(url);
-      return () => {
-        window.URL.revokeObjectURL(url);
-      };
-    } else {
-      setGeneratedPdfUrl(null);
-    }
-  }, [generatedPdfBlob]);
+  // Calculate gross, deductions & net salary for slip
+  const salaryCalculations = useMemo(() => {
+    const basic = parseFloat(salaryBasic) || 0;
+    const hra = parseFloat(salaryHra) || 0;
+    const conv = parseFloat(salaryConveyance) || 0;
+    const special = parseFloat(salarySpecialAllowance) || 0;
+    const gross = basic + hra + conv + special;
 
-  // Helper to generate reference number
-  const createReferenceNumber = (letterType, emp) => {
-    const yr = new Date().getFullYear();
-    const mo = String(new Date().getMonth() + 1).padStart(2, '0');
-    const letterObj = LETTER_TYPES.find(l => l.id === letterType) || { code: 'DOC' };
-    const rand = Math.floor(100 + Math.random() * 900);
-    const branchPrefix = (emp?.branchName || emp?.branch?.name || 'KHAMLA').toUpperCase().slice(0, 6);
-    
-    if (letterType === 'Salary Slip') {
-      return `${branchPrefix}/HR/${letterObj.code}/${yr}/${mo}/${rand}`;
-    }
-    return `${branchPrefix}/HR/${letterObj.code}/${yr}/${rand}`;
-  };
+    const pf = parseFloat(salaryPfDeduction) || 0;
+    const pt = parseFloat(salaryPtDeduction) || 0;
+    const tds = parseFloat(salaryTdsDeduction) || 0;
+    const deductions = pf + pt + tds;
 
-  // Generate Document Action
+    const net = Math.max(0, gross - deductions);
+    return { gross, deductions, net };
+  }, [
+    salaryBasic, salaryHra, salaryConveyance, salarySpecialAllowance,
+    salaryPfDeduction, salaryPtDeduction, salaryTdsDeduction
+  ]);
+
+  // Handle Generate Letter
   const handleGenerateDocument = async (e) => {
     if (e) e.preventDefault();
 
     if (!selectedEmployeeId) {
-      toast.error('Please select an employee.');
+      toast.warning('Please select an employee first.');
       return;
     }
 
-    setLoading(true);
-    setGeneratedPdfBlob(null);
-
-    const empName = currentEmployee?.fullName || currentEmployee?.name || 'Employee';
-    const refNumber = createReferenceNumber(selectedLetterType, currentEmployee);
-    let summaryText = '';
-
     try {
-      let pdfBlob = null;
-      let title = '';
+      setLoading(true);
+      setGeneratedPdfBlob(null);
+
+      let payload = {
+        letterType: selectedLetterType,
+        employeeId: selectedEmployeeId,
+      };
+
+      const empName = currentEmployee?.fullName || currentEmployee?.name || 'Employee';
+      const refCode = `ADV/${selectedLetterType.slice(0, 2).toUpperCase()}/${Date.now().toString().slice(-4)}`;
+      let summaryText = '';
 
       switch (selectedLetterType) {
-        case 'Offer Letter': {
-          const payload = {
-            employeeId: selectedEmployeeId,
-            candidateName: empName,
-            designation: offerDesignation || currentEmployee?.designation || 'Staff',
+        case 'Offer Letter':
+          payload = {
+            ...payload,
+            designation: offerDesignation,
             joiningDate: offerJoiningDate,
-            annualSalary: Number(offerAnnualSalary) || 0,
+            annualSalary: Number(offerAnnualSalary) || 0
           };
-          title = `Offer_Letter_${empName.replace(/\s+/g, '_')}`;
-          summaryText = `Designation: ${offerDesignation} • CTC: ₹${Number(offerAnnualSalary).toLocaleString()}/yr`;
-          pdfBlob = await letterService.generateOfferLetter(payload);
+          summaryText = `Designation: ${offerDesignation} | CTC: ₹${Number(offerAnnualSalary).toLocaleString()}/yr`;
           break;
-        }
 
-        case 'Confirmation Letter': {
-          const payload = {
-            employeeId: selectedEmployeeId,
-            probationStartDate: probationStartDate,
-            probationEndDate: probationEndDate,
-            confirmationDate: confirmationDate,
-            noticePeriodDays: Number(confirmationNoticePeriod) || 60,
+        case 'Confirmation Letter':
+          payload = {
+            ...payload,
+            probationStartDate,
+            probationEndDate,
+            confirmationDate,
+            noticePeriodDays: Number(confirmationNoticePeriod) || 60
           };
-          title = `Confirmation_Letter_${empName.replace(/\s+/g, '_')}`;
-          summaryText = `Confirmed: ${confirmationDate} • Notice: ${confirmationNoticePeriod} Days`;
-          pdfBlob = await letterService.generateConfirmationLetter(payload);
+          summaryText = `Confirmation: ${confirmationDate} | Notice: ${confirmationNoticePeriod} Days`;
           break;
-        }
 
-        case 'Performance Letter': {
-          const payload = {
-            employeeId: selectedEmployeeId,
+        case 'Performance Letter':
+          payload = {
+            ...payload,
             reviewPeriod: perfReviewPeriod,
             overallRating: perfOverallRating,
-            managerComments: perfManagerComments,
-            appraisalOutcome: perfAppraisalOutcome,
+            managerComments: perfManagerComments
           };
-          title = `Performance_Letter_${empName.replace(/\s+/g, '_')}`;
-          summaryText = `Period: ${perfReviewPeriod} • Rating: ${perfOverallRating}`;
-          pdfBlob = await letterService.generatePerformanceLetter(payload);
+          summaryText = `Period: ${perfReviewPeriod} | Rating: ${perfOverallRating}`;
           break;
-        }
 
-        case 'Promotion Letter': {
-          const payload = {
-            employeeId: selectedEmployeeId,
-            newRole: promotedNewRole,
-            effectiveDate: promotionEffectiveDate,
+        case 'Salary Increment':
+          payload = {
+            ...payload,
+            currentSalary: Number(incCurrentSalary) || 0,
+            newSalary: Number(incNewSalary) || 0,
+            effectiveDate: incEffectiveDate,
+            incrementPercentage: Number(incPercentage) || 0
           };
-          title = `Promotion_Letter_${empName.replace(/\s+/g, '_')}`;
-          summaryText = `Role: ${promotedNewRole} • Effective: ${promotionEffectiveDate}`;
-          pdfBlob = await letterService.generatePromotionLetter(payload);
+          summaryText = `Increment: ${incPercentage}% | Revised CTC: ₹${Number(incNewSalary).toLocaleString()}/yr`;
           break;
-        }
 
-        case 'Transfer Letter': {
-          if (!transferToBranchId) {
-            toast.error('Please select a target branch for transfer.');
-            setLoading(false);
-            return;
-          }
-          const targetBranch = branches.find(b => (b.id || b._id) === transferToBranchId);
-          const targetBranchName = targetBranch?.branchName || targetBranch?.name || 'New Branch';
+        case 'Promotion Letter':
+          payload = {
+            ...payload,
+            currentDesignation: promoCurrentDesignation,
+            newDesignation: promoNewDesignation,
+            effectiveDate: promoEffectiveDate,
+            revisedSalary: Number(promoRevisedSalary) || 0
+          };
+          summaryText = `Promoted: ${promoNewDesignation} | Revised CTC: ₹${Number(promoRevisedSalary).toLocaleString()}/yr`;
+          break;
 
-          const payload = {
-            employeeId: selectedEmployeeId,
-            transferToBranchId: transferToBranchId,
+        case 'Transfer Letter':
+          payload = {
+            ...payload,
+            currentBranch: transferCurrentBranch,
+            newBranch: transferNewBranch,
             effectiveDate: transferEffectiveDate,
-            reportingDate: transferReportingDate,
+            relocationSupport: transferRelocationSupport
           };
-          title = `Transfer_Letter_${empName.replace(/\s+/g, '_')}`;
-          summaryText = `To: ${targetBranchName} • Effective: ${transferEffectiveDate}`;
-          pdfBlob = await letterService.generateTransferLetter(payload);
+          summaryText = `Transferred: ${transferNewBranch} | Effective: ${transferEffectiveDate}`;
           break;
-        }
 
-        case 'Salary Increment': {
-          const payload = {
-            employeeId: selectedEmployeeId,
-            reviewPeriod: incrReviewPeriod,
-            effectiveDate: incrEffectiveDate,
-            incrementPercentage: Number(incrPercentage) || 0,
-            currentCtc: Number(incrCurrentCtc) || 0,
-            revisedCtc: Number(incrRevisedCtc) || 0,
+        case 'Salary Slip':
+          payload = {
+            ...payload,
+            month: salaryMonth,
+            year: Number(salaryYear),
+            basicSalary: Number(salaryBasic),
+            hra: Number(salaryHra),
+            conveyance: Number(salaryConveyance),
+            specialAllowance: Number(salarySpecialAllowance),
+            pfDeduction: Number(salaryPfDeduction),
+            ptDeduction: Number(salaryPtDeduction),
+            tdsDeduction: Number(salaryTdsDeduction),
+            presentDays: Number(salaryPresentDays),
+            lopDays: Number(salaryLopDays),
+            accountNumber: salaryAccountNumber
           };
-          title = `Salary_Increment_${empName.replace(/\s+/g, '_')}`;
-          summaryText = `Increment: ${incrPercentage}% • Revised CTC: ₹${Number(incrRevisedCtc).toLocaleString()}/yr`;
-          pdfBlob = await letterService.generateSalaryIncrement(payload);
+          summaryText = `Month: ${salaryMonth} ${salaryYear} | Net: ₹${salaryCalculations.net.toLocaleString()}`;
           break;
-        }
 
-        case 'Salary Slip': {
-          const payload = {
-            employeeId: selectedEmployeeId,
-            salaryDate: salaryDate,
-            payDate: salaryPayDate,
-            payPeriod: salaryPayPeriod,
-            workingDays: Number(salaryWorkingDays) || 30,
-            presentDays: Number(salaryPresentDays) || 30,
-            lopDays: Number(salaryLopDays) || 0,
-            ...(salaryAccountNumber ? { accountNumber: salaryAccountNumber } : {}),
-          };
-          title = `Salary_Slip_${salaryPayPeriod.replace(/\s+/g, '_')}_${empName.replace(/\s+/g, '_')}`;
-          summaryText = `Period: ${salaryPayPeriod} • Paid Days: ${salaryPresentDays}/${salaryWorkingDays}`;
-          pdfBlob = await letterService.generateSalarySlip(payload);
-          break;
-        }
-
-        case 'Termination Letter': {
-          const payload = {
-            employeeId: selectedEmployeeId,
+        case 'Termination Letter':
+          payload = {
+            ...payload,
             terminationDate: termDate,
+            noticePeriodDays: Number(termNoticePeriodDays),
             reason: termReason,
-            noticePeriodDays: Number(termNoticePeriodDays) || 30,
-            handoverTo: termHandoverTo,
+            handoverTo: termHandoverTo
           };
-          title = `Termination_Letter_${empName.replace(/\s+/g, '_')}`;
-          summaryText = `Date: ${termDate} • Reason: ${termReason}`;
-          pdfBlob = await letterService.generateTerminationLetter(payload);
+          summaryText = `Exit Date: ${termDate} | Handover: ${termHandoverTo}`;
           break;
-        }
 
         default:
-          toast.error('Invalid letter type selected.');
-          setLoading(false);
-          return;
+          break;
       }
 
-      if (pdfBlob) {
-        setGeneratedPdfBlob(pdfBlob);
-        setGeneratedDocTitle(title);
-        setGeneratedRefNo(refNumber);
-
-        // Record into history
-        const newHistoryItem = {
-          id: `hist-${Date.now()}`,
-          referenceNumber: refNumber,
-          letterType: selectedLetterType,
-          employeeId: selectedEmployeeId,
-          employeeName: empName,
-          designation: currentEmployee?.designation || offerDesignation || 'Staff',
-          detailsSummary: summaryText,
-          generatedAt: new Date().toISOString(),
-        };
-
-        setHistoryList(prev => [newHistoryItem, ...prev]);
-        toast.success(`${selectedLetterType} generated successfully!`);
+      const response = await letterService.generate(payload);
+      let pdfBlob;
+      if (response instanceof Blob) {
+        pdfBlob = response;
+      } else if (response.data instanceof Blob) {
+        pdfBlob = response.data;
       } else {
-        throw new Error('Received empty PDF document.');
+        pdfBlob = new Blob([response.data || response], { type: 'application/pdf' });
       }
+
+      setGeneratedPdfBlob(pdfBlob);
+      const url = URL.createObjectURL(pdfBlob);
+      setGeneratedPdfUrl(url);
+
+      const docTitle = `${selectedLetterType.replace(/\s+/g, '_')}_${empName.replace(/\s+/g, '_')}`;
+      setGeneratedDocTitle(docTitle);
+      setGeneratedRefNo(refCode);
+
+      const newHistoryItem = {
+        id: `HIST-${Date.now().toString().slice(-4)}`,
+        letterType: selectedLetterType,
+        employeeName: empName,
+        referenceNumber: refCode,
+        designation: currentEmployee?.designation || 'Staff',
+        generatedAt: new Date().toISOString(),
+        detailsSummary: summaryText
+      };
+      setHistoryList(prev => [newHistoryItem, ...prev]);
+
+      toast.success(`${selectedLetterType} generated successfully!`);
     } catch (err) {
       console.error('Failed to generate letter:', err);
       const errMsg = err.response?.data?.message || err.message || 'Failed to generate PDF document.';
@@ -568,76 +556,111 @@ const LettersAndPayroll = () => {
   return (
     <div className="w-full flex flex-col gap-5 font-sans antialiased pb-16">
       
-      {/* Header Card */}
-      <div className="bg-white rounded-xl shadow-xs border border-slate-200/90 p-5 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+      {/* 1. Header Card - Exact Match with Employees.jsx */}
+      <div className="bg-white rounded-xl p-5 shadow-xs border border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl font-bold text-[#225091] tracking-tight m-0">
-              Letters & Payroll Management
-            </h1>
-            <span className="px-2 py-0.5 text-[11px] font-semibold bg-slate-100 text-slate-600 rounded-md border border-slate-200">
-              HR Operations
-            </span>
-          </div>
-          <div className="flex items-center text-xs font-medium text-slate-500 mt-1">
-            <Link to="/dashboard" className="hover:text-[#225091] transition-colors">Dashboard</Link>
-            <ChevronRight size={13} className="mx-1 text-slate-400" />
-            <span className="text-slate-500">HR Operations</span>
-            <ChevronRight size={13} className="mx-1 text-slate-400" />
+          <h1 className="text-2xl font-bold text-[#225091] m-0">
+            Letters & Payroll
+          </h1>
+          <div className="flex items-center text-sm font-medium text-gray-500 mt-1">
+            <Link to="/dashboard" className="hover:text-gray-900 transition-colors">
+              Dashboard
+            </Link>
+            <ChevronRight size={15} className="mx-1 text-gray-400" />
+            <span className="text-gray-600">HR Management</span>
+            <ChevronRight size={15} className="mx-1 text-gray-400" />
             <span className="text-[#225091] font-semibold">Letters & Payroll</span>
           </div>
         </div>
 
-        {/* Tab Switcher */}
-        <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200/80">
+        {/* Tab Actions */}
+        <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={() => setActiveTab('generate')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+            className={`px-5 py-2.5 rounded-full font-semibold transition-all shadow-sm flex items-center gap-2 text-sm shrink-0 cursor-pointer ${
               activeTab === 'generate'
-                ? 'bg-[#225091] text-white shadow-xs'
-                : 'text-slate-600 hover:text-slate-900'
+                ? 'bg-[#225091] text-white hover:bg-[#1b427b]'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
           >
-            <FileCheck size={14} />
+            <FileCheck size={16} />
             <span>Generate Document</span>
           </button>
 
           <button
             type="button"
             onClick={() => setActiveTab('history')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+            className={`px-5 py-2.5 rounded-full font-semibold transition-all shadow-sm flex items-center gap-2 text-sm shrink-0 cursor-pointer ${
               activeTab === 'history'
-                ? 'bg-[#225091] text-white shadow-xs'
-                : 'text-slate-600 hover:text-slate-900'
+                ? 'bg-[#225091] text-white hover:bg-[#1b427b]'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
           >
-            <History size={14} />
-            <span>History</span>
-            <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
-              activeTab === 'history' ? 'bg-white/20 text-white' : 'bg-white text-slate-700 shadow-2xs border border-slate-200'
-            }`}>
-              {historyList.length}
-            </span>
+            <History size={16} />
+            <span>History ({historyList.length})</span>
           </button>
+        </div>
+      </div>
+
+      {/* 2. Top Stats Overview (Matching Employees.jsx 4 KPI Cards) */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-white rounded-xl p-4.5 border border-gray-100 shadow-xs flex flex-col items-center justify-center transition-all hover:shadow-md">
+          <div className="flex items-center gap-2 text-[#225091] mb-1">
+            <Layers size={18} />
+            <span className="text-[26px] font-bold leading-none font-heading">8</span>
+          </div>
+          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider text-center">
+            DOCUMENT TEMPLATES
+          </span>
+        </div>
+
+        <div className="bg-white rounded-xl p-4.5 border border-gray-100 shadow-xs flex flex-col items-center justify-center transition-all hover:shadow-md">
+          <div className="flex items-center gap-2 text-emerald-600 mb-1">
+            <User size={18} />
+            <span className="text-[26px] font-bold leading-none font-heading">{employees.length}</span>
+          </div>
+          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider text-center">
+            STAFF AVAILABLE
+          </span>
+        </div>
+
+        <div className="bg-white rounded-xl p-4.5 border border-gray-100 shadow-xs flex flex-col items-center justify-center transition-all hover:shadow-md">
+          <div className="flex items-center gap-2 text-purple-600 mb-1">
+            <Receipt size={18} />
+            <span className="text-[26px] font-bold leading-none font-heading">
+              {historyList.filter(h => h.letterType === 'Salary Slip').length}
+            </span>
+          </div>
+          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider text-center">
+            SALARY SLIPS ISSUED
+          </span>
+        </div>
+
+        <div className="bg-white rounded-xl p-4.5 border border-gray-100 shadow-xs flex flex-col items-center justify-center transition-all hover:shadow-md">
+          <div className="flex items-center gap-2 text-amber-600 mb-1">
+            <FileSpreadsheet size={18} />
+            <span className="text-[26px] font-bold leading-none font-heading">{historyList.length}</span>
+          </div>
+          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider text-center">
+            TOTAL GENERATED
+          </span>
         </div>
       </div>
 
       {/* TAB 1: GENERATE DOCUMENT */}
       {activeTab === 'generate' && (
-        <div className="space-y-6">
+        <div className="space-y-5">
           
           {/* Step 1: Letter Type Selection Grid */}
-          <div className="bg-white rounded-xl shadow-xs border border-slate-200/90 p-5">
-            <div className="flex items-center justify-between mb-3.5">
-              <div>
-                <h2 className="text-sm font-bold text-slate-900 tracking-tight">
-                  Step 1: Choose Document Type
-                </h2>
-                <p className="text-xs text-slate-500 font-normal mt-0.5">
-                  Select the official document template you wish to generate
-                </p>
-              </div>
+          <div className="bg-white rounded-xl p-5 shadow-xs border border-gray-100">
+            <div className="mb-3.5">
+              <h2 className="text-base font-bold text-gray-900 m-0">
+                Step 1: Choose Document Type
+              </h2>
+              <p className="text-xs text-gray-500 font-medium mt-0.5">
+                Select the official document template you wish to generate
+              </p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
@@ -656,20 +679,20 @@ const LettersAndPayroll = () => {
                     }}
                     className={`flex flex-col text-left p-3.5 rounded-xl border transition-all cursor-pointer relative overflow-hidden ${
                       isSelected
-                        ? 'border-[#225091] ring-1 ring-[#225091] bg-slate-50/50 shadow-xs'
-                        : 'border-slate-200/90 bg-white hover:bg-slate-50/80 hover:border-slate-300'
+                        ? 'border-[#225091] ring-2 ring-[#225091]/15 bg-blue-50/20 shadow-xs'
+                        : 'border-gray-100 hover:border-gray-200 bg-white hover:bg-slate-50/70'
                     }`}
                   >
                     {isSelected && (
                       <div className="absolute top-3 right-3 w-2 h-2 rounded-full bg-[#225091]"></div>
                     )}
-                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center mb-2.5 bg-white shadow-2xs border ${type.color}`}>
-                      <IconComponent size={16} strokeWidth={2} />
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center mb-2.5 bg-white shadow-2xs border border-gray-100 text-[#225091]">
+                      <IconComponent size={16} />
                     </div>
-                    <span className="text-xs font-bold text-slate-900 mb-0.5">
+                    <span className="text-xs font-semibold text-gray-900 mb-0.5">
                       {type.name}
                     </span>
-                    <span className="text-[11px] text-slate-500 font-normal line-clamp-2">
+                    <span className="text-[11px] text-gray-500 font-medium line-clamp-2">
                       {type.description}
                     </span>
                   </button>
@@ -682,27 +705,27 @@ const LettersAndPayroll = () => {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
             
             {/* Left 2 Cols: Document Details Form */}
-            <div className="lg:col-span-2 bg-white rounded-xl shadow-xs border border-slate-200/90 p-5 flex flex-col justify-between">
-              <form onSubmit={handleGenerateDocument} className="space-y-5">
+            <div className="lg:col-span-2 bg-white rounded-xl shadow-xs border border-gray-100 p-5 flex flex-col justify-between">
+              <form onSubmit={handleGenerateDocument} className="space-y-4">
                 <div>
-                  <h2 className="text-sm font-bold text-slate-900 tracking-tight mb-0.5">
+                  <h2 className="text-base font-bold text-gray-900 mb-0.5">
                     Step 2: Configure {selectedLetterType}
                   </h2>
-                  <p className="text-xs text-slate-500 font-normal mb-4">
+                  <p className="text-xs text-gray-500 font-medium mb-3">
                     Fill in the required details to generate the official document.
                   </p>
                 </div>
 
                 {/* Employee Selector Dropdown */}
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                    Select Target Employee <span className="text-rose-500">*</span>
+                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                    Select Target Employee <span className="text-red-500">*</span>
                   </label>
                   <select 
                     required
                     value={selectedEmployeeId}
                     onChange={(e) => setSelectedEmployeeId(e.target.value)}
-                    className="w-full px-3.5 py-2 rounded-lg bg-slate-50 border border-slate-200 focus:border-[#225091] focus:bg-white text-xs font-medium text-slate-800 outline-none transition-all cursor-pointer"
+                    className="w-full px-3.5 py-2.5 bg-gray-50/70 hover:bg-gray-50 focus:bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all text-gray-800 font-medium cursor-pointer"
                   >
                     <option value="">-- Choose Employee from Directory --</option>
                     {employees.map((emp) => {
@@ -720,7 +743,7 @@ const LettersAndPayroll = () => {
                 </div>
 
                 {/* Dynamic Configuration Fields */}
-                <div className="pt-4 border-t border-gray-100">
+                <div className="pt-3 border-t border-gray-100">
                   
                   {/* 1. Offer Letter */}
                   {selectedLetterType === 'Offer Letter' && (
@@ -732,8 +755,8 @@ const LettersAndPayroll = () => {
                           required
                           value={offerDesignation}
                           onChange={(e) => setOfferDesignation(e.target.value)}
-                          placeholder="e.g. Branch Operations Manager"
-                          className="w-full px-4 py-3 rounded-xl bg-[#EEF4FA] border border-transparent focus:border-[#1B4E8C] focus:bg-white focus:ring-4 focus:ring-[#1B4E8C]/10 text-sm text-gray-800 font-medium outline-none transition-all"
+                          placeholder="e.g. Senior Loan Officer"
+                          className="w-full px-3.5 py-2.5 bg-gray-50/70 hover:bg-gray-50 focus:bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all text-gray-800 font-medium"
                         />
                       </div>
                       <div>
@@ -743,21 +766,21 @@ const LettersAndPayroll = () => {
                           required
                           value={offerJoiningDate}
                           onChange={(e) => setOfferJoiningDate(e.target.value)}
-                          className="w-full px-4 py-3 rounded-xl bg-[#EEF4FA] border border-transparent focus:border-[#1B4E8C] focus:bg-white focus:ring-4 focus:ring-[#1B4E8C]/10 text-sm text-gray-800 font-medium outline-none transition-all"
+                          className="w-full px-3.5 py-2.5 bg-gray-50/70 hover:bg-gray-50 focus:bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all text-gray-800 font-medium"
                         />
                       </div>
                       <div className="sm:col-span-2">
                         <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Annual CTC / Salary (₹) *</label>
                         <div className="relative">
-                          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold">₹</span>
+                          <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 font-bold">₹</span>
                           <input 
                             type="number"
                             required
                             min="1000"
                             value={offerAnnualSalary}
                             onChange={(e) => setOfferAnnualSalary(e.target.value)}
-                            placeholder="e.g. 600000"
-                            className="w-full pl-9 pr-4 py-3 rounded-xl bg-[#EEF4FA] border border-transparent focus:border-[#1B4E8C] focus:bg-white focus:ring-4 focus:ring-[#1B4E8C]/10 text-sm text-gray-800 font-bold outline-none transition-all"
+                            placeholder="e.g. 450000"
+                            className="w-full pl-8 pr-4 py-2.5 bg-gray-50/70 hover:bg-gray-50 focus:bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all text-gray-800 font-semibold"
                           />
                         </div>
                       </div>
@@ -774,7 +797,7 @@ const LettersAndPayroll = () => {
                           required
                           value={probationStartDate}
                           onChange={(e) => setProbationStartDate(e.target.value)}
-                          className="w-full px-4 py-3 rounded-xl bg-[#EEF4FA] border border-transparent focus:border-[#1B4E8C] focus:bg-white focus:ring-4 focus:ring-[#1B4E8C]/10 text-sm text-gray-800 font-medium outline-none transition-all"
+                          className="w-full px-3.5 py-2.5 bg-gray-50/70 hover:bg-gray-50 focus:bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all text-gray-800 font-medium"
                         />
                       </div>
                       <div>
@@ -784,7 +807,7 @@ const LettersAndPayroll = () => {
                           required
                           value={probationEndDate}
                           onChange={(e) => setProbationEndDate(e.target.value)}
-                          className="w-full px-4 py-3 rounded-xl bg-[#EEF4FA] border border-transparent focus:border-[#1B4E8C] focus:bg-white focus:ring-4 focus:ring-[#1B4E8C]/10 text-sm text-gray-800 font-medium outline-none transition-all"
+                          className="w-full px-3.5 py-2.5 bg-gray-50/70 hover:bg-gray-50 focus:bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all text-gray-800 font-medium"
                         />
                       </div>
                       <div>
@@ -794,7 +817,7 @@ const LettersAndPayroll = () => {
                           required
                           value={confirmationDate}
                           onChange={(e) => setConfirmationDate(e.target.value)}
-                          className="w-full px-4 py-3 rounded-xl bg-[#EEF4FA] border border-transparent focus:border-[#1B4E8C] focus:bg-white focus:ring-4 focus:ring-[#1B4E8C]/10 text-sm text-gray-800 font-medium outline-none transition-all"
+                          className="w-full px-3.5 py-2.5 bg-gray-50/70 hover:bg-gray-50 focus:bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all text-gray-800 font-medium"
                         />
                       </div>
                       <div>
@@ -806,7 +829,7 @@ const LettersAndPayroll = () => {
                           value={confirmationNoticePeriod}
                           onChange={(e) => setConfirmationNoticePeriod(e.target.value)}
                           placeholder="e.g. 60"
-                          className="w-full px-4 py-3 rounded-xl bg-[#EEF4FA] border border-transparent focus:border-[#1B4E8C] focus:bg-white focus:ring-4 focus:ring-[#1B4E8C]/10 text-sm text-gray-800 font-medium outline-none transition-all"
+                          className="w-full px-3.5 py-2.5 bg-gray-50/70 hover:bg-gray-50 focus:bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all text-gray-800 font-medium"
                         />
                       </div>
                     </div>
@@ -823,7 +846,7 @@ const LettersAndPayroll = () => {
                           value={perfReviewPeriod}
                           onChange={(e) => setPerfReviewPeriod(e.target.value)}
                           placeholder="e.g. FY 2025–26"
-                          className="w-full px-4 py-3 rounded-xl bg-[#EEF4FA] border border-transparent focus:border-[#1B4E8C] focus:bg-white focus:ring-4 focus:ring-[#1B4E8C]/10 text-sm text-gray-800 font-medium outline-none transition-all"
+                          className="w-full px-3.5 py-2.5 bg-gray-50/70 hover:bg-gray-50 focus:bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all text-gray-800 font-medium"
                         />
                       </div>
                       <div>
@@ -834,7 +857,7 @@ const LettersAndPayroll = () => {
                           value={perfOverallRating}
                           onChange={(e) => setPerfOverallRating(e.target.value)}
                           placeholder="e.g. 4.5 / 5.0 (Exceeds Expectations)"
-                          className="w-full px-4 py-3 rounded-xl bg-[#EEF4FA] border border-transparent focus:border-[#1B4E8C] focus:bg-white focus:ring-4 focus:ring-[#1B4E8C]/10 text-sm text-gray-800 font-medium outline-none transition-all"
+                          className="w-full px-3.5 py-2.5 bg-gray-50/70 hover:bg-gray-50 focus:bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all text-gray-800 font-medium"
                         />
                       </div>
                       <div className="sm:col-span-2">
@@ -845,165 +868,155 @@ const LettersAndPayroll = () => {
                           value={perfManagerComments}
                           onChange={(e) => setPerfManagerComments(e.target.value)}
                           placeholder="Enter evaluation remarks..."
-                          className="w-full px-4 py-3 rounded-xl bg-[#EEF4FA] border border-transparent focus:border-[#1B4E8C] focus:bg-white focus:ring-4 focus:ring-[#1B4E8C]/10 text-sm text-gray-800 font-medium outline-none transition-all resize-none"
-                        />
-                      </div>
-                      <div className="sm:col-span-2">
-                        <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Appraisal Outcome *</label>
-                        <input 
-                          type="text"
-                          required
-                          value={perfAppraisalOutcome}
-                          onChange={(e) => setPerfAppraisalOutcome(e.target.value)}
-                          placeholder="e.g. Eligible for annual increment of 15% and promotion."
-                          className="w-full px-4 py-3 rounded-xl bg-[#EEF4FA] border border-transparent focus:border-[#1B4E8C] focus:bg-white focus:ring-4 focus:ring-[#1B4E8C]/10 text-sm text-gray-800 font-medium outline-none transition-all"
+                          className="w-full px-3.5 py-2 bg-gray-50/70 hover:bg-gray-50 focus:bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all text-gray-800 font-medium resize-none"
                         />
                       </div>
                     </div>
                   )}
 
-                  {/* 4. Promotion Letter */}
-                  {selectedLetterType === 'Promotion Letter' && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Promoted Role / Designation *</label>
-                        <input 
-                          type="text"
-                          required
-                          value={promotedNewRole}
-                          onChange={(e) => setPromotedNewRole(e.target.value)}
-                          placeholder="e.g. Senior Branch Manager"
-                          className="w-full px-4 py-3 rounded-xl bg-[#EEF4FA] border border-transparent focus:border-[#1B4E8C] focus:bg-white focus:ring-4 focus:ring-[#1B4E8C]/10 text-sm text-gray-800 font-medium outline-none transition-all"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Effective Date *</label>
-                        <input 
-                          type="date"
-                          required
-                          value={promotionEffectiveDate}
-                          onChange={(e) => setPromotionEffectiveDate(e.target.value)}
-                          className="w-full px-4 py-3 rounded-xl bg-[#EEF4FA] border border-transparent focus:border-[#1B4E8C] focus:bg-white focus:ring-4 focus:ring-[#1B4E8C]/10 text-sm text-gray-800 font-medium outline-none transition-all"
-                        />
-                      </div>
-                    </div>
-                  )}
-
-                  {/* 5. Transfer Letter */}
-                  {selectedLetterType === 'Transfer Letter' && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="sm:col-span-2">
-                        <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Transfer To Branch *</label>
-                        <select 
-                          required
-                          value={transferToBranchId}
-                          onChange={(e) => setTransferToBranchId(e.target.value)}
-                          className="w-full px-4 py-3 rounded-xl bg-[#EEF4FA] border border-transparent focus:border-[#1B4E8C] focus:bg-white focus:ring-4 focus:ring-[#1B4E8C]/10 text-sm font-semibold text-gray-800 outline-none transition-all cursor-pointer"
-                        >
-                          <option value="">-- Choose Target Branch --</option>
-                          {branches.map((b) => (
-                            <option key={b.id || b._id} value={b.id || b._id}>
-                              {b.branchName || b.name || `Branch #${b.id || b._id}`}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Effective Date *</label>
-                        <input 
-                          type="date"
-                          required
-                          value={transferEffectiveDate}
-                          onChange={(e) => setTransferEffectiveDate(e.target.value)}
-                          className="w-full px-4 py-3 rounded-xl bg-[#EEF4FA] border border-transparent focus:border-[#1B4E8C] focus:bg-white focus:ring-4 focus:ring-[#1B4E8C]/10 text-sm text-gray-800 font-medium outline-none transition-all"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Reporting Date *</label>
-                        <input 
-                          type="date"
-                          required
-                          value={transferReportingDate}
-                          onChange={(e) => setTransferReportingDate(e.target.value)}
-                          className="w-full px-4 py-3 rounded-xl bg-[#EEF4FA] border border-transparent focus:border-[#1B4E8C] focus:bg-white focus:ring-4 focus:ring-[#1B4E8C]/10 text-sm text-gray-800 font-medium outline-none transition-all"
-                        />
-                      </div>
-                    </div>
-                  )}
-
-                  {/* 6. Salary Increment Letter */}
+                  {/* 4. Salary Increment */}
                   {selectedLetterType === 'Salary Increment' && (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Review Period *</label>
-                        <input 
-                          type="text"
-                          required
-                          value={incrReviewPeriod}
-                          onChange={(e) => setIncrReviewPeriod(e.target.value)}
-                          placeholder="e.g. FY 2025–26"
-                          className="w-full px-4 py-3 rounded-xl bg-[#EEF4FA] border border-transparent focus:border-[#1B4E8C] focus:bg-white focus:ring-4 focus:ring-[#1B4E8C]/10 text-sm text-gray-800 font-medium outline-none transition-all"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Effective Date *</label>
-                        <input 
-                          type="date"
-                          required
-                          value={incrEffectiveDate}
-                          onChange={(e) => setIncrEffectiveDate(e.target.value)}
-                          className="w-full px-4 py-3 rounded-xl bg-[#EEF4FA] border border-transparent focus:border-[#1B4E8C] focus:bg-white focus:ring-4 focus:ring-[#1B4E8C]/10 text-sm text-gray-800 font-medium outline-none transition-all"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Increment (%) *</label>
-                        <input 
-                          type="number"
-                          required
-                          min="1"
-                          max="100"
-                          value={incrPercentage}
-                          onChange={(e) => {
-                            const pct = Number(e.target.value);
-                            setIncrPercentage(e.target.value);
-                            if (incrCurrentCtc && pct) {
-                              const cur = Number(incrCurrentCtc);
-                              setIncrRevisedCtc(Math.round(cur + (cur * pct) / 100).toString());
-                            }
-                          }}
-                          placeholder="e.g. 15"
-                          className="w-full px-4 py-3 rounded-xl bg-[#EEF4FA] border border-transparent focus:border-[#1B4E8C] focus:bg-white focus:ring-4 focus:ring-[#1B4E8C]/10 text-sm text-gray-800 font-medium outline-none transition-all"
-                        />
-                      </div>
                       <div>
                         <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Current CTC (₹) *</label>
                         <input 
                           type="number"
                           required
-                          min="1000"
-                          value={incrCurrentCtc}
-                          onChange={(e) => {
-                            const cur = Number(e.target.value);
-                            setIncrCurrentCtc(e.target.value);
-                            if (cur && incrPercentage) {
-                              const pct = Number(incrPercentage);
-                              setIncrRevisedCtc(Math.round(cur + (cur * pct) / 100).toString());
-                            }
-                          }}
-                          placeholder="e.g. 600000"
-                          className="w-full px-4 py-3 rounded-xl bg-[#EEF4FA] border border-transparent focus:border-[#1B4E8C] focus:bg-white focus:ring-4 focus:ring-[#1B4E8C]/10 text-sm text-gray-800 font-medium outline-none transition-all"
+                          value={incCurrentSalary}
+                          onChange={(e) => setIncCurrentSalary(e.target.value)}
+                          placeholder="e.g. 350000"
+                          className="w-full px-3.5 py-2.5 bg-gray-50/70 hover:bg-gray-50 focus:bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all text-gray-800 font-medium"
                         />
                       </div>
-                      <div className="sm:col-span-2">
-                        <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Revised Annual CTC (₹) *</label>
+                      <div>
+                        <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Revised New CTC (₹) *</label>
                         <input 
                           type="number"
                           required
-                          min="1000"
-                          value={incrRevisedCtc}
-                          onChange={(e) => setIncrRevisedCtc(e.target.value)}
-                          placeholder="e.g. 690000"
-                          className="w-full px-4 py-3 rounded-xl bg-[#EEF4FA] border border-transparent focus:border-[#1B4E8C] focus:bg-white focus:ring-4 focus:ring-[#1B4E8C]/10 text-sm text-[#1B4E8C] font-black outline-none transition-all"
+                          value={incNewSalary}
+                          onChange={(e) => setIncNewSalary(e.target.value)}
+                          placeholder="e.g. 400000"
+                          className="w-full px-3.5 py-2.5 bg-gray-50/70 hover:bg-gray-50 focus:bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all text-gray-800 font-medium"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Increment Percentage (%)</label>
+                        <input 
+                          type="number"
+                          value={incPercentage}
+                          onChange={(e) => setIncPercentage(e.target.value)}
+                          placeholder="e.g. 15"
+                          className="w-full px-3.5 py-2.5 bg-gray-50/70 hover:bg-gray-50 focus:bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all text-gray-800 font-medium"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Effective Date *</label>
+                        <input 
+                          type="date"
+                          required
+                          value={incEffectiveDate}
+                          onChange={(e) => setIncEffectiveDate(e.target.value)}
+                          className="w-full px-3.5 py-2.5 bg-gray-50/70 hover:bg-gray-50 focus:bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all text-gray-800 font-medium"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 5. Promotion Letter */}
+                  {selectedLetterType === 'Promotion Letter' && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Current Role *</label>
+                        <input 
+                          type="text"
+                          required
+                          value={promoCurrentDesignation}
+                          onChange={(e) => setPromoCurrentDesignation(e.target.value)}
+                          className="w-full px-3.5 py-2.5 bg-gray-50/70 hover:bg-gray-50 focus:bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all text-gray-800 font-medium"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Promoted To (New Role) *</label>
+                        <input 
+                          type="text"
+                          required
+                          value={promoNewDesignation}
+                          onChange={(e) => setPromoNewDesignation(e.target.value)}
+                          placeholder="e.g. Branch Manager"
+                          className="w-full px-3.5 py-2.5 bg-gray-50/70 hover:bg-gray-50 focus:bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all text-gray-800 font-medium"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Revised CTC (₹) *</label>
+                        <input 
+                          type="number"
+                          required
+                          value={promoRevisedSalary}
+                          onChange={(e) => setPromoRevisedSalary(e.target.value)}
+                          placeholder="e.g. 550000"
+                          className="w-full px-3.5 py-2.5 bg-gray-50/70 hover:bg-gray-50 focus:bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all text-gray-800 font-medium"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Effective Date *</label>
+                        <input 
+                          type="date"
+                          required
+                          value={promoEffectiveDate}
+                          onChange={(e) => setPromoEffectiveDate(e.target.value)}
+                          className="w-full px-3.5 py-2.5 bg-gray-50/70 hover:bg-gray-50 focus:bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all text-gray-800 font-medium"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 6. Transfer Letter */}
+                  {selectedLetterType === 'Transfer Letter' && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Current Branch *</label>
+                        <input 
+                          type="text"
+                          required
+                          value={transferCurrentBranch}
+                          onChange={(e) => setTransferCurrentBranch(e.target.value)}
+                          className="w-full px-3.5 py-2.5 bg-gray-50/70 hover:bg-gray-50 focus:bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all text-gray-800 font-medium"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Transferred Branch *</label>
+                        <select
+                          required
+                          value={transferNewBranch}
+                          onChange={(e) => setTransferNewBranch(e.target.value)}
+                          className="w-full px-3.5 py-2.5 bg-gray-50/70 hover:bg-gray-50 focus:bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all text-gray-800 font-medium cursor-pointer"
+                        >
+                          <option value="">-- Choose Branch --</option>
+                          {branches.map(b => (
+                            <option key={b._id || b.id} value={b.name}>
+                              {b.name} ({b.city || 'Branch'})
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Effective Transfer Date *</label>
+                        <input 
+                          type="date"
+                          required
+                          value={transferEffectiveDate}
+                          onChange={(e) => setTransferEffectiveDate(e.target.value)}
+                          className="w-full px-3.5 py-2.5 bg-gray-50/70 hover:bg-gray-50 focus:bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all text-gray-800 font-medium"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Relocation Support</label>
+                        <input 
+                          type="text"
+                          value={transferRelocationSupport}
+                          onChange={(e) => setTransferRelocationSupport(e.target.value)}
+                          placeholder="Standard Allowance"
+                          className="w-full px-3.5 py-2.5 bg-gray-50/70 hover:bg-gray-50 focus:bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all text-gray-800 font-medium"
                         />
                       </div>
                     </div>
@@ -1011,75 +1024,87 @@ const LettersAndPayroll = () => {
 
                   {/* 7. Salary Slip */}
                   {selectedLetterType === 'Salary Slip' && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                       <div>
-                        <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Salary Period (Month & Year) *</label>
-                        <select 
-                          required
-                          value={salaryPayPeriod}
-                          onChange={(e) => setSalaryPayPeriod(e.target.value)}
-                          className="w-full px-4 py-3 rounded-xl bg-[#EEF4FA] border border-transparent focus:border-[#1B4E8C] focus:bg-white focus:ring-4 focus:ring-[#1B4E8C]/10 text-sm font-semibold text-gray-800 outline-none transition-all cursor-pointer"
+                        <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Salary Month *</label>
+                        <select
+                          value={salaryMonth}
+                          onChange={(e) => setSalaryMonth(e.target.value)}
+                          className="w-full px-3.5 py-2.5 bg-gray-50/70 hover:bg-gray-50 focus:bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all text-gray-800 font-medium"
                         >
-                          {monthYearOptions.map((opt) => (
-                            <option key={opt} value={opt}>{opt}</option>
-                          ))}
+                          {MONTHS_LIST.map(m => <option key={m} value={m}>{m}</option>)}
                         </select>
                       </div>
                       <div>
-                        <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Pay Date *</label>
+                        <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Year *</label>
                         <input 
-                          type="date"
-                          required
-                          value={salaryPayDate}
-                          onChange={(e) => setSalaryPayDate(e.target.value)}
-                          className="w-full px-4 py-3 rounded-xl bg-[#EEF4FA] border border-transparent focus:border-[#1B4E8C] focus:bg-white focus:ring-4 focus:ring-[#1B4E8C]/10 text-sm text-gray-800 font-medium outline-none transition-all"
+                          type="number"
+                          value={salaryYear}
+                          onChange={(e) => setSalaryYear(e.target.value)}
+                          className="w-full px-3.5 py-2.5 bg-gray-50/70 hover:bg-gray-50 focus:bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all text-gray-800 font-medium"
                         />
                       </div>
                       <div>
-                        <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Working Days *</label>
+                        <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Basic Salary (₹) *</label>
                         <input 
                           type="number"
-                          required
-                          min="1"
-                          max="31"
-                          value={salaryWorkingDays}
-                          onChange={(e) => setSalaryWorkingDays(e.target.value)}
-                          placeholder="e.g. 31"
-                          className="w-full px-4 py-3 rounded-xl bg-[#EEF4FA] border border-transparent focus:border-[#1B4E8C] focus:bg-white focus:ring-4 focus:ring-[#1B4E8C]/10 text-sm text-gray-800 font-medium outline-none transition-all"
+                          value={salaryBasic}
+                          onChange={(e) => setSalaryBasic(e.target.value)}
+                          className="w-full px-3.5 py-2.5 bg-gray-50/70 hover:bg-gray-50 focus:bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all text-gray-800 font-medium"
                         />
                       </div>
                       <div>
-                        <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Present / Paid Days *</label>
+                        <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">HRA (₹)</label>
                         <input 
                           type="number"
-                          required
-                          min="0"
-                          max="31"
+                          value={salaryHra}
+                          onChange={(e) => setSalaryHra(e.target.value)}
+                          className="w-full px-3.5 py-2.5 bg-gray-50/70 hover:bg-gray-50 focus:bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all text-gray-800 font-medium"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Conveyance (₹)</label>
+                        <input 
+                          type="number"
+                          value={salaryConveyance}
+                          onChange={(e) => setSalaryConveyance(e.target.value)}
+                          className="w-full px-3.5 py-2.5 bg-gray-50/70 hover:bg-gray-50 focus:bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all text-gray-800 font-medium"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Special Allowance (₹)</label>
+                        <input 
+                          type="number"
+                          value={salarySpecialAllowance}
+                          onChange={(e) => setSalarySpecialAllowance(e.target.value)}
+                          className="w-full px-3.5 py-2.5 bg-gray-50/70 hover:bg-gray-50 focus:bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all text-gray-800 font-medium"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">PF Deduction (₹)</label>
+                        <input 
+                          type="number"
+                          value={salaryPfDeduction}
+                          onChange={(e) => setSalaryPfDeduction(e.target.value)}
+                          className="w-full px-3.5 py-2.5 bg-gray-50/70 hover:bg-gray-50 focus:bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all text-gray-800 font-medium"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">PT Deduction (₹)</label>
+                        <input 
+                          type="number"
+                          value={salaryPtDeduction}
+                          onChange={(e) => setSalaryPtDeduction(e.target.value)}
+                          className="w-full px-3.5 py-2.5 bg-gray-50/70 hover:bg-gray-50 focus:bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all text-gray-800 font-medium"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Present Days (0-31)</label>
+                        <input 
+                          type="number"
                           value={salaryPresentDays}
                           onChange={(e) => setSalaryPresentDays(e.target.value)}
-                          placeholder="e.g. 29"
-                          className="w-full px-4 py-3 rounded-xl bg-[#EEF4FA] border border-transparent focus:border-[#1B4E8C] focus:bg-white focus:ring-4 focus:ring-[#1B4E8C]/10 text-sm text-gray-800 font-medium outline-none transition-all"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">LOP (Loss of Pay) Days</label>
-                        <input 
-                          type="number"
-                          min="0"
-                          value={salaryLopDays}
-                          onChange={(e) => setSalaryLopDays(e.target.value)}
-                          placeholder="e.g. 2"
-                          className="w-full px-4 py-3 rounded-xl bg-[#EEF4FA] border border-transparent focus:border-[#1B4E8C] focus:bg-white focus:ring-4 focus:ring-[#1B4E8C]/10 text-sm text-gray-800 font-medium outline-none transition-all"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Account Number (Optional)</label>
-                        <input 
-                          type="text"
-                          value={salaryAccountNumber}
-                          onChange={(e) => setSalaryAccountNumber(e.target.value)}
-                          placeholder="e.g. 5010023487654321"
-                          className="w-full px-4 py-3 rounded-xl bg-[#EEF4FA] border border-transparent focus:border-[#1B4E8C] focus:bg-white focus:ring-4 focus:ring-[#1B4E8C]/10 text-sm text-gray-800 font-medium outline-none transition-all"
+                          className="w-full px-3.5 py-2.5 bg-gray-50/70 hover:bg-gray-50 focus:bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all text-gray-800 font-medium"
                         />
                       </div>
                     </div>
@@ -1095,7 +1120,7 @@ const LettersAndPayroll = () => {
                           required
                           value={termDate}
                           onChange={(e) => setTermDate(e.target.value)}
-                          className="w-full px-4 py-3 rounded-xl bg-[#EEF4FA] border border-transparent focus:border-[#1B4E8C] focus:bg-white focus:ring-4 focus:ring-[#1B4E8C]/10 text-sm text-gray-800 font-medium outline-none transition-all"
+                          className="w-full px-3.5 py-2.5 bg-gray-50/70 hover:bg-gray-50 focus:bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all text-gray-800 font-medium"
                         />
                       </div>
                       <div>
@@ -1103,11 +1128,9 @@ const LettersAndPayroll = () => {
                         <input 
                           type="number"
                           required
-                          min="0"
                           value={termNoticePeriodDays}
                           onChange={(e) => setTermNoticePeriodDays(e.target.value)}
-                          placeholder="e.g. 30"
-                          className="w-full px-4 py-3 rounded-xl bg-[#EEF4FA] border border-transparent focus:border-[#1B4E8C] focus:bg-white focus:ring-4 focus:ring-[#1B4E8C]/10 text-sm text-gray-800 font-medium outline-none transition-all"
+                          className="w-full px-3.5 py-2.5 bg-gray-50/70 hover:bg-gray-50 focus:bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all text-gray-800 font-medium"
                         />
                       </div>
                       <div className="sm:col-span-2">
@@ -1117,19 +1140,7 @@ const LettersAndPayroll = () => {
                           required
                           value={termReason}
                           onChange={(e) => setTermReason(e.target.value)}
-                          placeholder="e.g. Resignation / Personal Reasons"
-                          className="w-full px-4 py-3 rounded-xl bg-[#EEF4FA] border border-transparent focus:border-[#1B4E8C] focus:bg-white focus:ring-4 focus:ring-[#1B4E8C]/10 text-sm text-gray-800 font-medium outline-none transition-all"
-                        />
-                      </div>
-                      <div className="sm:col-span-2">
-                        <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Handover Responsibilities To *</label>
-                        <input 
-                          type="text"
-                          required
-                          value={termHandoverTo}
-                          onChange={(e) => setTermHandoverTo(e.target.value)}
-                          placeholder="e.g. Mr. Amit Verma, Senior Branch Officer"
-                          className="w-full px-4 py-3 rounded-xl bg-[#EEF4FA] border border-transparent focus:border-[#1B4E8C] focus:bg-white focus:ring-4 focus:ring-[#1B4E8C]/10 text-sm text-gray-800 font-medium outline-none transition-all"
+                          className="w-full px-3.5 py-2.5 bg-gray-50/70 hover:bg-gray-50 focus:bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all text-gray-800 font-medium"
                         />
                       </div>
                     </div>
@@ -1138,20 +1149,20 @@ const LettersAndPayroll = () => {
                 </div>
 
                 {/* Submit Action */}
-                <div className="pt-4 flex justify-end">
+                <div className="pt-3 flex justify-end">
                   <button 
                     type="submit" 
                     disabled={loading || !selectedEmployeeId}
-                    className="w-full sm:w-auto px-8 py-3.5 bg-[#1B4E8C] hover:bg-[#153e70] active:scale-[0.99] disabled:opacity-50 text-white font-bold rounded-xl shadow-lg shadow-[#1B4E8C]/25 hover:shadow-xl transition-all flex items-center justify-center gap-2.5 text-sm tracking-wide cursor-pointer"
+                    className="bg-[#225091] hover:bg-[#1b427b] disabled:opacity-50 text-white px-6 py-2.5 rounded-full font-semibold transition-all shadow-sm flex items-center justify-center gap-2 text-sm cursor-pointer shadow-md hover:shadow-lg"
                   >
                     {loading ? (
                       <>
-                        <Loader2 size={18} className="animate-spin" />
+                        <Loader2 size={16} className="animate-spin" />
                         <span>Generating Official PDF...</span>
                       </>
                     ) : (
                       <>
-                        <FileCheck size={18} />
+                        <FileCheck size={16} />
                         <span>Generate {selectedLetterType}</span>
                       </>
                     )}
@@ -1162,63 +1173,63 @@ const LettersAndPayroll = () => {
             </div>
 
             {/* Right 1 Col: Selected Employee Overview & PDF Status */}
-            <div className="space-y-6">
+            <div className="space-y-4">
               
-              {/* Employee Summary Card */}
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">
+              {/* Employee Summary Card - Matching Employees.jsx Avatar and Badges */}
+              <div className="bg-white rounded-xl shadow-xs border border-gray-100 p-5">
+                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">
                   Employee Summary
                 </h3>
 
                 {currentEmployee ? (
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-3.5 pb-4 border-b border-gray-100">
-                      <div className="w-13 h-13 rounded-2xl bg-gradient-to-tr from-[#1B4E8C] to-[#3B82F6] flex items-center justify-center text-white font-black text-lg shadow-md shrink-0">
+                  <div className="space-y-3.5">
+                    <div className="flex items-center gap-3 pb-3.5 border-b border-gray-100">
+                      <div className="w-12 h-12 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center text-[#225091] font-bold text-base shadow-2xs shrink-0">
                         {(currentEmployee.fullName || currentEmployee.name || 'E').slice(0, 2).toUpperCase()}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <h4 className="text-base font-bold text-gray-900 truncate">
+                        <h4 className="text-sm font-semibold text-gray-900 truncate m-0">
                           {currentEmployee.fullName || currentEmployee.name}
                         </h4>
-                        <span className="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 text-[#1B4E8C] border border-blue-200/60 mt-0.5">
+                        <span className="inline-block px-2 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 text-[#225091] border border-blue-200/60 mt-0.5">
                           {currentEmployee.designation || 'Staff Member'}
                         </span>
                       </div>
                     </div>
 
-                    <div className="space-y-2.5 text-xs">
+                    <div className="space-y-2 text-xs">
                       <div className="flex items-center justify-between text-gray-600">
                         <span className="flex items-center gap-1.5 text-gray-400 font-medium">
-                          <Building2 size={14} /> Branch
+                          <Building2 size={13} /> Branch
                         </span>
-                        <span className="font-bold text-gray-800 text-right">
+                        <span className="font-semibold text-gray-800 text-right">
                           {currentEmployee.branchName || currentEmployee.branch?.name || 'Main Branch'}
                         </span>
                       </div>
 
                       <div className="flex items-center justify-between text-gray-600">
                         <span className="flex items-center gap-1.5 text-gray-400 font-medium">
-                          <Calendar size={14} /> Joining Date
+                          <Calendar size={13} /> Joining Date
                         </span>
-                        <span className="font-bold text-gray-800">
+                        <span className="font-semibold text-gray-800">
                           {currentEmployee.joiningDate ? new Date(currentEmployee.joiningDate).toLocaleDateString() : 'N/A'}
                         </span>
                       </div>
 
                       <div className="flex items-center justify-between text-gray-600">
                         <span className="flex items-center gap-1.5 text-gray-400 font-medium">
-                          <IndianRupee size={14} /> Current CTC
+                          <IndianRupee size={13} /> Current CTC
                         </span>
-                        <span className="font-bold text-gray-800">
+                        <span className="font-bold text-gray-900 font-heading">
                           {currentEmployee.salary ? `₹${Number(currentEmployee.salary).toLocaleString()}/yr` : '—'}
                         </span>
                       </div>
 
                       <div className="flex items-center justify-between text-gray-600">
                         <span className="flex items-center gap-1.5 text-gray-400 font-medium">
-                          <User size={14} /> Employee Code
+                          <User size={13} /> Employee Code
                         </span>
-                        <span className="font-mono font-bold text-gray-700 bg-gray-100 px-2 py-0.5 rounded-md">
+                        <span className="font-mono font-bold text-gray-700 bg-gray-100 px-2 py-0.5 rounded-md text-[11px]">
                           {currentEmployee.employeeCode || currentEmployee.code || (currentEmployee.id || currentEmployee._id)?.slice(-6).toUpperCase()}
                         </span>
                       </div>
@@ -1226,7 +1237,7 @@ const LettersAndPayroll = () => {
                   </div>
                 ) : (
                   <div className="py-8 text-center text-gray-400 text-xs flex flex-col items-center">
-                    <User size={32} strokeWidth={1.5} className="mb-2 text-gray-300" />
+                    <User size={28} className="mb-2 text-gray-300" />
                     <span>Select an employee above to preview details.</span>
                   </div>
                 )}
@@ -1234,49 +1245,49 @@ const LettersAndPayroll = () => {
 
               {/* Live PDF Ready Result Card */}
               {generatedPdfBlob && (
-                <div className="bg-gradient-to-br from-emerald-50 via-teal-50/40 to-white border-2 border-emerald-300/80 rounded-2xl p-5 shadow-lg shadow-emerald-500/10 space-y-4 animate-in fade-in zoom-in duration-300">
+                <div className="bg-emerald-50/50 border border-emerald-200 rounded-xl p-4.5 shadow-xs space-y-3.5 animate-in fade-in zoom-in duration-200">
                   <div className="flex items-start gap-3">
-                    <div className="p-2.5 bg-emerald-500 text-white rounded-xl shadow-md shrink-0">
-                      <CheckCircle2 size={22} />
+                    <div className="p-2 bg-emerald-500 text-white rounded-lg shadow-2xs shrink-0">
+                      <CheckCircle2 size={18} />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <span className="text-[11px] font-black tracking-wider uppercase text-emerald-700 block">
+                      <span className="text-[10px] font-bold tracking-wider uppercase text-emerald-700 block">
                         DOCUMENT READY
                       </span>
-                      <h4 className="text-sm font-bold text-gray-900 truncate">
+                      <h4 className="text-xs font-bold text-gray-900 truncate m-0">
                         {generatedDocTitle}.pdf
                       </h4>
-                      <p className="text-[11.5px] font-mono text-gray-500 mt-0.5">
+                      <p className="text-[11px] font-mono text-gray-500 mt-0.5">
                         Ref: {generatedRefNo}
                       </p>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-3 gap-2 pt-2 border-t border-emerald-200/60">
+                  <div className="grid grid-cols-3 gap-2 pt-2 border-t border-emerald-100">
                     <button 
                       type="button" 
                       onClick={handlePreview}
-                      className="py-2.5 px-3 rounded-xl bg-white hover:bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center justify-center gap-1.5 transition-colors shadow-xs cursor-pointer"
+                      className="py-1.5 px-2 rounded-lg bg-white hover:bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold flex items-center justify-center gap-1 transition-colors shadow-2xs cursor-pointer"
                     >
-                      <Eye size={14} />
+                      <Eye size={13} />
                       <span>Preview</span>
                     </button>
                     
                     <button 
                       type="button" 
                       onClick={handlePrint}
-                      className="py-2.5 px-3 rounded-xl bg-white hover:bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center justify-center gap-1.5 transition-colors shadow-xs cursor-pointer"
+                      className="py-1.5 px-2 rounded-lg bg-white hover:bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold flex items-center justify-center gap-1 transition-colors shadow-2xs cursor-pointer"
                     >
-                      <Printer size={14} />
+                      <Printer size={13} />
                       <span>Print</span>
                     </button>
 
                     <button 
                       type="button" 
                       onClick={handleDownload}
-                      className="py-2.5 px-3 rounded-xl bg-[#1B4E8C] hover:bg-[#153e70] text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-colors shadow-md shadow-[#1B4E8C]/20 cursor-pointer"
+                      className="py-1.5 px-2 rounded-lg bg-[#225091] hover:bg-[#1b427b] text-white text-xs font-semibold flex items-center justify-center gap-1 transition-colors shadow-2xs cursor-pointer"
                     >
-                      <Download size={14} />
+                      <Download size={13} />
                       <span>Save</span>
                     </button>
                   </div>
@@ -1292,10 +1303,10 @@ const LettersAndPayroll = () => {
 
       {/* TAB 2: DOCUMENT HISTORY */}
       {activeTab === 'history' && (
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
+        <div className="bg-white rounded-xl shadow-xs border border-gray-100 overflow-hidden flex flex-col">
           
-          {/* History Search & Filter Bar */}
-          <div className="p-5 border-b border-gray-100 bg-[#F9FBFE] flex flex-col sm:flex-row items-center justify-between gap-3.5">
+          {/* History Search & Filter Bar - Exact Match with Employees.jsx */}
+          <div className="p-4 border-b border-gray-100 bg-white flex flex-col sm:flex-row items-center justify-between gap-3.5">
             <div className="relative w-full sm:w-80">
               <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
               <input 
@@ -1306,7 +1317,7 @@ const LettersAndPayroll = () => {
                   setHistoryPage(1);
                 }}
                 placeholder="Search employee name or ref no..."
-                className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl text-xs font-medium text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#1B4E8C] focus:ring-4 focus:ring-[#1B4E8C]/10 shadow-xs transition-all"
+                className="w-full pl-10 pr-4 py-2 bg-gray-50/70 hover:bg-gray-50 focus:bg-white border border-gray-200 rounded-xl text-xs font-medium text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all shadow-2xs"
               />
             </div>
 
@@ -1317,7 +1328,7 @@ const LettersAndPayroll = () => {
                   setHistoryTypeFilter(e.target.value);
                   setHistoryPage(1);
                 }}
-                className="w-full sm:w-auto px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-xs font-bold text-gray-700 focus:outline-none focus:border-[#1B4E8C] shadow-xs cursor-pointer"
+                className="w-full sm:w-auto px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs font-medium text-gray-700 focus:outline-none focus:border-[#225091] shadow-2xs cursor-pointer"
               >
                 <option value="ALL">All Document Types</option>
                 {LETTER_TYPES.map((lt) => (
@@ -1333,26 +1344,26 @@ const LettersAndPayroll = () => {
                   setHistorySearch('');
                   setHistoryTypeFilter('ALL');
                 }}
-                className="p-2.5 bg-white border border-gray-200 hover:bg-gray-50 rounded-xl text-gray-600 shadow-xs transition-colors cursor-pointer"
+                className="p-2 bg-gray-50 border border-gray-200 hover:bg-gray-100 rounded-lg text-gray-600 shadow-2xs transition-colors cursor-pointer"
                 title="Reset Filters"
               >
-                <RefreshCw size={15} />
+                <RefreshCw size={14} />
               </button>
             </div>
           </div>
 
-          {/* Table View */}
+          {/* Table View - Exact Match with Employees.jsx */}
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse min-w-[700px]">
-              <thead className="bg-[#F4F8FD] text-gray-600 text-[11px] uppercase tracking-wider font-bold border-b border-gray-200/80">
+              <thead className="bg-[#F8FAFC] text-gray-600 text-xs uppercase tracking-wider font-semibold border-b border-gray-200/80">
                 <tr>
-                  <th className="py-4 px-5 text-center w-16">Sr.No.</th>
-                  <th className="py-4 px-5">Ref Number</th>
-                  <th className="py-4 px-5">Employee</th>
-                  <th className="py-4 px-5">Document Type</th>
-                  <th className="py-4 px-5">Details Summary</th>
-                  <th className="py-4 px-5">Generated On</th>
-                  <th className="py-4 px-5 text-center w-28">Action</th>
+                  <th className="py-3.5 px-5 text-center w-16 font-semibold">Sr.No.</th>
+                  <th className="py-3.5 px-5 font-semibold">Ref Number</th>
+                  <th className="py-3.5 px-5 font-semibold">Employee</th>
+                  <th className="py-3.5 px-5 font-semibold">Document Type</th>
+                  <th className="py-3.5 px-5 font-semibold">Details Summary</th>
+                  <th className="py-3.5 px-5 font-semibold">Generated On</th>
+                  <th className="py-3.5 px-5 text-center w-28 font-semibold">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 text-xs">
@@ -1362,63 +1373,61 @@ const LettersAndPayroll = () => {
                     const letterTypeConfig = LETTER_TYPES.find(l => l.id === item.letterType);
 
                     return (
-                      <tr key={item.id} className="hover:bg-blue-50/40 transition-colors">
-                        <td className="py-3.5 px-5 text-center text-gray-500 font-bold">
+                      <tr key={item.id} className="hover:bg-slate-50/70 transition-colors">
+                        <td className="py-3.5 px-5 text-center text-gray-500 font-medium">
                           {sr}
                         </td>
                         <td className="py-3.5 px-5">
-                          <span className="font-mono text-[11px] font-bold text-[#1B4E8C] bg-blue-50 px-2.5 py-1 rounded-md border border-blue-100">
+                          <span className="font-mono text-[11px] font-bold text-[#225091] bg-blue-50 px-2.5 py-1 rounded-md border border-blue-100">
                             {item.referenceNumber}
                           </span>
                         </td>
-                        <td className="py-3.5 px-5 font-bold text-gray-900">
+                        <td className="py-3.5 px-5">
                           <div className="flex items-center gap-2.5">
-                            <div className="w-7 h-7 rounded-full bg-[#1B4E8C]/10 text-[#1B4E8C] flex items-center justify-center font-bold text-xs shrink-0">
+                            <div className="w-8 h-8 rounded-full bg-blue-50 text-[#225091] flex items-center justify-center font-bold text-xs shrink-0 border border-blue-100">
                               {(item.employeeName || 'E').slice(0, 1)}
                             </div>
                             <div>
-                              <div>{item.employeeName}</div>
-                              <span className="text-[10.5px] font-medium text-gray-400">
+                              <div className="font-semibold text-gray-900 text-sm">{item.employeeName}</div>
+                              <span className="text-xs text-gray-500">
                                 {item.designation || 'Staff'}
                               </span>
                             </div>
                           </div>
                         </td>
                         <td className="py-3.5 px-5">
-                          <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold border ${letterTypeConfig?.color || 'bg-gray-100 text-gray-700'}`}>
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold border uppercase tracking-wide ${letterTypeConfig?.badgeColor || 'bg-gray-100 text-gray-700'}`}>
                             {item.letterType}
                           </span>
                         </td>
-                        <td className="py-3.5 px-5 text-gray-600 max-w-xs truncate font-medium">
+                        <td className="py-3.5 px-5 text-xs text-gray-600 max-w-xs truncate font-medium">
                           {item.detailsSummary}
                         </td>
-                        <td className="py-3.5 px-5 text-gray-500 font-medium">
+                        <td className="py-3.5 px-5 text-xs text-gray-500 font-medium">
                           {new Date(item.generatedAt).toLocaleString(undefined, {
                             dateStyle: 'medium',
                             timeStyle: 'short',
                           })}
                         </td>
                         <td className="py-3.5 px-5 text-center">
-                          <div className="flex items-center justify-center gap-1.5">
-                            <button
-                              type="button"
-                              onClick={() => handleDeleteHistory(item.id)}
-                              className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
-                              title="Delete Record"
-                            >
-                              <Trash2 size={15} />
-                            </button>
-                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteHistory(item.id)}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200/60 transition-all shadow-2xs cursor-pointer"
+                            title="Delete Record"
+                          >
+                            <Trash2 size={13} /> Delete
+                          </button>
                         </td>
                       </tr>
                     );
                   })
                 ) : (
                   <tr>
-                    <td colSpan={7} className="py-14 text-center text-gray-400">
-                      <FileText size={36} className="mx-auto mb-2 text-gray-300 stroke-1" />
-                      <p className="text-sm font-semibold text-gray-500">No document history found</p>
-                      <p className="text-xs text-gray-400 mt-1">Generated documents will appear here for record-keeping.</p>
+                    <td colSpan={7} className="py-12 text-center text-gray-500 text-sm font-medium">
+                      <FileText size={32} className="mx-auto mb-2 text-gray-300 stroke-1" />
+                      <p className="text-sm font-semibold text-gray-700">No document history found</p>
+                      <p className="text-xs text-gray-400 mt-0.5">Generated documents will appear here for record-keeping.</p>
                     </td>
                   </tr>
                 )}
@@ -1426,30 +1435,30 @@ const LettersAndPayroll = () => {
             </table>
           </div>
 
-          {/* Pagination */}
+          {/* Pagination - Exact Match with Employees.jsx */}
           {totalHistoryPages > 1 && (
-            <div className="p-4 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500 bg-[#F9FBFE]">
-              <span>
-                Showing {((historyPage - 1) * historyLimit) + 1} to {Math.min(historyPage * historyLimit, filteredHistory.length)} of {filteredHistory.length} records
-              </span>
+            <div className="p-4 border-t border-gray-100 flex items-center justify-between text-sm text-gray-500 bg-white">
+              <div>
+                Showing page {historyPage} of {totalHistoryPages} ({filteredHistory.length} total entries)
+              </div>
 
               <div className="flex items-center gap-1.5">
                 <button
                   type="button"
                   disabled={historyPage <= 1}
                   onClick={() => setHistoryPage(p => p - 1)}
-                  className="px-3 py-1.5 rounded-lg border border-gray-200 bg-white font-bold hover:bg-gray-50 disabled:opacity-40 transition-colors"
+                  className="px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-xs font-semibold text-[#225091] hover:bg-[#225091] hover:text-white disabled:opacity-40 transition-colors"
                 >
                   Previous
                 </button>
-                <span className="font-bold text-gray-800 px-2">
+                <span className="font-semibold text-gray-800 px-2 text-xs">
                   {historyPage} / {totalHistoryPages}
                 </span>
                 <button
                   type="button"
                   disabled={historyPage >= totalHistoryPages}
                   onClick={() => setHistoryPage(p => p + 1)}
-                  className="px-3 py-1.5 rounded-lg border border-gray-200 bg-white font-bold hover:bg-gray-50 disabled:opacity-40 transition-colors"
+                  className="px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-xs font-semibold text-[#225091] hover:bg-[#225091] hover:text-white disabled:opacity-40 transition-colors"
                 >
                   Next
                 </button>
