@@ -566,56 +566,56 @@ const LettersAndPayroll = () => {
   const totalHistoryPages = Math.ceil(filteredHistory.length / historyLimit) || 1;
 
   return (
-    <div className="w-full flex flex-col gap-6 font-sans antialiased pb-12">
+    <div className="w-full flex flex-col gap-5 font-sans antialiased pb-16">
       
       {/* Header Card */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+      <div className="bg-white rounded-xl shadow-xs border border-slate-200/90 p-5 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
         <div>
-          <div className="flex items-center gap-2.5 mb-1.5">
-            <div className="p-2 bg-[#1B4E8C]/10 text-[#1B4E8C] rounded-xl">
-              <FileText size={22} strokeWidth={2} />
-            </div>
-            <h1 className="text-2xl font-black text-[#1B4E8C] tracking-wide">
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl font-bold text-[#225091] tracking-tight m-0">
               Letters & Payroll Management
             </h1>
+            <span className="px-2 py-0.5 text-[11px] font-semibold bg-slate-100 text-slate-600 rounded-md border border-slate-200">
+              HR Operations
+            </span>
           </div>
-          <div className="flex items-center text-xs font-semibold text-gray-500 pl-1">
-            <Link to="/dashboard" className="hover:text-[#1B4E8C] transition-colors">Dashboard</Link>
-            <ChevronRight size={13} className="mx-1 text-gray-400" />
-            <span>HR Operations</span>
-            <ChevronRight size={13} className="mx-1 text-gray-400" />
-            <span className="text-[#1B4E8C] font-bold">Letters & Payroll</span>
+          <div className="flex items-center text-xs font-medium text-slate-500 mt-1">
+            <Link to="/dashboard" className="hover:text-[#225091] transition-colors">Dashboard</Link>
+            <ChevronRight size={13} className="mx-1 text-slate-400" />
+            <span className="text-slate-500">HR Operations</span>
+            <ChevronRight size={13} className="mx-1 text-slate-400" />
+            <span className="text-[#225091] font-semibold">Letters & Payroll</span>
           </div>
         </div>
 
         {/* Tab Switcher */}
-        <div className="flex items-center bg-[#EEF4FA] p-1.5 rounded-2xl border border-gray-200/60 shadow-xs">
+        <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200/80">
           <button
             type="button"
             onClick={() => setActiveTab('generate')}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
               activeTab === 'generate'
-                ? 'bg-[#1B4E8C] text-white shadow-md shadow-[#1B4E8C]/25'
-                : 'text-gray-600 hover:text-gray-900'
+                ? 'bg-[#225091] text-white shadow-xs'
+                : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            <FileCheck size={16} />
+            <FileCheck size={14} />
             <span>Generate Document</span>
           </button>
 
           <button
             type="button"
             onClick={() => setActiveTab('history')}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
               activeTab === 'history'
-                ? 'bg-[#1B4E8C] text-white shadow-md shadow-[#1B4E8C]/25'
-                : 'text-gray-600 hover:text-gray-900'
+                ? 'bg-[#225091] text-white shadow-xs'
+                : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            <History size={16} />
+            <History size={14} />
             <span>History</span>
-            <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${
-              activeTab === 'history' ? 'bg-white/20 text-white' : 'bg-white text-gray-700 shadow-xs'
+            <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+              activeTab === 'history' ? 'bg-white/20 text-white' : 'bg-white text-slate-700 shadow-2xs border border-slate-200'
             }`}>
               {historyList.length}
             </span>
@@ -628,19 +628,19 @@ const LettersAndPayroll = () => {
         <div className="space-y-6">
           
           {/* Step 1: Letter Type Selection Grid */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-            <div className="flex items-center justify-between mb-4">
+          <div className="bg-white rounded-xl shadow-xs border border-slate-200/90 p-5">
+            <div className="flex items-center justify-between mb-3.5">
               <div>
-                <h2 className="text-base font-bold text-gray-800">
+                <h2 className="text-sm font-bold text-slate-900 tracking-tight">
                   Step 1: Choose Document Type
                 </h2>
-                <p className="text-xs text-gray-500 font-medium mt-0.5">
+                <p className="text-xs text-slate-500 font-normal mt-0.5">
                   Select the official document template you wish to generate
                 </p>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
               {LETTER_TYPES.map((type) => {
                 const IconComponent = type.icon;
                 const isSelected = selectedLetterType === type.id;
@@ -654,22 +654,22 @@ const LettersAndPayroll = () => {
                       setGeneratedDocTitle('');
                       setGeneratedRefNo('');
                     }}
-                    className={`flex flex-col text-left p-4 rounded-2xl border-2 transition-all cursor-pointer relative overflow-hidden ${
+                    className={`flex flex-col text-left p-3.5 rounded-xl border transition-all cursor-pointer relative overflow-hidden ${
                       isSelected
-                        ? 'border-[#1B4E8C] bg-gradient-to-br from-[#1B4E8C]/5 via-[#EEF4FA] to-white shadow-md shadow-[#1B4E8C]/10 scale-[1.02]'
-                        : 'border-gray-100 bg-[#F9FBFE] hover:bg-[#EEF4FA] hover:border-gray-200'
+                        ? 'border-[#225091] ring-1 ring-[#225091] bg-slate-50/50 shadow-xs'
+                        : 'border-slate-200/90 bg-white hover:bg-slate-50/80 hover:border-slate-300'
                     }`}
                   >
                     {isSelected && (
-                      <div className="absolute top-3 right-3 w-2.5 h-2.5 rounded-full bg-[#1B4E8C] animate-pulse"></div>
+                      <div className="absolute top-3 right-3 w-2 h-2 rounded-full bg-[#225091]"></div>
                     )}
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 bg-white shadow-xs border ${type.color}`}>
-                      <IconComponent size={20} strokeWidth={2} />
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center mb-2.5 bg-white shadow-2xs border ${type.color}`}>
+                      <IconComponent size={16} strokeWidth={2} />
                     </div>
-                    <span className="text-[13.5px] font-bold text-gray-800 leading-tight mb-1">
+                    <span className="text-xs font-bold text-slate-900 mb-0.5">
                       {type.name}
                     </span>
-                    <span className="text-[11.5px] text-gray-500 leading-snug line-clamp-2">
+                    <span className="text-[11px] text-slate-500 font-normal line-clamp-2">
                       {type.description}
                     </span>
                   </button>
@@ -679,30 +679,30 @@ const LettersAndPayroll = () => {
           </div>
 
           {/* Step 2 & 3: Configuration Form & Employee Context */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
             
             {/* Left 2 Cols: Document Details Form */}
-            <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col justify-between">
-              <form onSubmit={handleGenerateDocument} className="space-y-6">
+            <div className="lg:col-span-2 bg-white rounded-xl shadow-xs border border-slate-200/90 p-5 flex flex-col justify-between">
+              <form onSubmit={handleGenerateDocument} className="space-y-5">
                 <div>
-                  <h2 className="text-base font-bold text-gray-800 mb-1">
+                  <h2 className="text-sm font-bold text-slate-900 tracking-tight mb-0.5">
                     Step 2: Configure {selectedLetterType}
                   </h2>
-                  <p className="text-xs text-gray-500 font-medium mb-5">
-                    Fill in the required information for the generated official PDF.
+                  <p className="text-xs text-slate-500 font-normal mb-4">
+                    Fill in the required details to generate the official document.
                   </p>
                 </div>
 
                 {/* Employee Selector Dropdown */}
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
-                    Select Target Employee <span className="text-red-500">*</span>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                    Select Target Employee <span className="text-rose-500">*</span>
                   </label>
                   <select 
                     required
                     value={selectedEmployeeId}
                     onChange={(e) => setSelectedEmployeeId(e.target.value)}
-                    className="w-full px-4 py-3.5 rounded-xl bg-[#EEF4FA] border border-transparent focus:border-[#1B4E8C] focus:bg-white focus:ring-4 focus:ring-[#1B4E8C]/10 text-sm font-semibold text-gray-800 outline-none transition-all cursor-pointer"
+                    className="w-full px-3.5 py-2 rounded-lg bg-slate-50 border border-slate-200 focus:border-[#225091] focus:bg-white text-xs font-medium text-slate-800 outline-none transition-all cursor-pointer"
                   >
                     <option value="">-- Choose Employee from Directory --</option>
                     {employees.map((emp) => {
