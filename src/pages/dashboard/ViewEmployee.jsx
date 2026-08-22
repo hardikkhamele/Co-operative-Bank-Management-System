@@ -132,56 +132,71 @@ const ViewEmployee = () => {
   const tabs = ['Personal Details', 'Job Details', 'Shift & WOFF', 'Attendance', 'WOFF / HOFF', 'KRA Settings'];
 
   return (
-    <div className="flex flex-col gap-6 w-full">
+    <div className="flex flex-col gap-5 w-full font-sans antialiased pb-16">
       {/* Header section with Breadcrumbs */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 shrink-0">
-        <div className="flex items-center gap-3 mb-2">
+      <div className="bg-white rounded-xl shadow-xs border border-slate-200/90 p-5 shrink-0 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <div className="flex items-center gap-3 mb-1">
             <button 
-            onClick={() => navigate(-1)}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors shrink-0"
-            type="button"
-          >
-            <ArrowLeft size={16} /> Back
-          </button>
-            <h1 className="text-xl font-bold text-[#225091] m-0">Staff Details</h1>
+              onClick={() => navigate(-1)}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors shrink-0 cursor-pointer"
+              type="button"
+            >
+              <ArrowLeft size={14} /> Back
+            </button>
+            <h1 className="text-xl font-bold text-[#225091] tracking-tight m-0">Employee Profile</h1>
           </div>
-        <div className="flex items-center text-sm text-gray-500 pl-[40px]">
-          <Link to="/dashboard" className="hover:text-gray-700">Dashboard</Link>
-          <ChevronRight size={14} className="mx-2" />
-          <span className="hover:text-gray-700">HR Management</span>
-          <ChevronRight size={14} className="mx-2" />
-          <Link to="/employees" className="hover:text-gray-700">Employee</Link>
-          <ChevronRight size={14} className="mx-2" />
-          <span className="text-[#225091] font-semibold">{empName}</span>
+          <div className="flex items-center text-xs font-medium text-slate-500 pl-1">
+            <Link to="/dashboard" className="hover:text-[#225091] transition-colors">Dashboard</Link>
+            <ChevronRight size={13} className="mx-1 text-slate-400" />
+            <span>HR Operations</span>
+            <ChevronRight size={13} className="mx-1 text-slate-400" />
+            <Link to="/employees" className="hover:text-[#225091] transition-colors">Employees</Link>
+            <ChevronRight size={13} className="mx-1 text-slate-400" />
+            <span className="text-[#225091] font-semibold">{empName}</span>
+          </div>
         </div>
+
+        <Link
+          to={`/employees/edit/${id}`}
+          className="bg-[#225091] hover:bg-[#1a3f73] active:scale-[0.99] text-white px-4 py-2 rounded-lg font-semibold transition-all shadow-xs flex items-center gap-2 text-xs tracking-normal cursor-pointer"
+        >
+          <Award size={14} />
+          <span>Edit Profile</span>
+        </Link>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      <div className="bg-white rounded-xl shadow-xs border border-slate-200/90 p-6">
         {/* Profile Banner */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-8 pb-6 border-b border-gray-100">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-8 pb-6 border-b border-slate-100">
           <div className="flex items-center gap-5">
-            <div className="w-[76px] h-[76px] rounded-full border-[3px] border-[#225091] overflow-hidden bg-[#f4f2ff] flex items-center justify-center shrink-0 shadow-sm">
+            <div className="w-18 h-18 rounded-xl border-2 border-[#225091] overflow-hidden bg-gradient-to-tr from-[#225091] to-[#3B82F6] flex items-center justify-center shrink-0 shadow-sm text-white font-bold text-xl">
               {avatarUrl ? (
                 <img src={avatarUrl} alt={empName} className="w-full h-full object-cover" />
               ) : (
-                <span className="text-2xl font-bold text-[#225091]">{getInitials(empName)}</span>
+                <span>{getInitials(empName)}</span>
               )}
             </div>
             <div>
               <div className="flex items-center gap-3 mb-1">
-                <h2 className="text-[22px] font-bold text-[#1b2559]">{empName}</h2>
-                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${empStatus === 'ACTIVE' ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-700'}`}>
+                <h2 className="text-xl font-bold text-slate-900 tracking-tight">{empName}</h2>
+                <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wider border ${
+                  empStatus === 'ACTIVE' 
+                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
+                    : 'bg-rose-50 text-rose-700 border-rose-200'
+                }`}>
+                  <span className={`w-1.5 h-1.5 rounded-full ${empStatus === 'ACTIVE' ? 'bg-emerald-500' : 'bg-rose-500'}`}></span>
                   {empStatus}
                 </span>
               </div>
               <div className="flex flex-wrap items-center gap-2">
-                <span className="inline-block px-3 py-1 bg-[#6366f1] text-white text-[11px] font-semibold rounded-full">
+                <span className="inline-block px-2.5 py-0.5 bg-blue-50 text-[#225091] border border-blue-200/80 text-xs font-semibold rounded-md">
                   {empDesignation}
                 </span>
-                <span className="inline-block px-3 py-1 bg-gray-100 text-gray-700 text-[11px] font-semibold rounded-full">
+                <span className="inline-block px-2.5 py-0.5 bg-slate-100 text-slate-700 font-mono text-xs font-semibold rounded-md border border-slate-200">
                   ID: {empCode}
                 </span>
-                <span className="inline-block px-3 py-1 bg-teal-50 text-teal-700 text-[11px] font-semibold rounded-full">
+                <span className="inline-block px-2.5 py-0.5 bg-slate-50 text-slate-600 border border-slate-200 text-xs font-medium rounded-md">
                   {empDepartment}
                 </span>
               </div>
@@ -189,34 +204,34 @@ const ViewEmployee = () => {
           </div>
           
           {/* Quick Info Box */}
-          <div className="bg-[#f4f5f9] rounded-2xl p-4 px-6 flex flex-wrap gap-8 items-center border border-gray-100">
+          <div className="bg-slate-50/80 rounded-xl p-4 px-6 flex flex-wrap gap-6 items-center border border-slate-200/80">
             <div className="flex flex-col">
-              <span className="text-[12px] text-gray-500 font-medium mb-0.5">Shift Timings</span>
-              <span className="text-[14px] text-gray-800 font-bold">{shift.punchInTime || '09:30'} - {shift.punchOutTime || '18:30'}</span>
+              <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-0.5">Shift Timings</span>
+              <span className="text-xs text-slate-800 font-semibold">{shift.punchInTime || '09:30'} - {shift.punchOutTime || '18:30'}</span>
             </div>
-            <div className="w-[1px] h-8 bg-gray-200 hidden sm:block"></div>
+            <div className="w-[1px] h-7 bg-slate-200 hidden sm:block"></div>
             <div className="flex flex-col">
-              <span className="text-[12px] text-gray-500 font-medium mb-0.5">Weekly Off</span>
-              <span className="text-[14px] text-gray-800 font-bold">{shift.weeklyOff?.day || employee.weeklyOff || 'SUNDAY'}</span>
+              <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-0.5">Weekly Off</span>
+              <span className="text-xs text-slate-800 font-semibold">{shift.weeklyOff?.day || employee.weeklyOff || 'SUNDAY'}</span>
             </div>
-            <div className="w-[1px] h-8 bg-gray-200 hidden sm:block"></div>
+            <div className="w-[1px] h-7 bg-slate-200 hidden sm:block"></div>
             <div className="flex flex-col">
-              <span className="text-[12px] text-gray-500 font-medium mb-0.5">Date of Joining</span>
-              <span className="text-[14px] text-gray-800 font-bold">{formatDate(job.joiningDate || employee.joiningDate)}</span>
+              <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-0.5">Date of Joining</span>
+              <span className="text-xs text-slate-800 font-semibold">{formatDate(job.joiningDate || employee.joiningDate)}</span>
             </div>
           </div>
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-2 border-b border-gray-100 pb-5 mb-6 overflow-x-auto no-scrollbar">
+        <div className="flex gap-1.5 border-b border-slate-100 pb-4 mb-6 overflow-x-auto no-scrollbar">
           {tabs.map(tab => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-5 py-2.5 rounded-xl font-semibold text-[14px] whitespace-nowrap transition-all ${
+              className={`px-4 py-2 rounded-lg font-semibold text-xs whitespace-nowrap transition-all cursor-pointer ${
                 activeTab === tab 
-                  ? 'bg-[#eef2ff] text-[#225091] shadow-xs' 
-                  : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
+                  ? 'bg-[#225091] text-white shadow-xs' 
+                  : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
               }`}
             >
               {tab}

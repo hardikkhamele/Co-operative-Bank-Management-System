@@ -14,12 +14,26 @@ const useBranchStore = create(
       fetchBranches: async () => {
         set({ isLoading: true });
         try {
-          const res = await branchService.getDropdownList();
-          if (res && res.success) {
-            set({ branchOptions: res.data || [], isLoading: false });
-          } else {
-            set({ isLoading: false });
+          let list = [];
+          try {
+            const res = await branchService.getDropdownList();
+            if (res && res.success && Array.isArray(res.data)) {
+              list = res.data;
+            }
+          } catch (e) {
+            console.warn("Dropdown endpoint failed, attempting fallback list...", e);
           }
+
+          if (list.length === 0) {
+            const fallbackRes = await branchService.list({ limit: 100 });
+            if (fallbackRes && fallbackRes.success) {
+              list = Array.isArray(fallbackRes.data)
+                ? fallbackRes.data
+                : fallbackRes.data?.items || fallbackRes.data?.branches || [];
+            }
+          }
+
+          set({ branchOptions: list, isLoading: false });
         } catch (error) {
           console.error("Failed to fetch branches for global store", error);
           set({ isLoading: false });
