@@ -319,7 +319,7 @@ const DashboardLayout = () => {
           <SidebarGroup title="Payment">
             {hasPermission('cash_payment.view') && (
               <NavLink to="/cash-payment" className={subNavLinkClass}>
-                <Banknote size={18} /> Payment
+                <Banknote size={18} /> Cash Payment
               </NavLink>
             )}
           </SidebarGroup>
