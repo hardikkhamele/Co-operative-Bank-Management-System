@@ -37,7 +37,8 @@ import {
   Building2, 
   ShieldCheck,
   TrendingUp,
-  Receipt
+  Receipt,
+  Eye
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
