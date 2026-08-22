@@ -652,56 +652,7 @@ const LettersAndPayroll = () => {
       {activeTab === 'generate' && (
         <div className="space-y-5">
           
-          {/* Step 1: Letter Type Selection Grid */}
-          <div className="bg-white rounded-xl p-5 shadow-xs border border-gray-100">
-            <div className="mb-3.5">
-              <h2 className="text-base font-bold text-gray-900 m-0">
-                Step 1: Choose Document Type
-              </h2>
-              <p className="text-xs text-gray-500 font-medium mt-0.5">
-                Select the official document template you wish to generate
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-              {LETTER_TYPES.map((type) => {
-                const IconComponent = type.icon;
-                const isSelected = selectedLetterType === type.id;
-                return (
-                  <button
-                    key={type.id}
-                    type="button"
-                    onClick={() => {
-                      setSelectedLetterType(type.id);
-                      setGeneratedPdfBlob(null);
-                      setGeneratedDocTitle('');
-                      setGeneratedRefNo('');
-                    }}
-                    className={`flex flex-col text-left p-3.5 rounded-xl border transition-all cursor-pointer relative overflow-hidden ${
-                      isSelected
-                        ? 'border-[#225091] ring-2 ring-[#225091]/15 bg-blue-50/20 shadow-xs'
-                        : 'border-gray-100 hover:border-gray-200 bg-white hover:bg-slate-50/70'
-                    }`}
-                  >
-                    {isSelected && (
-                      <div className="absolute top-3 right-3 w-2 h-2 rounded-full bg-[#225091]"></div>
-                    )}
-                    <div className="w-8 h-8 rounded-lg flex items-center justify-center mb-2.5 bg-white shadow-2xs border border-gray-100 text-[#225091]">
-                      <IconComponent size={16} />
-                    </div>
-                    <span className="text-xs font-semibold text-gray-900 mb-0.5">
-                      {type.name}
-                    </span>
-                    <span className="text-[11px] text-gray-500 font-medium line-clamp-2">
-                      {type.description}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Step 2 & 3: Configuration Form & Employee Context */}
+          {/* Main Document Configuration Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
             
             {/* Left 2 Cols: Document Details Form */}
@@ -709,41 +660,74 @@ const LettersAndPayroll = () => {
               <form onSubmit={handleGenerateDocument} className="space-y-4">
                 <div>
                   <h2 className="text-base font-bold text-gray-900 mb-0.5">
-                    Step 2: Configure {selectedLetterType}
+                    Generate Official Document
                   </h2>
                   <p className="text-xs text-gray-500 font-medium mb-3">
-                    Fill in the required details to generate the official document.
+                    Choose the document template and fill in the official details.
                   </p>
                 </div>
 
-                {/* Employee Selector Dropdown */}
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
-                    Select Target Employee <span className="text-red-500">*</span>
-                  </label>
-                  <select 
-                    required
-                    value={selectedEmployeeId}
-                    onChange={(e) => setSelectedEmployeeId(e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-gray-50/70 hover:bg-gray-50 focus:bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all text-gray-800 font-medium cursor-pointer"
-                  >
-                    <option value="">-- Choose Employee from Directory --</option>
-                    {employees.map((emp) => {
-                      const empId = emp.id || emp._id;
-                      const empName = emp.fullName || emp.name || `Employee #${empId}`;
-                      const desig = emp.designation ? ` • ${emp.designation}` : '';
-                      const branch = emp.branchName || emp.branch?.name ? ` (${emp.branchName || emp.branch?.name})` : '';
-                      return (
-                        <option key={empId} value={empId}>
-                          {empName}{desig}{branch}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* Step 1: Choose Document Type Dropdown */}
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                      Step 1: Choose Document Type <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      value={selectedLetterType}
+                      onChange={(e) => {
+                        setSelectedLetterType(e.target.value);
+                        setGeneratedPdfBlob(null);
+                        setGeneratedDocTitle('');
+                        setGeneratedRefNo('');
+                      }}
+                      className="w-full px-3.5 py-2.5 bg-gray-50/70 hover:bg-gray-50 focus:bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all text-gray-800 font-semibold cursor-pointer"
+                    >
+                      {LETTER_TYPES.map((type) => (
+                        <option key={type.id} value={type.id}>
+                          {type.name}
                         </option>
-                      );
-                    })}
-                  </select>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Step 2: Employee Selector Dropdown */}
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                      Step 2: Select Target Employee <span className="text-red-500">*</span>
+                    </label>
+                    <select 
+                      required
+                      value={selectedEmployeeId}
+                      onChange={(e) => setSelectedEmployeeId(e.target.value)}
+                      className="w-full px-3.5 py-2.5 bg-gray-50/70 hover:bg-gray-50 focus:bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all text-gray-800 font-medium cursor-pointer"
+                    >
+                      <option value="">-- Choose Employee from Directory --</option>
+                      {employees.map((emp) => {
+                        const empId = emp.id || emp._id;
+                        const empName = emp.fullName || emp.name || `Employee #${empId}`;
+                        const desig = emp.designation ? ` • ${emp.designation}` : '';
+                        const branch = emp.branchName || emp.branch?.name ? ` (${emp.branchName || emp.branch?.name})` : '';
+                        return (
+                          <option key={empId} value={empId}>
+                            {empName}{desig}{branch}
+                          </option>
+                        );
+                      })}
+                    </select>
+                  </div>
                 </div>
 
-                {/* Dynamic Configuration Fields */}
+                {/* Step 3: Dynamic Configuration Fields */}
                 <div className="pt-3 border-t border-gray-100">
+                  <div className="mb-3">
+                    <span className="text-xs font-bold text-gray-700 uppercase tracking-wider block">
+                      Step 3: {selectedLetterType} Information
+                    </span>
+                    <span className="text-[11px] text-gray-500 font-medium">
+                      {LETTER_TYPES.find(l => l.id === selectedLetterType)?.description}
+                    </span>
+                  </div>
                   
                   {/* 1. Offer Letter */}
                   {selectedLetterType === 'Offer Letter' && (
