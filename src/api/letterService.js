@@ -91,6 +91,13 @@ export const letterService = {
   generateSalaryIncrement: async (data) => {
     return await postPdfRequest('/v1/society/employees/hr/letters/salary-increment', data);
   },
+
+  // 8. Termination Letter PDF
+  // POST /api/v1/society/employees/hr/letters/termination
+  // Body: { employeeId, terminationDate, reason, noticePeriodDays, handoverTo }
+  generateTerminationLetter: async (data) => {
+    return await postPdfRequest('/v1/society/employees/hr/letters/termination', data);
+  },
 };
 
 export default letterService;

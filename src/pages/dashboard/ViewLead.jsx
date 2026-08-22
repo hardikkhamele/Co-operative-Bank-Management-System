@@ -229,7 +229,7 @@ const ViewLead = () => {
             </div>
           )}
           <div>
-            <h2 className="text-xl font-bold text-gray-800">{customerName}</h2>
+            <h2 className="text-xl font-bold text-[#225091]">{customerName}</h2>
             <p className="text-gray-500 font-medium mt-1 text-[15px]">{phoneNumber}</p>
           </div>
         </div>
@@ -239,7 +239,7 @@ const ViewLead = () => {
       {/* Personal Information */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="bg-[#f4f3fb] px-6 py-4 border-b border-gray-100">
-          <h2 className="text-[17px] font-bold text-gray-800">Personal Information</h2>
+          <h2 className="text-[17px] font-bold text-[#225091]">Personal Information</h2>
         </div>
         <div className="p-6 flex flex-col gap-4 text-[14px]">
           <div className="flex">
@@ -268,7 +268,7 @@ const ViewLead = () => {
       {/* Documents */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="bg-[#f4f3fb] px-6 py-4 border-b border-gray-100 flex justify-between items-center">
-          <h2 className="text-[17px] font-bold text-gray-800">Documents</h2>
+          <h2 className="text-[17px] font-bold text-[#225091]">Documents</h2>
           <span className="text-xs text-gray-400 font-medium">Customer KYC Documents</span>
         </div>
         <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -406,7 +406,7 @@ const ViewLead = () => {
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="bg-[#f4f3fb] px-6 py-4 border-b border-gray-100 flex items-center gap-2">
             <Landmark size={18} className="text-[#225091]" />
-            <h2 className="text-[17px] font-bold text-gray-800">Bank Information</h2>
+            <h2 className="text-[17px] font-bold text-[#225091]">Bank Information</h2>
           </div>
           <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4 text-[14px]">
             <div className="flex">
@@ -434,7 +434,7 @@ const ViewLead = () => {
         <>
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="bg-[#f4f3fb] px-6 py-4 border-b border-gray-100">
-            <h2 className="text-[17px] font-bold text-gray-800">Loan Information</h2>
+            <h2 className="text-[17px] font-bold text-[#225091]">Loan Information</h2>
           </div>
           <div className="bg-[#f8f9fb] p-6 text-[14px]">
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 mb-6">
@@ -531,7 +531,7 @@ const ViewLead = () => {
         {/* EMI Schedule Information */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="bg-[#f4f3fb] px-6 py-4 border-b border-gray-100 flex justify-between items-center">
-            <h2 className="text-[17px] font-bold text-gray-800">EMI Schedule</h2>
+            <h2 className="text-[17px] font-bold text-[#225091]">EMI Schedule</h2>
             <span className="text-xs font-semibold text-gray-600">{tenureMonths} Months Plan</span>
           </div>
           <div className="bg-[#f8f9fb] p-6 text-[14px]">
@@ -593,7 +593,7 @@ const ViewLead = () => {
       {isNewLead && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="bg-[#f4f3fb] px-6 py-4 border-b border-gray-100 flex justify-between items-center">
-            <h2 className="text-[17px] font-bold text-gray-800">Loan Information</h2>
+            <h2 className="text-[17px] font-bold text-[#225091]">Loan Information</h2>
             <span className="text-xs font-semibold px-2.5 py-1 rounded bg-blue-50 text-[#225091]">
               {status === 'PENDING_DOWN_PAYMENT' ? 'Pending Down Payment' : 'New Application'}
             </span>
@@ -657,7 +657,7 @@ const ViewLead = () => {
       {isRejected && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="bg-[#f4f3fb] px-6 py-4 border-b border-gray-100">
-            <h2 className="text-[17px] font-bold text-gray-800">Loan Information</h2>
+            <h2 className="text-[17px] font-bold text-[#225091]">Loan Information</h2>
           </div>
           <div className="bg-[#f8f9fb] p-6 text-[14px]">
             <div className="flex flex-col gap-3">

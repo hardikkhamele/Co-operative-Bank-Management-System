@@ -291,11 +291,11 @@ const CashPayment = () => {
 <div className="space-y-6">
       {/* Header and Breadcrumb */}
       <div className="bg-white rounded-lg p-5 shadow-sm border border-gray-100">
-        <h1 className="text-2xl font-semibold text-[#1b2559] mb-2">Cash Payment</h1>
+        <h1 className="text-2xl font-semibold text-[#1b2559] mb-2">Payment</h1>
         <div className="flex items-center text-sm font-medium text-gray-500">
           <Link to="/dashboard" className="hover:text-[#1b2559] transition-colors">Dashboard</Link>
           <ChevronRight size={16} className="mx-1" />
-          <span className="text-[#1b2559]">Cash Payment</span>
+          <span className="text-[#1b2559]">Payment</span>
         </div>
       </div>
 
@@ -424,19 +424,18 @@ const CashPayment = () => {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="overflow-x-auto">
           <table ref={tableRef} className="w-full text-left text-sm whitespace-nowrap">
-            <thead className="bg-white text-gray-400 text-[11px] uppercase tracking-wider font-bold border-b border-gray-100">
+            <thead className="bg-[#F8FAFC] text-gray-600 text-xs uppercase tracking-wider font-semibold border-b border-gray-200/80">
               <tr>
-                
-                <th className="px-6 py-4 font-bold">Sr.No.</th>
-                <th className="px-6 py-4 font-bold">Employee Name</th>
-                <th className="px-6 py-4 font-bold">Designation</th>
-                <th className="px-6 py-4 font-bold">Total Cash<br/>Collection</th>
-                <th className="px-6 py-4 font-bold">Total Cash<br/>Submitted</th>
-                <th className="px-6 py-4 font-bold">Total Cash<br/>Pending</th>
-                <th className="px-6 py-4 text-center">Action</th>
+                <th className="py-3.5 px-5 font-semibold">Sr.No.</th>
+                <th className="py-3.5 px-5 font-semibold">Employee Name</th>
+                <th className="py-3.5 px-5 font-semibold">Designation</th>
+                <th className="py-3.5 px-5 font-semibold">Total Cash Collection</th>
+                <th className="py-3.5 px-5 font-semibold">Total Cash Submitted</th>
+                <th className="py-3.5 px-5 font-semibold">Total Cash Pending</th>
+                <th className="py-3.5 px-5 font-semibold text-center">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -445,13 +444,13 @@ const CashPayment = () => {
                   <td colSpan="7" className="text-center py-12">
                     <div className="flex items-center justify-center gap-2 text-gray-500">
                       <Loader2 size={20} className="animate-spin text-[#225091]" />
-                      <span>Loading cash payment records...</span>
+                      <span className="text-sm font-medium">Loading cash payment records...</span>
                     </div>
                   </td>
                 </tr>
               ) : displayedItems.length === 0 ? (
                 <tr>
-                  <td colSpan="7" className="text-center py-12 text-gray-500 font-medium">
+                  <td colSpan="7" className="text-center py-12 text-gray-500 font-medium text-sm">
                     No cash payment records found.
                   </td>
                 </tr>
@@ -463,42 +462,42 @@ const CashPayment = () => {
                   const avatarUrl = payment.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(empName)}&background=random`;
 
                   return (
-                    <tr key={empId || index} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-6 py-4 text-gray-700 font-medium">
+                    <tr key={empId || index} className="hover:bg-slate-50/70 transition-colors">
+                      <td className="py-3.5 px-5 text-[13px] text-gray-500 font-medium">
                         {(page - 1) * limit + index + 1}
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="py-3.5 px-5">
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 border border-gray-100">
+                          <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 border border-gray-100 shadow-xs">
                             <img src={avatarUrl} alt={empName} className="w-full h-full object-cover" />
                           </div>
-                          <span className="text-[#1b2559] font-semibold">{empName}</span>
+                          <span className="text-gray-900 font-semibold text-sm">{empName}</span>
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-gray-700">{designation}</td>
-                      <td className="px-6 py-4 text-gray-700 font-medium">₹{formatCurrency(payment.totalCashCollection)}</td>
-                      <td className="px-6 py-4 text-gray-700 font-medium">₹{formatCurrency(payment.totalCashSubmitted)}</td>
-                      <td className="px-6 py-4 text-gray-700 font-medium">
-                        <span className={`font-semibold ${Number(payment.totalCashPending) > 0 ? 'text-amber-600' : 'text-gray-700'}`}>
+                      <td className="py-3.5 px-5 text-xs text-gray-600 font-medium">{designation}</td>
+                      <td className="py-3.5 px-5 text-sm font-bold text-gray-900 tabular-nums">₹{formatCurrency(payment.totalCashCollection)}</td>
+                      <td className="py-3.5 px-5 text-sm font-semibold text-emerald-600 tabular-nums">₹{formatCurrency(payment.totalCashSubmitted)}</td>
+                      <td className="py-3.5 px-5 text-sm font-semibold tabular-nums">
+                        <span className={`${Number(payment.totalCashPending) > 0 ? 'text-amber-600' : 'text-gray-700'}`}>
                           ₹{formatCurrency(payment.totalCashPending)}
                         </span>
                       </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center justify-center gap-2">
+                      <td className="py-3.5 px-5">
+                        <div className="flex items-center justify-center gap-1.5">
                           <button 
                             onClick={() => openSubmitModal(payment)}
-                            className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-medium text-xs transition-colors"
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200/60 font-semibold text-xs transition-all shadow-xs"
                             title="Submit Cash"
                           >
-                            <ArrowDownCircle size={14} />
+                            <ArrowDownCircle size={13} />
                             <span>Submit Cash</span>
                           </button>
                           <button 
                             onClick={() => navigate(`/cash-payment/view/${empId}`)}
-                            className="w-8 h-8 flex items-center justify-center rounded bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors" 
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-[#225091] bg-[#EAF2FB] hover:bg-[#d8e8f8] border border-[#225091]/15 transition-all shadow-xs" 
                             title="View Employee Cash Details"
                           >
-                            <Eye size={16} />
+                            <Eye size={13} /> View
                           </button>
                         </div>
                       </td>

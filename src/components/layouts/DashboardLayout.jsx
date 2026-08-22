@@ -4,14 +4,34 @@ import { LayoutDashboard, MapPin, IdCard, UserPlus, List, ClipboardList, Store, 
 import useAuthStore from '../../store/authStore';
 import useLoadingStore from '../../store/loadingStore';
 import useBranchStore from '../../store/branchStore';
+import usePermission from '../../hooks/usePermission';
 import GlobalLoader from '../GlobalLoader';
+
+const flattenChildren = (children) => {
+  const result = [];
+  React.Children.forEach(children, (child) => {
+    if (!child) return;
+    if (React.isValidElement(child) && child.type === React.Fragment) {
+      result.push(...flattenChildren(child.props.children));
+    } else {
+      result.push(child);
+    }
+  });
+  return result;
+};
 
 const SidebarGroup = ({ title, children, defaultOpen = false }) => {
   const location = useLocation();
-  const childArray = React.Children.toArray(children);
+  // Filter out any false/null/undefined children and unpack any React.Fragment
+  const validChildren = flattenChildren(children).filter(Boolean);
+
+  // If no children permitted/visible, do not render this sidebar group at all
+  if (validChildren.length === 0) {
+    return null;
+  }
 
   // Check if current route matches any child NavLink
-  const hasActiveChild = childArray.some(child => {
+  const hasActiveChild = validChildren.some(child => {
     if (!React.isValidElement(child)) return false;
     const to = child.props?.to;
     if (!to) return false;
@@ -31,7 +51,7 @@ const SidebarGroup = ({ title, children, defaultOpen = false }) => {
     <div className="mb-1">
       <div 
         onClick={() => setIsOpen(!isOpen)}
-        className={`px-6 py-3.5 flex items-center justify-between cursor-pointer transition-all duration-200 border-l-4 ${
+        className={`px-4.5 py-3 flex items-center justify-between cursor-pointer transition-all duration-200 border-l-4 ${
           hasActiveChild
             ? isOpen 
               ? 'border-brand-primary bg-brand-light' 
@@ -45,7 +65,7 @@ const SidebarGroup = ({ title, children, defaultOpen = false }) => {
           {hasActiveChild && !isOpen && (
             <span className="w-2 h-2 rounded-full bg-brand-primary animate-pulse" title="Active module" />
           )}
-          <h3 className={`text-[14.5px] transition-colors duration-200 m-0 select-none ${
+          <h3 className={`text-[14px] transition-colors duration-200 m-0 select-none ${
             hasActiveChild 
               ? 'font-bold text-brand-primary' 
               : isOpen 
@@ -71,7 +91,7 @@ const SidebarGroup = ({ title, children, defaultOpen = false }) => {
       >
         <div className="overflow-hidden">
           <div className="space-y-1 py-2">
-            {children}
+            {validChildren}
           </div>
         </div>
       </div>
@@ -80,9 +100,10 @@ const SidebarGroup = ({ title, children, defaultOpen = false }) => {
 };
 
 const DashboardLayout = () => {
-    const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const { hasPermission, hasAnyPermission } = usePermission();
   
   const hiddenRoutes = [
     '/credit', '/debit', '/transfer', '/contra', 
@@ -100,11 +121,14 @@ const DashboardLayout = () => {
       setShowMore(true);
     }
   }, [location.pathname]);
+
   const logout = useAuthStore((state) => state.logout);
   const user = useAuthStore((state) => state.user);
+  const role = useAuthStore((state) => state.role);
   const resetLoader = useLoadingStore((state) => state.resetLoader);
 
   const userName = user?.fullName || user?.name || 'Bank Admin';
+  const roleName = role?.name || user?.role || 'Admin';
   const userAvatar = user?.avatar || user?.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=1B58A6&color=fff`;
 
   // Automatically clear any stuck loader on route change
@@ -124,23 +148,45 @@ const DashboardLayout = () => {
   };
 
   const navLinkClass = ({ isActive }) =>
-    `flex items-center gap-3 px-6 py-3.5 text-[14.5px] font-semibold border-l-4 transition-colors ${
+    `flex items-center gap-2.5 px-4.5 py-3 text-[14px] font-semibold border-l-4 transition-colors ${
       isActive
         ? 'border-brand-primary text-brand-primary bg-brand-light'
         : 'border-transparent text-text-body hover:bg-brand-surface hover:text-text-heading'
     }`;
 
-  const subNavLinkClass = ({ isActive }) =>
-    `flex items-center gap-3 px-6 py-2.5 text-[14px] font-medium border-l-4 transition-colors ${
-      isActive
-        ? 'border-brand-primary text-brand-primary bg-brand-light'
+  const subNavLinkClass = (propsOrTo, explicitTo) => {
+    let isActive = false;
+    let targetTo = explicitTo;
+
+    if (typeof propsOrTo === 'string') {
+      targetTo = propsOrTo;
+    } else if (propsOrTo && typeof propsOrTo === 'object') {
+      isActive = propsOrTo.isActive;
+    }
+
+    const isNestedActive = targetTo
+      ? location.pathname === targetTo || location.pathname.startsWith(targetTo + '/')
+      : false;
+
+    return `flex items-center gap-2.5 px-4.5 py-2.5 text-[13.5px] font-medium border-l-4 transition-colors ${
+      isActive || isNestedActive
+        ? 'border-brand-primary text-brand-primary bg-brand-light font-semibold'
         : 'border-transparent text-text-muted hover:bg-brand-surface hover:text-brand-primary'
     }`;
+  };
+
+  // Check if any "Show More" section has visible items
+  const hasShowMoreItems = 
+    hasAnyPermission(['upi_autopay.view', 'upi.view']) ||
+    hasAnyPermission(['whatsapp_banking.view', 'whatsapp.view']) ||
+    hasPermission('biomatrix.view') ||
+    hasAnyPermission(['role.view', 'roles_permissions.view', 'role.create']) ||
+    hasAnyPermission(['help_support.view', 'settings.view']);
 
   return (
     <div className="flex h-screen bg-bg-page overflow-hidden">
       {/* Sidebar */}
-      <div className="w-64 bg-brand-sidebar border-r border-border-divider flex flex-col shadow-sm z-10 print:hidden">
+      <div className="w-[236px] bg-brand-sidebar border-r border-border-divider flex flex-col shadow-sm z-10 print:hidden shrink-0">
         {/* Logo Area */}
         <div className="h-[76px] flex items-center px-4 border-b border-border-divider">
           <div className="flex items-center gap-3">
@@ -162,153 +208,205 @@ const DashboardLayout = () => {
 
         {/* Navigation */}
         <div className="flex-1 overflow-y-auto py-4 px-0 space-y-1">
-          <div className="mb-2">
-            <NavLink
-              to="/dashboard"
-              className={navLinkClass}
-            >
-              <LayoutDashboard size={18} />
-              Dashboard
-            </NavLink>
-          </div>
+          {hasPermission('dashboard.view') && (
+            <div className="mb-2">
+              <NavLink
+                to="/dashboard"
+                className={navLinkClass}
+              >
+                <LayoutDashboard size={18} />
+                Dashboard
+              </NavLink>
+            </div>
+          )}
 
+          {/* Branch Management */}
           <SidebarGroup title="Branch Management">
-            <NavLink to="/branch" className={subNavLinkClass}>
-              <MapPin size={18} /> Branch
-            </NavLink>
+            {hasPermission('branch.view') && (
+              <NavLink to="/branch" className={subNavLinkClass}>
+                <MapPin size={18} /> Branch
+              </NavLink>
+            )}
           </SidebarGroup>
 
+          {/* Partner Management */}
           <SidebarGroup title="Partner Management">
-            <NavLink to="/merchant" className={subNavLinkClass}>
-              <Store size={18} /> Merchant
-            </NavLink>
+            {hasPermission('merchant.view') && (
+              <NavLink to="/merchant" className={subNavLinkClass}>
+                <Store size={18} /> Merchant
+              </NavLink>
+            )}
           </SidebarGroup>
 
+          {/* HR Management */}
           <SidebarGroup title="HR Management">
-            <NavLink to="/employees" className={subNavLinkClass}>
-              <UserCheck size={18} /> Employee
-            </NavLink>
-            <NavLink to="/letters-payroll" className={subNavLinkClass}>
-              <FileText size={18} /> Letters & Payroll
-            </NavLink>
-            <NavLink to="/daily-work-report" className={subNavLinkClass}>
-              <BarChart2 size={18} /> Daily Work Report
-            </NavLink>
-            <NavLink to="/kpa-report" className={subNavLinkClass}>
-              <TrendingUp size={18} /> KPA Report
-            </NavLink>
-            <NavLink to="/important-dates" className={subNavLinkClass}>
-              <CalendarDays size={18} /> Important Dates
-            </NavLink>
+            {hasPermission('employee.view') && (
+              <NavLink to="/employees" className={subNavLinkClass}>
+                <UserCheck size={18} /> Employee
+              </NavLink>
+            )}
+            {hasAnyPermission(['letters_payroll.view', 'payroll.view', 'employee.view']) && (
+              <NavLink to="/letters-payroll" className={subNavLinkClass}>
+                <FileText size={18} /> Letters & Payroll
+              </NavLink>
+            )}
+            {hasAnyPermission(['daily_work_report.view', 'work_report.view', 'employee.view']) && (
+              <NavLink to="/daily-work-report" className={subNavLinkClass}>
+                <BarChart2 size={18} /> Daily Work Report
+              </NavLink>
+            )}
+            {hasAnyPermission(['kpa_report.view', 'employee.view']) && (
+              <NavLink to="/kpa-report" className={subNavLinkClass}>
+                <TrendingUp size={18} /> KPA Report
+              </NavLink>
+            )}
+            {hasAnyPermission(['important_dates.view', 'employee.view']) && (
+              <NavLink to="/important-dates" className={subNavLinkClass}>
+                <CalendarDays size={18} /> Important Dates
+              </NavLink>
+            )}
           </SidebarGroup>
 
+          {/* CRM Management */}
           <SidebarGroup title="CRM Management">
-            <NavLink to="/leads" className={subNavLinkClass}>
-              <UserPlus size={18} /> Leads
-            </NavLink>
-            <NavLink to="/inventory" className={subNavLinkClass}>
-              <List size={18} /> Inventory
-            </NavLink>
+            {hasPermission('lead.view') && (
+              <NavLink to="/leads" className={subNavLinkClass}>
+                <UserPlus size={18} /> Leads
+              </NavLink>
+            )}
+            {hasPermission('inventory.view') && (
+              <NavLink to="/inventory" className={subNavLinkClass}>
+                <List size={18} /> Inventory
+              </NavLink>
+            )}
           </SidebarGroup>
 
+          {/* Verification */}
           <SidebarGroup title="Verification">
-            <NavLink to="/cibil" className={subNavLinkClass}>
-              <ClipboardList size={18} /> CIBIL Score & Report
-            </NavLink>
-            <NavLink to="/kyc" className={subNavLinkClass}>
-              <IdCard size={18} /> KYC Verification
-            </NavLink>
+            {hasAnyPermission(['cards_credit.view', 'cibil.view', 'cibil_score.view', 'credit_score.view', 'verification.view']) && (
+              <NavLink to="/cibil" className={(props) => subNavLinkClass(props, '/cibil')}>
+                <ClipboardList size={18} /> CIBIL Score & Report
+              </NavLink>
+            )}
+            {hasAnyPermission(['kyc.view', 'verification.view']) && (
+              <NavLink to="/kyc" className={(props) => subNavLinkClass(props, '/kyc')}>
+                <IdCard size={18} /> KYC Verification
+              </NavLink>
+            )}
           </SidebarGroup>
 
+          {/* Receipt Management */}
           <SidebarGroup title="Receipt Management">
-            <NavLink to="/credit" className={subNavLinkClass}>
-              <ArrowDownRight size={18} /> Credit Receipt
-            </NavLink>
-            <NavLink to="/debit" className={subNavLinkClass}>
-              <ArrowUpRight size={18} /> Debit Receipt
-            </NavLink>
-            <NavLink to="/transfer" className={subNavLinkClass}>
-              <ArrowRightLeft size={18} /> Transfer Receipt
-            </NavLink>
-            <NavLink to="/contra" className={subNavLinkClass}>
-              <RefreshCcw size={18} /> Contra Receipt
-            </NavLink>
+            {hasPermission('receipt.view') && (
+              <>
+                <NavLink to="/credit" className={(props) => subNavLinkClass(props, '/credit')}>
+                  <ArrowDownRight size={18} /> Credit Receipt
+                </NavLink>
+                <NavLink to="/debit" className={(props) => subNavLinkClass(props, '/debit')}>
+                  <ArrowUpRight size={18} /> Debit Receipt
+                </NavLink>
+                <NavLink to="/transfer" className={(props) => subNavLinkClass(props, '/transfer')}>
+                  <ArrowRightLeft size={18} /> Transfer Receipt
+                </NavLink>
+                <NavLink to="/contra" className={(props) => subNavLinkClass(props, '/contra')}>
+                  <RefreshCcw size={18} /> Contra Receipt
+                </NavLink>
+              </>
+            )}
           </SidebarGroup>
 
-          <SidebarGroup title="Cash Payment">
-            <NavLink to="/cash-payment" className={subNavLinkClass}>
-              <Banknote size={18} /> Cash Payment
-            </NavLink>
+          {/* Payment */}
+          <SidebarGroup title="Payment">
+            {hasPermission('cash_payment.view') && (
+              <NavLink to="/cash-payment" className={subNavLinkClass}>
+                <Banknote size={18} /> Payment
+              </NavLink>
+            )}
           </SidebarGroup>
 
+          {/* EMI Cards & Verification Credits */}
           <SidebarGroup title="EMI Cards & Verification Credits">
-            <NavLink to="/cards-credit" className={subNavLinkClass}>
-              <CreditCard size={18} /> Cards & Credit
-            </NavLink>
+            {hasAnyPermission(['cards_credit.view', 'card_credit.view', 'emi_card.view', 'card.view']) && (
+              <NavLink to="/cards-credit" className={subNavLinkClass}>
+                <CreditCard size={18} /> Cards & Credit
+              </NavLink>
+            )}
           </SidebarGroup>
 
           {showMore && (
             <>
               <SidebarGroup title="UPI Smart">
-            <NavLink to="/upi-autopay" className={subNavLinkClass}>
-              <Smartphone size={18} /> UPI Autopay
-            </NavLink>
-          </SidebarGroup>
+                {hasAnyPermission(['upi_autopay.view', 'upi.view']) && (
+                  <NavLink to="/upi-autopay" className={subNavLinkClass}>
+                    <Smartphone size={18} /> UPI Autopay
+                  </NavLink>
+                )}
+              </SidebarGroup>
 
-          <SidebarGroup title="WhatsApp Marketing">
-            <NavLink to="/whatsapp-banking" className={subNavLinkClass}>
-              <MessageCircle size={18} /> WhatsApp Banking
-            </NavLink>
-          </SidebarGroup>
+              <SidebarGroup title="WhatsApp Marketing">
+                {hasAnyPermission(['whatsapp_banking.view', 'whatsapp.view']) && (
+                  <NavLink to="/whatsapp-banking" className={subNavLinkClass}>
+                    <MessageCircle size={18} /> WhatsApp Banking
+                  </NavLink>
+                )}
+              </SidebarGroup>
 
-          <SidebarGroup title="Biomatrix Integration">
-            <NavLink to="/biomatrix-integration" className={subNavLinkClass}>
-              <Fingerprint size={18} /> Biomatrix Integration
-            </NavLink>
-          </SidebarGroup>
+              <SidebarGroup title="Biomatrix Integration">
+                {hasPermission('biomatrix.view') && (
+                  <NavLink to="/biomatrix-integration" className={subNavLinkClass}>
+                    <Fingerprint size={18} /> Biomatrix Integration
+                  </NavLink>
+                )}
+              </SidebarGroup>
 
-          <SidebarGroup title="Roles & Permissions">
-            <NavLink to="/roles-permissions" className={subNavLinkClass}>
-              <UserCog size={18} /> Roles & Permissions
-            </NavLink>
-          </SidebarGroup>
+              <SidebarGroup title="Roles & Permissions">
+                {hasAnyPermission(['role.view', 'roles_permissions.view', 'role.create']) && (
+                  <NavLink to="/roles-permissions" className={subNavLinkClass}>
+                    <UserCog size={18} /> Roles & Permissions
+                  </NavLink>
+                )}
+              </SidebarGroup>
 
-          <SidebarGroup title="Settings">
-            <NavLink to="/settings/help" className={subNavLinkClass}>
-              <Headphones size={18} /> Help & Support
-            </NavLink>
-          </SidebarGroup>
-          </>
+              <SidebarGroup title="Settings">
+                {hasAnyPermission(['help_support.view', 'settings.view']) && (
+                  <NavLink to="/settings/help" className={subNavLinkClass}>
+                    <Headphones size={18} /> Help & Support
+                  </NavLink>
+                )}
+              </SidebarGroup>
+            </>
           )}
           
-          <div className="mb-4 mt-2">
-            <div 
-              onClick={() => setShowMore(!showMore)}
-              className={`px-6 py-3.5 flex items-center justify-between cursor-pointer transition-all duration-200 border-l-4 group ${
-                !showMore && hiddenRoutes.some(route => location.pathname.startsWith(route))
-                  ? 'border-brand-primary bg-brand-primary/10'
-                  : 'border-transparent hover:bg-brand-surface'
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                {!showMore && hiddenRoutes.some(route => location.pathname.startsWith(route)) ? (
-                  <span className="w-2 h-2 rounded-full bg-brand-primary animate-pulse" />
-                ) : (
-                  <MoreHorizontal size={18} className="text-text-muted group-hover:text-brand-primary transition-colors" />
-                )}
-                <h3 className={`text-[14.5px] m-0 select-none transition-colors ${
+          {hasShowMoreItems && (
+            <div className="mb-4 mt-2">
+              <div 
+                onClick={() => setShowMore(!showMore)}
+                className={`px-6 py-3.5 flex items-center justify-between cursor-pointer transition-all duration-200 border-l-4 group ${
                   !showMore && hiddenRoutes.some(route => location.pathname.startsWith(route))
-                    ? 'font-bold text-brand-primary'
-                    : 'font-semibold text-text-body group-hover:text-brand-primary'
-                }`}>
-                  {showMore ? 'Show Less' : 'Show More'}
-                </h3>
+                    ? 'border-brand-primary bg-brand-primary/10'
+                    : 'border-transparent hover:bg-brand-surface'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  {!showMore && hiddenRoutes.some(route => location.pathname.startsWith(route)) ? (
+                    <span className="w-2 h-2 rounded-full bg-brand-primary animate-pulse" />
+                  ) : (
+                    <MoreHorizontal size={18} className="text-text-muted group-hover:text-brand-primary transition-colors" />
+                  )}
+                  <h3 className={`text-[14.5px] m-0 select-none transition-colors ${
+                    !showMore && hiddenRoutes.some(route => location.pathname.startsWith(route))
+                      ? 'font-bold text-brand-primary'
+                      : 'font-semibold text-text-body group-hover:text-brand-primary'
+                  }`}>
+                    {showMore ? 'Show Less' : 'Show More'}
+                  </h3>
+                </div>
+                <ChevronDown size={16} className={`transition-transform duration-300 ease-out ${
+                  showMore ? 'rotate-180 text-brand-primary' : !showMore && hiddenRoutes.some(route => location.pathname.startsWith(route)) ? 'text-brand-primary' : 'text-text-muted'
+                }`} />
               </div>
-              <ChevronDown size={16} className={`transition-transform duration-300 ease-out ${
-                showMore ? 'rotate-180 text-brand-primary' : !showMore && hiddenRoutes.some(route => location.pathname.startsWith(route)) ? 'text-brand-primary' : 'text-text-muted'
-              }`} />
             </div>
-          </div>
+          )}
         </div>
       </div>
 
@@ -319,7 +417,14 @@ const DashboardLayout = () => {
           <div className="flex items-center gap-8">
             <div>
               <div className="text-xs text-white/80 font-medium">Welcome</div>
-              <div className="text-lg font-semibold tracking-wide">{userName}</div>
+              <div className="flex items-center gap-2.5">
+                <div className="text-lg font-semibold tracking-wide">{userName}</div>
+                {roleName && (
+                  <span className="bg-white/15 text-white/90 border border-white/20 px-2 py-0.5 rounded-full text-[11px] font-medium tracking-wide">
+                    {roleName}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
           

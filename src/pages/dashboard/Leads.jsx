@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect, useCallback } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import {
   ChevronRight,
@@ -28,37 +28,37 @@ const getStatusBadge = (status) => {
   switch (normalized) {
     case "NEW":
       return (
-        <span className="px-4 py-1.5 rounded-md bg-gray-100 border border-gray-300 text-gray-700 text-xs font-semibold whitespace-nowrap">
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-amber-50 border border-amber-200/60 text-amber-700 text-[12px] font-semibold tracking-wide uppercase whitespace-nowrap">
           New
         </span>
       );
     case "PENDING_DOWN_PAYMENT":
       return (
-        <span className="px-4 py-1.5 rounded-md bg-amber-50 border border-amber-300 text-amber-600 text-xs font-semibold whitespace-nowrap">
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-amber-50 border border-amber-200/60 text-amber-700 text-[12px] font-semibold tracking-wide uppercase whitespace-nowrap">
           Pending Down Payment
         </span>
       );
     case "ACTIVE":
       return (
-        <span className="px-4 py-1.5 rounded-md bg-blue-50 border border-blue-200 text-[#1B58A6] text-xs font-semibold whitespace-nowrap">
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-emerald-50 border border-emerald-200/60 text-emerald-700 text-[12px] font-semibold tracking-wide uppercase whitespace-nowrap">
           Active
         </span>
       );
     case "COMPLETED":
       return (
-        <span className="px-4 py-1.5 rounded-md bg-green-50 border border-green-400 text-[#00c950] text-xs font-semibold whitespace-nowrap">
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-blue-50 border border-blue-200/60 text-blue-700 text-[12px] font-semibold tracking-wide uppercase whitespace-nowrap">
           Completed
         </span>
       );
     case "REJECTED":
       return (
-        <span className="px-4 py-1.5 rounded-md bg-red-50 border border-red-300 text-[#ff4c4c] text-xs font-semibold whitespace-nowrap">
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-rose-50 border border-rose-200/60 text-rose-700 text-[12px] font-semibold tracking-wide uppercase whitespace-nowrap">
           Rejected
         </span>
       );
     default:
       return (
-        <span className="px-4 py-1.5 rounded-md bg-gray-100 border border-gray-200 text-gray-600 text-xs font-semibold whitespace-nowrap">
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-gray-100 border border-gray-200 text-gray-700 text-[12px] font-semibold tracking-wide uppercase whitespace-nowrap">
           {status || "N/A"}
         </span>
       );
@@ -74,9 +74,32 @@ const getInitials = (name) => {
   return name.slice(0, 2).toUpperCase();
 };
 
-const Leads = () => {
+const Leads = ({ leadType: propLeadType, systemTitle: propSystemTitle }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
+
+  // Resolve leadType from prop or pathname
+  const path = location.pathname.toLowerCase();
+  let currentLeadType = propLeadType;
+  let resolvedTitle = propSystemTitle;
+
+  if (!currentLeadType) {
+    if (path.includes('/leads/customer') || path.includes('/leads/branch')) {
+      currentLeadType = 'CUSTOMER';
+      resolvedTitle = 'Customer';
+    } else if (path.includes('/leads/merchant')) {
+      currentLeadType = 'MERCHANT';
+      resolvedTitle = 'Merchant';
+    } else if (path.includes('/leads/sip')) {
+      currentLeadType = 'SIP';
+      resolvedTitle = 'Smart SIP';
+    }
+  } else if (!resolvedTitle) {
+    if (currentLeadType === 'CUSTOMER' || currentLeadType === 'BRANCH') resolvedTitle = 'Customer';
+    else if (currentLeadType === 'MERCHANT') resolvedTitle = 'Merchant';
+    else if (currentLeadType === 'SIP') resolvedTitle = 'Smart SIP';
+  }
 
   // Read initial filter values from URL
   const initialSearch = searchParams.get("search") || "";
@@ -97,12 +120,12 @@ const Leads = () => {
 
   // Pagination states
   const [page, setPage] = useState(initialPage);
-  const [limit] = useState(8);
+  const [limit] = useState(10);
   const [meta, setMeta] = useState({
     totalRecords: 0,
     totalPages: 1,
     page: initialPage,
-    limit: 8,
+    limit: 10,
     hasNextPage: false,
     hasPrevPage: false,
   });
@@ -266,6 +289,10 @@ const Leads = () => {
         params.branchId = selectedBranchId;
       } else if (globalBranchId) {
         params.branchId = globalBranchId;
+      }
+
+      if (currentLeadType) {
+        params.leadType = currentLeadType;
       }
 
       const res = await leadService.list(params);
@@ -466,8 +493,20 @@ const Leads = () => {
     <div className="max-w-[1400px] w-full">
       {/* Header Card */}
       <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-6">
-        <div className="flex items-center gap-3 mb-2">
-          <h2 className="text-xl font-bold text-[#225091] m-0">Leads</h2>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => navigate('/leads')}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 hover:text-[#225091] transition-colors shrink-0"
+              type="button"
+              title="Back to Select Lead System"
+            >
+              <ArrowLeft size={14} /> Back
+            </button>
+            <h2 className="text-xl font-bold text-[#225091] m-0">
+              {resolvedTitle ? `${resolvedTitle} Leads` : "Leads"}
+            </h2>
+          </div>
         </div>
         <div className="flex items-center text-sm font-medium text-gray-500">
           <Link
@@ -479,7 +518,18 @@ const Leads = () => {
           <ChevronRight size={16} className="mx-1 text-gray-400" />
           <span>CRM Management</span>
           <ChevronRight size={16} className="mx-1 text-gray-400" />
-          <span className="text-[#225091]">Leads</span>
+          <Link
+            to="/leads"
+            className="hover:text-[#225091] transition-colors"
+          >
+            Leads
+          </Link>
+          {resolvedTitle && (
+            <>
+              <ChevronRight size={16} className="mx-1 text-gray-400" />
+              <span className="text-[#225091] font-semibold">{resolvedTitle}</span>
+            </>
+          )}
         </div>
       </div>
 
@@ -780,41 +830,23 @@ const Leads = () => {
       </div>
 
       {/* Table Card */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="overflow-x-auto">
           <table
             ref={tableRef}
             className="w-full text-left border-collapse min-w-[1000px]"
           >
-            <thead>
-              <tr className="bg-[#f4f2ff]">
-                <th className="py-4 px-6 font-semibold text-gray-700 text-sm">
-                  Sr.No.
-                </th>
-                <th className="py-4 px-6 font-semibold text-gray-700 text-sm">
-                  Application Number
-                </th>
-                <th className="py-4 px-6 font-semibold text-gray-700 text-sm">
-                  Customer Name
-                </th>
-                <th className="py-4 px-6 font-semibold text-gray-700 text-sm">
-                  Phone Number
-                </th>
-                <th className="py-4 px-6 font-semibold text-gray-700 text-sm">
-                  Branch
-                </th>
-                <th className="py-4 px-6 font-semibold text-gray-700 text-sm">
-                  Employee Name
-                </th>
-                <th className="py-4 px-6 font-semibold text-gray-700 text-sm">
-                  Address
-                </th>
-                <th className="py-4 px-6 font-semibold text-gray-700 text-sm">
-                  Status
-                </th>
-                <th className="py-4 px-6 font-semibold text-gray-700 text-sm text-center">
-                  Action
-                </th>
+            <thead className="bg-[#F8FAFC] text-gray-600 text-xs uppercase tracking-wider font-semibold border-b border-gray-200/80">
+              <tr>
+                <th className="py-3.5 px-5 font-semibold">Sr.No.</th>
+                <th className="py-3.5 px-5 font-semibold">Application Number</th>
+                <th className="py-3.5 px-5 font-semibold">Customer Name</th>
+                <th className="py-3.5 px-5 font-semibold">Phone Number</th>
+                <th className="py-3.5 px-5 font-semibold">Branch</th>
+                <th className="py-3.5 px-5 font-semibold">Employee Name</th>
+                <th className="py-3.5 px-5 font-semibold">Address</th>
+                <th className="py-3.5 px-5 font-semibold">Status</th>
+                <th className="py-3.5 px-5 font-semibold text-center">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -823,8 +855,8 @@ const Leads = () => {
                   <td colSpan="9" className="py-16 text-center text-gray-500">
                     <div className="flex flex-col items-center justify-center gap-3">
                       <Loader2
-                        size={32}
-                        className="animate-spin text-[#1D4ED8]"
+                        size={28}
+                        className="animate-spin text-[#225091]"
                       />
                       <span className="text-sm font-medium">
                         Loading leads...
@@ -838,72 +870,72 @@ const Leads = () => {
                   return (
                     <tr
                       key={lead.id || idx}
-                      className="hover:bg-gray-50/50 transition-colors"
+                      className="hover:bg-slate-50/70 transition-colors"
                     >
-                      <td className="py-4 px-6 text-sm text-gray-600 font-medium">
+                      <td className="py-3.5 px-5 text-[13px] text-gray-500 font-medium">
                         {displaySrNo}
                       </td>
-                      <td className="py-4 px-6 text-sm text-gray-800 font-semibold">
+                      <td className="py-3.5 px-5 text-sm text-[#1b2559] font-semibold">
                         {lead.applicationNumber || "—"}
                       </td>
-                      <td className="py-4 px-6">
+                      <td className="py-3.5 px-5">
                         <div className="flex items-center gap-3">
                           {lead.profileImage ? (
                             <img
                               src={lead.profileImage}
                               alt={lead.customerName || "Lead"}
-                              className="w-8 h-8 rounded-full object-cover border border-gray-100 shadow-sm"
+                              className="w-8 h-8 rounded-full object-cover border border-gray-100 shadow-xs"
                               onError={(e) => {
                                 e.target.style.display = "none";
                               }}
                             />
                           ) : (
-                            <div className="w-8 h-8 rounded-full bg-teal-50 border border-teal-100 flex items-center justify-center text-xs font-bold text-[#1D4ED8]">
+                            <div className="w-8 h-8 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center text-xs font-bold text-[#225091] shadow-xs">
                               {getInitials(lead.customerName)}
                             </div>
                           )}
-                          <span className="text-sm font-medium text-gray-800">
+                          <span className="text-sm font-semibold text-gray-900">
                             {lead.customerName || "—"}
                           </span>
                         </div>
                       </td>
-                      <td className="py-4 px-6 text-sm text-gray-600">
+                      <td className="py-3.5 px-5 text-xs text-gray-600">
                         {lead.phoneNumber || "—"}
                       </td>
-                      <td className="py-4 px-6 text-sm text-gray-600 font-medium">
+                      <td className="py-3.5 px-5 text-xs text-gray-600 font-medium">
                         {lead.branchName || "—"}
                       </td>
-                      <td className="py-4 px-6 text-sm text-gray-600">
+                      <td className="py-3.5 px-5 text-xs text-gray-600">
                         {lead.createdByName || "—"}
                       </td>
                       <td
-                        className="py-4 px-6 text-sm text-gray-600 max-w-xs truncate"
+                        className="py-3.5 px-5 text-xs text-gray-500 max-w-xs truncate"
                         title={lead.address}
                       >
                         {lead.address || "—"}
                       </td>
-                      <td className="py-4 px-6">
+                      <td className="py-3.5 px-5">
                         {getStatusBadge(lead.status)}
                       </td>
-                      <td className="py-4 px-6 text-center">
-                        <div className="flex justify-center items-center gap-3">
+                      <td className="py-3.5 px-5 text-center">
+                        <div className="flex justify-center items-center gap-1.5">
                           <Link
                             to={`/leads/view/${lead.id}`}
                             state={lead}
-                            className="p-1 text-gray-500 hover:text-[#1D4ED8] transition-colors"
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-[#225091] bg-[#EAF2FB] hover:bg-[#d8e8f8] border border-[#225091]/15 transition-all shadow-xs"
                             title="View Lead Details"
                           >
-                            <Eye size={18} />
+                            <Eye size={13} /> View
                           </Link>
                           <button
                             onClick={() => {
                               setLeadToDelete(lead);
                               setIsDeleteModalOpen(true);
                             }}
-                            className="p-1 text-red-500 hover:text-red-700 transition-colors"
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200/60 transition-all shadow-xs"
                             title="Delete Lead"
                           >
-                            <Trash2 size={18} />
+                            <Trash2 size={13} /> Delete
                           </button>
                         </div>
                       </td>

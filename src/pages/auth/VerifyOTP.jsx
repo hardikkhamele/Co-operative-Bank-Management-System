@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Pencil } from 'lucide-react';
 import { toast } from 'react-toastify';
@@ -6,7 +6,6 @@ import AuthLayout from '../../components/layouts/AuthLayout';
 import otpIllustration from '../../assets/images/enter-otp.png';
 import { sanitizeDigits } from '../../utils/validation';
 import { authService } from '../../api/authService';
-import { useEffect } from 'react';
 
 const VerifyOTP = () => {
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
@@ -85,33 +84,47 @@ const VerifyOTP = () => {
   };
 
   return (
-    <AuthLayout illustration={<img src={otpIllustration} alt="Verify OTP Illustration" className="w-full max-w-md object-contain drop-shadow-2xl" />}>
-      <div className="flex flex-col items-center mb-6 text-center">
-        <svg viewBox="0 0 200 180" className="w-16 h-16 mb-2">
-          <polygon points="30,100 80,100 110,160 60,160" fill="#ef3b3a" />
-          <polygon points="100,10 180,160 130,160 90,80" fill="#1D4ED8" />
-        </svg>
-        <div className="flex flex-col text-center text-[#1D4ED8] mb-4">
-            <span className="font-extrabold text-[15px] leading-tight tracking-wide">ADVITA CREDIT</span>
+    <AuthLayout 
+      welcomeHeading={"WELCOME TO\nADVITA COOPERATIVE & BRANCH"}
+      illustration={<img src={otpIllustration} alt="Verify OTP Illustration" className="w-full h-auto object-contain drop-shadow-xl" />}
+    >
+      {/* Top Logo Badge inside Card */}
+      <div className="flex flex-col items-center text-center mb-6">
+        <div className="bg-white rounded-[16px] shadow-sm border border-gray-100 p-2 flex flex-col items-center justify-center shrink-0 w-[54px] h-[54px] mb-3.5">
+          <svg viewBox="0 0 200 180" className="w-7 h-7">
+            <polygon points="30,100 80,100 110,160 60,160" fill="#ef3b3a" />
+            <polygon points="100,10 180,160 130,160 90,80" fill="#1b58a6" />
+          </svg>
+          <span className="text-[4.5px] font-black text-[#1b58a6] tracking-tighter mt-0.5 whitespace-nowrap">
+            ADVITA CREDIT
+          </span>
         </div>
-        <h2 className="text-xl font-bold text-gray-800 mb-1">Verify OTP</h2>
-        <p className="text-xs text-gray-500">
-          A 6 digit OTP has been sent to
-          <br />
-          <span className="text-[#1D4ED8] font-medium flex items-center justify-center gap-1.5 mt-1">
+
+        <h2 className="text-[22px] sm:text-[24px] font-black tracking-wide uppercase leading-tight">
+          <span className="text-[#1B4E8C]">VERIFY </span>
+          <span className="text-[#EF3B3A]">OTP</span>
+        </h2>
+        <p className="text-[13px] text-gray-500 font-medium mt-1.5 leading-normal">
+          A 6-digit OTP has been sent to
+          <span className="text-[#1B4E8C] font-bold flex items-center justify-center gap-1.5 mt-0.5 text-[13.5px]">
             {email}
-            <button onClick={() => navigate('/forgot-password')} className="text-[#00bcd4] hover:text-[#00a0b5]">
-              <Pencil size={12} />
+            <button 
+              type="button"
+              onClick={() => navigate('/forgot-password')} 
+              className="text-[#EF3B3A] hover:opacity-80 p-0.5 transition-opacity"
+              title="Edit email"
+            >
+              <Pencil size={13} />
             </button>
           </span>
         </p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4 flex flex-col items-center">
-        <div className="flex justify-center gap-2 mb-2 w-full">
+        <div className="flex justify-center gap-2 sm:gap-2.5 mb-1 w-full">
           {otp.map((data, index) => (
             <input
-              className="w-10 h-10 md:w-12 md:h-12 border border-gray-200 rounded-lg text-center text-lg font-semibold text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8] focus:border-transparent bg-white transition-all shadow-sm"
+              className="w-11 h-13 sm:w-12 sm:h-13 rounded-[14px] text-center text-xl font-bold text-gray-800 focus:outline-none focus:ring-4 focus:ring-[#1B4E8C]/10 focus:border-[#1B4E8C] bg-[#EEF4FA] focus:bg-white transition-all border border-transparent shadow-xs"
               type="text"
               inputMode="numeric"
               pattern="[0-9]*"
@@ -128,9 +141,9 @@ const VerifyOTP = () => {
           ))}
         </div>
 
-        <p className="text-xs text-gray-500 mt-2 mb-2">
-          Didn't received the code?{' '}
-          <button type="button" onClick={handleResend} className="text-[#00bcd4] hover:text-[#00a0b5] font-semibold">
+        <p className="text-[13px] text-gray-500 my-1 font-medium">
+          Didn't receive the code?{' '}
+          <button type="button" onClick={handleResend} className="text-[#1B4E8C] hover:text-[#EF3B3A] font-bold transition-colors">
             Resend Code
           </button>
         </p>
@@ -138,16 +151,16 @@ const VerifyOTP = () => {
         <button
           type="submit"
           disabled={loading}
-          className="w-full py-3 px-4 mt-2 bg-[#1D4ED8] hover:bg-[#154685] disabled:bg-gray-400 text-white font-medium rounded-full transition-colors shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#1D4ED8] text-sm"
+          className="w-full mt-2 py-3.5 bg-[#1B4E8C] hover:bg-[#153e70] active:scale-[0.99] disabled:opacity-70 text-white font-bold rounded-[14px] shadow-lg shadow-[#1B4E8C]/25 hover:shadow-xl transition-all flex justify-center items-center text-[15px] tracking-wide cursor-pointer"
         >
           {loading ? 'Verifying...' : 'Verify OTP'}
         </button>
       </form>
 
-      <div className="mt-8 text-center">
-        <p className="text-xs text-gray-500">
+      <div className="mt-6 text-center">
+        <p className="text-[13px] text-gray-500 font-medium">
           Remember Password ?{' '}
-          <Link to="/login" className="text-[#00bcd4] hover:text-[#00a0b5] font-semibold">
+          <Link to="/login" className="text-[#1B4E8C] hover:text-[#EF3B3A] font-bold transition-colors">
             Login
           </Link>
         </p>

@@ -335,26 +335,26 @@ const Merchants = () => {
       </div>
 
       {/* Table Card */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
         <div className="overflow-x-auto">
           <table ref={tableRef} className="w-full text-left border-collapse min-w-[900px]">
-            <thead>
-              <tr className="bg-[#f8f9fb] border-b border-gray-100">
-                <th className="py-4 px-6 text-[11px] font-extrabold text-gray-500 uppercase tracking-wider">Sr.No.</th>
-                <th className="py-4 px-6 text-[11px] font-extrabold text-gray-500 uppercase tracking-wider">Shop Name</th>
-                <th className="py-4 px-6 text-[11px] font-extrabold text-gray-500 uppercase tracking-wider">Owner Name</th>
-                <th className="py-4 px-6 text-[11px] font-extrabold text-gray-500 uppercase tracking-wider">Email</th>
-                <th className="py-4 px-6 text-[11px] font-extrabold text-gray-500 uppercase tracking-wider">Phone Number</th>
-                <th className="py-4 px-6 text-[11px] font-extrabold text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="py-4 px-6 text-[11px] font-extrabold text-gray-500 uppercase tracking-wider text-center">Action</th>
+            <thead className="bg-[#F8FAFC] text-gray-600 text-xs uppercase tracking-wider font-semibold border-b border-gray-200/80">
+              <tr>
+                <th className="py-3.5 px-5 font-semibold">Sr.No.</th>
+                <th className="py-3.5 px-5 font-semibold">Shop Name</th>
+                <th className="py-3.5 px-5 font-semibold">Owner Name</th>
+                <th className="py-3.5 px-5 font-semibold">Email</th>
+                <th className="py-3.5 px-5 font-semibold">Phone Number</th>
+                <th className="py-3.5 px-5 font-semibold">Status</th>
+                <th className="py-3.5 px-5 font-semibold text-center">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {loading ? (
                 <tr>
                   <td colSpan="7" className="py-16 text-center text-gray-500">
-                    <Loader2 size={32} className="animate-spin text-[#225091] mx-auto mb-3" />
-                    <p className="text-sm font-semibold text-gray-700">Loading merchants...</p>
+                    <Loader2 size={24} className="animate-spin text-[#225091] mx-auto mb-2" />
+                    <p className="text-sm font-medium text-gray-600">Loading merchants...</p>
                   </td>
                 </tr>
               ) : merchants && merchants.length > 0 ? (
@@ -364,52 +364,52 @@ const Merchants = () => {
                   const isRowActive = (row.status || '').toUpperCase() === 'ACTIVE';
 
                   return (
-                    <tr key={rowId || idx} className="hover:bg-gray-50/60 transition-colors group">
-                      <td className="py-4 px-6 text-sm text-gray-600 font-semibold">{srNo}</td>
-                      <td className="py-4 px-6 text-sm text-gray-900 font-bold">
+                    <tr key={rowId || idx} className="hover:bg-slate-50/70 transition-colors group">
+                      <td className="py-3.5 px-5 text-[13px] text-gray-500 font-medium">{srNo}</td>
+                      <td className="py-3.5 px-5">
                         <div className="flex items-center gap-2.5">
-                          <div className="w-8 h-8 rounded-lg bg-[#225091]/10 text-[#225091] flex items-center justify-center font-bold text-xs shrink-0">
-                            <Store size={16} />
+                          <div className="w-7 h-7 rounded-lg bg-blue-50 text-[#225091] flex items-center justify-center font-bold text-xs shrink-0 border border-blue-100 shadow-xs">
+                            <Store size={14} />
                           </div>
-                          <span>{row.shopName || row.name || '—'}</span>
+                          <span className="text-sm font-semibold text-gray-900">{row.shopName || row.name || '—'}</span>
                         </div>
                       </td>
-                      <td className="py-4 px-6 text-sm text-gray-800 font-medium">{row.ownerName || row.shopOwnerName || '—'}</td>
-                      <td className="py-4 px-6 text-sm text-gray-600 font-medium">{row.email || '—'}</td>
-                      <td className="py-4 px-6 text-sm text-gray-600 font-medium">{row.phoneNumber || row.phone || '—'}</td>
-                      <td className="py-4 px-6">
+                      <td className="py-3.5 px-5 text-sm font-semibold text-gray-800">{row.ownerName || row.shopOwnerName || '—'}</td>
+                      <td className="py-3.5 px-5 text-xs text-gray-600">{row.email || '—'}</td>
+                      <td className="py-3.5 px-5 text-xs text-gray-600 font-medium">{row.phoneNumber || row.phone || '—'}</td>
+                      <td className="py-3.5 px-5">
                         {isRowActive ? (
-                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[12px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/60 uppercase tracking-wide">
                             Active
                           </span>
                         ) : (
-                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-600 border border-gray-200">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[12px] font-semibold bg-rose-50 text-rose-700 border border-rose-200/60 uppercase tracking-wide">
                             Inactive
                           </span>
                         )}
                       </td>
-                      <td className="py-4 px-6">
-                        <div className="flex items-center justify-center gap-3">
+                      <td className="py-3.5 px-5">
+                        <div className="flex items-center justify-center gap-1.5">
                           <Link 
                             to={`/merchant/${rowId}/view`} 
-                            className="p-1 text-gray-400 hover:text-[#225091] transition-colors" 
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-[#225091] bg-[#EAF2FB] hover:bg-[#d8e8f8] border border-[#225091]/15 transition-all shadow-xs" 
                             title="View Merchant"
                           >
-                            <Eye size={18} />
+                            <Eye size={13} /> View
                           </Link>
                           <Link 
                             to={`/merchant/${rowId}/edit`} 
-                            className="p-1 text-gray-400 hover:text-emerald-600 transition-colors" 
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200/60 transition-all shadow-xs" 
                             title="Edit Merchant"
                           >
-                            <Edit size={18} />
+                            <Edit size={13} /> Edit
                           </Link>
                           <button 
                             onClick={() => handleDeleteClick(row)} 
-                            className="p-1 text-gray-400 hover:text-red-500 transition-colors" 
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200/60 transition-all shadow-xs" 
                             title="Delete Merchant"
                           >
-                            <Trash2 size={18} />
+                            <Trash2 size={13} /> Delete
                           </button>
                         </div>
                       </td>
@@ -420,11 +420,11 @@ const Merchants = () => {
                 <tr>
                   <td colSpan="7" className="py-16 text-center">
                     <div className="flex flex-col items-center justify-center">
-                      <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mb-3">
-                        <Search size={22} className="text-gray-300" />
+                      <div className="w-10 h-10 bg-gray-50 rounded-full flex items-center justify-center mb-2">
+                        <Search size={20} className="text-gray-300" />
                       </div>
                       <p className="text-sm font-semibold text-gray-800">No merchants found</p>
-                      <p className="text-xs text-gray-400 mt-1">Try adjusting your search or filters</p>
+                      <p className="text-xs text-gray-400 mt-0.5">Try adjusting your search or filters</p>
                     </div>
                   </td>
                 </tr>

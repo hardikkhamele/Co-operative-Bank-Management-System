@@ -181,7 +181,7 @@ const ViewCashPayment = () => {
         <div className="flex items-center text-sm font-medium text-gray-500">
           <Link to="/dashboard" className="hover:text-[#1b2559] transition-colors">Dashboard</Link>
           <ChevronRight size={16} className="mx-1" />
-          <Link to="/cash-payment" className="hover:text-[#1b2559] transition-colors">Cash Payment</Link>
+          <Link to="/cash-payment" className="hover:text-[#1b2559] transition-colors">Payment</Link>
           <ChevronRight size={16} className="mx-1" />
           <span className="text-[#1b2559]">View Details</span>
         </div>

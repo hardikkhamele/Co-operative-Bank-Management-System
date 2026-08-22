@@ -151,92 +151,93 @@ const RolesAndPermissions = () => {
       </div>
 
       {/* Table */}
-      <div className="flex-1 overflow-x-auto">
-        <table className="w-full text-left border-collapse min-w-[600px]">
-          <thead>
-            <tr className="bg-indigo-50/50 text-gray-700 text-sm font-semibold border-b border-gray-100">
-              <th className="py-4 px-6 text-center w-20">Sr. No.</th>
-              <th className="py-4 px-6">Role Name</th>
-
-              <th className="py-4 px-6">Description</th>
-              <th className="py-4 px-6 text-center">Permissions Count</th>
-              <th className="py-4 px-6">Status</th>
-              <th className="py-4 px-6 text-center w-32">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading && roles.length === 0 ? null : roles.length === 0 ? (
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex-1 flex flex-col">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse min-w-[700px]">
+            <thead className="bg-[#F8FAFC] text-gray-600 text-xs uppercase tracking-wider font-semibold border-b border-gray-200/80">
               <tr>
-                <td colSpan="8" className="py-8 text-center text-gray-500">
-                  No roles found.
-                </td>
+                <th className="py-3.5 px-5 text-center w-20 font-semibold">Sr. No.</th>
+                <th className="py-3.5 px-5 font-semibold">Role Name</th>
+                <th className="py-3.5 px-5 font-semibold">Description</th>
+                <th className="py-3.5 px-5 text-center font-semibold">Permissions Count</th>
+                <th className="py-3.5 px-5 font-semibold">Status</th>
+                <th className="py-3.5 px-5 text-center font-semibold">Actions</th>
               </tr>
-            ) : (
-              roles.map((row, index) => {
-                const roleId = row._id || row.id || row.roleId;
-                return (
-                <tr
-                  key={roleId}
-                  className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors text-sm text-gray-600"
-                >
-                  <td className="py-4 px-6 text-center">
-                    {row.srNo || (page - 1) * 10 + index + 1}
-                  </td>
-                  <td className="py-4 px-6 font-medium text-gray-800">
-                    {row.name}
-                  </td>
-
-                  <td
-                    className="py-4 px-6 max-w-xs truncate"
-                    title={row.description}
-                  >
-                    {row.description || "—"}
-                  </td>
-                  <td className="py-4 px-6 text-center">
-                    <span className="bg-blue-50 text-blue-700 border border-blue-100 px-2.5 py-0.5 rounded-full text-xs font-semibold">
-                      {row.permissions?.length || 0}
-                    </span>
-                  </td>
-                  <td className="py-4 px-6">
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs font-semibold ${row.status === "ACTIVE" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}
-                    >
-                      {row.status || "UNKNOWN"}
-                    </span>
-                  </td>
-                  <td className="py-4 px-6">
-                    <div className="flex items-center justify-center gap-3">
-                      <button
-                        onClick={() => handleView(roleId)}
-                        className="text-gray-400 hover:text-gray-700 transition-colors"
-                        title="View Details"
-                      >
-                        <Eye size={18} />
-                      </button>
-                      <button
-                        onClick={() =>
-                          navigate(`/roles-permissions/edit/${roleId}`)
-                        }
-                        className="text-gray-400 hover:text-blue-500 transition-colors"
-                        title="Edit"
-                      >
-                        <Edit size={18} />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(roleId)}
-                        className="text-gray-400 hover:text-red-500 transition-colors"
-                        title="Delete"
-                      >
-                        <Trash2 size={18} />
-                      </button>
-                    </div>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {loading && roles.length === 0 ? null : roles.length === 0 ? (
+                <tr>
+                  <td colSpan="6" className="py-12 text-center text-gray-500 text-sm font-medium">
+                    No roles found.
                   </td>
                 </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
+              ) : (
+                roles.map((row, index) => {
+                  const roleId = row._id || row.id || row.roleId;
+                  const isActive = (row.status || "").toUpperCase() === "ACTIVE";
+                  return (
+                  <tr
+                    key={roleId}
+                    className="hover:bg-slate-50/70 transition-colors"
+                  >
+                    <td className="py-3.5 px-5 text-center text-[13px] text-gray-500 font-medium">
+                      {row.srNo || (page - 1) * 10 + index + 1}
+                    </td>
+                    <td className="py-3.5 px-5 font-semibold text-gray-900 text-sm">
+                      {row.name}
+                    </td>
+                    <td
+                      className="py-3.5 px-5 text-xs text-gray-600 max-w-xs truncate"
+                      title={row.description}
+                    >
+                      {row.description || "—"}
+                    </td>
+                    <td className="py-3.5 px-5 text-center">
+                      <span className="bg-blue-50 text-blue-700 border border-blue-100 px-2.5 py-0.5 rounded-full text-xs font-semibold">
+                        {row.permissions?.length || 0}
+                      </span>
+                    </td>
+                    <td className="py-3.5 px-5">
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[12px] font-semibold border uppercase tracking-wide ${isActive ? "bg-emerald-50 text-emerald-700 border-emerald-200/60" : "bg-rose-50 text-rose-700 border-rose-200/60"}`}
+                      >
+                        {row.status || "UNKNOWN"}
+                      </span>
+                    </td>
+                    <td className="py-3.5 px-5 text-center">
+                      <div className="flex items-center justify-center gap-2">
+                        <button
+                          onClick={() => handleView(roleId)}
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-[#225091] bg-[#EAF2FB] hover:bg-[#d8e8f8] border border-[#225091]/15 transition-all shadow-xs"
+                          title="View Details"
+                        >
+                          <Eye size={13} /> View
+                        </button>
+                        <button
+                          onClick={() =>
+                            navigate(`/roles-permissions/edit/${roleId}`)
+                          }
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200/60 transition-all shadow-xs"
+                          title="Edit"
+                        >
+                          <Edit size={13} /> Edit
+                        </button>
+                        <button
+                          onClick={() => handleDelete(roleId)}
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200/60 transition-all shadow-xs"
+                          title="Delete"
+                        >
+                          <Trash2 size={13} /> Delete
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* Pagination */}

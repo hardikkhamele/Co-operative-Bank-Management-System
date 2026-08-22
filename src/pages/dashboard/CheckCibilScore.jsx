@@ -161,9 +161,26 @@ const CheckCibilScore = () => {
 
   // Helper functions for parsing report
   const rawData = reportResult?.data || reportResult || {};
-  const creditReport = rawData.reportJson?.data || rawData.creditReport?.data || rawData || {};
-  const reportObj = creditReport.credit_report || rawData.creditReport?.report || {};
-  const scoreVal = Number(creditReport.credit_score ?? reportObj?.SCORE?.FCIREXScore ?? 0);
+  const creditReport =
+    rawData.reportJson?.data ||
+    rawData.creditReport?.data ||
+    rawData.creditReport ||
+    rawData.report ||
+    rawData ||
+    {};
+  const reportObj =
+    creditReport.credit_report ||
+    creditReport.report ||
+    rawData.creditReport?.report ||
+    creditReport ||
+    {};
+  const scoreVal = Number(
+    creditReport.credit_score ??
+      creditReport.score ??
+      reportObj?.SCORE?.FCIREXScore ??
+      rawData.score ??
+      0
+  );
 
   const getScoreRating = (score) => {
     if (isNaN(score) || score === null || score === undefined) {
@@ -628,45 +645,45 @@ const CheckCibilScore = () => {
                 ) : (
                   <div className="overflow-x-auto">
                     <table className="w-full text-left text-sm">
-                      <thead className="bg-gray-50/70 text-gray-600 text-xs font-semibold border-b border-gray-100">
+                      <thead className="bg-[#F8FAFC] text-gray-600 text-xs uppercase tracking-wider font-semibold border-b border-gray-200/80">
                         <tr>
-                          <th className="px-6 py-3.5">Account / Subscriber</th>
-                          <th className="px-6 py-3.5">Type &amp; Portfolio</th>
-                          <th className="px-6 py-3.5">Sanctioned / High Credit</th>
-                          <th className="px-6 py-3.5">Current Balance</th>
-                          <th className="px-6 py-3.5">Past Due</th>
-                          <th className="px-6 py-3.5">Opened / Reported</th>
-                          <th className="px-6 py-3.5">Status</th>
+                          <th className="py-3.5 px-5 font-semibold">Account / Subscriber</th>
+                          <th className="py-3.5 px-5 font-semibold">Type &amp; Portfolio</th>
+                          <th className="py-3.5 px-5 font-semibold">Sanctioned / High Credit</th>
+                          <th className="py-3.5 px-5 font-semibold">Current Balance</th>
+                          <th className="py-3.5 px-5 font-semibold">Past Due</th>
+                          <th className="py-3.5 px-5 font-semibold">Opened / Reported</th>
+                          <th className="py-3.5 px-5 font-semibold">Status</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-gray-100 font-medium text-gray-700">
+                      <tbody className="divide-y divide-gray-100">
                         {accountList.map((acc, index) => (
-                          <tr key={index} className="hover:bg-gray-50/70 transition-colors">
-                            <td className="px-6 py-4">
-                              <div className="font-bold text-gray-900">{acc.Subscriber_Name || acc.Identification_Number || 'N/A'}</div>
+                          <tr key={index} className="hover:bg-slate-50/70 transition-colors">
+                            <td className="py-3.5 px-5">
+                              <div className="font-semibold text-gray-900 text-sm">{acc.Subscriber_Name || acc.Identification_Number || 'N/A'}</div>
                               <div className="text-xs font-mono text-gray-400 mt-0.5">{acc.Account_Number || 'XXXX'}</div>
                             </td>
-                            <td className="px-6 py-4">
-                              <div>Code: {acc.Account_Type || '01'}</div>
-                              <div className="text-xs text-gray-400">Portfolio: {acc.Portfolio_Type || 'I'}</div>
+                            <td className="py-3.5 px-5 text-xs text-gray-600">
+                              <div className="font-medium text-gray-800">Code: {acc.Account_Type || '01'}</div>
+                              <div className="text-[11px] text-gray-400">Portfolio: {acc.Portfolio_Type || 'I'}</div>
                             </td>
-                            <td className="px-6 py-4 font-bold text-gray-900">
+                            <td className="py-3.5 px-5 text-sm font-bold text-gray-900 tabular-nums">
                               {formatCurrency(acc.Highest_Credit_or_Original_Loan_Amount)}
                             </td>
-                            <td className="px-6 py-4 font-bold text-[#225091]">
+                            <td className="py-3.5 px-5 text-sm font-bold text-[#225091] tabular-nums">
                               {formatCurrency(acc.CurrentBalance || acc.Current_Balance)}
                             </td>
-                            <td className="px-6 py-4">
-                              <span className={Number(acc.Amount_Past_Due) > 0 ? "text-red-600 font-bold" : "text-gray-500"}>
+                            <td className="py-3.5 px-5 text-sm font-semibold tabular-nums">
+                              <span className={Number(acc.Amount_Past_Due) > 0 ? "text-rose-600 font-bold" : "text-gray-500"}>
                                 {formatCurrency(acc.Amount_Past_Due)}
                               </span>
                             </td>
-                            <td className="px-6 py-4 text-xs text-gray-500">
+                            <td className="py-3.5 px-5 text-xs text-gray-500">
                               <div>Opened: {formatDate(acc.Open_Date)}</div>
                               <div>Reported: {formatDate(acc.Date_Reported)}</div>
                             </td>
-                            <td className="px-6 py-4">
-                              <span className="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-200">
+                            <td className="py-3.5 px-5">
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[12px] font-semibold border border-emerald-200/60 uppercase tracking-wide">
                                 Active (Code {acc.Account_Status || '11'})
                               </span>
                             </td>
@@ -690,36 +707,36 @@ const CheckCibilScore = () => {
                 </div>
 
                 {capsList.length === 0 ? (
-                  <div className="p-8 text-center text-gray-500 text-sm">
+                  <div className="p-8 text-center text-gray-500 text-sm font-medium">
                     No recent non-credit bureau inquiries found in this report.
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
                     <table className="w-full text-left text-sm">
-                      <thead className="bg-gray-50/70 text-gray-600 text-xs font-semibold border-b border-gray-100">
+                      <thead className="bg-[#F8FAFC] text-gray-600 text-xs uppercase tracking-wider font-semibold border-b border-gray-200/80">
                         <tr>
-                          <th className="px-6 py-3.5">Subscriber Institution</th>
-                          <th className="px-6 py-3.5">Inquiry Date</th>
-                          <th className="px-6 py-3.5">Enquiry Purpose</th>
-                          <th className="px-6 py-3.5">Report Number</th>
+                          <th className="py-3.5 px-5 font-semibold">Subscriber Institution</th>
+                          <th className="py-3.5 px-5 font-semibold">Inquiry Date</th>
+                          <th className="py-3.5 px-5 font-semibold">Enquiry Purpose</th>
+                          <th className="py-3.5 px-5 font-semibold">Report Number</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-gray-100 font-medium text-gray-700">
+                      <tbody className="divide-y divide-gray-100">
                         {capsList.map((item, index) => (
-                          <tr key={index} className="hover:bg-gray-50/70 transition-colors">
-                            <td className="px-6 py-4">
-                              <div className="font-bold text-gray-900">{item.Subscriber_Name || item.Subscriber_code || 'Financial Institution'}</div>
+                          <tr key={index} className="hover:bg-slate-50/70 transition-colors">
+                            <td className="py-3.5 px-5">
+                              <div className="font-semibold text-gray-900 text-sm">{item.Subscriber_Name || item.Subscriber_code || 'Financial Institution'}</div>
                               <div className="text-xs text-gray-400 font-mono">{item.Subscriber_code}</div>
                             </td>
-                            <td className="px-6 py-4 text-gray-600">
+                            <td className="py-3.5 px-5 text-xs text-gray-600 font-medium">
                               {formatDate(item.Date_of_Request)}
                             </td>
-                            <td className="px-6 py-4">
-                              <span className="px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 text-xs font-semibold">
+                            <td className="py-3.5 px-5">
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 text-[12px] font-semibold border border-blue-200/60 uppercase tracking-wide">
                                 Purpose: Code {item.Finance_Purpose || item.Enquiry_Reason || '99'}
                               </span>
                             </td>
-                            <td className="px-6 py-4 font-mono text-xs text-gray-500">
+                            <td className="py-3.5 px-5 font-mono text-xs text-gray-500">
                               {item.ReportNumber || 'N/A'}
                             </td>
                           </tr>

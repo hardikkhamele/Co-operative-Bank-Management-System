@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronRight, ArrowLeft, Download, Printer, Loader2 } from 'lucide-react';
+import { ChevronRight, ArrowLeft, Download, Printer, Loader2, XCircle, CheckCircle, X } from 'lucide-react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { transferReceiptService } from '../../api/transferReceiptService';
+import useAuthStore from '../../store/authStore';
 
 const ViewTransferReceipt = () => {
   const { id } = useParams();
@@ -10,6 +11,30 @@ const ViewTransferReceipt = () => {
   const [receipt, setReceipt] = useState(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
+
+  // Reject & Preview modal state
+  const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
+  const [rejectionReason, setRejectionReason] = useState('');
+  const [previewImageUrl, setPreviewImageUrl] = useState(null);
+
+  const authRole = useAuthStore((state) => state.role);
+  const authUser = useAuthStore((state) => state.user);
+  const rawRole =
+    authRole?.code ||
+    authRole?.name ||
+    authRole ||
+    authUser?.role?.code ||
+    authUser?.role?.name ||
+    authUser?.role ||
+    "";
+  const roleString = (typeof rawRole === "string" ? rawRole : "").toUpperCase();
+  const canApprove =
+    !roleString ||
+    roleString.includes("OWNER") ||
+    roleString.includes("MANAGER") ||
+    roleString.includes("ACCOUNTANT") ||
+    roleString.includes("CA") ||
+    roleString.includes("ADMIN");
 
   useEffect(() => {
     const fetchDetails = async () => {
@@ -34,21 +59,45 @@ const ViewTransferReceipt = () => {
     }
   }, [id]);
 
-  const handleAction = async (newStatus) => {
+  const handleApprove = async () => {
     setUpdating(true);
     try {
       const receiptId = receipt?._id || receipt?.id || id;
-      const res = await transferReceiptService.update(receiptId, { status: newStatus });
-      toast.success(res?.message || `Receipt ${newStatus === 'APPROVED' ? 'approved' : 'rejected'} successfully.`);
+      const res = await transferReceiptService.approve(receiptId);
+      toast.success(res?.message || 'Transfer receipt approved successfully.');
       setReceipt(prev => ({
         ...prev,
-        status: newStatus,
-        approvedBy: newStatus === 'APPROVED' ? 'Admin / Manager' : null,
-        rejectedBy: newStatus === 'REJECTED' ? 'Admin / Manager' : null
+        status: 'APPROVED',
+        rejectionReason: null,
+        approvedBy: res?.data?.approvedBy || 'Branch Manager / Owner'
       }));
     } catch (err) {
-      toast.error(err.response?.data?.message || err.message || 'Failed to update receipt status');
-      setReceipt(prev => ({ ...prev, status: newStatus }));
+      toast.error(err.response?.data?.message || err.message || 'Failed to approve receipt');
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const handleReject = async (e) => {
+    if (e) e.preventDefault();
+    if (!rejectionReason.trim()) {
+      toast.error('Rejection reason is required');
+      return;
+    }
+    setUpdating(true);
+    try {
+      const receiptId = receipt?._id || receipt?.id || id;
+      const res = await transferReceiptService.reject(receiptId, rejectionReason.trim());
+      toast.success(res?.message || 'Transfer receipt rejected successfully.');
+      setIsRejectModalOpen(false);
+      setReceipt(prev => ({
+        ...prev,
+        status: 'REJECTED',
+        rejectionReason: rejectionReason.trim(),
+        rejectedBy: res?.data?.rejectedBy || 'Branch Manager / Owner'
+      }));
+    } catch (err) {
+      toast.error(err.response?.data?.message || err.message || 'Failed to reject receipt');
     } finally {
       setUpdating(false);
     }
@@ -57,8 +106,9 @@ const ViewTransferReceipt = () => {
   const getStatusBadge = (status) => {
     const s = (status || '').toUpperCase();
     switch (s) {
+      case 'PENDING':
       case 'NEW':
-        return <span className="inline-flex items-center justify-center px-4 py-1 text-xs font-bold text-yellow-700 bg-yellow-100 border border-yellow-200 rounded-full">NEW</span>;
+        return <span className="inline-flex items-center justify-center px-4 py-1 text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 rounded-full">PENDING</span>;
       case 'APPROVED':
         return <span className="inline-flex items-center justify-center px-4 py-1 text-xs font-bold text-[#225091] bg-teal-50 border border-teal-200 rounded-full">APPROVED</span>;
       case 'REJECTED':
@@ -70,7 +120,7 @@ const ViewTransferReceipt = () => {
 
   if (loading) {
     return (
-      <div className="p-16 flex flex-col items-center justify-center gap-3 text-gray-500">
+      <div className="w-full p-16 flex flex-col items-center justify-center gap-3 text-gray-500">
         <Loader2 size={32} className="animate-spin text-[#225091]" />
         <span className="font-medium">Loading transfer receipt details...</span>
       </div>
@@ -79,7 +129,7 @@ const ViewTransferReceipt = () => {
 
   if (!receipt) {
     return (
-      <div className="p-12 text-center text-gray-500">
+      <div className="w-full p-12 text-center text-gray-500">
         <p className="text-lg font-semibold mb-4">Receipt not found.</p>
         <button 
           onClick={() => navigate('/transfer')}
@@ -94,22 +144,22 @@ const ViewTransferReceipt = () => {
   const receiptDate = receipt.date ? (receipt.date.includes('T') ? receipt.date.split('T')[0] : receipt.date) : '—';
   const customerName = receipt.name || receipt.preparedBy || '—';
   const accountNumber = receipt.accountNumber || receipt.acNo || '—';
-  const isNew = (receipt.status || '').toUpperCase() === 'NEW';
+  const isPending = ['NEW', 'PENDING'].includes((receipt.status || '').toUpperCase());
 
   return (
-    <div className="space-y-6">
+    <div className="w-full max-w-none space-y-6">
       {/* Header and Breadcrumb */}
-      <div className="bg-white rounded-lg p-5 shadow-sm border border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 print:hidden">
+      <div className="w-full bg-white rounded-lg p-5 shadow-sm border border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 print:hidden">
         <div>
           <div className="flex items-center gap-3 mb-2">
             <button 
-              onClick={() => navigate('/transfer')}
-              className="p-1.5 -ml-1.5 rounded-lg text-gray-500 hover:text-[#225091] hover:bg-blue-50 transition-colors"
-              title="Go Back"
+              onClick={() => navigate(-1)}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors shrink-0"
+              type="button"
             >
-              <ArrowLeft size={20} />
+              <ArrowLeft size={16} /> Back
             </button>
-            <h1 className="text-xl font-bold text-[#225091]">View Receipt</h1>
+            <h1 className="text-xl font-bold text-[#225091] m-0">View Transfer Receipt</h1>
           </div>
           <div className="flex items-center text-xs font-medium text-gray-500 uppercase tracking-wide pl-[40px]">
             <Link to="/dashboard" className="hover:text-[#225091] transition-colors">Dashboard</Link>
@@ -121,10 +171,42 @@ const ViewTransferReceipt = () => {
             <span className="text-[#225091]">View Receipt</span>
           </div>
         </div>
-        {!isNew && (
+        {isPending && canApprove ? (
           <div className="flex items-center gap-3">
             <button 
-              onClick={() => window.print()}
+              type="button"
+              disabled={updating}
+              onClick={() => {
+                setRejectionReason('');
+                setIsRejectModalOpen(true);
+              }}
+              className="px-5 py-2.5 rounded-xl border border-rose-300 text-rose-700 bg-rose-50 hover:bg-rose-100 font-semibold text-sm transition-colors shadow-xs disabled:opacity-50 flex items-center gap-2"
+            >
+              <XCircle size={16} />
+              Reject
+            </button>
+            <button 
+              type="button"
+              disabled={updating}
+              onClick={handleApprove}
+              className="px-6 py-2.5 rounded-xl bg-emerald-600 text-white font-semibold hover:bg-emerald-700 transition-colors shadow-sm text-sm disabled:opacity-50 flex items-center gap-2"
+            >
+              {updating ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle size={16} />}
+              Approve Receipt
+            </button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={() => {
+                const element = document.createElement("a");
+                const file = new Blob([JSON.stringify(receipt, null, 2)], {type: 'text/plain'});
+                element.href = URL.createObjectURL(file);
+                element.download = `Transfer-Receipt-${receipt.receiptNo || id}.json`;
+                document.body.appendChild(element);
+                element.click();
+                document.body.removeChild(element);
+              }}
               className="flex items-center gap-2 px-4 py-2 border border-gray-200 text-gray-700 hover:bg-gray-50 rounded-lg font-semibold text-sm transition-colors shadow-sm"
             >
               <Download size={16} />
@@ -132,7 +214,7 @@ const ViewTransferReceipt = () => {
             </button>
             <button 
               onClick={() => window.print()}
-              className="flex items-center gap-2 px-4 py-2 bg-[#225091] text-white hover:bg-[#168f94] rounded-lg font-semibold text-sm transition-colors shadow-sm"
+              className="flex items-center gap-2 px-4 py-2 bg-[#225091] text-white hover:bg-[#1b427b] rounded-lg font-semibold text-sm transition-colors shadow-sm"
             >
               <Printer size={16} />
               Print
@@ -142,7 +224,7 @@ const ViewTransferReceipt = () => {
       </div>
 
       {/* Main Receipt Voucher */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden relative pb-24">
+      <div className="w-full bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden relative pb-24">
         
         {/* Document Header */}
         <div className="px-10 py-8 border-b border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-gradient-to-r from-gray-50/50 to-white">
@@ -154,7 +236,7 @@ const ViewTransferReceipt = () => {
             </div>
             <div>
               <h2 className="text-lg font-bold text-gray-900">{receipt.bankName || 'Advita Co-operative Bank'}</h2>
-              <p className="text-sm text-gray-600 mt-0.5">{receipt.address || 'Central Office, Maharashtra'}</p>
+              <p className="text-sm text-gray-600 mt-0.5">{receipt.branchName ? `${receipt.branchName}, ` : ''}{receipt.address || receipt.city || 'Central Office, Maharashtra'}</p>
               <p className="text-sm text-gray-600">{receipt.phone || '+91 98765 43210'}</p>
             </div>
           </div>
@@ -164,6 +246,20 @@ const ViewTransferReceipt = () => {
             <p className="text-sm text-gray-600 mt-0.5">Receipt Date: <span className="font-medium text-gray-800">{receiptDate}</span></p>
           </div>
         </div>
+
+        {/* Rejection Alert Banner */}
+        {receipt.status === 'REJECTED' && (
+          <div className="mx-10 mt-6 p-4 rounded-xl bg-rose-50 border border-rose-200 flex items-start gap-3">
+            <XCircle className="text-rose-600 shrink-0 mt-0.5" size={20} />
+            <div>
+              <h4 className="text-sm font-bold text-rose-800">Receipt Rejected</h4>
+              <p className="text-sm text-rose-700 mt-1">
+                <span className="font-semibold">Rejection Reason: </span>
+                {receipt.rejectionReason || 'No specific reason provided.'}
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Details Grid */}
         <div className="px-10 py-8">
@@ -192,7 +288,7 @@ const ViewTransferReceipt = () => {
              </div>
              <div className="md:text-right">
                 <p className="text-xs uppercase font-bold text-gray-400 mb-1">Amount</p>
-                <p className="text-gray-900 font-bold text-[16px]">{receipt.amount ? `₹${receipt.amount}` : '—'}</p>
+                <p className="text-gray-900 font-bold text-[16px]">{receipt.formattedAmount || (receipt.amount ? `₹${receipt.amount}` : '—')}</p>
              </div>
            </div>
            
@@ -202,6 +298,21 @@ const ViewTransferReceipt = () => {
                 {receipt.narration || `Transfer receipt posted for GL head ${receipt.glHeadName || 'Daily Deposit'} on Account No. ${accountNumber}.`}
               </p>
            </div>
+
+           {receipt.image && (
+             <div className="mt-6 pt-6 border-t border-gray-100">
+               <p className="text-xs uppercase font-bold text-gray-400 mb-2">Attached Receipt Document</p>
+               <div className="p-3 bg-gray-50/80 rounded-xl border border-gray-100 inline-block max-w-sm">
+                 <img
+                   src={receipt.image}
+                   alt="Receipt attachment"
+                   className="max-h-48 w-auto rounded-lg object-contain border border-gray-200 shadow-xs cursor-pointer hover:opacity-95 transition-opacity"
+                   onClick={() => setPreviewImageUrl(receipt.image)}
+                 />
+                 <p className="text-[11px] text-gray-500 mt-1.5 text-center font-medium">Click to expand preview</p>
+               </div>
+             </div>
+           )}
         </div>
 
         {/* Signatures Section */}
@@ -221,7 +332,7 @@ const ViewTransferReceipt = () => {
               <p className="text-gray-800 text-sm font-medium truncate">
                  {(receipt.status || '').toUpperCase() === 'REJECTED' 
                    ? (receipt.rejectedBy || 'Branch Manager') 
-                   : (receipt.approvedBy || (isNew ? 'Pending Approval' : 'Branch Manager'))}
+                   : (receipt.approvedBy || (isPending ? 'Pending Approval' : 'Branch Manager'))}
               </p>
            </div>
            <div className="relative">
@@ -233,33 +344,127 @@ const ViewTransferReceipt = () => {
            </div>
         </div>
 
-        {/* Actions for 'NEW' Status */}
-        {isNew && (
-          <div className="absolute bottom-0 left-0 w-full p-4 flex justify-end gap-4 bg-white border-t border-gray-100 print:hidden">
+        {/* Actions for Pending Status & Authorized Roles */}
+        {isPending && canApprove && (
+          <div className="w-full p-6 flex justify-end gap-4 bg-gray-50 border-t border-gray-100 print:hidden">
              <button 
                 type="button"
                 disabled={updating}
-                onClick={() => handleAction('REJECTED')}
-                className="px-8 py-2.5 rounded-full border-2 border-red-500 text-red-500 font-semibold hover:bg-red-50 transition-colors text-sm disabled:opacity-50 flex items-center gap-2"
+                onClick={() => {
+                  setRejectionReason('');
+                  setIsRejectModalOpen(true);
+                }}
+                className="px-8 py-2.5 rounded-xl border border-rose-300 text-rose-700 bg-white hover:bg-rose-50 font-semibold transition-colors text-sm disabled:opacity-50 flex items-center gap-2 shadow-xs"
              >
-               {updating && <Loader2 size={16} className="animate-spin" />}
+               <XCircle size={16} />
                Reject
              </button>
              <button 
                 type="button"
                 disabled={updating}
-                onClick={() => handleAction('APPROVED')}
-                className="px-8 py-2.5 rounded-full bg-[#225091] text-white font-semibold hover:bg-[#168f94] transition-colors shadow-sm text-sm disabled:opacity-50 flex items-center gap-2"
+                onClick={handleApprove}
+                className="px-8 py-2.5 rounded-xl bg-emerald-600 text-white font-semibold hover:bg-emerald-700 transition-colors shadow-sm text-sm disabled:opacity-50 flex items-center gap-2"
              >
-               {updating && <Loader2 size={16} className="animate-spin" />}
+               {updating ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle size={16} />}
                Approve Receipt
              </button>
           </div>
         )}
       </div>
-      
-      
 
+      {/* Reject Modal */}
+      {isRejectModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-in fade-in">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl relative">
+            <button
+              onClick={() => setIsRejectModalOpen(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <X size={20} />
+            </button>
+            <div className="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mb-4">
+              <XCircle size={24} />
+            </div>
+            <h3 className="text-lg font-bold text-gray-900 mb-1">
+              Reject Transfer Receipt
+            </h3>
+            <p className="text-xs text-gray-500 mb-4">
+              Please specify the mandatory reason for rejecting receipt{" "}
+              <span className="font-semibold text-gray-700">
+                {receipt.receiptNo || "TR-000001"}
+              </span>.
+            </p>
+            <form onSubmit={handleReject}>
+              <div className="mb-4">
+                <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-2">
+                  Rejection Reason <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  required
+                  rows={3}
+                  value={rejectionReason}
+                  onChange={(e) => setRejectionReason(e.target.value)}
+                  placeholder="e.g. Invalid account number provided for ledger transfer"
+                  className="w-full px-3.5 py-2.5 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 text-gray-800 resize-none"
+                />
+              </div>
+              <div className="flex items-center justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIsRejectModalOpen(false)}
+                  className="px-5 py-2 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-100 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={updating || !rejectionReason.trim()}
+                  className="px-6 py-2 rounded-xl text-sm font-semibold text-white bg-rose-600 hover:bg-rose-700 transition-colors shadow-sm disabled:opacity-50 flex items-center gap-2"
+                >
+                  {updating ? (
+                    <Loader2 size={16} className="animate-spin" />
+                  ) : (
+                    "Confirm Reject"
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* In-Panel Image Preview Modal */}
+      {previewImageUrl && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs p-4 animate-in fade-in">
+          <div className="bg-white rounded-2xl p-5 max-w-2xl w-full shadow-2xl relative flex flex-col max-h-[90vh]">
+            <div className="flex items-center justify-between pb-3 border-b border-gray-100">
+              <h3 className="text-base font-bold text-gray-900">Transfer Receipt Document Preview</h3>
+              <button
+                onClick={() => setPreviewImageUrl(null)}
+                className="p-1 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div className="flex-1 overflow-auto p-2 flex items-center justify-center bg-gray-50 rounded-xl my-3">
+              <img
+                src={previewImageUrl}
+                alt="Transfer Receipt Document"
+                className="max-h-[65vh] w-auto object-contain rounded-lg shadow-sm"
+              />
+            </div>
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setPreviewImageUrl(null)}
+                className="px-5 py-2 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-100 transition-colors"
+              >
+                Close Preview
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

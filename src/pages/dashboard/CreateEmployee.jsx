@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { toast } from 'react-toastify';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft,  ChevronRight, Camera, Calendar, ChevronDown, Eye, EyeOff } from 'lucide-react';
+import { ArrowLeft, ChevronRight, Camera, Calendar, ChevronDown, Eye, EyeOff, Check, Search, AlertCircle } from 'lucide-react';
 import { employeeService } from '../../api/employeeService';
 import { branchService } from '../../api/branchService';
 import { roleService } from '../../api/roleService';
@@ -9,10 +9,119 @@ import {
   validatePassword, 
   validatePhone, 
   validateEmail, 
+  validateDOB,
   sanitizeDigits, 
   preventInvalidNumberKeys,
   validatePositiveNumber 
 } from '../../utils/validation';
+
+const INDIAN_STATES_FALLBACK = [
+  'Andaman and Nicobar Islands', 'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 
+  'Chandigarh', 'Chhattisgarh', 'Dadra and Nagar Haveli and Daman and Diu', 'Delhi', 'Goa', 
+  'Gujarat', 'Haryana', 'Himachal Pradesh', 'Jammu and Kashmir', 'Jharkhand', 'Karnataka', 
+  'Kerala', 'Ladakh', 'Lakshadweep', 'Madhya Pradesh', 'Maharashtra', 'Manipur', 'Meghalaya', 
+  'Mizoram', 'Nagaland', 'Odisha', 'Puducherry', 'Punjab', 'Rajasthan', 'Sikkim', 'Tamil Nadu', 
+  'Telangana', 'Tripura', 'Uttar Pradesh', 'Uttarakhand', 'West Bengal'
+];
+
+// Custom Downward, Small-Scrollable Searchable State Dropdown
+const StateDropdown = ({ value, onChange, options, loading }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const filteredOptions = useMemo(() => {
+    if (!searchTerm.trim()) return options;
+    return options.filter(opt => opt.toLowerCase().includes(searchTerm.toLowerCase()));
+  }, [options, searchTerm]);
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className={`w-full flex justify-between items-center bg-white border px-4 py-3 rounded-xl text-sm transition-all focus:outline-none ${
+          isOpen ? 'border-[#225091] ring-1 ring-[#225091]' : 'border-gray-200 hover:border-gray-300'
+        }`}
+      >
+        <span className={value ? 'text-gray-800 font-medium' : 'text-gray-400'}>
+          {value || (loading ? 'Loading states...' : 'Select State')}
+        </span>
+        <ChevronDown size={16} className={`text-gray-500 transition-transform duration-200 shrink-0 ml-2 ${isOpen ? 'rotate-180' : ''}`} />
+      </button>
+
+      {isOpen && (
+        <div className="absolute top-full left-0 w-full mt-1.5 bg-white border border-gray-200 rounded-xl shadow-xl z-50 overflow-hidden flex flex-col">
+          {/* Quick Search */}
+          <div className="p-2 border-b border-gray-100 bg-gray-50/70">
+            <div className="relative">
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search state..."
+                autoFocus
+                className="w-full pl-8 pr-6 py-1.5 text-xs bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#225091] text-gray-700"
+              />
+              <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
+              {searchTerm && (
+                <button
+                  type="button"
+                  onClick={() => setSearchTerm('')}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-400 hover:text-gray-600"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Small Scrollable State List */}
+          <div className="max-h-44 overflow-y-auto py-1 divide-y divide-gray-50">
+            {filteredOptions.length === 0 ? (
+              <div className="px-4 py-3 text-xs text-center text-gray-400">
+                No states found
+              </div>
+            ) : (
+              filteredOptions.map((st) => {
+                const isSelected = value === st;
+                return (
+                  <button
+                    key={st}
+                    type="button"
+                    onClick={() => {
+                      onChange(st);
+                      setIsOpen(false);
+                      setSearchTerm('');
+                    }}
+                    className={`w-full text-left px-4 py-2.5 text-xs font-medium flex items-center justify-between transition-colors ${
+                      isSelected 
+                        ? 'bg-[#225091]/10 text-[#225091] font-semibold' 
+                        : 'text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    <span>{st}</span>
+                    {isSelected && <Check size={14} className="text-[#225091]" />}
+                  </button>
+                );
+              })
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 const CreateEmployee = () => {
   const navigate = useNavigate();
@@ -23,6 +132,8 @@ const CreateEmployee = () => {
   // Dynamic Options
   const [branches, setBranches] = useState([]);
   const [roles, setRoles] = useState([]);
+  const [states, setStates] = useState(INDIAN_STATES_FALLBACK);
+  const [loadingStates, setLoadingStates] = useState(false);
 
   useEffect(() => {
     const fetchOptions = async () => {
@@ -37,7 +148,31 @@ const CreateEmployee = () => {
         console.error("Failed to fetch options", err);
       }
     };
+
+    const fetchStates = async () => {
+      setLoadingStates(true);
+      try {
+        const res = await fetch('https://api.countrystatecity.in/v1/countries/IN/states', {
+          headers: {
+            'X-CSCAPI-KEY': 'NHhvOEcyWk50N2Vna3VFTE00bFp3MjFKR0ZEOUhkZlg4RTk1MlJlaA=='
+          }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data) && data.length > 0) {
+            const stateNames = data.map(item => (typeof item === 'string' ? item : item.name)).sort((a, b) => a.localeCompare(b));
+            setStates(stateNames);
+          }
+        }
+      } catch (err) {
+        console.warn("Could not fetch states from countrystatecity API, using fallback list.", err);
+      } finally {
+        setLoadingStates(false);
+      }
+    };
+
     fetchOptions();
+    fetchStates();
   }, []);
 
   // Form States
@@ -69,43 +204,220 @@ const CreateEmployee = () => {
   });
   const [kraSettings, setKraSettings] = useState({
     year: new Date().getFullYear(),
-    targets: [{ product: 'Fixed Deposit', targetValue: 2400000 }, { product: 'Loan Disbursement', targetValue: 2400000 }, { product: 'Savings Account', targetValue: 1200 }]
+    targets: [
+      { product: 'Fixed Deposit', targetValue: 2400000 }, 
+      { product: 'Loan Disbursement', targetValue: 2400000 }, 
+      { product: 'Savings Account', targetValue: 1200 }
+    ]
   });
 
+  // Form Validation Errors
+  const [errors, setErrors] = useState({});
+  const [touched, setTouched] = useState({});
+
+  const tabs = ['Personal Details', 'Job Details', 'Shift & WOFF', 'Attendance', 'WOFF & HOFF', 'KRA Settings'];
+  const currentTabIndex = tabs.indexOf(activeTab);
+  const isFirstTab = currentTabIndex === 0;
+  const isLastTab = currentTabIndex === tabs.length - 1;
+
+  // Single field validation
+  const validateSingleField = (field, value) => {
+    let errorMsg = null;
+
+    switch (field) {
+      case 'fullName':
+        if (!value || !value.trim()) {
+          errorMsg = 'Full Name is required.';
+        } else if (value.trim().length < 2) {
+          errorMsg = 'Full Name must be at least 2 characters.';
+        }
+        break;
+
+      case 'email': {
+        const emailCheck = validateEmail(value, { required: true });
+        if (!emailCheck.isValid) errorMsg = emailCheck.error;
+        break;
+      }
+
+      case 'password': {
+        const passCheck = validatePassword(value, { minLength: 6, required: true, fieldName: 'Password' });
+        if (!passCheck.isValid) errorMsg = passCheck.error;
+        break;
+      }
+
+      case 'phoneNumber': {
+        if (value) {
+          const phoneCheck = validatePhone(value, { required: false });
+          if (!phoneCheck.isValid) errorMsg = phoneCheck.error;
+        }
+        break;
+      }
+
+      case 'dateOfBirth': {
+        if (value) {
+          const dobCheck = validateDOB(value, { required: false });
+          if (!dobCheck.isValid) errorMsg = dobCheck.error;
+        }
+        break;
+      }
+
+      case 'branchId':
+        if (!value) {
+          errorMsg = 'Branch is required.';
+        }
+        break;
+
+      case 'roleId':
+        if (!value) {
+          errorMsg = 'Department (Role) is required.';
+        }
+        break;
+
+      case 'salary':
+        if (value !== '') {
+          const salaryCheck = validatePositiveNumber(value, 'Salary', { min: 0, required: false });
+          if (!salaryCheck.isValid) errorMsg = salaryCheck.error;
+        }
+        break;
+
+      case 'punchInTime':
+        if (!value) errorMsg = 'Punch In Time is required.';
+        break;
+
+      case 'punchOutTime':
+        if (!value) errorMsg = 'Punch Out Time is required.';
+        break;
+
+      case 'weeklyOffDay':
+        if (!value) errorMsg = 'Weekly Off Day is required.';
+        break;
+
+      default:
+        break;
+    }
+
+    setErrors(prev => {
+      const updated = { ...prev };
+      if (errorMsg) {
+        updated[field] = errorMsg;
+      } else {
+        delete updated[field];
+      }
+      return updated;
+    });
+
+    return errorMsg;
+  };
+
+  // Validate entire tab
+  const validateTab = (tabName) => {
+    const tabErrors = {};
+
+    if (tabName === 'Personal Details') {
+      const fields = [
+        { name: 'fullName', val: personalDetails.fullName },
+        { name: 'email', val: personalDetails.email },
+        { name: 'password', val: personalDetails.password },
+        { name: 'phoneNumber', val: personalDetails.phoneNumber },
+        { name: 'dateOfBirth', val: personalDetails.dateOfBirth }
+      ];
+      fields.forEach(f => {
+        const err = validateSingleField(f.name, f.val);
+        if (err) tabErrors[f.name] = err;
+      });
+    } else if (tabName === 'Job Details') {
+      const fields = [
+        { name: 'branchId', val: jobDetails.branchId },
+        { name: 'roleId', val: jobDetails.roleId },
+        { name: 'salary', val: jobDetails.salary }
+      ];
+      fields.forEach(f => {
+        const err = validateSingleField(f.name, f.val);
+        if (err) tabErrors[f.name] = err;
+      });
+    } else if (tabName === 'Shift & WOFF') {
+      const fields = [
+        { name: 'punchInTime', val: shiftSettings.punchInTime },
+        { name: 'punchOutTime', val: shiftSettings.punchOutTime },
+        { name: 'weeklyOffDay', val: shiftSettings.weeklyOffDay }
+      ];
+      fields.forEach(f => {
+        const err = validateSingleField(f.name, f.val);
+        if (err) tabErrors[f.name] = err;
+      });
+    }
+
+    return tabErrors;
+  };
+
+  // Real-time tab validity check for buttons
+  const isTabValid = (tabName) => {
+    switch (tabName) {
+      case 'Personal Details': {
+        const nameValid = !!personalDetails.fullName?.trim() && personalDetails.fullName.trim().length >= 2;
+        const emailValid = validateEmail(personalDetails.email).isValid;
+        const passValid = validatePassword(personalDetails.password, { minLength: 6 }).isValid;
+        const phoneValid = !personalDetails.phoneNumber || validatePhone(personalDetails.phoneNumber, { required: false }).isValid;
+        const dobValid = !personalDetails.dateOfBirth || validateDOB(personalDetails.dateOfBirth, { required: false }).isValid;
+        return nameValid && emailValid && passValid && phoneValid && dobValid;
+      }
+      case 'Job Details': {
+        const branchValid = !!jobDetails.branchId;
+        const roleValid = !!jobDetails.roleId;
+        const salaryValid = jobDetails.salary === '' || validatePositiveNumber(jobDetails.salary, 'Salary', { min: 0, required: false }).isValid;
+        return branchValid && roleValid && salaryValid;
+      }
+      case 'Shift & WOFF': {
+        return !!shiftSettings.punchInTime && !!shiftSettings.punchOutTime && !!shiftSettings.weeklyOffDay;
+      }
+      case 'Attendance':
+      case 'WOFF & HOFF':
+      case 'KRA Settings':
+        return true;
+      default:
+        return false;
+    }
+  };
+
+  const isCurrentTabValid = useMemo(() => isTabValid(activeTab), [
+    activeTab,
+    personalDetails,
+    jobDetails,
+    shiftSettings
+  ]);
+
+  const handleNext = () => {
+    const currentTabErrors = validateTab(activeTab);
+    if (Object.keys(currentTabErrors).length > 0) {
+      const firstErrMsg = Object.values(currentTabErrors)[0];
+      toast.error(firstErrMsg || "Please correct the errors in this section.");
+      return;
+    }
+
+    if (currentTabIndex < tabs.length - 1) {
+      setActiveTab(tabs[currentTabIndex + 1]);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const handlePrevious = () => {
+    if (currentTabIndex > 0) {
+      setActiveTab(tabs[currentTabIndex - 1]);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
   const handleCreate = async () => {
-    if (!personalDetails.fullName?.trim()) {
-      toast.error("Full Name is required.");
-      setActiveTab('Personal Details');
-      return;
-    }
-
-    const emailCheck = validateEmail(personalDetails.email);
-    if (!emailCheck.isValid) {
-      toast.error(emailCheck.error);
-      setActiveTab('Personal Details');
-      return;
-    }
-
-    const passCheck = validatePassword(personalDetails.password, { minLength: 6 });
-    if (!passCheck.isValid) {
-      toast.error(passCheck.error);
-      setActiveTab('Personal Details');
-      return;
-    }
-
-    if (personalDetails.phoneNumber) {
-      const phoneCheck = validatePhone(personalDetails.phoneNumber, { required: false });
-      if (!phoneCheck.isValid) {
-        toast.error(phoneCheck.error);
-        setActiveTab('Personal Details');
+    // Validate all tabs from first to last
+    const checkTabs = ['Personal Details', 'Job Details', 'Shift & WOFF'];
+    for (const tabName of checkTabs) {
+      const tabErrors = validateTab(tabName);
+      if (Object.keys(tabErrors).length > 0) {
+        setActiveTab(tabName);
+        const firstErrMsg = Object.values(tabErrors)[0];
+        toast.error(firstErrMsg || `Please complete ${tabName} correctly.`);
         return;
       }
-    }
-
-    if (!jobDetails.roleId || !jobDetails.branchId) {
-      toast.error("Role and Branch are required in Job Details.");
-      setActiveTab('Job Details');
-      return;
     }
 
     setSubmitting(true);
@@ -189,8 +501,6 @@ const CreateEmployee = () => {
     }
   };
 
-  const tabs = ['Personal Details', 'Job Details', 'Shift & WOFF', 'Attendance', 'WOFF & HOFF', 'KRA Settings'];
-
   return (
     <div className="flex flex-col gap-6 w-full">
       {/* Header Card */}
@@ -198,12 +508,12 @@ const CreateEmployee = () => {
         <div>
           <div className="flex items-center gap-3 mb-2">
             <button 
-            onClick={() => navigate(-1)}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors shrink-0"
-            type="button"
-          >
-            <ArrowLeft size={16} /> Back
-          </button>
+              onClick={() => navigate(-1)}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors shrink-0"
+              type="button"
+            >
+              <ArrowLeft size={16} /> Back
+            </button>
             <h1 className="text-xl font-bold text-[#225091] m-0">Create Employee</h1>
           </div>
           <div className="flex items-center text-sm text-gray-500 pl-[40px]">
@@ -214,58 +524,128 @@ const CreateEmployee = () => {
             <span className="text-[#225091]">Create Employee</span>
           </div>
         </div>
-
       </div>
 
-      {/* Tabs */}
+      {/* Stepper Tabs */}
       <div className="flex flex-wrap gap-2 mb-2">
-        {tabs.map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors ${
-              activeTab === tab ? 'bg-[#e9e8fa] text-[#1b2559]' : 'text-gray-500 bg-white hover:bg-gray-50'
-            }`}
-          >
-            {tab}
-          </button>
-        ))}
+        {tabs.map((tab, idx) => {
+          const isActive = activeTab === tab;
+          const isCompleted = isTabValid(tab) && currentTabIndex > idx;
+          return (
+            <button
+              key={tab}
+              type="button"
+              onClick={() => setActiveTab(tab)}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all border ${
+                isActive 
+                  ? 'bg-[#225091] text-white border-[#225091] shadow-xs' 
+                  : isCompleted 
+                    ? 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100/70' 
+                    : 'text-gray-600 bg-white border-gray-200 hover:bg-gray-50'
+              }`}
+            >
+              <span className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold ${
+                isActive 
+                  ? 'bg-white text-[#225091]' 
+                  : isCompleted 
+                    ? 'bg-emerald-600 text-white' 
+                    : 'bg-gray-100 text-gray-600'
+              }`}>
+                {isCompleted ? '✓' : idx + 1}
+              </span>
+              {tab}
+            </button>
+          );
+        })}
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-10">
+      {/* Main Tab Content Card */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-2">
         {activeTab === 'Personal Details' && (
           <div>
             <h2 className="text-xl font-bold text-gray-800 mb-6">General Info</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-semibold text-gray-800 mb-2">Full Name *</label>
+                <label className="block text-sm font-semibold text-gray-800 mb-2">
+                  Full Name <span className="text-rose-500">*</span>
+                </label>
                 <input 
                   type="text" 
                   value={personalDetails.fullName} 
-                  onChange={e => setPersonalDetails({...personalDetails, fullName: e.target.value})} 
+                  onChange={e => {
+                    const val = e.target.value;
+                    setPersonalDetails({...personalDetails, fullName: val});
+                    if (touched.fullName || errors.fullName) validateSingleField('fullName', val);
+                  }}
+                  onBlur={() => {
+                    setTouched(t => ({ ...t, fullName: true }));
+                    validateSingleField('fullName', personalDetails.fullName);
+                  }}
                   placeholder="Enter full name"
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-sm" 
+                  className={`w-full px-4 py-3 rounded-xl border bg-white text-sm transition-all ${
+                    errors.fullName 
+                      ? 'border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-rose-500' 
+                      : 'border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091]'
+                  }`} 
                 />
+                {errors.fullName && (
+                  <p className="text-xs text-rose-500 mt-1.5 font-medium flex items-center gap-1">
+                    <AlertCircle size={13} /> {errors.fullName}
+                  </p>
+                )}
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-800 mb-2">Email *</label>
+                <label className="block text-sm font-semibold text-gray-800 mb-2">
+                  Email <span className="text-rose-500">*</span>
+                </label>
                 <input 
                   type="email" 
                   value={personalDetails.email} 
-                  onChange={e => setPersonalDetails({...personalDetails, email: e.target.value})} 
+                  onChange={e => {
+                    const val = e.target.value;
+                    setPersonalDetails({...personalDetails, email: val});
+                    if (touched.email || errors.email) validateSingleField('email', val);
+                  }}
+                  onBlur={() => {
+                    setTouched(t => ({ ...t, email: true }));
+                    validateSingleField('email', personalDetails.email);
+                  }}
                   placeholder="Enter email address"
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-sm" 
+                  className={`w-full px-4 py-3 rounded-xl border bg-white text-sm transition-all ${
+                    errors.email 
+                      ? 'border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-rose-500' 
+                      : 'border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091]'
+                  }`} 
                 />
+                {errors.email && (
+                  <p className="text-xs text-rose-500 mt-1.5 font-medium flex items-center gap-1">
+                    <AlertCircle size={13} /> {errors.email}
+                  </p>
+                )}
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-800 mb-2">Password *</label>
+                <label className="block text-sm font-semibold text-gray-800 mb-2">
+                  Password <span className="text-rose-500">*</span>
+                </label>
                 <div className="relative">
                   <input 
                     type={showPassword ? "text" : "password"} 
                     value={personalDetails.password} 
-                    onChange={e => setPersonalDetails({...personalDetails, password: e.target.value})} 
+                    onChange={e => {
+                      const val = e.target.value;
+                      setPersonalDetails({...personalDetails, password: val});
+                      if (touched.password || errors.password) validateSingleField('password', val);
+                    }}
+                    onBlur={() => {
+                      setTouched(t => ({ ...t, password: true }));
+                      validateSingleField('password', personalDetails.password);
+                    }}
                     placeholder="Minimum 6 characters"
-                    className="w-full pl-4 pr-10 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-sm" 
+                    className={`w-full pl-4 pr-10 py-3 rounded-xl border bg-white text-sm transition-all ${
+                      errors.password 
+                        ? 'border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-rose-500' 
+                        : 'border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091]'
+                    }`} 
                   />
                   <button
                     type="button"
@@ -275,17 +655,39 @@ const CreateEmployee = () => {
                     {showPassword ? <Eye size={18} /> : <EyeOff size={18} />}
                   </button>
                 </div>
+                {errors.password && (
+                  <p className="text-xs text-rose-500 mt-1.5 font-medium flex items-center gap-1">
+                    <AlertCircle size={13} /> {errors.password}
+                  </p>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-800 mb-2">Phone</label>
                 <input 
                   type="tel" 
                   value={personalDetails.phoneNumber} 
-                  onChange={e => setPersonalDetails({...personalDetails, phoneNumber: sanitizeDigits(e.target.value, 10)})} 
+                  onChange={e => {
+                    const val = sanitizeDigits(e.target.value, 10);
+                    setPersonalDetails({...personalDetails, phoneNumber: val});
+                    if (touched.phoneNumber || errors.phoneNumber) validateSingleField('phoneNumber', val);
+                  }}
+                  onBlur={() => {
+                    setTouched(t => ({ ...t, phoneNumber: true }));
+                    validateSingleField('phoneNumber', personalDetails.phoneNumber);
+                  }}
                   placeholder="10-digit mobile number"
                   maxLength={10}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-sm" 
+                  className={`w-full px-4 py-3 rounded-xl border bg-white text-sm transition-all ${
+                    errors.phoneNumber 
+                      ? 'border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-rose-500' 
+                      : 'border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091]'
+                  }`} 
                 />
+                {errors.phoneNumber && (
+                  <p className="text-xs text-rose-500 mt-1.5 font-medium flex items-center gap-1">
+                    <AlertCircle size={13} /> {errors.phoneNumber}
+                  </p>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-800 mb-2">Gender</label>
@@ -297,7 +699,30 @@ const CreateEmployee = () => {
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-800 mb-2">Date Of Birth</label>
-                <input type="date" value={personalDetails.dateOfBirth} onChange={e => setPersonalDetails({...personalDetails, dateOfBirth: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-sm" />
+                <input 
+                  type="date" 
+                  max={new Date().toISOString().split('T')[0]}
+                  value={personalDetails.dateOfBirth} 
+                  onChange={e => {
+                    const val = e.target.value;
+                    setPersonalDetails({...personalDetails, dateOfBirth: val});
+                    if (touched.dateOfBirth || errors.dateOfBirth) validateSingleField('dateOfBirth', val);
+                  }}
+                  onBlur={() => {
+                    setTouched(t => ({ ...t, dateOfBirth: true }));
+                    validateSingleField('dateOfBirth', personalDetails.dateOfBirth);
+                  }}
+                  className={`w-full px-4 py-3 rounded-xl border bg-white text-sm transition-all ${
+                    errors.dateOfBirth 
+                      ? 'border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-rose-500' 
+                      : 'border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091]'
+                  }`} 
+                />
+                {errors.dateOfBirth && (
+                  <p className="text-xs text-rose-500 mt-1.5 font-medium flex items-center gap-1">
+                    <AlertCircle size={13} /> {errors.dateOfBirth}
+                  </p>
+                )}
               </div>
               <div className="md:col-span-2">
                 <label className="block text-sm font-semibold text-gray-800 mb-2">Address</label>
@@ -312,18 +737,64 @@ const CreateEmployee = () => {
             <h2 className="text-xl font-bold text-gray-800 mb-6">Employment Info</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-semibold text-gray-800 mb-2">Branch *</label>
-                <select value={jobDetails.branchId} onChange={e => setJobDetails({...jobDetails, branchId: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-sm">
+                <label className="block text-sm font-semibold text-gray-800 mb-2">
+                  Branch <span className="text-rose-500">*</span>
+                </label>
+                <select 
+                  value={jobDetails.branchId} 
+                  onChange={e => {
+                    const val = e.target.value;
+                    setJobDetails({...jobDetails, branchId: val});
+                    if (touched.branchId || errors.branchId) validateSingleField('branchId', val);
+                  }}
+                  onBlur={() => {
+                    setTouched(t => ({ ...t, branchId: true }));
+                    validateSingleField('branchId', jobDetails.branchId);
+                  }}
+                  className={`w-full px-4 py-3 rounded-xl border bg-white text-sm transition-all ${
+                    errors.branchId 
+                      ? 'border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-rose-500' 
+                      : 'border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091]'
+                  }`}
+                >
                   <option value="">Select Branch</option>
                   {branches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
                 </select>
+                {errors.branchId && (
+                  <p className="text-xs text-rose-500 mt-1.5 font-medium flex items-center gap-1">
+                    <AlertCircle size={13} /> {errors.branchId}
+                  </p>
+                )}
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-800 mb-2">Department *</label>
-                <select value={jobDetails.roleId} onChange={e => setJobDetails({...jobDetails, roleId: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-sm">
+                <label className="block text-sm font-semibold text-gray-800 mb-2">
+                  Department <span className="text-rose-500">*</span>
+                </label>
+                <select 
+                  value={jobDetails.roleId} 
+                  onChange={e => {
+                    const val = e.target.value;
+                    setJobDetails({...jobDetails, roleId: val});
+                    if (touched.roleId || errors.roleId) validateSingleField('roleId', val);
+                  }}
+                  onBlur={() => {
+                    setTouched(t => ({ ...t, roleId: true }));
+                    validateSingleField('roleId', jobDetails.roleId);
+                  }}
+                  className={`w-full px-4 py-3 rounded-xl border bg-white text-sm transition-all ${
+                    errors.roleId 
+                      ? 'border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-rose-500' 
+                      : 'border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091]'
+                  }`}
+                >
                   <option value="">Select Department</option>
                   {roles.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
                 </select>
+                {errors.roleId && (
+                  <p className="text-xs text-rose-500 mt-1.5 font-medium flex items-center gap-1">
+                    <AlertCircle size={13} /> {errors.roleId}
+                  </p>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-800 mb-2">Designation</label>
@@ -331,11 +802,39 @@ const CreateEmployee = () => {
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-800 mb-2">State</label>
-                <input type="text" value={jobDetails.state} onChange={e => setJobDetails({...jobDetails, state: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-sm" />
+                <StateDropdown 
+                  value={jobDetails.state}
+                  onChange={(val) => setJobDetails({...jobDetails, state: val})}
+                  options={states}
+                  loading={loadingStates}
+                />
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-800 mb-2">Salary (Monthly)</label>
-                <input type="number" min="0" value={jobDetails.salary} onChange={e => setJobDetails({...jobDetails, salary: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-sm" />
+                <input 
+                  type="number" 
+                  min="0" 
+                  value={jobDetails.salary} 
+                  onChange={e => {
+                    const val = e.target.value;
+                    setJobDetails({...jobDetails, salary: val});
+                    if (touched.salary || errors.salary) validateSingleField('salary', val);
+                  }}
+                  onBlur={() => {
+                    setTouched(t => ({ ...t, salary: true }));
+                    validateSingleField('salary', jobDetails.salary);
+                  }}
+                  className={`w-full px-4 py-3 rounded-xl border bg-white text-sm transition-all ${
+                    errors.salary 
+                      ? 'border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-rose-500' 
+                      : 'border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091]'
+                  }`} 
+                />
+                {errors.salary && (
+                  <p className="text-xs text-rose-500 mt-1.5 font-medium flex items-center gap-1">
+                    <AlertCircle size={13} /> {errors.salary}
+                  </p>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-800 mb-2">Joining Date</label>
@@ -349,7 +848,6 @@ const CreateEmployee = () => {
           </div>
         )}
 
-        {/* Keeping other tabs simple for payload structure */}
         {activeTab === 'Shift & WOFF' && (
           <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -359,11 +857,55 @@ const CreateEmployee = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-semibold text-gray-800 mb-2">Punch In Time</label>
-                    <input type="time" value={shiftSettings.punchInTime} onChange={e => setShiftSettings({...shiftSettings, punchInTime: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-sm" />
+                    <input 
+                      type="time" 
+                      value={shiftSettings.punchInTime} 
+                      onChange={e => {
+                        const val = e.target.value;
+                        setShiftSettings({...shiftSettings, punchInTime: val});
+                        if (touched.punchInTime || errors.punchInTime) validateSingleField('punchInTime', val);
+                      }}
+                      onBlur={() => {
+                        setTouched(t => ({ ...t, punchInTime: true }));
+                        validateSingleField('punchInTime', shiftSettings.punchInTime);
+                      }}
+                      className={`w-full px-4 py-3 rounded-xl border bg-white text-sm transition-all ${
+                        errors.punchInTime 
+                          ? 'border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-rose-500' 
+                          : 'border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091]'
+                      }`} 
+                    />
+                    {errors.punchInTime && (
+                      <p className="text-xs text-rose-500 mt-1.5 font-medium flex items-center gap-1">
+                        <AlertCircle size={13} /> {errors.punchInTime}
+                      </p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-gray-800 mb-2">Punch Out Time</label>
-                    <input type="time" value={shiftSettings.punchOutTime} onChange={e => setShiftSettings({...shiftSettings, punchOutTime: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-sm" />
+                    <input 
+                      type="time" 
+                      value={shiftSettings.punchOutTime} 
+                      onChange={e => {
+                        const val = e.target.value;
+                        setShiftSettings({...shiftSettings, punchOutTime: val});
+                        if (touched.punchOutTime || errors.punchOutTime) validateSingleField('punchOutTime', val);
+                      }}
+                      onBlur={() => {
+                        setTouched(t => ({ ...t, punchOutTime: true }));
+                        validateSingleField('punchOutTime', shiftSettings.punchOutTime);
+                      }}
+                      className={`w-full px-4 py-3 rounded-xl border bg-white text-sm transition-all ${
+                        errors.punchOutTime 
+                          ? 'border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-rose-500' 
+                          : 'border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091]'
+                      }`} 
+                    />
+                    {errors.punchOutTime && (
+                      <p className="text-xs text-rose-500 mt-1.5 font-medium flex items-center gap-1">
+                        <AlertCircle size={13} /> {errors.punchOutTime}
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -374,7 +916,23 @@ const CreateEmployee = () => {
                 <div className="flex flex-col gap-4">
                   <div>
                     <label className="block text-sm font-semibold text-gray-800 mb-2">Weekly Off Day</label>
-                    <select value={shiftSettings.weeklyOffDay} onChange={e => setShiftSettings({...shiftSettings, weeklyOffDay: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-sm">
+                    <select 
+                      value={shiftSettings.weeklyOffDay} 
+                      onChange={e => {
+                        const val = e.target.value;
+                        setShiftSettings({...shiftSettings, weeklyOffDay: val});
+                        if (touched.weeklyOffDay || errors.weeklyOffDay) validateSingleField('weeklyOffDay', val);
+                      }}
+                      onBlur={() => {
+                        setTouched(t => ({ ...t, weeklyOffDay: true }));
+                        validateSingleField('weeklyOffDay', shiftSettings.weeklyOffDay);
+                      }}
+                      className={`w-full px-4 py-3 rounded-xl border bg-white text-sm transition-all ${
+                        errors.weeklyOffDay 
+                          ? 'border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-rose-500' 
+                          : 'border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091]'
+                      }`}
+                    >
                       <option value="">Select</option>
                       <option value="SUNDAY">Sunday</option>
                       <option value="SATURDAY">Saturday</option>
@@ -384,6 +942,11 @@ const CreateEmployee = () => {
                       <option value="THURSDAY">Thursday</option>
                       <option value="FRIDAY">Friday</option>
                     </select>
+                    {errors.weeklyOffDay && (
+                      <p className="text-xs text-rose-500 mt-1.5 font-medium flex items-center gap-1">
+                        <AlertCircle size={13} /> {errors.weeklyOffDay}
+                      </p>
+                    )}
                   </div>
                   <label className="flex items-center gap-3 border border-gray-200 rounded-xl px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors mt-2">
                     <input type="checkbox" checked={shiftSettings.weeklyOffPayable} onChange={e => setShiftSettings({...shiftSettings, weeklyOffPayable: e.target.checked})} className="w-5 h-5 rounded border-gray-300 text-[#225091] focus:ring-[#225091]" />
@@ -771,13 +1334,53 @@ const CreateEmployee = () => {
       </div>
       
       {/* Bottom Action Buttons */}
-      <div className="flex justify-end gap-4 mt-2">
-        <button onClick={() => navigate('/employees')} className="px-8 py-2.5 rounded-full border border-gray-300 text-gray-700 font-bold hover:bg-gray-50 transition-colors bg-white shadow-sm">
-          Cancel
-        </button>
-        <button onClick={handleCreate} disabled={submitting} className="px-8 py-2.5 rounded-full bg-[#225091] text-white font-bold hover:bg-[#168f94] transition-colors shadow-sm disabled:opacity-50 flex items-center">
-          {submitting ? 'Creating...' : 'Finish & Create'}
-        </button>
+      <div className="flex justify-between items-center mt-2">
+        <div>
+          {isFirstTab ? (
+            <button 
+              type="button"
+              onClick={() => navigate('/employees')} 
+              className="px-6 py-2.5 rounded-xl border border-gray-300 text-gray-700 font-semibold hover:bg-gray-50 transition-colors bg-white shadow-xs"
+            >
+              Cancel
+            </button>
+          ) : (
+            <button 
+              type="button"
+              onClick={handlePrevious} 
+              className="flex items-center gap-1.5 px-6 py-2.5 rounded-xl border border-gray-300 text-gray-700 font-semibold hover:bg-gray-50 transition-colors bg-white shadow-xs"
+            >
+              <ArrowLeft size={16} /> Previous
+            </button>
+          )}
+        </div>
+
+        <div className="flex items-center gap-3">
+          {!isLastTab ? (
+            <button 
+              type="button"
+              onClick={handleNext} 
+              disabled={!isCurrentTabValid} 
+              className={`flex items-center gap-2 px-8 py-2.5 rounded-xl font-bold transition-all shadow-sm ${
+                isCurrentTabValid
+                  ? 'bg-[#225091] hover:bg-[#163a6c] text-white cursor-pointer'
+                  : 'bg-gray-200 text-gray-400 border border-gray-200 cursor-not-allowed opacity-60'
+              }`}
+              title={!isCurrentTabValid ? "Please fill all required fields to proceed" : "Go to next step"}
+            >
+              Next <ChevronRight size={16} />
+            </button>
+          ) : (
+            <button 
+              type="button"
+              onClick={handleCreate} 
+              disabled={submitting} 
+              className="px-8 py-2.5 rounded-xl bg-[#225091] text-white font-bold hover:bg-[#163a6c] transition-colors shadow-sm disabled:opacity-50 flex items-center gap-2"
+            >
+              {submitting ? 'Creating Employee...' : 'Finish & Create'}
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

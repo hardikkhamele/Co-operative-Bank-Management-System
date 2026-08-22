@@ -26,6 +26,16 @@ export const creditReceiptService = {
     return response.data;
   },
 
+  approve: async (id) => {
+    const response = await axiosInstance.put(`/v1/society/credit-receipts/${id}/approve`);
+    return response.data;
+  },
+
+  reject: async (id, rejectionReason) => {
+    const response = await axiosInstance.put(`/v1/society/credit-receipts/${id}/reject`, { rejectionReason });
+    return response.data;
+  },
+
   export: async (params) => {
     const response = await axiosInstance.get('/v1/society/credit-receipts/export', {
       params,
@@ -58,6 +68,16 @@ export const debitReceiptService = {
   
   delete: async (id) => {
     const response = await axiosInstance.delete(`/v1/society/debit-receipts/${id}`);
+    return response.data;
+  },
+
+  approve: async (id) => {
+    const response = await axiosInstance.put(`/v1/society/debit-receipts/${id}/approve`);
+    return response.data;
+  },
+
+  reject: async (id, rejectionReason) => {
+    const response = await axiosInstance.put(`/v1/society/debit-receipts/${id}/reject`, { rejectionReason });
     return response.data;
   },
 
@@ -96,6 +116,16 @@ export const transferReceiptService = {
     return response.data;
   },
 
+  approve: async (id) => {
+    const response = await axiosInstance.put(`/v1/society/transfer-receipts/${id}/approve`);
+    return response.data;
+  },
+
+  reject: async (id, rejectionReason) => {
+    const response = await axiosInstance.put(`/v1/society/transfer-receipts/${id}/reject`, { rejectionReason });
+    return response.data;
+  },
+
   export: async (params) => {
     const response = await axiosInstance.get('/v1/society/transfer-receipts/export', {
       params,
@@ -128,6 +158,16 @@ export const contraReceiptService = {
   
   delete: async (id) => {
     const response = await axiosInstance.delete(`/v1/society/contra-receipts/${id}`);
+    return response.data;
+  },
+
+  approve: async (id) => {
+    const response = await axiosInstance.put(`/v1/society/contra-receipts/${id}/approve`);
+    return response.data;
+  },
+
+  reject: async (id, rejectionReason) => {
+    const response = await axiosInstance.put(`/v1/society/contra-receipts/${id}/reject`, { rejectionReason });
     return response.data;
   },
 

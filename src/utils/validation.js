@@ -157,6 +157,53 @@ export const validatePhone = (phone, { required = true, fieldName = 'Phone numbe
 };
 
 /**
+ * Validates Date of Birth (must be valid past date, not in future, minimum age 18, maximum age 100).
+ * @param {string} dob 
+ * @param {Object} [options]
+ * @param {boolean} [options.required=false]
+ * @param {number} [options.minAge=18]
+ * @param {number} [options.maxAge=100]
+ * @param {string} [options.fieldName='Date of Birth']
+ * @returns {{ isValid: boolean, error: string | null }}
+ */
+export const validateDOB = (dob, { required = false, minAge = 18, maxAge = 100, fieldName = 'Date of Birth' } = {}) => {
+  if (!dob || !String(dob).trim()) {
+    if (required) {
+      return validationResult(false, `${fieldName} is required.`);
+    }
+    return validationResult(true, null);
+  }
+
+  const birthDate = new Date(dob);
+  if (isNaN(birthDate.getTime())) {
+    return validationResult(false, `Please enter a valid ${fieldName}.`);
+  }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  if (birthDate >= today) {
+    return validationResult(false, `${fieldName} cannot be in the future.`);
+  }
+
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const monthDiff = today.getMonth() - birthDate.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
+  }
+
+  if (age < minAge) {
+    return validationResult(false, `Employee must be at least ${minAge} years old.`);
+  }
+
+  if (age > maxAge) {
+    return validationResult(false, `Please enter a valid ${fieldName} (Age cannot exceed ${maxAge} years).`);
+  }
+
+  return validationResult(true, null);
+};
+
+/**
  * Validates standard 6-digit postal pincode.
  * @param {string} pincode 
  * @param {Object} [options]

@@ -83,47 +83,65 @@ const CooperativeBanks = () => {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-xl shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse min-w-[1000px]">
-            <thead>
-              <tr className="bg-[#f8f9fb] border-b border-gray-100">
-                <th className="py-3.5 px-5 text-[10px] font-extrabold text-gray-500 uppercase tracking-wider">Sr.No.</th>
-                <th className="py-3.5 px-5 text-[10px] font-extrabold text-gray-500 uppercase tracking-wider">Bank Name</th>
-                <th className="py-3.5 px-5 text-[10px] font-extrabold text-gray-500 uppercase tracking-wider">Email</th>
-                <th className="py-3.5 px-5 text-[10px] font-extrabold text-gray-500 uppercase tracking-wider">Phone Number</th>
-                <th className="py-3.5 px-5 text-[10px] font-extrabold text-gray-500 uppercase tracking-wider">Mobile Number</th>
-                <th className="py-3.5 px-5 text-[10px] font-extrabold text-gray-500 uppercase tracking-wider">Authorized Person</th>
-                <th className="py-3.5 px-5 text-[10px] font-extrabold text-gray-500 uppercase tracking-wider text-center">Action</th>
+            <thead className="bg-[#F8FAFC] text-gray-600 text-xs uppercase tracking-wider font-semibold border-b border-gray-200/80">
+              <tr>
+                <th className="py-3.5 px-5 font-semibold">Sr.No.</th>
+                <th className="py-3.5 px-5 font-semibold">Bank Name</th>
+                <th className="py-3.5 px-5 font-semibold">Email</th>
+                <th className="py-3.5 px-5 font-semibold">Phone Number</th>
+                <th className="py-3.5 px-5 font-semibold">Mobile Number</th>
+                <th className="py-3.5 px-5 font-semibold">Authorized Person</th>
+                <th className="py-3.5 px-5 text-center font-semibold">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {filteredData.length > 0 ? (
                 filteredData.map((row, idx) => (
-                  <tr key={row.id} className="hover:bg-gray-50/50 transition-colors group">
-                    <td className="py-3 px-5 text-[13px] text-gray-700 font-semibold">{idx + 1}</td>
-                    <td className="py-3 px-5 text-[13px] text-gray-800 font-bold">{row.name}</td>
-                    <td className="py-3 px-5 text-[13px] text-gray-600 font-medium">{row.email}</td>
-                    <td className="py-3 px-5 text-[13px] text-gray-600 font-medium">{row.phone}</td>
-                    <td className="py-3 px-5 text-[13px] text-gray-600 font-medium">{row.mobile}</td>
-                    <td className="py-3 px-5 text-[13px] text-gray-800 font-semibold">{row.authorizedPerson || row.ubo || '—'}</td>
-                    <td className="py-3 px-5">
-                      <div className="flex items-center justify-center gap-3">
-                        <Link to="/co-operative-bank/view" className="text-gray-400 hover:text-[#225091] transition-colors" title="View"><Eye size={16} strokeWidth={2.5}/></Link>
-                        <Link to="/co-operative-bank/edit" className="text-gray-400 hover:text-emerald-500 transition-colors" title="Edit"><Edit size={16} strokeWidth={2.5}/></Link>
-                        <button onClick={() => handleDeleteClick(row)} className="text-gray-400 hover:text-red-500 transition-colors" title="Delete"><Trash2 size={16} strokeWidth={2.5}/></button>
+                  <tr key={row.id} className="hover:bg-slate-50/70 transition-colors">
+                    <td className="py-3.5 px-5 text-[13px] text-gray-500 font-medium">{idx + 1}</td>
+                    <td className="py-3.5 px-5 text-sm font-semibold text-gray-900">{row.name}</td>
+                    <td className="py-3.5 px-5 text-xs text-gray-600 font-medium">{row.email}</td>
+                    <td className="py-3.5 px-5 text-xs text-gray-600 font-medium">{row.phone}</td>
+                    <td className="py-3.5 px-5 text-xs text-gray-600 font-medium">{row.mobile}</td>
+                    <td className="py-3.5 px-5 text-sm text-gray-800 font-medium">{row.authorizedPerson || row.ubo || '—'}</td>
+                    <td className="py-3.5 px-5">
+                      <div className="flex items-center justify-center gap-2">
+                        <Link 
+                          to="/co-operative-bank/view" 
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-[#225091] bg-[#EAF2FB] hover:bg-[#d8e8f8] border border-[#225091]/15 transition-all shadow-xs" 
+                          title="View"
+                        >
+                          <Eye size={13} /> View
+                        </Link>
+                        <Link 
+                          to="/co-operative-bank/edit" 
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200/60 transition-all shadow-xs" 
+                          title="Edit"
+                        >
+                          <Edit size={13} /> Edit
+                        </Link>
+                        <button 
+                          onClick={() => handleDeleteClick(row)} 
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200/60 transition-all shadow-xs" 
+                          title="Delete"
+                        >
+                          <Trash2 size={13} /> Delete
+                        </button>
                       </div>
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan="7" className="py-12 text-center">
-                    <div className="flex flex-col items-center justify-center">
-                      <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mb-3">
-                        <Search size={24} className="text-gray-300" />
+                  <td colSpan="7" className="py-12 text-center text-gray-500 text-sm font-medium">
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      <div className="w-10 h-10 bg-gray-50 rounded-full flex items-center justify-center">
+                        <Search size={20} className="text-gray-400" />
                       </div>
-                      <p className="text-[13px] font-semibold text-gray-800">No banks found</p>
+                      <p className="text-sm font-semibold text-gray-800">No banks found</p>
                     </div>
                   </td>
                 </tr>

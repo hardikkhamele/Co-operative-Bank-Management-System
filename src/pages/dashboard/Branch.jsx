@@ -529,74 +529,74 @@ const Branch = () => {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm whitespace-nowrap">
-            <thead className="bg-white text-gray-400 text-[11px] uppercase tracking-wider font-bold border-b border-gray-100">
+            <thead className="bg-[#F8FAFC] text-gray-600 text-xs uppercase tracking-wider font-semibold border-b border-gray-200/80">
               <tr>
-                <th className="px-6 py-4 font-bold">Sr.No.</th>
-                <th className="px-6 py-4 font-bold">Branch Name</th>
-                <th className="px-6 py-4 font-bold">Branch Code</th>
-                <th className="px-6 py-4 font-bold">State/UT</th>
-                <th className="px-6 py-4 font-bold">Branch Manager</th>
-                <th className="px-6 py-4 font-bold">EMI Card Available</th>
-                <th className="px-6 py-4 font-bold">Verification Credit</th>
-                <th className="px-6 py-4 font-bold">Status</th>
-                <th className="px-6 py-4 text-center">Action</th>
+                <th className="py-3.5 px-5 font-semibold">Sr.No.</th>
+                <th className="py-3.5 px-5 font-semibold">Branch Name</th>
+                <th className="py-3.5 px-5 font-semibold">Branch Code</th>
+                <th className="py-3.5 px-5 font-semibold">State/UT</th>
+                <th className="py-3.5 px-5 font-semibold">Branch Manager</th>
+                <th className="py-3.5 px-5 font-semibold">EMI Card Available</th>
+                <th className="py-3.5 px-5 font-semibold">Verification Credit</th>
+                <th className="py-3.5 px-5 font-semibold">Status</th>
+                <th className="py-3.5 px-5 font-semibold text-center">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {loading && branches.length === 0 ? null : branches.length === 0 ? (
-                <tr><td colSpan="9" className="px-6 py-8 text-center text-gray-500">No branches found.</td></tr>
+                <tr><td colSpan="9" className="py-10 px-5 text-center text-gray-500 text-sm font-medium">No branches found.</td></tr>
               ) : (
                 branches.map((branch, idx) => (
-                  <tr key={branch.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4 text-gray-700">{branch.srNo || ((page - 1) * 10 + idx + 1)}</td>
-                    <td className="px-6 py-4 text-gray-900 font-medium">{branch.name}</td>
-                    <td className="px-6 py-4 text-gray-700">{branch.code}</td>
-                    <td className="px-6 py-4 text-gray-700">{branch.state}</td>
-                    <td className="px-6 py-4">
+                  <tr key={branch.id} className="hover:bg-slate-50/70 transition-colors">
+                    <td className="py-3.5 px-5 text-[13px] text-gray-500 font-medium">{branch.srNo || ((page - 1) * 10 + idx + 1)}</td>
+                    <td className="py-3.5 px-5 text-sm text-gray-900 font-semibold">{branch.name}</td>
+                    <td className="py-3.5 px-5 text-xs text-gray-600 font-mono font-medium">{branch.code}</td>
+                    <td className="py-3.5 px-5 text-xs text-gray-600">{branch.state}</td>
+                    <td className="py-3.5 px-5">
                       {(() => {
                         const managerData = branch.branchManager || branch.manager;
                         const mName = managerData?.fullName || managerData?.name || branch.managerName || managerData?.user?.name || managerData?.user?.fullName;
                         const mEmail = managerData?.email || branch.managerEmail || managerData?.user?.email;
                         return mName || mEmail ? (
-                          <div className="flex flex-col sm:flex-row items-stretch sm:items-center w-full sm:w-auto gap-3">
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm shrink-0 bg-blue-100 text-blue-700 font-bold`}>
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs shrink-0 bg-blue-50 text-[#225091] font-bold border border-blue-100 shadow-xs">
                               {getInitials(mName || mEmail)}
                             </div>
                             <div className="flex flex-col">
-                              <span className="text-gray-700 font-medium">{mName || 'Unnamed Manager'}</span>
-                              <span className="text-xs text-gray-500">{mEmail || ''}</span>
+                              <span className="text-gray-900 font-semibold text-xs">{mName || 'Unnamed Manager'}</span>
+                              <span className="text-[11px] text-gray-500">{mEmail || ''}</span>
                             </div>
                           </div>
                         ) : (
-                          <span className="text-gray-400 italic">No Manager</span>
+                          <span className="text-gray-400 text-xs italic">No Manager</span>
                         );
                       })()}
                     </td>
-                    <td className="px-6 py-4 text-gray-700">{branch.cardStock || 0}</td>
-                    <td className="px-6 py-4 text-gray-700">{branch.verificationCredits || 0}</td>
-                    <td className="px-6 py-4">
-                      <span className={`px-2 py-1 rounded-full text-xs font-semibold ${branch.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                    <td className="py-3.5 px-5 text-sm font-semibold text-gray-800 tabular-nums">{branch.cardStock || 0}</td>
+                    <td className="py-3.5 px-5 text-sm font-semibold text-gray-800 tabular-nums">{branch.verificationCredits || 0}</td>
+                    <td className="py-3.5 px-5">
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[12px] font-semibold border uppercase tracking-wide ${branch.status === 'ACTIVE' ? 'bg-emerald-50 text-emerald-700 border-emerald-200/60' : 'bg-rose-50 text-rose-700 border-rose-200/60'}`}>
                         {branch.status || 'UNKNOWN'}
                       </span>
                     </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center justify-center gap-4">
+                    <td className="py-3.5 px-5">
+                      <div className="flex items-center justify-center gap-1.5">
                         <button 
                           onClick={() => handleOpenEdit(branch)}
-                          className="text-gray-600 hover:text-gray-900 transition-colors" 
-                          title="Edit"
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200/60 transition-all shadow-xs" 
+                          title="Edit Branch"
                         >
-                          <Edit size={18} />
+                          <Edit size={13} /> Edit
                         </button>
                         <button 
                           onClick={() => { setSelectedBranch(branch); setIsDeleteModalOpen(true); }}
-                          className="text-red-500 hover:text-red-700 transition-colors" 
-                          title="Delete"
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200/60 transition-all shadow-xs" 
+                          title="Delete Branch"
                         >
-                          <Trash2 size={18} />
+                          <Trash2 size={13} /> Delete
                         </button>
                       </div>
                     </td>

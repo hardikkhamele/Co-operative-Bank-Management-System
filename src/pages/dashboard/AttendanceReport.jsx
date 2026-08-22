@@ -301,52 +301,52 @@ const AttendanceReport = () => {
 
         {/* Daily Table */}
         {activeTab === 'daily' && (
-          <div className="w-full overflow-x-auto bg-white rounded-xl shadow-sm border border-gray-200">
+          <div className="w-full overflow-x-auto bg-white rounded-xl shadow-sm border border-gray-100">
             <table className="w-full min-w-[800px] text-left border-collapse">
-              <thead>
-                <tr className="bg-gray-50/50 border-b border-gray-100 text-sm font-semibold text-gray-700">
-                  <th className="py-4 px-6 w-20 text-center">Sr.No.</th>
-                  <th className="py-4 px-6">Name</th>
-                  <th className="py-4 px-6">Designation</th>
-                  <th className="py-4 px-6">Punch In</th>
-                  <th className="py-4 px-6">Punch Out</th>
-                  <th className="py-4 px-6">Total Hrs</th>
-                  <th className="py-4 px-6 text-center">Status</th>
+              <thead className="bg-[#F8FAFC] text-gray-600 text-xs uppercase tracking-wider font-semibold border-b border-gray-200/80">
+                <tr>
+                  <th className="py-3.5 px-5 w-20 text-center font-semibold">Sr.No.</th>
+                  <th className="py-3.5 px-5 font-semibold">Name</th>
+                  <th className="py-3.5 px-5 font-semibold">Designation</th>
+                  <th className="py-3.5 px-5 font-semibold">Punch In</th>
+                  <th className="py-3.5 px-5 font-semibold">Punch Out</th>
+                  <th className="py-3.5 px-5 font-semibold">Total Hrs</th>
+                  <th className="py-3.5 px-5 text-center font-semibold">Status</th>
                 </tr>
               </thead>
-              <tbody className="text-[15px] text-gray-600">
+              <tbody className="divide-y divide-gray-100 text-sm">
                 {paginatedDailyData.length === 0 ? (
                   <tr>
-                    <td colSpan="7" className="text-center py-10 font-medium text-gray-500">
+                    <td colSpan="7" className="text-center py-10 font-medium text-gray-500 text-sm">
                       No attendance records found.
                     </td>
                   </tr>
                 ) : (
                   paginatedDailyData.map((row, index) => (
-                    <tr key={row.id || index} className="border-b border-gray-100 hover:bg-gray-50/40 transition-colors">
-                      <td className="py-4 px-6 text-center font-medium">{(page - 1) * limit + index + 1}</td>
-                      <td className="py-4 px-6">
+                    <tr key={row.id || index} className="hover:bg-slate-50/70 transition-colors">
+                      <td className="py-3.5 px-5 text-center text-[13px] text-gray-500 font-medium">{(page - 1) * limit + index + 1}</td>
+                      <td className="py-3.5 px-5">
                         <div className="flex items-center gap-3">
                           {row.avatar ? (
                             <img 
                               src={row.avatar} 
                               alt={row.name} 
-                              className="w-8 h-8 rounded-full object-cover border border-gray-100" 
+                              className="w-8 h-8 rounded-full object-cover border border-gray-100 shadow-xs" 
                             />
                           ) : (
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[13px] font-bold ${row.avatarColor || 'bg-[#f4f2ff] text-[#225091]'}`}>
+                            <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold bg-blue-50 text-[#225091] border border-blue-100 shadow-xs">
                               {row.initials || (row.name ? row.name.substring(0, 2).toUpperCase() : 'NA')}
                             </div>
                           )}
-                          <span className="font-medium text-gray-800">{row.name}</span>
+                          <span className="font-semibold text-gray-900 text-sm">{row.name}</span>
                         </div>
                       </td>
-                      <td className="py-4 px-6">{row.designation || '—'}</td>
-                      <td className="py-4 px-6">{row.punchIn || '—'}</td>
-                      <td className="py-4 px-6">{row.punchOut || '—'}</td>
-                      <td className="py-4 px-6">{row.totalHrs || '—'}</td>
-                      <td className="py-4 px-6 text-center">
-                        <div className={`inline-flex items-center justify-center w-8 h-8 rounded-full border text-[13px] font-medium ${getStatusBadgeStyle(row.status || 'A')}`}>
+                      <td className="py-3.5 px-5 text-xs text-gray-600 font-medium">{row.designation || '—'}</td>
+                      <td className="py-3.5 px-5 text-xs text-gray-600">{row.punchIn || '—'}</td>
+                      <td className="py-3.5 px-5 text-xs text-gray-600">{row.punchOut || '—'}</td>
+                      <td className="py-3.5 px-5 text-sm font-semibold text-gray-800 tabular-nums">{row.totalHrs || '—'}</td>
+                      <td className="py-3.5 px-5 text-center">
+                        <div className={`inline-flex items-center justify-center w-7 h-7 rounded-full border text-xs font-bold shadow-2xs ${getStatusBadgeStyle(row.status || 'A')}`}>
                           {row.status || 'A'}
                         </div>
                       </td>

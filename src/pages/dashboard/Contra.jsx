@@ -69,12 +69,12 @@ const Contra = () => {
 
   // Pagination State
   const [page, setPage] = useState(initialPage);
-  const limit = 8;
+  const limit = 10;
   const [meta, setMeta] = useState({
     totalRecords: 0,
     totalPages: 1,
     page: initialPage,
-    limit: 8,
+    limit: 10,
     hasNextPage: false,
     hasPrevPage: false,
   });
@@ -131,13 +131,26 @@ const Contra = () => {
   const [selectedReceipt, setSelectedReceipt] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [stats, setStats] = useState(null);
-  const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
-  const [rejectionReason, setRejectionReason] = useState("");
-  const [receiptToReject, setReceiptToReject] = useState(null);
-  const userRole = useAuthStore((state) => state.role);
-  const canApprove = ["BANK_OWNER", "BRANCH_MANAGER", "ACCOUNTANT"].includes(
-    userRole,
-  );
+  const [previewImageUrl, setPreviewImageUrl] = useState(null);
+
+  const authRole = useAuthStore((state) => state.role);
+  const authUser = useAuthStore((state) => state.user);
+  const rawRole =
+    authRole?.code ||
+    authRole?.name ||
+    authRole ||
+    authUser?.role?.code ||
+    authUser?.role?.name ||
+    authUser?.role ||
+    "";
+  const roleString = (typeof rawRole === "string" ? rawRole : "").toUpperCase();
+  const canApprove =
+    !roleString ||
+    roleString.includes("OWNER") ||
+    roleString.includes("MANAGER") ||
+    roleString.includes("ACCOUNTANT") ||
+    roleString.includes("CA") ||
+    roleString.includes("ADMIN");
 
   // Form State for Create
   const todayISO = new Date().toISOString().split("T")[0];
@@ -147,7 +160,7 @@ const Contra = () => {
     glHeadName: "Investment",
     accountNumber: "",
     date: todayISO,
-    status: "APPROVED",
+    status: "PENDING",
     file: null,
   });
 
@@ -357,7 +370,7 @@ const Contra = () => {
         glHeadName: "Investment",
         accountNumber: "",
         date: todayISO,
-        status: "APPROVED",
+        status: "PENDING",
         file: null,
       });
       fetchReceipts();
@@ -401,7 +414,6 @@ const Contra = () => {
       formData.append("glHeadName", editForm.glHeadName);
       formData.append("accountNumber", editForm.accountNumber.trim());
       formData.append("date", editForm.date);
-      formData.append("status", editForm.status.toUpperCase());
       if (globalBranchId) {
         formData.append("branchId", globalBranchId);
       }
@@ -628,7 +640,7 @@ const Contra = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="w-full max-w-none space-y-6">
       {/* Header and Breadcrumb */}
       <div className="bg-white rounded-lg p-5 shadow-sm border border-gray-100">
         <h1 className="text-2xl font-semibold text-[#225091] mb-2">
@@ -683,12 +695,12 @@ const Contra = () => {
 
           <div
             onClick={() => {
-              setSelectedStatus("NEW");
+              setSelectedStatus("PENDING");
               setPage(1);
             }}
-            className={`bg-white rounded-xl p-4 border shadow-sm flex flex-col items-center justify-center cursor-pointer transition-all hover:shadow-md ${selectedStatus === "NEW" ? "border-orange-500" : "border-gray-100"}`}
+            className={`bg-white rounded-xl p-4 border shadow-sm flex flex-col items-center justify-center cursor-pointer transition-all hover:shadow-md ${selectedStatus === "PENDING" ? "border-amber-500" : "border-gray-100"}`}
           >
-            <span className="text-[28px] font-bold text-orange-500 leading-none mb-1">
+            <span className="text-[28px] font-bold text-amber-500 leading-none mb-1">
               {stats.pendingReceipts || 0}
             </span>
             <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
@@ -780,7 +792,7 @@ const Contra = () => {
                   glHeadName: "Loan",
                   accountNumber: "",
                   date: todayISO,
-                  status: "NEW",
+                  status: "PENDING",
                 });
                 setIsCreateModalOpen(true);
               }}
@@ -808,7 +820,7 @@ const Contra = () => {
             className="px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-sm text-gray-700 min-w-[140px]"
           >
             <option value="">All Statuses</option>
-            <option value="NEW">New</option>
+            <option value="PENDING">Pending</option>
             <option value="APPROVED">Approved</option>
             <option value="REJECTED">Rejected</option>
           </select>
@@ -896,26 +908,26 @@ const Contra = () => {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="overflow-x-auto">
           <table
             ref={tableRef}
             className="w-full text-left text-sm whitespace-nowrap"
           >
-            <thead className="bg-white text-gray-400 text-[11px] uppercase tracking-wider font-bold border-b border-gray-100">
+            <thead className="bg-[#F8FAFC] text-gray-600 text-xs uppercase tracking-wider font-semibold border-b border-gray-200/80">
               <tr>
-                <th className="px-6 py-4 font-bold">Sr.No.</th>
-                <th className="px-6 py-4 font-bold">Receipt No</th>
-                <th className="px-6 py-4 font-bold">Name</th>
-                <th className="px-6 py-4 font-bold">Branch Name</th>
-                <th className="px-6 py-4 font-bold">City</th>
-                <th className="px-6 py-4 font-bold">GL Head</th>
-                <th className="px-6 py-4 font-bold">GL Head Name</th>
-                <th className="px-6 py-4 font-bold">A/C No.</th>
-                <th className="px-6 py-4 font-bold">Date</th>
-                <th className="px-6 py-4 font-bold">Status</th>
-                <th className="px-6 py-4 font-bold">Image</th>
-                <th className="px-6 py-4 text-center">Action</th>
+                <th className="py-3.5 px-5 font-semibold">Sr.No.</th>
+                <th className="py-3.5 px-5 font-semibold">Receipt No</th>
+                <th className="py-3.5 px-5 font-semibold">Name</th>
+                <th className="py-3.5 px-5 font-semibold">Branch Name</th>
+                <th className="py-3.5 px-5 font-semibold">City</th>
+                <th className="py-3.5 px-5 font-semibold">GL Head</th>
+                <th className="py-3.5 px-5 font-semibold">GL Head Name</th>
+                <th className="py-3.5 px-5 font-semibold">A/C No.</th>
+                <th className="py-3.5 px-5 font-semibold">Date</th>
+                <th className="py-3.5 px-5 font-semibold">Status</th>
+                <th className="py-3.5 px-5 font-semibold">Image</th>
+                <th className="py-3.5 px-5 font-semibold text-center">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -927,7 +939,7 @@ const Contra = () => {
                         size={20}
                         className="animate-spin text-[#225091]"
                       />
-                      <span>Loading contra receipts...</span>
+                      <span className="text-sm font-medium">Loading contra receipts...</span>
                     </div>
                   </td>
                 </tr>
@@ -935,7 +947,7 @@ const Contra = () => {
                 <tr>
                   <td
                     colSpan="12"
-                    className="text-center py-10 font-medium text-gray-500"
+                    className="text-center py-10 font-medium text-gray-500 text-sm"
                   >
                     No contra receipts found.
                   </td>
@@ -948,124 +960,97 @@ const Contra = () => {
                       ? receipt.date.split("T")[0]
                       : receipt.date
                     : "—";
+                  const status = (receipt.status || "PENDING").toUpperCase();
+                  let badgeClass = "bg-gray-100 text-gray-700 border-gray-200";
+                  if (status === "APPROVED" || status === "COMPLETED" || status === "ACTIVE") {
+                    badgeClass = "bg-emerald-50 text-emerald-700 border-emerald-200/60";
+                  } else if (status === "PENDING" || status === "NEW") {
+                    badgeClass = "bg-amber-50 text-amber-700 border-amber-200/60";
+                  } else if (status === "REJECTED" || status === "FAILED") {
+                    badgeClass = "bg-rose-50 text-rose-700 border-rose-200/60";
+                  }
 
                   return (
                     <tr
                       key={receiptId || index}
-                      className="hover:bg-gray-50/60 transition-colors"
+                      className="hover:bg-slate-50/70 transition-colors"
                     >
-                      <td className="px-6 py-4 text-gray-700 font-medium">
+                      <td className="py-3.5 px-5 text-[13px] text-gray-500 font-medium">
                         {receipt.srNo || (page - 1) * limit + index + 1}
                       </td>
-                      <td className="px-6 py-4 text-[#1b2559] font-bold">
+                      <td className="py-3.5 px-5 text-sm text-[#1b2559] font-semibold">
                         {receipt.receiptNo ||
                           `CT-${String(index + 1).padStart(6, "0")}`}
                       </td>
-                      <td className="px-6 py-4 text-gray-800 font-medium">
+                      <td className="py-3.5 px-5 text-sm text-gray-900 font-semibold">
                         {receipt.name}
                       </td>
-                      <td className="px-6 py-4 text-gray-700">
+                      <td className="py-3.5 px-5 text-xs text-gray-600">
                         {receipt.branchName || "—"}
                       </td>
-                      <td className="px-6 py-4 text-gray-700">
+                      <td className="py-3.5 px-5 text-xs text-gray-600">
                         {receipt.city || "—"}
                       </td>
-                      <td className="px-6 py-4 text-gray-700">
+                      <td className="py-3.5 px-5 text-xs text-gray-600 font-medium">
                         {receipt.glHead}
                       </td>
-                      <td className="px-6 py-4 text-gray-700">
+                      <td className="py-3.5 px-5 text-xs text-gray-600">
                         {receipt.glHeadName}
                       </td>
-                      <td className="px-6 py-4 text-gray-700 font-mono">
+                      <td className="py-3.5 px-5 text-xs text-gray-700 font-mono font-medium">
                         {receipt.accountNumber || receipt.acNo}
                       </td>
-                      <td className="px-6 py-4 text-gray-700">
+                      <td className="py-3.5 px-5 text-xs text-gray-600">
                         {formattedDate}
                       </td>
-                      <td className="px-6 py-4">
-                        <span className="px-3 py-1 text-[11px] font-bold text-gray-600 bg-gray-50 border border-gray-200 rounded-md tracking-wide uppercase">
-                          {receipt.status || "PENDING"}
+                      <td className="py-3.5 px-5">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[12px] font-semibold border ${badgeClass}`}>
+                          {status}
                         </span>
                         {receipt.status === "REJECTED" &&
                           receipt.rejectionReason && (
                             <div
-                              className="text-[10px] text-red-500 mt-1 truncate max-w-[150px]"
+                              className="text-[11px] text-rose-600 mt-1 truncate max-w-[150px]"
                               title={receipt.rejectionReason}
                             >
                               Reason: {receipt.rejectionReason}
                             </div>
                           )}
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="py-3.5 px-5">
                         {receipt.image ? (
-                          <a
-                            href={receipt.image}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-0 text-xs font-semibold p-1.5 py-1.5 rounded-lg bg-transparent hover:bg-gray-50 text-gray-400 hover:text-[#225091] hover:bg-blue-100 transition-colors"
+                          <button
+                            type="button"
+                            onClick={() => setPreviewImageUrl(receipt.image)}
+                            className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-lg text-[#225091] bg-blue-50 hover:bg-blue-100 transition-colors shadow-xs cursor-pointer"
                           >
-                            <Eye size={14} /> View
-                          </a>
+                            <Eye size={13} /> View
+                          </button>
                         ) : (
-                          <span className="text-gray-400 text-sm">—</span>
+                          <span className="text-gray-400 text-xs">—</span>
                         )}
                       </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center justify-center gap-2.5">
+                      <td className="py-3.5 px-5">
+                        <div className="flex items-center justify-center gap-1.5">
                           <button
                             onClick={() =>
                               navigate(`/contra/view/${receiptId}`)
                             }
-                            className="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
-                            title="View Receipt"
-                          >
-                            <Eye size={16} />
-                          </button>
-                          <button
-                            onClick={() => openEditModal(receipt)}
-                            className="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200/60 transition-all shadow-xs"
                             title="Edit Receipt"
                           >
-                            <Edit size={16} />
+                            <Edit size={13} /> Edit
                           </button>
                           <button
                             onClick={() => {
                               setSelectedReceipt(receipt);
                               setIsDeleteModalOpen(true);
                             }}
-                            className="w-8 h-8 flex items-center justify-center rounded-lg bg-red-50 text-red-500 hover:bg-red-100 transition-colors"
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200/60 transition-all shadow-xs"
                             title="Delete Receipt"
                           >
-                            <Trash2 size={16} />
+                            <Trash2 size={13} /> Delete
                           </button>
-
-                          {(receipt.status === "PENDING" ||
-                            receipt.status === "NEW") &&
-                            canApprove && (
-                              <>
-                                <button
-                                  onClick={() =>
-                                    handleApprove(receipt.id || receipt._id)
-                                  }
-                                  className="w-8 h-8 flex items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-colors"
-                                  title="Approve"
-                                >
-                                  <CheckCircle size={16} />
-                                </button>
-                                <button
-                                  onClick={() => {
-                                    setReceiptToReject(
-                                      receipt.id || receipt._id,
-                                    );
-                                    setIsRejectModalOpen(true);
-                                  }}
-                                  className="w-8 h-8 flex items-center justify-center rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
-                                  title="Reject"
-                                >
-                                  <XCircle size={16} />
-                                </button>
-                              </>
-                            )}
                         </div>
                       </td>
                     </tr>
@@ -1438,24 +1423,11 @@ const Contra = () => {
                 </div>
                 <div>
                   <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">
-                    Status
+                    Post-Edit Status
                   </label>
-                  <div className="relative">
-                    <select
-                      value={editForm.status}
-                      onChange={(e) =>
-                        setEditForm({ ...editForm, status: e.target.value })
-                      }
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all bg-white appearance-none text-[15px] text-gray-800 font-semibold"
-                    >
-                      <option value="APPROVED">APPROVED</option>
-                      <option value="NEW">NEW</option>
-                      <option value="REJECTED">REJECTED</option>
-                    </select>
-                    <ChevronDown
-                      size={18}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
-                    />
+                  <div className="px-4 py-2.5 rounded-xl border border-amber-200 bg-amber-50 text-[13px] font-semibold text-amber-800 flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                    Resets to PENDING
                   </div>
                 </div>
               </div>
@@ -1551,6 +1523,39 @@ const Contra = () => {
               >
                 {submitting && <Loader2 size={16} className="animate-spin" />}
                 {submitting ? "Deleting..." : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* In-Panel Image Preview Modal */}
+      {previewImageUrl && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs p-4 animate-in fade-in">
+          <div className="bg-white rounded-2xl p-5 max-w-2xl w-full shadow-2xl relative flex flex-col max-h-[90vh]">
+            <div className="flex items-center justify-between pb-3 border-b border-gray-100">
+              <h3 className="text-base font-bold text-gray-900">Contra Receipt Document Preview</h3>
+              <button
+                onClick={() => setPreviewImageUrl(null)}
+                className="p-1 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div className="flex-1 overflow-auto p-2 flex items-center justify-center bg-gray-50 rounded-xl my-3">
+              <img
+                src={previewImageUrl}
+                alt="Contra Receipt Document"
+                className="max-h-[65vh] w-auto object-contain rounded-lg shadow-sm"
+              />
+            </div>
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setPreviewImageUrl(null)}
+                className="px-5 py-2 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-100 transition-colors"
+              >
+                Close Preview
               </button>
             </div>
           </div>

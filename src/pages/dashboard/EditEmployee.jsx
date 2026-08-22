@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { toast } from 'react-toastify';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft,  ChevronRight, Camera, Calendar, ChevronDown, CheckCircle2, Eye, EyeOff } from 'lucide-react';
+import { ArrowLeft, ChevronRight, Camera, Calendar, ChevronDown, CheckCircle2, Eye, EyeOff, Check, Search, AlertCircle } from 'lucide-react';
 import { employeeService } from '../../api/employeeService';
 import { branchService } from '../../api/branchService';
 import { roleService } from '../../api/roleService';
@@ -9,9 +9,119 @@ import {
   validatePassword, 
   validatePhone, 
   validateEmail, 
+  validateDOB,
+  validatePositiveNumber,
   sanitizeDigits, 
   preventInvalidNumberKeys 
 } from '../../utils/validation';
+
+const INDIAN_STATES_FALLBACK = [
+  'Andaman and Nicobar Islands', 'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 
+  'Chandigarh', 'Chhattisgarh', 'Dadra and Nagar Haveli and Daman and Diu', 'Delhi', 'Goa', 
+  'Gujarat', 'Haryana', 'Himachal Pradesh', 'Jammu and Kashmir', 'Jharkhand', 'Karnataka', 
+  'Kerala', 'Ladakh', 'Lakshadweep', 'Madhya Pradesh', 'Maharashtra', 'Manipur', 'Meghalaya', 
+  'Mizoram', 'Nagaland', 'Odisha', 'Puducherry', 'Punjab', 'Rajasthan', 'Sikkim', 'Tamil Nadu', 
+  'Telangana', 'Tripura', 'Uttar Pradesh', 'Uttarakhand', 'West Bengal'
+];
+
+// Custom Downward, Small-Scrollable Searchable State Dropdown
+const StateDropdown = ({ value, onChange, options, loading }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const filteredOptions = useMemo(() => {
+    if (!searchTerm.trim()) return options;
+    return options.filter(opt => opt.toLowerCase().includes(searchTerm.toLowerCase()));
+  }, [options, searchTerm]);
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className={`w-full flex justify-between items-center bg-white border px-4 py-3 rounded-xl text-sm transition-all focus:outline-none ${
+          isOpen ? 'border-[#225091] ring-1 ring-[#225091]' : 'border-gray-200 hover:border-gray-300'
+        }`}
+      >
+        <span className={value ? 'text-gray-800 font-medium' : 'text-gray-400'}>
+          {value || (loading ? 'Loading states...' : 'Select State')}
+        </span>
+        <ChevronDown size={16} className={`text-gray-500 transition-transform duration-200 shrink-0 ml-2 ${isOpen ? 'rotate-180' : ''}`} />
+      </button>
+
+      {isOpen && (
+        <div className="absolute top-full left-0 w-full mt-1.5 bg-white border border-gray-200 rounded-xl shadow-xl z-50 overflow-hidden flex flex-col">
+          {/* Quick Search */}
+          <div className="p-2 border-b border-gray-100 bg-gray-50/70">
+            <div className="relative">
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search state..."
+                autoFocus
+                className="w-full pl-8 pr-6 py-1.5 text-xs bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#225091] text-gray-700"
+              />
+              <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
+              {searchTerm && (
+                <button
+                  type="button"
+                  onClick={() => setSearchTerm('')}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-400 hover:text-gray-600"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Small Scrollable State List */}
+          <div className="max-h-44 overflow-y-auto py-1 divide-y divide-gray-50">
+            {filteredOptions.length === 0 ? (
+              <div className="px-4 py-3 text-xs text-center text-gray-400">
+                No states found
+              </div>
+            ) : (
+              filteredOptions.map((st) => {
+                const isSelected = value === st;
+                return (
+                  <button
+                    key={st}
+                    type="button"
+                    onClick={() => {
+                      onChange(st);
+                      setIsOpen(false);
+                      setSearchTerm('');
+                    }}
+                    className={`w-full text-left px-4 py-2.5 text-xs font-medium flex items-center justify-between transition-colors ${
+                      isSelected 
+                        ? 'bg-[#225091]/10 text-[#225091] font-semibold' 
+                        : 'text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    <span>{st}</span>
+                    {isSelected && <Check size={14} className="text-[#225091]" />}
+                  </button>
+                );
+              })
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 const EditEmployee = () => {
   const navigate = useNavigate();
@@ -26,6 +136,8 @@ const EditEmployee = () => {
   // Dynamic Options
   const [branches, setBranches] = useState([]);
   const [roles, setRoles] = useState([]);
+  const [states, setStates] = useState(INDIAN_STATES_FALLBACK);
+  const [loadingStates, setLoadingStates] = useState(false);
 
   // Form States
   const [personalDetails, setPersonalDetails] = useState({
@@ -81,6 +193,23 @@ const EditEmployee = () => {
         if (bRes.success) setBranches(bRes.data);
         if (rRes.success) setRoles(rRes.data);
 
+        // Fetch Indian states
+        try {
+          const sRes = await fetch('https://api.countrystatecity.in/v1/countries/IN/states', {
+            headers: {
+              'X-CSCAPI-KEY': 'NHhvOEcyWk50N2Vna3VFTE00bFp3MjFKR0ZEOUhkZlg4RTk1MlJlaA=='
+            }
+          });
+          if (sRes.ok) {
+            const sData = await sRes.json();
+            if (Array.isArray(sData) && sData.length > 0) {
+              setStates(sData.map(s => (typeof s === 'string' ? s : s.name)).sort((a, b) => a.localeCompare(b)));
+            }
+          }
+        } catch (stateErr) {
+          console.warn("Could not fetch states from countrystatecity API, using fallback list.", stateErr);
+        }
+
         if (empRes.success && empRes.data) {
           const emp = empRes.data;
           
@@ -116,13 +245,13 @@ const EditEmployee = () => {
               weeklyOffPayable: emp.shiftSettings.weeklyOff?.payable ?? true,
               variableWeeklyOff: emp.shiftSettings.weeklyOff?.variable ?? false,
               secondWeeklyOff: emp.shiftSettings.weeklyOff?.secondWeeklyOff ?? false,
-              lateAllowedMins: emp.shiftSettings.lateAllowedMinutes || 15,
+              lateAllowedMins: emp.shiftSettings.lateAllowedMinutes ?? 15,
               lateAllowedAsPerShift: emp.shiftSettings.lateAllowedAsPerShift ?? false,
-              earlyAllowedMins: emp.shiftSettings.earlyAllowedMinutes || 15,
+              earlyAllowedMins: emp.shiftSettings.earlyAllowedMinutes ?? 15,
               earlyAllowedAsPerShift: emp.shiftSettings.earlyAllowedAsPerShift ?? false,
-              halfDayMins: emp.shiftSettings.halfDayMinutes || 240,
+              halfDayMins: emp.shiftSettings.halfDayMinutes ?? 240,
               halfDayAsPerShift: emp.shiftSettings.halfDayAsPerShift ?? false,
-              fullDayMins: emp.shiftSettings.fullDayMinutes || 480,
+              fullDayMins: emp.shiftSettings.fullDayMinutes ?? 480,
               fullDayAsPerShift: emp.shiftSettings.fullDayAsPerShift ?? false
             });
           }
@@ -152,18 +281,24 @@ const EditEmployee = () => {
           }
 
           if (emp.woffHoffSettings) {
-            setWoffHoffSettings(prev => ({ ...prev, ...emp.woffHoffSettings }));
+            setWoffHoffSettings({
+              ...emp.woffHoffSettings
+            });
           }
 
           if (emp.kraSettings) {
             setKraSettings({
               year: emp.kraSettings.year || new Date().getFullYear(),
-              targets: emp.kraSettings.targets?.length ? emp.kraSettings.targets : [{ product: 'Fixed Deposit', targetValue: 2400000 }]
+              targets: emp.kraSettings.targets?.length ? emp.kraSettings.targets : [
+                { product: 'Fixed Deposit', targetValue: 2400000 },
+                { product: 'Loan Disbursement', targetValue: 2400000 },
+                { product: 'Savings Account', targetValue: 1200 }
+              ]
             });
           }
         }
       } catch (err) {
-        console.error("Failed to load data", err);
+        console.error("Failed to load employee data", err);
         toast.error("Failed to load employee details.");
       } finally {
         setLoading(false);
@@ -172,73 +307,171 @@ const EditEmployee = () => {
     fetchData();
   }, [id]);
 
+  // Form Validation Errors
+  const [errors, setErrors] = useState({});
+  const [touched, setTouched] = useState({});
 
+  // Single field validation
+  const validateSingleField = (field, value) => {
+    let errorMsg = null;
+
+    switch (field) {
+      case 'fullName':
+        if (!value || !value.trim()) {
+          errorMsg = 'Full Name is required.';
+        } else if (value.trim().length < 2) {
+          errorMsg = 'Full Name must be at least 2 characters.';
+        }
+        break;
+
+      case 'email': {
+        const emailCheck = validateEmail(value, { required: true });
+        if (!emailCheck.isValid) errorMsg = emailCheck.error;
+        break;
+      }
+
+      case 'password': {
+        if (value) {
+          const passCheck = validatePassword(value, { minLength: 6, required: false, fieldName: 'Password' });
+          if (!passCheck.isValid) errorMsg = passCheck.error;
+        }
+        break;
+      }
+
+      case 'phoneNumber': {
+        if (value) {
+          const phoneCheck = validatePhone(value, { required: false });
+          if (!phoneCheck.isValid) errorMsg = phoneCheck.error;
+        }
+        break;
+      }
+
+      case 'dateOfBirth': {
+        if (value) {
+          const dobCheck = validateDOB(value, { required: false });
+          if (!dobCheck.isValid) errorMsg = dobCheck.error;
+        }
+        break;
+      }
+
+      case 'branchId':
+        if (!value) {
+          errorMsg = 'Branch is required.';
+        }
+        break;
+
+      case 'roleId':
+        if (!value) {
+          errorMsg = 'Department (Role) is required.';
+        }
+        break;
+
+      case 'salary':
+        if (value !== '') {
+          const salaryCheck = validatePositiveNumber(value, 'Salary', { min: 0, required: false });
+          if (!salaryCheck.isValid) errorMsg = salaryCheck.error;
+        }
+        break;
+
+      case 'punchInTime':
+        if (!value) errorMsg = 'Punch In Time is required.';
+        break;
+
+      case 'punchOutTime':
+        if (!value) errorMsg = 'Punch Out Time is required.';
+        break;
+
+      case 'weeklyOffDay':
+        if (!value) errorMsg = 'Weekly Off Day is required.';
+        break;
+
+      default:
+        break;
+    }
+
+    setErrors(prev => {
+      const updated = { ...prev };
+      if (errorMsg) {
+        updated[field] = errorMsg;
+      } else {
+        delete updated[field];
+      }
+      return updated;
+    });
+
+    return errorMsg;
+  };
+
+  // Section Save Handlers
   const savePersonalDetails = async () => {
-    if (!personalDetails.fullName?.trim()) {
-      toast.error("Full Name is required.");
-      return;
-    }
+    const fieldsToValidate = [
+      { name: 'fullName', val: personalDetails.fullName },
+      { name: 'email', val: personalDetails.email },
+      { name: 'password', val: personalDetails.password },
+      { name: 'phoneNumber', val: personalDetails.phoneNumber },
+      { name: 'dateOfBirth', val: personalDetails.dateOfBirth }
+    ];
 
-    const emailCheck = validateEmail(personalDetails.email);
-    if (!emailCheck.isValid) {
-      toast.error(emailCheck.error);
-      return;
-    }
-
-    if (personalDetails.password) {
-      const passCheck = validatePassword(personalDetails.password, { minLength: 6 });
-      if (!passCheck.isValid) {
-        toast.error(passCheck.error);
-        return;
+    let hasError = false;
+    let firstMsg = null;
+    fieldsToValidate.forEach(f => {
+      const err = validateSingleField(f.name, f.val);
+      if (err) {
+        hasError = true;
+        if (!firstMsg) firstMsg = err;
       }
-    }
+    });
 
-    if (personalDetails.phoneNumber) {
-      const phoneCheck = validatePhone(personalDetails.phoneNumber, { required: false });
-      if (!phoneCheck.isValid) {
-        toast.error(phoneCheck.error);
-        return;
-      }
+    if (hasError) {
+      toast.error(firstMsg || "Please fix errors in Personal Details.");
+      return;
     }
 
     setSubmittingTab('Personal Details');
     try {
-      const payload = { 
-        ...personalDetails,
+      const res = await employeeService.updateSection(id, 'personal-details', {
         fullName: personalDetails.fullName.trim(),
+        gender: personalDetails.gender,
+        dateOfBirth: personalDetails.dateOfBirth,
+        phoneNumber: personalDetails.phoneNumber.trim(),
         email: personalDetails.email.trim(),
-        phoneNumber: personalDetails.phoneNumber.trim()
-      };
-      if (!payload.password) delete payload.password; // Don't send empty password
-      await employeeService.updatePersonalDetails(id, payload);
-      toast.success('Personal details updated!');
+        address: personalDetails.address,
+        ...(personalDetails.password ? { password: personalDetails.password } : {})
+      });
+      if (res.success) toast.success("Personal details updated successfully!");
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to update personal details');
+      console.error(err);
+      toast.error(err.response?.data?.message || "Failed to update personal details.");
     } finally {
       setSubmittingTab(null);
     }
   };
 
   const saveJobDetails = async () => {
+    if (!jobDetails.roleId || !jobDetails.branchId) {
+      toast.error("Role and Branch are required in Job Details.");
+      return;
+    }
+
+    if (jobDetails.salary !== '') {
+      const salaryCheck = validatePositiveNumber(jobDetails.salary, 'Salary', { min: 0, required: false });
+      if (!salaryCheck.isValid) {
+        toast.error(salaryCheck.error);
+        return;
+      }
+    }
+
     setSubmittingTab('Job Details');
     try {
-      const payload = {
+      const res = await employeeService.updateSection(id, 'job-details', {
         ...jobDetails,
         salary: Math.max(0, Number(jobDetails.salary) || 0),
         probationPeriodMonths: Math.max(0, Number(jobDetails.probationPeriodMonths) || 0)
-      };
-      
-      // Update specific relations if they changed
-      if (payload.roleId) await employeeService.changeRole(id, payload.roleId);
-      if (payload.branchId) await employeeService.changeBranch(id, payload.branchId);
-      
-      delete payload.roleId;
-      delete payload.branchId;
-      
-      await employeeService.updateJobDetails(id, payload);
-      toast.success('Job details updated!');
+      });
+      if (res.success) toast.success("Job details updated successfully!");
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to update job details');
+      console.error(err);
+      toast.error(err.response?.data?.message || "Failed to update job details.");
     } finally {
       setSubmittingTab(null);
     }
@@ -247,7 +480,7 @@ const EditEmployee = () => {
   const saveShiftSettings = async () => {
     setSubmittingTab('Shift & WOFF');
     try {
-      const payload = {
+      const res = await employeeService.updateSection(id, 'shift-settings', {
         punchInTime: shiftSettings.punchInTime,
         punchOutTime: shiftSettings.punchOutTime,
         weeklyOff: {
@@ -264,11 +497,11 @@ const EditEmployee = () => {
         halfDayAsPerShift: shiftSettings.halfDayAsPerShift,
         fullDayMinutes: shiftSettings.fullDayMins,
         fullDayAsPerShift: shiftSettings.fullDayAsPerShift
-      };
-      await employeeService.updateShiftSettings(id, payload);
-      toast.success('Shift settings updated!');
+      });
+      if (res.success) toast.success("Shift settings updated successfully!");
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to update shift settings');
+      console.error(err);
+      toast.error(err.response?.data?.message || "Failed to update shift settings.");
     } finally {
       setSubmittingTab(null);
     }
@@ -277,7 +510,7 @@ const EditEmployee = () => {
   const saveAttendanceSettings = async () => {
     setSubmittingTab('Attendance');
     try {
-      const payload = {
+      const res = await employeeService.updateSection(id, 'attendance-settings', {
         punchType: attendanceSettings.punchType,
         noOutPunchAction: attendanceSettings.noOutPunchAction,
         presentOnWeeklyOffHolidayAction: attendanceSettings.presentOnWeeklyOffHolidayAction,
@@ -303,11 +536,11 @@ const EditEmployee = () => {
           otAsPerShift: attendanceSettings.otAsPerShift,
           considerOTAsCOFF: attendanceSettings.considerOTAsCOFF
         }
-      };
-      await employeeService.updateAttendanceSettings(id, payload);
-      toast.success('Attendance settings updated!');
+      });
+      if (res.success) toast.success("Attendance settings updated successfully!");
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to update attendance settings');
+      console.error(err);
+      toast.error(err.response?.data?.message || "Failed to update attendance settings.");
     } finally {
       setSubmittingTab(null);
     }
@@ -316,11 +549,13 @@ const EditEmployee = () => {
   const saveWoffHoffSettings = async () => {
     setSubmittingTab('WOFF & HOFF');
     try {
-      const payload = { ...woffHoffSettings };
-      await employeeService.updateWoffHoffSettings(id, payload);
-      toast.success('WOFF/HOFF settings updated!');
+      const res = await employeeService.updateSection(id, 'woff-hoff-settings', {
+        ...woffHoffSettings
+      });
+      if (res.success) toast.success("WOFF/HOFF rules updated successfully!");
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to update WOFF/HOFF settings');
+      console.error(err);
+      toast.error(err.response?.data?.message || "Failed to update WOFF/HOFF rules.");
     } finally {
       setSubmittingTab(null);
     }
@@ -329,14 +564,14 @@ const EditEmployee = () => {
   const saveKraSettings = async () => {
     setSubmittingTab('KRA Settings');
     try {
-      const payload = {
+      const res = await employeeService.updateSection(id, 'kra-settings', {
         year: Math.max(2000, Number(kraSettings.year)),
         targets: kraSettings.targets.map(t => ({ ...t, targetValue: Math.max(0, Number(t.targetValue) || 0) }))
-      };
-      await employeeService.updateKraSettings(id, payload);
-      toast.success('KRA settings updated!');
+      });
+      if (res.success) toast.success("KRA targets updated successfully!");
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to update KRA settings');
+      console.error(err);
+      toast.error(err.response?.data?.message || "Failed to update KRA targets.");
     } finally {
       setSubmittingTab(null);
     }
@@ -344,23 +579,27 @@ const EditEmployee = () => {
 
   const tabs = ['Personal Details', 'Job Details', 'Shift & WOFF', 'Attendance', 'WOFF & HOFF', 'KRA Settings'];
 
-  if (loading && !personalDetails.fullName) {
-    return null;
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#225091]"></div>
+      </div>
+    );
   }
 
   return (
-    <div className="flex flex-col gap-6 w-full relative">
+    <div className="flex flex-col gap-6 w-full">
       {/* Header Card */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 shrink-0 flex justify-between items-center">
         <div>
           <div className="flex items-center gap-3 mb-2">
             <button 
-            onClick={() => navigate(-1)}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors shrink-0"
-            type="button"
-          >
-            <ArrowLeft size={16} /> Back
-          </button>
+              onClick={() => navigate(-1)}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors shrink-0"
+              type="button"
+            >
+              <ArrowLeft size={16} /> Back
+            </button>
             <h1 className="text-xl font-bold text-[#225091] m-0">Edit Employee</h1>
           </div>
           <div className="flex items-center text-sm text-gray-500 pl-[40px]">
@@ -371,9 +610,6 @@ const EditEmployee = () => {
             <span className="text-[#225091]">Edit Employee</span>
           </div>
         </div>
-        <button onClick={() => navigate('/employees')} className="px-6 py-2 rounded-full border border-gray-300 text-gray-700 font-semibold hover:bg-gray-50 transition-colors text-sm">
-          Back to List
-        </button>
       </div>
 
       {/* Tabs */}
@@ -395,43 +631,86 @@ const EditEmployee = () => {
         {activeTab === 'Personal Details' && (
           <div>
             <h2 className="text-xl font-bold text-gray-800 mb-6">General Info</h2>
-            
-            <div className="flex items-center gap-6 mb-8">
-              <div className="w-24 h-24 rounded-full bg-gray-100 border border-gray-200 flex flex-col items-center justify-center overflow-hidden relative group cursor-pointer shrink-0">
-                {imagePreview ? (
-                  <img src={imagePreview} alt="Profile" className="w-full h-full object-cover" />
-                ) : (
-                  <div className="text-gray-400 group-hover:text-[#225091] transition-colors flex flex-col items-center">
-                    <Camera size={24} />
-                    <span className="text-[10px] mt-1 font-semibold uppercase">Upload</span>
-                  </div>
-                )}
-                <input type="file" accept="image/*" onChange={handleImageChange} className="absolute inset-0 opacity-0 cursor-pointer z-10" />
-              </div>
-              <div>
-                <h3 className="text-sm font-semibold text-gray-800">Profile Photo</h3>
-                <p className="text-xs text-gray-500 mt-1 max-w-xs">Upload a professional photo. Recommended size 256x256px in JPG or PNG format.</p>
-              </div>
-            </div>
-
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-semibold text-gray-800 mb-2">Full Name *</label>
-                <input type="text" value={personalDetails.fullName} onChange={e => setPersonalDetails({...personalDetails, fullName: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-sm" />
+                <label className="block text-sm font-semibold text-gray-800 mb-2">
+                  Full Name <span className="text-rose-500">*</span>
+                </label>
+                <input 
+                  type="text" 
+                  value={personalDetails.fullName} 
+                  onChange={e => {
+                    const val = e.target.value;
+                    setPersonalDetails({...personalDetails, fullName: val});
+                    if (touched.fullName || errors.fullName) validateSingleField('fullName', val);
+                  }}
+                  onBlur={() => {
+                    setTouched(t => ({ ...t, fullName: true }));
+                    validateSingleField('fullName', personalDetails.fullName);
+                  }}
+                  placeholder="Enter full name"
+                  className={`w-full px-4 py-3 rounded-xl border bg-white text-sm transition-all ${
+                    errors.fullName 
+                      ? 'border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-rose-500' 
+                      : 'border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091]'
+                  }`} 
+                />
+                {errors.fullName && (
+                  <p className="text-xs text-rose-500 mt-1.5 font-medium flex items-center gap-1">
+                    <AlertCircle size={13} /> {errors.fullName}
+                  </p>
+                )}
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-800 mb-2">Email *</label>
-                <input type="email" value={personalDetails.email} onChange={e => setPersonalDetails({...personalDetails, email: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-sm" />
+                <label className="block text-sm font-semibold text-gray-800 mb-2">
+                  Email <span className="text-rose-500">*</span>
+                </label>
+                <input 
+                  type="email" 
+                  value={personalDetails.email} 
+                  onChange={e => {
+                    const val = e.target.value;
+                    setPersonalDetails({...personalDetails, email: val});
+                    if (touched.email || errors.email) validateSingleField('email', val);
+                  }}
+                  onBlur={() => {
+                    setTouched(t => ({ ...t, email: true }));
+                    validateSingleField('email', personalDetails.email);
+                  }}
+                  placeholder="Enter email address"
+                  className={`w-full px-4 py-3 rounded-xl border bg-white text-sm transition-all ${
+                    errors.email 
+                      ? 'border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-rose-500' 
+                      : 'border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091]'
+                  }`} 
+                />
+                {errors.email && (
+                  <p className="text-xs text-rose-500 mt-1.5 font-medium flex items-center gap-1">
+                    <AlertCircle size={13} /> {errors.email}
+                  </p>
+                )}
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-800 mb-2">Change Password (Optional)</label>
+                <label className="block text-sm font-semibold text-gray-800 mb-2">Password (Leave blank to keep current)</label>
                 <div className="relative">
                   <input 
                     type={showPassword ? "text" : "password"} 
-                    placeholder="Leave blank to keep current (min 6 chars)" 
                     value={personalDetails.password} 
-                    onChange={e => setPersonalDetails({...personalDetails, password: e.target.value})} 
-                    className="w-full pl-4 pr-10 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-sm" 
+                    onChange={e => {
+                      const val = e.target.value;
+                      setPersonalDetails({...personalDetails, password: val});
+                      if (touched.password || errors.password) validateSingleField('password', val);
+                    }}
+                    onBlur={() => {
+                      setTouched(t => ({ ...t, password: true }));
+                      validateSingleField('password', personalDetails.password);
+                    }}
+                    placeholder="New password (optional)"
+                    className={`w-full pl-4 pr-10 py-3 rounded-xl border bg-white text-sm transition-all ${
+                      errors.password 
+                        ? 'border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-rose-500' 
+                        : 'border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091]'
+                    }`} 
                   />
                   <button
                     type="button"
@@ -441,17 +720,39 @@ const EditEmployee = () => {
                     {showPassword ? <Eye size={18} /> : <EyeOff size={18} />}
                   </button>
                 </div>
+                {errors.password && (
+                  <p className="text-xs text-rose-500 mt-1.5 font-medium flex items-center gap-1">
+                    <AlertCircle size={13} /> {errors.password}
+                  </p>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-800 mb-2">Phone</label>
                 <input 
                   type="tel" 
                   value={personalDetails.phoneNumber} 
-                  onChange={e => setPersonalDetails({...personalDetails, phoneNumber: sanitizeDigits(e.target.value, 10)})} 
+                  onChange={e => {
+                    const val = sanitizeDigits(e.target.value, 10);
+                    setPersonalDetails({...personalDetails, phoneNumber: val});
+                    if (touched.phoneNumber || errors.phoneNumber) validateSingleField('phoneNumber', val);
+                  }}
+                  onBlur={() => {
+                    setTouched(t => ({ ...t, phoneNumber: true }));
+                    validateSingleField('phoneNumber', personalDetails.phoneNumber);
+                  }}
                   placeholder="10-digit mobile number"
                   maxLength={10}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-sm" 
+                  className={`w-full px-4 py-3 rounded-xl border bg-white text-sm transition-all ${
+                    errors.phoneNumber 
+                      ? 'border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-rose-500' 
+                      : 'border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091]'
+                  }`} 
                 />
+                {errors.phoneNumber && (
+                  <p className="text-xs text-rose-500 mt-1.5 font-medium flex items-center gap-1">
+                    <AlertCircle size={13} /> {errors.phoneNumber}
+                  </p>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-800 mb-2">Gender</label>
@@ -463,7 +764,30 @@ const EditEmployee = () => {
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-800 mb-2">Date Of Birth</label>
-                <input type="date" value={personalDetails.dateOfBirth} onChange={e => setPersonalDetails({...personalDetails, dateOfBirth: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-sm" />
+                <input 
+                  type="date" 
+                  max={new Date().toISOString().split('T')[0]}
+                  value={personalDetails.dateOfBirth} 
+                  onChange={e => {
+                    const val = e.target.value;
+                    setPersonalDetails({...personalDetails, dateOfBirth: val});
+                    if (touched.dateOfBirth || errors.dateOfBirth) validateSingleField('dateOfBirth', val);
+                  }}
+                  onBlur={() => {
+                    setTouched(t => ({ ...t, dateOfBirth: true }));
+                    validateSingleField('dateOfBirth', personalDetails.dateOfBirth);
+                  }}
+                  className={`w-full px-4 py-3 rounded-xl border bg-white text-sm transition-all ${
+                    errors.dateOfBirth 
+                      ? 'border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-rose-500' 
+                      : 'border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091]'
+                  }`} 
+                />
+                {errors.dateOfBirth && (
+                  <p className="text-xs text-rose-500 mt-1.5 font-medium flex items-center gap-1">
+                    <AlertCircle size={13} /> {errors.dateOfBirth}
+                  </p>
+                )}
               </div>
               <div className="md:col-span-2">
                 <label className="block text-sm font-semibold text-gray-800 mb-2">Address</label>
@@ -483,18 +807,64 @@ const EditEmployee = () => {
             <h2 className="text-xl font-bold text-gray-800 mb-6">Employment Info</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-semibold text-gray-800 mb-2">Branch *</label>
-                <select value={jobDetails.branchId} onChange={e => setJobDetails({...jobDetails, branchId: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-sm">
+                <label className="block text-sm font-semibold text-gray-800 mb-2">
+                  Branch <span className="text-rose-500">*</span>
+                </label>
+                <select 
+                  value={jobDetails.branchId} 
+                  onChange={e => {
+                    const val = e.target.value;
+                    setJobDetails({...jobDetails, branchId: val});
+                    if (touched.branchId || errors.branchId) validateSingleField('branchId', val);
+                  }}
+                  onBlur={() => {
+                    setTouched(t => ({ ...t, branchId: true }));
+                    validateSingleField('branchId', jobDetails.branchId);
+                  }}
+                  className={`w-full px-4 py-3 rounded-xl border bg-white text-sm transition-all ${
+                    errors.branchId 
+                      ? 'border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-rose-500' 
+                      : 'border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091]'
+                  }`}
+                >
                   <option value="">Select Branch</option>
                   {branches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
                 </select>
+                {errors.branchId && (
+                  <p className="text-xs text-rose-500 mt-1.5 font-medium flex items-center gap-1">
+                    <AlertCircle size={13} /> {errors.branchId}
+                  </p>
+                )}
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-800 mb-2">Department *</label>
-                <select value={jobDetails.roleId} onChange={e => setJobDetails({...jobDetails, roleId: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-sm">
+                <label className="block text-sm font-semibold text-gray-800 mb-2">
+                  Department <span className="text-rose-500">*</span>
+                </label>
+                <select 
+                  value={jobDetails.roleId} 
+                  onChange={e => {
+                    const val = e.target.value;
+                    setJobDetails({...jobDetails, roleId: val});
+                    if (touched.roleId || errors.roleId) validateSingleField('roleId', val);
+                  }}
+                  onBlur={() => {
+                    setTouched(t => ({ ...t, roleId: true }));
+                    validateSingleField('roleId', jobDetails.roleId);
+                  }}
+                  className={`w-full px-4 py-3 rounded-xl border bg-white text-sm transition-all ${
+                    errors.roleId 
+                      ? 'border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-rose-500' 
+                      : 'border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091]'
+                  }`}
+                >
                   <option value="">Select Department</option>
                   {roles.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
                 </select>
+                {errors.roleId && (
+                  <p className="text-xs text-rose-500 mt-1.5 font-medium flex items-center gap-1">
+                    <AlertCircle size={13} /> {errors.roleId}
+                  </p>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-800 mb-2">Designation</label>
@@ -502,11 +872,39 @@ const EditEmployee = () => {
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-800 mb-2">State</label>
-                <input type="text" value={jobDetails.state} onChange={e => setJobDetails({...jobDetails, state: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-sm" />
+                <StateDropdown 
+                  value={jobDetails.state}
+                  onChange={(val) => setJobDetails({...jobDetails, state: val})}
+                  options={states}
+                  loading={loadingStates}
+                />
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-800 mb-2">Salary (Monthly)</label>
-                <input type="number" min="0" value={jobDetails.salary} onChange={e => setJobDetails({...jobDetails, salary: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-sm" />
+                <input 
+                  type="number" 
+                  min="0" 
+                  value={jobDetails.salary} 
+                  onChange={e => {
+                    const val = e.target.value;
+                    setJobDetails({...jobDetails, salary: val});
+                    if (touched.salary || errors.salary) validateSingleField('salary', val);
+                  }}
+                  onBlur={() => {
+                    setTouched(t => ({ ...t, salary: true }));
+                    validateSingleField('salary', jobDetails.salary);
+                  }}
+                  className={`w-full px-4 py-3 rounded-xl border bg-white text-sm transition-all ${
+                    errors.salary 
+                      ? 'border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-rose-500' 
+                      : 'border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091]'
+                  }`} 
+                />
+                {errors.salary && (
+                  <p className="text-xs text-rose-500 mt-1.5 font-medium flex items-center gap-1">
+                    <AlertCircle size={13} /> {errors.salary}
+                  </p>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-800 mb-2">Joining Date</label>
@@ -534,11 +932,55 @@ const EditEmployee = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-semibold text-gray-800 mb-2">Punch In Time</label>
-                    <input type="time" value={shiftSettings.punchInTime} onChange={e => setShiftSettings({...shiftSettings, punchInTime: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-sm" />
+                    <input 
+                      type="time" 
+                      value={shiftSettings.punchInTime} 
+                      onChange={e => {
+                        const val = e.target.value;
+                        setShiftSettings({...shiftSettings, punchInTime: val});
+                        if (touched.punchInTime || errors.punchInTime) validateSingleField('punchInTime', val);
+                      }}
+                      onBlur={() => {
+                        setTouched(t => ({ ...t, punchInTime: true }));
+                        validateSingleField('punchInTime', shiftSettings.punchInTime);
+                      }}
+                      className={`w-full px-4 py-3 rounded-xl border bg-white text-sm transition-all ${
+                        errors.punchInTime 
+                          ? 'border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-rose-500' 
+                          : 'border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091]'
+                      }`} 
+                    />
+                    {errors.punchInTime && (
+                      <p className="text-xs text-rose-500 mt-1.5 font-medium flex items-center gap-1">
+                        <AlertCircle size={13} /> {errors.punchInTime}
+                      </p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-gray-800 mb-2">Punch Out Time</label>
-                    <input type="time" value={shiftSettings.punchOutTime} onChange={e => setShiftSettings({...shiftSettings, punchOutTime: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-sm" />
+                    <input 
+                      type="time" 
+                      value={shiftSettings.punchOutTime} 
+                      onChange={e => {
+                        const val = e.target.value;
+                        setShiftSettings({...shiftSettings, punchOutTime: val});
+                        if (touched.punchOutTime || errors.punchOutTime) validateSingleField('punchOutTime', val);
+                      }}
+                      onBlur={() => {
+                        setTouched(t => ({ ...t, punchOutTime: true }));
+                        validateSingleField('punchOutTime', shiftSettings.punchOutTime);
+                      }}
+                      className={`w-full px-4 py-3 rounded-xl border bg-white text-sm transition-all ${
+                        errors.punchOutTime 
+                          ? 'border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-rose-500' 
+                          : 'border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091]'
+                      }`} 
+                    />
+                    {errors.punchOutTime && (
+                      <p className="text-xs text-rose-500 mt-1.5 font-medium flex items-center gap-1">
+                        <AlertCircle size={13} /> {errors.punchOutTime}
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -549,7 +991,23 @@ const EditEmployee = () => {
                 <div className="flex flex-col gap-4">
                   <div>
                     <label className="block text-sm font-semibold text-gray-800 mb-2">Weekly Off Day</label>
-                    <select value={shiftSettings.weeklyOffDay} onChange={e => setShiftSettings({...shiftSettings, weeklyOffDay: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-sm">
+                    <select 
+                      value={shiftSettings.weeklyOffDay} 
+                      onChange={e => {
+                        const val = e.target.value;
+                        setShiftSettings({...shiftSettings, weeklyOffDay: val});
+                        if (touched.weeklyOffDay || errors.weeklyOffDay) validateSingleField('weeklyOffDay', val);
+                      }}
+                      onBlur={() => {
+                        setTouched(t => ({ ...t, weeklyOffDay: true }));
+                        validateSingleField('weeklyOffDay', shiftSettings.weeklyOffDay);
+                      }}
+                      className={`w-full px-4 py-3 rounded-xl border bg-white text-sm transition-all ${
+                        errors.weeklyOffDay 
+                          ? 'border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-rose-500' 
+                          : 'border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091]'
+                      }`}
+                    >
                       <option value="">Select</option>
                       <option value="SUNDAY">Sunday</option>
                       <option value="SATURDAY">Saturday</option>
@@ -559,6 +1017,11 @@ const EditEmployee = () => {
                       <option value="THURSDAY">Thursday</option>
                       <option value="FRIDAY">Friday</option>
                     </select>
+                    {errors.weeklyOffDay && (
+                      <p className="text-xs text-rose-500 mt-1.5 font-medium flex items-center gap-1">
+                        <AlertCircle size={13} /> {errors.weeklyOffDay}
+                      </p>
+                    )}
                   </div>
                   <label className="flex items-center gap-3 border border-gray-200 rounded-xl px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors mt-2">
                     <input type="checkbox" checked={shiftSettings.weeklyOffPayable} onChange={e => setShiftSettings({...shiftSettings, weeklyOffPayable: e.target.checked})} className="w-5 h-5 rounded border-gray-300 text-[#225091] focus:ring-[#225091]" />

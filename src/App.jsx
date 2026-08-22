@@ -2,6 +2,7 @@ import React, { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import ProtectedRoute from './components/routes/ProtectedRoute';
 import PublicRoute from './components/routes/PublicRoute';
+import PermissionRoute from './components/routes/PermissionRoute';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -48,6 +49,7 @@ const ImportantDates = lazy(() => import('./pages/dashboard/ImportantDates'));
 const Customers = lazy(() => import('./pages/dashboard/Customers'));
 const CustomerLoans = lazy(() => import('./pages/dashboard/CustomerLoans'));
 const LoanDetails = lazy(() => import('./pages/dashboard/LoanDetails'));
+const SelectLeadSystem = lazy(() => import('./pages/dashboard/SelectLeadSystem'));
 const Leads = lazy(() => import('./pages/dashboard/Leads'));
 const CreateLead = lazy(() => import('./pages/dashboard/CreateLead'));
 const EditLead = lazy(() => import('./pages/dashboard/EditLead'));
@@ -140,77 +142,156 @@ function App() {
             <Route path="/" element={<DashboardLayout />}>
               <Route index element={<Navigate to="/dashboard" replace />} />
               <Route path="dashboard" element={<Dashboard />} />
-            <Route path="profile" element={<MyProfile />} />
-            <Route path="notifications" element={<Notifications />} />
-            <Route path="managers" element={<Managers />} />
-            <Route path="managers/create" element={<CreateManager />} />
-            <Route path="managers/edit" element={<EditManager />} />
-            <Route path="managers/view" element={<ViewManager />} />
-            <Route path="employees" element={<Employees />} />
-            <Route path="employees/create" element={<CreateEmployee />} />
-            <Route path="employees/edit/:id" element={<EditEmployee />} />
-            <Route path="employees/view/:id" element={<ViewEmployee />} />
-            {/* Attendance Report route commented out */}
-            <Route path="letters-payroll" element={<LettersAndPayroll />} />
-            <Route path="daily-work-report" element={<DailyWorkReport />} />
-            <Route path="kpa-report" element={<KPAReport />} />
-            <Route path="kpa-report/view/:id" element={<ViewReport />} />
-            <Route path="kpa-report/view/:id/add-kra" element={<AddKRA />} />
-            <Route path="important-dates" element={<ImportantDates />} />
-            <Route path="customers" element={<Customers />} />
-            <Route path="customers/:id/loans" element={<CustomerLoans />} />
-            <Route path="customers/:id/loans/:loanId" element={<LoanDetails />} />
-            <Route path="leads" element={<Leads />} />
-            <Route path="leads/create" element={<CreateLead />} />
-            <Route path="leads/edit" element={<EditLead />} />
-            <Route path="leads/edit/:id" element={<EditLead />} />
-            <Route path="leads/view" element={<ViewLead />} />
-            <Route path="leads/view/:id" element={<ViewLead />} />
-            <Route path="leads/setup-loan" element={<SetupLoan />} />
-            <Route path="leads/setup-loan/:id" element={<SetupLoan />} />
-            <Route path="region" element={<Region />} />
-            <Route path="branch" element={<Branch />} />
-            <Route path="roles-permissions" element={<RolesAndPermissions />} />
-            <Route path="roles-permissions/create" element={<CreateRole />} />
-            <Route path="roles-permissions/edit/:id" element={<EditRole />} />
-            <Route path="product-categories" element={<ProductCategories />} />
-            <Route path="product-brands" element={<ProductBrands />} />
-            <Route path="products" element={<Products />} />
-            <Route path="banners" element={<Banners />} />
-            <Route path="co-operative-bank" element={<CooperativeBanks />} />
-            <Route path="co-operative-bank/create" element={<CreateCooperativeBank />} />
-            <Route path="co-operative-bank/edit" element={<EditCooperativeBank />} />
-            <Route path="co-operative-bank/view" element={<ViewCooperativeBank />} />
-            <Route path="settings/help" element={<HelpSupport />} />
-            <Route path="merchant" element={<Merchants />} />
-            <Route path="merchant/create" element={<CreateMerchant />} />
-            <Route path="merchant/:id/edit" element={<EditMerchant />} />
-            <Route path="merchant/:id/view" element={<ViewMerchant />} />
-            <Route path="price-settings" element={<PriceSettings />} />
-            <Route path="inventory" element={<Inventory />} />
-            <Route path="inventory/create" element={<CreateInventory />} />
-            <Route path="inventory/edit" element={<EditInventory />} />
-            <Route path="inventory/edit/:id" element={<EditInventory />} />
-            <Route path="credit" element={<Credit />} />
-            <Route path="credit/view/:id" element={<ViewCreditReceipt />} />
-            <Route path="debit" element={<Debit />} />
-            <Route path="debit/view/:id" element={<ViewDebitReceipt />} />
-            <Route path="transfer" element={<Transfer />} />
-            <Route path="transfer/view/:id" element={<ViewTransferReceipt />} />
-            <Route path="contra" element={<Contra />} />
-            <Route path="contra/view/:id" element={<ViewContraReceipt />} />
-            <Route path="cibil" element={<CheckCibilScore />} />
-            <Route path="kyc" element={<KycVerification />} />
-            <Route path="kyc/callback" element={<KycCallback />} />
-            <Route path="cash-payment" element={<CashPayment />} />
-            <Route path="cash-payment/view/:id" element={<ViewCashPayment />} />
-            <Route path="cards-credit" element={<CardsAndCredit />} />
-            <Route path="cards-credit/payment" element={<ChoosePaymentMethod />} />
-            <Route path="cards-credit/payment/success" element={<PaymentSuccessful />} />
-            <Route path="upi-autopay" element={<ComingSoon />} />
-            <Route path="whatsapp-banking" element={<ComingSoon />} />
-            <Route path="biomatrix-integration" element={<ComingSoon />} />
-            <Route path="coming-soon" element={<ComingSoon />} />
+              <Route path="profile" element={<MyProfile />} />
+              <Route path="notifications" element={<Notifications />} />
+
+              {/* Branch Management */}
+              <Route element={<PermissionRoute permission="branch.view" />}>
+                <Route path="branch" element={<Branch />} />
+                <Route path="region" element={<Region />} />
+              </Route>
+
+              {/* Partner / Merchant Management */}
+              <Route element={<PermissionRoute permission="merchant.view" />}>
+                <Route path="merchant" element={<Merchants />} />
+                <Route path="merchant/create" element={<CreateMerchant />} />
+                <Route path="merchant/:id/edit" element={<EditMerchant />} />
+                <Route path="merchant/:id/view" element={<ViewMerchant />} />
+              </Route>
+
+              {/* Managers */}
+              <Route element={<PermissionRoute anyOf={['manager.view', 'employee.view']} />}>
+                <Route path="managers" element={<Managers />} />
+                <Route path="managers/create" element={<CreateManager />} />
+                <Route path="managers/edit" element={<EditManager />} />
+                <Route path="managers/view" element={<ViewManager />} />
+              </Route>
+
+              {/* Employees & HR */}
+              <Route element={<PermissionRoute permission="employee.view" />}>
+                <Route path="employees" element={<Employees />} />
+                <Route path="employees/create" element={<CreateEmployee />} />
+                <Route path="employees/edit/:id" element={<EditEmployee />} />
+                <Route path="employees/view/:id" element={<ViewEmployee />} />
+              </Route>
+
+              <Route element={<PermissionRoute anyOf={['letters_payroll.view', 'payroll.view', 'employee.view']} />}>
+                <Route path="letters-payroll" element={<LettersAndPayroll />} />
+              </Route>
+
+              <Route element={<PermissionRoute anyOf={['daily_work_report.view', 'work_report.view', 'employee.view']} />}>
+                <Route path="daily-work-report" element={<DailyWorkReport />} />
+              </Route>
+
+              <Route element={<PermissionRoute anyOf={['kpa_report.view', 'employee.view']} />}>
+                <Route path="kpa-report" element={<KPAReport />} />
+                <Route path="kpa-report/view/:id" element={<ViewReport />} />
+                <Route path="kpa-report/view/:id/add-kra" element={<AddKRA />} />
+              </Route>
+
+              <Route element={<PermissionRoute anyOf={['important_dates.view', 'employee.view']} />}>
+                <Route path="important-dates" element={<ImportantDates />} />
+              </Route>
+
+              {/* CRM & Leads */}
+              <Route element={<PermissionRoute permission="lead.view" />}>
+                <Route path="leads" element={<SelectLeadSystem />} />
+                <Route path="leads/customer" element={<Leads leadType="CUSTOMER" systemTitle="Customer" />} />
+                <Route path="leads/branch" element={<Leads leadType="CUSTOMER" systemTitle="Customer" />} />
+                <Route path="leads/merchant" element={<Leads leadType="MERCHANT" systemTitle="Merchant" />} />
+                <Route path="leads/sip" element={<Leads leadType="SIP" systemTitle="Smart SIP" />} />
+                <Route path="leads/create" element={<CreateLead />} />
+                <Route path="leads/edit" element={<EditLead />} />
+                <Route path="leads/edit/:id" element={<EditLead />} />
+                <Route path="leads/view" element={<ViewLead />} />
+                <Route path="leads/view/:id" element={<ViewLead />} />
+                <Route path="leads/setup-loan" element={<SetupLoan />} />
+                <Route path="leads/setup-loan/:id" element={<SetupLoan />} />
+              </Route>
+
+              <Route element={<PermissionRoute anyOf={['customer.view', 'lead.view']} />}>
+                <Route path="customers" element={<Customers />} />
+                <Route path="customers/:id/loans" element={<CustomerLoans />} />
+                <Route path="customers/:id/loans/:loanId" element={<LoanDetails />} />
+              </Route>
+
+              {/* Inventory */}
+              <Route element={<PermissionRoute permission="inventory.view" />}>
+                <Route path="inventory" element={<Inventory />} />
+                <Route path="inventory/create" element={<CreateInventory />} />
+                <Route path="inventory/edit" element={<EditInventory />} />
+                <Route path="inventory/edit/:id" element={<EditInventory />} />
+              </Route>
+
+              {/* Receipts */}
+              <Route element={<PermissionRoute permission="receipt.view" />}>
+                <Route path="credit" element={<Credit />} />
+                <Route path="credit/view/:id" element={<ViewCreditReceipt />} />
+                <Route path="debit" element={<Debit />} />
+                <Route path="debit/view/:id" element={<ViewDebitReceipt />} />
+                <Route path="transfer" element={<Transfer />} />
+                <Route path="transfer/view/:id" element={<ViewTransferReceipt />} />
+                <Route path="contra" element={<Contra />} />
+                <Route path="contra/view/:id" element={<ViewContraReceipt />} />
+              </Route>
+
+              {/* Cash Payment */}
+              <Route element={<PermissionRoute permission="cash_payment.view" />}>
+                <Route path="cash-payment" element={<CashPayment />} />
+                <Route path="cash-payment/view/:id" element={<ViewCashPayment />} />
+              </Route>
+
+              {/* Verification */}
+              <Route element={<PermissionRoute anyOf={['cards_credit.view', 'cibil.view', 'cibil_score.view', 'credit_score.view', 'verification.view']} />}>
+                <Route path="cibil" element={<CheckCibilScore />} />
+              </Route>
+
+              <Route element={<PermissionRoute anyOf={['kyc.view', 'verification.view']} />}>
+                <Route path="kyc" element={<KycVerification />} />
+                <Route path="kyc/callback" element={<KycCallback />} />
+              </Route>
+
+              {/* Cards & Credits */}
+              <Route element={<PermissionRoute anyOf={['cards_credit.view', 'card_credit.view', 'emi_card.view', 'card.view']} />}>
+                <Route path="cards-credit" element={<CardsAndCredit />} />
+                <Route path="cards-credit/payment" element={<ChoosePaymentMethod />} />
+                <Route path="cards-credit/payment/success" element={<PaymentSuccessful />} />
+              </Route>
+
+              {/* Roles & Permissions */}
+              <Route element={<PermissionRoute anyOf={['role.view', 'roles_permissions.view', 'role.create']} />}>
+                <Route path="roles-permissions" element={<RolesAndPermissions />} />
+                <Route path="roles-permissions/create" element={<CreateRole />} />
+                <Route path="roles-permissions/edit/:id" element={<EditRole />} />
+              </Route>
+
+              {/* Products & Banners */}
+              <Route element={<PermissionRoute anyOf={['product.view', 'product_category.view']} />}>
+                <Route path="product-categories" element={<ProductCategories />} />
+                <Route path="product-brands" element={<ProductBrands />} />
+                <Route path="products" element={<Products />} />
+                <Route path="price-settings" element={<PriceSettings />} />
+                <Route path="banners" element={<Banners />} />
+              </Route>
+
+              {/* Co-operative Banks */}
+              <Route element={<PermissionRoute anyOf={['cooperative_bank.view', 'bank.view']} />}>
+                <Route path="co-operative-bank" element={<CooperativeBanks />} />
+                <Route path="co-operative-bank/create" element={<CreateCooperativeBank />} />
+                <Route path="co-operative-bank/edit" element={<EditCooperativeBank />} />
+                <Route path="co-operative-bank/view" element={<ViewCooperativeBank />} />
+              </Route>
+
+              {/* Settings */}
+              <Route element={<PermissionRoute anyOf={['help_support.view', 'settings.view']} />}>
+                <Route path="settings/help" element={<HelpSupport />} />
+              </Route>
+
+              {/* Coming Soon */}
+              <Route path="upi-autopay" element={<ComingSoon />} />
+              <Route path="whatsapp-banking" element={<ComingSoon />} />
+              <Route path="biomatrix-integration" element={<ComingSoon />} />
+              <Route path="coming-soon" element={<ComingSoon />} />
             </Route>
           </Route>
         </Routes>

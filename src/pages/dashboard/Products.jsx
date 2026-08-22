@@ -98,42 +98,44 @@ const Products = () => {
       </div>
 
       {/* Table Card */}
-      <div className="bg-white border border-gray-200 rounded-xl shadow-sm flex-1 overflow-hidden flex flex-col min-h-0">
+      <div className="bg-white border border-gray-100 rounded-xl shadow-sm flex-1 overflow-hidden flex flex-col min-h-0">
         <div className="flex-1 overflow-auto">
         <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="bg-indigo-50/50 text-gray-700 text-sm font-semibold border-b border-gray-200">
-              <th className="py-4 px-6 text-center w-20">Sr.No.</th>
-              <th className="py-4 px-6">Models</th>
-              <th className="py-4 px-6">Product Description</th>
-              <th className="py-4 px-6">Brand</th>
-              <th className="py-4 px-6">Product Category</th>
-              <th className="py-4 px-6 text-center w-32">Action</th>
+          <thead className="bg-[#F8FAFC] text-gray-600 text-xs uppercase tracking-wider font-semibold border-b border-gray-200/80">
+            <tr>
+              <th className="py-3.5 px-5 text-center w-20 font-semibold">Sr.No.</th>
+              <th className="py-3.5 px-5 font-semibold">Models</th>
+              <th className="py-3.5 px-5 font-semibold">Product Description</th>
+              <th className="py-3.5 px-5 font-semibold">Brand</th>
+              <th className="py-3.5 px-5 font-semibold">Product Category</th>
+              <th className="py-3.5 px-5 text-center font-semibold">Actions</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="divide-y divide-gray-100">
             {filteredData.map((row, index) => (
-              <tr key={row.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors text-sm text-gray-600">
-                <td className="py-4 px-6 text-center">{index + 1}</td>
-                <td className="py-4 px-6 font-medium text-gray-800 flex items-center gap-3">
-                  <div className="w-8 h-8 rounded border border-gray-200 overflow-hidden bg-white flex items-center justify-center p-0.5">
+              <tr key={row.id} className="hover:bg-slate-50/70 transition-colors">
+                <td className="py-3.5 px-5 text-center text-[13px] text-gray-500 font-medium">{index + 1}</td>
+                <td className="py-3.5 px-5 font-semibold text-gray-900 flex items-center gap-3 text-sm">
+                  <div className="w-8 h-8 rounded-lg border border-gray-200 overflow-hidden bg-white flex items-center justify-center p-0.5 shadow-2xs">
                     <img src={row.image} alt={row.model} className="w-full h-full object-contain" />
                   </div>
                   {row.model}
                 </td>
-                <td className="py-4 px-6">{row.description}</td>
-                <td className="py-4 px-6">{row.brand}</td>
-                <td className="py-4 px-6">{row.category}</td>
-                <td className="py-4 px-6">
-                  <div className="flex items-center justify-center gap-3">
+                <td className="py-3.5 px-5 text-xs text-gray-600">{row.description}</td>
+                <td className="py-3.5 px-5 text-xs text-gray-700 font-medium">{row.brand}</td>
+                <td className="py-3.5 px-5 text-xs text-gray-600 font-medium">{row.category}</td>
+                <td className="py-3.5 px-5 text-center">
+                  <div className="flex items-center justify-center gap-2">
                     <button 
                       onClick={() => setEditProductData(row)}
-                      className="text-gray-400 hover:text-blue-500 transition-colors"
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200/60 transition-all shadow-xs"
                     >
-                      <Edit size={18} />
+                      <Edit size={13} /> Edit
                     </button>
-                    <button className="text-gray-400 hover:text-red-500 transition-colors">
-                      <Trash2 size={18} />
+                    <button 
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200/60 transition-all shadow-xs"
+                    >
+                      <Trash2 size={13} /> Delete
                     </button>
                   </div>
                 </td>

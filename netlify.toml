@@ -5,7 +5,7 @@
 # Proxy all /api requests to Render backend (bypasses browser CORS completely on Netlify)
 [[redirects]]
   from = "/api/*"
-  to = "https://advita-backend.onrender.com/api/:splat"
+  to = "https://api.advitacredit.com/api/:splat"
   status = 200
   force = true
 

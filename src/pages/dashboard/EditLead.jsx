@@ -91,7 +91,7 @@ const EditLead = () => {
         <form onSubmit={handleSave}>
           {/* Basic Information */}
           <div className="mb-10">
-            <h2 className="text-lg font-bold text-gray-800 mb-6">Basic Information</h2>
+            <h2 className="text-lg font-bold text-[#225091] mb-6">Basic Information</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-semibold text-gray-800 mb-2">Full Name (As Per PAN Card) *</label>

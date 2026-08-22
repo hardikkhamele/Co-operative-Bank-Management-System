@@ -71,7 +71,6 @@ const Managers = () => {
   };
 
   const confirmDelete = () => {
-    // Perform delete action here
     setIsDeleteModalOpen(false);
     setManagerToDelete(null);
   };
@@ -79,7 +78,7 @@ const Managers = () => {
   return (
     <div className="h-full flex flex-col gap-6">
       {/* Header Card */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 shrink-0">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 shrink-0">
         <h1 className="text-xl font-bold text-[#225091] mb-2">Managers</h1>
         <div className="flex items-center text-sm text-gray-500">
           <Link to="/dashboard" className="hover:text-gray-700">Dashboard</Link>
@@ -160,7 +159,7 @@ const Managers = () => {
                   </button>
                   <button 
                     onClick={() => setIsFilterOpen(false)}
-                    className="flex-1 py-2.5 px-4 rounded-full bg-[#225091] text-white font-semibold hover:bg-[#168f94] transition-colors shadow-sm text-sm"
+                    className="flex-1 py-2.5 px-4 rounded-full bg-[#225091] text-white font-semibold hover:bg-[#163a6c] transition-colors shadow-sm text-sm"
                   >
                     Set Filter
                   </button>
@@ -171,84 +170,95 @@ const Managers = () => {
         </div>
 
         <Link 
-          to="/managers/create"
-          className="bg-[#225091] hover:bg-[#168f94] text-white px-4 py-2 rounded-full font-medium transition-colors flex items-center text-sm shadow-sm"
+          to="/managers/create" 
+          className="bg-[#225091] hover:bg-[#163a6c] text-white px-5 py-2.5 rounded-full font-semibold text-sm transition-colors flex items-center shadow-xs"
         >
           + Create Manager
         </Link>
       </div>
 
       {/* Table Card */}
-      <div className="bg-white border border-gray-200 rounded-xl shadow-sm flex-1 overflow-hidden flex flex-col min-h-0">
+      <div className="bg-white border border-gray-100 rounded-xl shadow-sm flex-1 overflow-hidden flex flex-col min-h-0">
         <div className="flex-1 overflow-auto">
         <table className="w-full text-left border-collapse min-w-[800px]">
-          <thead>
-            <tr className="bg-indigo-50/50 text-gray-700 text-sm font-semibold border-b border-gray-200">
-              <th className="py-4 px-6 text-center w-20">Sr.No.</th>
-              <th className="py-4 px-6">Manager Name</th>
-              <th className="py-4 px-6">Manager Type</th>
-              <th className="py-4 px-6">Region</th>
-              <th className="py-4 px-6">Branch</th>
-              <th className="py-4 px-6">Email</th>
-              <th className="py-4 px-6 text-center w-32">Action</th>
+          <thead className="bg-[#F8FAFC] text-gray-600 text-xs uppercase tracking-wider font-semibold border-b border-gray-200/80">
+            <tr>
+              <th className="py-3.5 px-5 font-semibold text-center w-20">Sr.No.</th>
+              <th className="py-3.5 px-5 font-semibold">Manager Name</th>
+              <th className="py-3.5 px-5 font-semibold">Manager Type</th>
+              <th className="py-3.5 px-5 font-semibold">Region</th>
+              <th className="py-3.5 px-5 font-semibold">Branch</th>
+              <th className="py-3.5 px-5 font-semibold">Email</th>
+              <th className="py-3.5 px-5 font-semibold text-center w-32">Action</th>
             </tr>
           </thead>
-          <tbody>
-            {filteredData.map((manager, idx) => (
-              <tr key={manager.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors text-sm text-gray-600">
-                <td className="py-4 px-6 text-center">{idx + 1}</td>
-                <td className="py-4 px-6 font-medium text-gray-800 flex items-center gap-3">
-                  <div className={`w-8 h-8 rounded-full overflow-hidden flex items-center justify-center ${manager.hasImage ? '' : 'bg-[#f4f2ff] text-gray-800 font-bold text-[13px]'}`}>
-                    {manager.hasImage ? (
-                      <img src={manager.avatar} alt={manager.name} className="w-full h-full object-cover" />
-                    ) : (
-                      manager.initials
-                    )}
-                  </div>
-                  <span className="font-semibold text-gray-800">{manager.name}</span>
-                </td>
-                <td className="py-4 px-6">
-                  <div className="max-w-[120px] leading-tight">
-                    {manager.type}
-                  </div>
-                </td>
-                <td className="py-4 px-6">{manager.region}</td>
-                <td className="py-4 px-6">{manager.branch}</td>
-                <td className="py-4 px-6">{manager.email}</td>
-                <td className="py-4 px-6">
-                  <div className="flex items-center justify-center gap-3">
-                    <Link 
-                      to="/managers/view"
-                      state={manager}
-                      className="text-gray-800 hover:text-blue-500 transition-colors"
-                    >
-                      <Eye size={18} />
-                    </Link>
-                    <Link 
-                      to="/managers/edit"
-                      state={manager}
-                      className="text-gray-800 hover:text-blue-500 transition-colors"
-                    >
-                      <Edit size={18} />
-                    </Link>
-                    <button 
-                      onClick={() => handleDeleteClick(manager)}
-                      className="text-red-500 hover:text-red-600 transition-colors"
-                    >
-                      <Trash2 size={18} />
-                    </button>
-                  </div>
+          <tbody className="divide-y divide-gray-100">
+            {filteredData.length === 0 ? (
+              <tr>
+                <td colSpan="7" className="py-10 text-center text-gray-500 text-sm font-medium">
+                  No managers found.
                 </td>
               </tr>
-            ))}
+            ) : (
+              filteredData.map((manager, idx) => (
+                <tr key={manager.id} className="hover:bg-slate-50/70 transition-colors">
+                  <td className="py-3.5 px-5 text-center text-[13px] text-gray-500 font-medium">{idx + 1}</td>
+                  <td className="py-3.5 px-5">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-8 h-8 rounded-full overflow-hidden flex items-center justify-center border border-gray-100 shadow-xs ${manager.hasImage ? '' : 'bg-blue-50 text-[#225091] font-bold text-xs'}`}>
+                        {manager.hasImage ? (
+                          <img src={manager.avatar} alt={manager.name} className="w-full h-full object-cover" />
+                        ) : (
+                          manager.initials
+                        )}
+                      </div>
+                      <span className="font-semibold text-gray-900 text-sm">{manager.name}</span>
+                    </div>
+                  </td>
+                  <td className="py-3.5 px-5 text-xs text-gray-700 font-medium">
+                    {manager.type}
+                  </td>
+                  <td className="py-3.5 px-5 text-xs text-gray-600">{manager.region}</td>
+                  <td className="py-3.5 px-5 text-xs text-gray-600 font-medium">{manager.branch}</td>
+                  <td className="py-3.5 px-5 text-xs text-gray-600">{manager.email}</td>
+                  <td className="py-3.5 px-5">
+                    <div className="flex items-center justify-center gap-1.5">
+                      <Link 
+                        to="/managers/view"
+                        state={manager}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-[#225091] bg-[#EAF2FB] hover:bg-[#d8e8f8] border border-[#225091]/15 transition-all shadow-xs"
+                        title="View Details"
+                      >
+                        <Eye size={13} /> View
+                      </Link>
+                      <Link 
+                        to="/managers/edit"
+                        state={manager}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200/60 transition-all shadow-xs"
+                        title="Edit"
+                      >
+                        <Edit size={13} /> Edit
+                      </Link>
+                      <button 
+                        onClick={() => handleDeleteClick(manager)}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200/60 transition-all shadow-xs"
+                        title="Delete"
+                      >
+                        <Trash2 size={13} /> Delete
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
-      </div>
+        </div>
       </div>
 
       {/* Pagination */}
       <div className="flex items-center justify-between text-sm text-gray-500 shrink-0">
-        <div>Showing {filteredData.length > 0 ? 1 : 0} to {filteredData.length} of 30 Entries</div>
+        <div className="text-[13px] text-gray-600 font-medium">Showing {filteredData.length > 0 ? 1 : 0} to {filteredData.length} of 30 Entries</div>
         <div className="flex items-center gap-2">
           <button className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 bg-white text-[#225091] hover:bg-[#225091] hover:text-white transition-colors shadow-sm">
             <ChevronLeft size={16} />

@@ -121,72 +121,83 @@ const Customers = () => {
         <div className="flex items-center w-full md:w-auto justify-end">
           <button 
             onClick={() => setIsAddModalOpen(true)}
-            className="bg-[#225091] hover:bg-[#159a9f] text-white py-2.5 px-6 rounded-full text-sm font-medium transition-colors shadow-sm whitespace-nowrap w-full md:w-auto"
+            className="bg-[#225091] hover:bg-[#163a6c] text-white py-2.5 px-6 rounded-full text-sm font-semibold transition-colors shadow-xs whitespace-nowrap w-full md:w-auto"
           >
-            +Add Customer
+            + Add Customer
           </button>
         </div>
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse min-w-[1000px]">
-            <thead>
-              <tr className="bg-gray-50/50 text-gray-500 text-[11px] uppercase tracking-wider font-bold border-b border-gray-100">
-                <th className="py-4 px-6 font-bold">Sr.No.</th>
-                <th className="py-4 px-6 font-bold">Customer Name</th>
-                <th className="py-4 px-6 font-bold">Gender</th>
-                <th className="py-4 px-6 font-bold">Date Of Birth</th>
-                <th className="py-4 px-6 font-bold">Phone Number</th>
-                <th className="py-4 px-6 font-bold">Email</th>
-                <th className="py-4 px-6 font-bold text-center">Action</th>
+            <thead className="bg-[#F8FAFC] text-gray-600 text-xs uppercase tracking-wider font-semibold border-b border-gray-200/80">
+              <tr>
+                <th className="py-3.5 px-5 font-semibold">Sr.No.</th>
+                <th className="py-3.5 px-5 font-semibold">Customer Name</th>
+                <th className="py-3.5 px-5 font-semibold">Gender</th>
+                <th className="py-3.5 px-5 font-semibold">Date Of Birth</th>
+                <th className="py-3.5 px-5 font-semibold">Phone Number</th>
+                <th className="py-3.5 px-5 font-semibold">Email</th>
+                <th className="py-3.5 px-5 font-semibold text-center">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {mockCustomers.map((customer, idx) => (
-                <tr key={customer.id} className="hover:bg-gray-50/50 transition-colors">
-                  <td className="py-4 px-6 text-sm text-gray-600">{idx + 1}</td>
-                  <td className="py-4 px-6">
-                    <div className="flex items-center gap-3">
-                      {customer.avatar ? (
-                        <img src={customer.avatar} alt={customer.name} className="w-8 h-8 rounded-full object-cover" />
-                      ) : (
-                        <div className="w-8 h-8 rounded-full bg-[#f4f2ff] text-[#225091] flex items-center justify-center text-xs font-bold">
-                          {customer.initials}
-                        </div>
-                      )}
-                      <span className="text-sm font-medium text-gray-800">{customer.name}</span>
-                    </div>
-                  </td>
-                  <td className="py-4 px-6 text-sm text-gray-600">{customer.gender}</td>
-                  <td className="py-4 px-6 text-sm text-gray-600">{customer.dob}</td>
-                  <td className="py-4 px-6 text-sm text-gray-600">{customer.phone}</td>
-                  <td className="py-4 px-6 text-sm text-gray-600">{customer.email}</td>
-                  <td className="py-4 px-6 text-center">
-                    <div className="flex justify-center items-center gap-3">
-                      <button 
-                        onClick={() => handleViewClick(customer)}
-                        className="text-gray-500 hover:text-gray-700 transition-colors"
-                      >
-                        <Eye size={18} />
-                      </button>
-                      <button 
-                        onClick={() => handleEditClick(customer)}
-                        className="text-gray-500 hover:text-[#225091] transition-colors"
-                      >
-                        <Edit size={18} />
-                      </button>
-                      <button 
-                        onClick={() => handleDeleteClick(customer)}
-                        className="text-[#ff3d67] hover:text-[#e02e55] transition-colors"
-                      >
-                        <Trash2 size={18} />
-                      </button>
-                    </div>
+              {mockCustomers.length === 0 ? (
+                <tr>
+                  <td colSpan="7" className="py-10 text-center text-gray-500 text-sm font-medium">
+                    No customers found.
                   </td>
                 </tr>
-              ))}
+              ) : (
+                mockCustomers.map((customer, idx) => (
+                  <tr key={customer.id} className="hover:bg-slate-50/70 transition-colors">
+                    <td className="py-3.5 px-5 text-[13px] text-gray-500 font-medium">{idx + 1}</td>
+                    <td className="py-3.5 px-5">
+                      <div className="flex items-center gap-3">
+                        {customer.avatar ? (
+                          <img src={customer.avatar} alt={customer.name} className="w-8 h-8 rounded-full object-cover border border-gray-100 shadow-xs" />
+                        ) : (
+                          <div className="w-8 h-8 rounded-full bg-blue-50 text-[#225091] border border-blue-100 flex items-center justify-center text-xs font-bold shadow-xs">
+                            {customer.initials}
+                          </div>
+                        )}
+                        <span className="text-sm font-semibold text-gray-900">{customer.name}</span>
+                      </div>
+                    </td>
+                    <td className="py-3.5 px-5 text-xs text-gray-600 capitalize">{customer.gender}</td>
+                    <td className="py-3.5 px-5 text-xs text-gray-600">{customer.dob}</td>
+                    <td className="py-3.5 px-5 text-xs text-gray-600 font-medium">{customer.phone}</td>
+                    <td className="py-3.5 px-5 text-xs text-gray-600">{customer.email}</td>
+                    <td className="py-3.5 px-5 text-center">
+                      <div className="flex justify-center items-center gap-1.5">
+                        <button 
+                          onClick={() => handleViewClick(customer)}
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-[#225091] bg-[#EAF2FB] hover:bg-[#d8e8f8] border border-[#225091]/15 transition-all shadow-xs"
+                          title="View"
+                        >
+                          <Eye size={13} /> View
+                        </button>
+                        <button 
+                          onClick={() => handleEditClick(customer)}
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200/60 transition-all shadow-xs"
+                          title="Edit"
+                        >
+                          <Edit size={13} /> Edit
+                        </button>
+                        <button 
+                          onClick={() => handleDeleteClick(customer)}
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200/60 transition-all shadow-xs"
+                          title="Delete"
+                        >
+                          <Trash2 size={13} /> Delete
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
@@ -194,8 +205,8 @@ const Customers = () => {
 
       {/* Pagination */}
       <div className="flex flex-col sm:flex-row justify-between items-center mt-6 text-sm text-gray-600">
-        <div className="mb-4 sm:mb-0 font-medium">
-          Showing 1 to 8 of 30 Entries
+        <div className="mb-4 sm:mb-0 text-[13px] font-medium text-gray-600">
+          Showing 1 to 10 of 30 Entries
         </div>
         <div className="flex items-center gap-2">
           <button className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors">
@@ -319,7 +330,7 @@ const Customers = () => {
                     <Phone size={22} className="text-[#225091]" />
                   </div>
                   <div>
-                    <div className="text-[13px] text-gray-500 font-medium mb-1">Phone</div>
+                    <div className="text-[13px] text-gray-500 font-medium mb-1">Phone Number</div>
                     <div className="text-[15px] font-semibold text-gray-800">{customerToView.phone}</div>
                   </div>
                 </div>
@@ -331,7 +342,7 @@ const Customers = () => {
                   </div>
                   <div>
                     <div className="text-[13px] text-gray-500 font-medium mb-1">Email</div>
-                    <div className="text-[15px] font-semibold text-gray-800">{customerToView.email || 'example@mail.com'}</div>
+                    <div className="text-[15px] font-semibold text-gray-800">{customerToView.email}</div>
                   </div>
                 </div>
               </div>

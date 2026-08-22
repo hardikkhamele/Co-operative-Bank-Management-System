@@ -1,4 +1,4 @@
-import React, { useRef,  useState, useEffect, useMemo  } from 'react';
+import React, { useRef, useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { 
@@ -15,8 +15,11 @@ import {
   RefreshCw,
   Phone,
   Mail,
-  Building2
-, Table, FileText, ChevronDown} from 'lucide-react';
+  Building2,
+  Table,
+  FileText,
+  ChevronDown
+} from 'lucide-react';
 import { kpaReportService } from '../../api/kpaReportService';
 import { branchService } from '../../api/branchService';
 import { roleService } from '../../api/roleService';
@@ -365,7 +368,7 @@ const KPAReport = () => {
   const exportToExcel = () => {
     const { headers, rows } = getSelectedDataFromTable();
     const tableHtml = `
-      <table ref={tableRef}  border="1">
+      <table ref={tableRef} border="1">
         <thead>
           <tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr>
         </thead>
@@ -406,7 +409,7 @@ const KPAReport = () => {
   };
 
   return (
-<div className="flex flex-col gap-6 w-full max-w-7xl mx-auto pb-10">
+    <div className="flex flex-col gap-6 w-full max-w-7xl mx-auto pb-10">
       
       {/* Breadcrumb & Header Card */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 shrink-0">
@@ -553,24 +556,23 @@ const KPAReport = () => {
         {/* Table View */}
         <div className="overflow-x-auto min-h-[320px] relative">
           <table ref={tableRef} className="w-full min-w-[900px]">
-            <thead>
-              <tr className="border-b border-gray-100 bg-[#f8f9fb]">
-                
-                <th className="px-6 py-4 font-bold">Sr.No.</th>
-                <th className="py-4 px-6 text-left text-[13px] font-bold whitespace-nowrap">Employee Name</th>
-                <th className="py-4 px-6 text-left text-[13px] font-bold whitespace-nowrap">Designation</th>
-                <th className="py-4 px-6 text-left text-[13px] font-bold whitespace-nowrap">Branch</th>
-                <th className="py-4 px-6 text-left text-[13px] font-bold whitespace-nowrap">Phone Number</th>
-                <th className="py-4 px-6 text-left text-[13px] font-bold whitespace-nowrap">Email</th>
-                <th className="py-4 px-6 text-center text-[13px] font-bold whitespace-nowrap w-24">Action</th>
+            <thead className="bg-[#F8FAFC] text-gray-600 text-xs uppercase tracking-wider font-semibold border-b border-gray-200/80">
+              <tr>
+                <th className="py-3.5 px-5 font-semibold">Sr.No.</th>
+                <th className="py-3.5 px-5 font-semibold text-left whitespace-nowrap">Employee Name</th>
+                <th className="py-3.5 px-5 font-semibold text-left whitespace-nowrap">Designation</th>
+                <th className="py-3.5 px-5 font-semibold text-left whitespace-nowrap">Branch</th>
+                <th className="py-3.5 px-5 font-semibold text-left whitespace-nowrap">Phone Number</th>
+                <th className="py-3.5 px-5 font-semibold text-left whitespace-nowrap">Email</th>
+                <th className="py-3.5 px-5 font-semibold text-center whitespace-nowrap w-24">Action</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-gray-100">
               {loading ? (
                 <tr>
                   <td colSpan="7" className="py-16 text-center text-gray-500">
-                    <div className="flex flex-col items-center justify-center gap-3">
-                      <Loader2 className="animate-spin text-[#225091]" size={32} />
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      <Loader2 className="animate-spin text-[#225091]" size={24} />
                       <span className="text-sm font-medium">Loading KPA employee reports...</span>
                     </div>
                   </td>
@@ -579,8 +581,8 @@ const KPAReport = () => {
                 <tr>
                   <td colSpan="7" className="py-16 text-center text-gray-500">
                     <div className="flex flex-col items-center justify-center gap-2">
-                      <FileSpreadsheet className="text-gray-300 w-12 h-12 mb-1" />
-                      <span className="text-base font-semibold text-gray-700">No KPA Reports Found</span>
+                      <FileSpreadsheet className="text-gray-300 w-10 h-10 mb-1" />
+                      <span className="text-sm font-semibold text-gray-800">No KPA Reports Found</span>
                       <span className="text-xs text-gray-400">Try adjusting your filters or search query</span>
                     </div>
                   </td>
@@ -597,31 +599,31 @@ const KPAReport = () => {
                   return (
                     <tr 
                       key={empId} 
-                      className={`border-b border-gray-50 hover:bg-teal-50/30 transition-colors ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50/30'}`}
+                      className="hover:bg-slate-50/70 transition-colors"
                     >
-                      <td className="py-4 px-6 text-[14px] text-gray-600 font-medium">{srNo}</td>
-                      <td className="py-4 px-6">
+                      <td className="py-3.5 px-5 text-[13px] text-gray-500 font-medium">{srNo}</td>
+                      <td className="py-3.5 px-5">
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center text-indigo-600 font-bold text-xs shrink-0">
+                          <div className="w-8 h-8 rounded-full bg-blue-50 text-[#225091] border border-blue-100 flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
                             {initials}
                           </div>
-                          <span className="text-[14px] font-semibold text-gray-800 whitespace-nowrap">{empName}</span>
+                          <span className="text-sm font-semibold text-gray-900 whitespace-nowrap">{empName}</span>
                         </div>
                       </td>
-                      <td className="py-4 px-6 text-[14px] text-gray-600">
-                        <span className="max-w-[160px] truncate block font-medium">{row.designation || '—'}</span>
+                      <td className="py-3.5 px-5 text-xs text-gray-600 font-medium">
+                        <span className="max-w-[160px] truncate block">{row.designation || '—'}</span>
                       </td>
-                      <td className="py-4 px-6 text-[14px] text-gray-600">{row.branch || row.branchName || '—'}</td>
-                      <td className="py-4 px-6 text-[14px] text-gray-600">{row.phoneNumber || row.phone || '—'}</td>
-                      <td className="py-4 px-6 text-[14px] text-gray-600">{row.email || '—'}</td>
-                      <td className="py-4 px-6">
+                      <td className="py-3.5 px-5 text-xs text-gray-600 font-medium">{row.branch || row.branchName || '—'}</td>
+                      <td className="py-3.5 px-5 text-xs text-gray-600">{row.phoneNumber || row.phone || '—'}</td>
+                      <td className="py-3.5 px-5 text-xs text-gray-600">{row.email || '—'}</td>
+                      <td className="py-3.5 px-5 text-center">
                         <div className="flex items-center justify-center">
                           <Link 
                             to={`/kpa-report/view/${empId}`} 
-                            className="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:text-[#225091] hover:bg-teal-50 transition-colors"
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-[#225091] bg-[#EAF2FB] hover:bg-[#d8e8f8] border border-[#225091]/15 transition-all shadow-xs"
                             title="View KPA Targets Detail"
                           >
-                            <Eye size={18} />
+                            <Eye size={13} /> View
                           </Link>
                         </div>
                       </td>

@@ -57,61 +57,66 @@ const Banners = () => {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse min-w-[800px]">
-            <thead>
-              <tr className="bg-gray-50/50 text-gray-500 text-[11px] uppercase tracking-wider font-bold border-b border-gray-100">
-                <th className="py-4 px-6 font-bold">Sr.No.</th>
-                <th className="py-4 px-6 font-bold">Portal Type</th>
-                <th className="py-4 px-6 font-bold">Banner Type</th>
-                <th className="py-4 px-6 font-bold">Product Category</th>
-                <th className="py-4 px-6 font-bold text-right">Action</th>
+            <thead className="bg-[#F8FAFC] text-gray-600 text-xs uppercase tracking-wider font-semibold border-b border-gray-200/80">
+              <tr>
+                <th className="py-3.5 px-5 font-semibold">Sr.No.</th>
+                <th className="py-3.5 px-5 font-semibold">Portal Type</th>
+                <th className="py-3.5 px-5 font-semibold">Banner Type</th>
+                <th className="py-3.5 px-5 font-semibold">Product Category</th>
+                <th className="py-3.5 px-5 font-semibold text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {mockBanners.map((banner, idx) => (
-                <tr key={banner.id} className="hover:bg-gray-50/50 transition-colors">
-                  <td className="py-6 px-6 text-sm text-gray-600">{idx + 1}</td>
-                  <td className="py-6 px-6 text-sm text-gray-600 font-medium">{banner.portalType}</td>
-                  <td className="py-6 px-6 text-sm text-gray-600">{banner.bannerType}</td>
-                  <td className="py-6 px-6">
-                    <div 
-                      onClick={() => { setSelectedBanner(banner); setIsPreviewModalOpen(true); }}
-                      className="relative w-64 h-24 rounded-lg overflow-hidden shadow-sm group cursor-pointer"
-                    >
-                      <img src={banner.image} alt={banner.category} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-                      <div className="absolute top-2 left-2 flex items-center gap-1.5 text-white">
-                        <ImageIcon size={12} className="opacity-80" />
-                        <span className="text-[10px] font-semibold opacity-90">Company Name</span>
-                      </div>
-                      <div className="absolute top-2 right-2 text-white text-xs font-semibold px-2 py-0.5 rounded bg-black/30 backdrop-blur-sm">
-                        {banner.category}
-                      </div>
-                      <div className="absolute bottom-3 left-3 right-3 flex justify-between items-end">
-                        <div>
-                          <p className="text-white text-sm font-bold leading-tight mb-1">Get Instant {banner.category}<br/>at 7% Interest</p>
-                          <span className="inline-block bg-white/20 backdrop-blur-md border border-white/40 text-white text-[9px] font-bold px-2 py-0.5 rounded-full">Know More</span>
-                        </div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="py-6 px-6 text-right">
-                    <div className="flex justify-end items-center gap-4">
-                      <button className="text-gray-500 hover:text-gray-800 transition-colors">
-                        <Edit size={18} />
-                      </button>
-                      <button 
-                        onClick={() => { setBannerToDelete(banner); setIsDeleteModalOpen(true); }}
-                        className="text-[#ff3d67] hover:text-[#e02e55] transition-colors"
-                      >
-                        <Trash2 size={18} />
-                      </button>
-                    </div>
+              {mockBanners.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="py-12 text-center text-gray-500 text-sm font-medium">
+                    No banners configured. Click "+ Create Banner" to add one.
                   </td>
                 </tr>
-              ))}
+              ) : (
+                mockBanners.map((banner, idx) => (
+                  <tr key={banner.id} className="hover:bg-slate-50/70 transition-colors">
+                    <td className="py-3.5 px-5 text-sm text-gray-500 font-medium">{idx + 1}</td>
+                    <td className="py-3.5 px-5 text-sm text-gray-900 font-semibold">{banner.portalType}</td>
+                    <td className="py-3.5 px-5 text-xs text-gray-600 font-medium">{banner.bannerType}</td>
+                    <td className="py-3.5 px-5">
+                      <div 
+                        onClick={() => { setSelectedBanner(banner); setIsPreviewModalOpen(true); }}
+                        className="relative w-64 h-20 rounded-lg overflow-hidden shadow-sm group cursor-pointer border border-gray-200"
+                      >
+                        <img src={banner.image} alt={banner.category} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                        <div className="absolute top-2 left-2 flex items-center gap-1.5 text-white">
+                          <ImageIcon size={12} className="opacity-80" />
+                          <span className="text-[10px] font-semibold opacity-90">Company Name</span>
+                        </div>
+                        <div className="absolute top-2 right-2 text-white text-xs font-semibold px-2 py-0.5 rounded bg-black/30 backdrop-blur-sm">
+                          {banner.category}
+                        </div>
+                        <div className="absolute bottom-2 left-2 right-2 flex justify-between items-end">
+                          <p className="text-white text-xs font-bold leading-tight">Get Instant {banner.category}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="py-3.5 px-5 text-right">
+                      <div className="flex justify-end items-center gap-2">
+                        <button className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200/60 transition-all shadow-xs">
+                          <Edit size={13} /> Edit
+                        </button>
+                        <button 
+                          onClick={() => { setBannerToDelete(banner); setIsDeleteModalOpen(true); }}
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200/60 transition-all shadow-xs"
+                        >
+                          <Trash2 size={13} /> Delete
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

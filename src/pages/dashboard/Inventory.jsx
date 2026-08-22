@@ -502,21 +502,20 @@ const Inventory = () => {
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="overflow-x-auto">
           <table ref={tableRef} className="w-full text-left border-collapse min-w-[800px]">
-            <thead>
-              <tr className="bg-gray-50/50 text-gray-500 text-[11px] uppercase tracking-wider font-bold border-b border-gray-100">
-                
-                <th className="px-6 py-4 font-bold">Sr.No.</th>
-                <th className="py-4 px-6 font-bold text-[15px] w-1/2">Assets</th>
-                <th className="py-4 px-6 font-bold text-[15px]">Quantity</th>
-                <th className="py-4 px-6 font-bold text-[15px] text-right">Action</th>
+            <thead className="bg-[#F8FAFC] text-gray-600 text-xs uppercase tracking-wider font-semibold border-b border-gray-200/80">
+              <tr>
+                <th className="py-3.5 px-5 font-semibold">Sr.No.</th>
+                <th className="py-3.5 px-5 font-semibold w-1/2">Assets</th>
+                <th className="py-3.5 px-5 font-semibold">Quantity</th>
+                <th className="py-3.5 px-5 font-semibold text-right">Action</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-gray-100">
               {loading ? (
                 <tr>
                   <td colSpan="4" className="py-16 text-center text-gray-500">
-                    <div className="flex flex-col items-center justify-center gap-3">
-                      <Loader2 size={32} className="animate-spin text-[#225091]" />
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      <Loader2 size={24} className="animate-spin text-[#225091]" />
                       <span className="text-sm font-medium">Loading inventory...</span>
                     </div>
                   </td>
@@ -525,8 +524,8 @@ const Inventory = () => {
                 <tr>
                   <td colSpan="4" className="py-16 text-center text-gray-500">
                     <div className="flex flex-col items-center justify-center gap-2">
-                      <AlertCircle size={32} className="text-gray-400" />
-                      <p className="font-semibold text-gray-700">No inventory items found</p>
+                      <AlertCircle size={28} className="text-gray-400" />
+                      <p className="font-semibold text-gray-800 text-sm">No inventory items found</p>
                       <p className="text-xs text-gray-400">
                         {debouncedSearch || activeFiltersCount > 0 
                           ? 'Try adjusting your search or filter criteria.' 
@@ -543,25 +542,25 @@ const Inventory = () => {
                   const displaySrNo = item.srNo || (startEntry + index);
 
                   return (
-                    <tr key={itemId || index} className="border-b border-gray-100 hover:bg-gray-50/50 transition-colors">
-                      <td className="py-4 px-6 text-[15px] text-gray-600 pl-8">{displaySrNo}</td>
-                      <td className="py-4 px-6 text-[15px] text-gray-800 font-medium">{assetName}</td>
-                      <td className="py-4 px-6 text-[15px] text-gray-600">{displayQuantity}</td>
-                      <td className="py-4 px-6">
-                        <div className="flex items-center justify-end gap-3">
+                    <tr key={itemId || index} className="hover:bg-slate-50/70 transition-colors">
+                      <td className="py-3.5 px-5 text-[13px] text-gray-500 font-medium">{displaySrNo}</td>
+                      <td className="py-3.5 px-5 text-sm text-gray-900 font-semibold">{assetName}</td>
+                      <td className="py-3.5 px-5 text-sm font-bold text-gray-800 tabular-nums">{displayQuantity}</td>
+                      <td className="py-3.5 px-5">
+                        <div className="flex items-center justify-end gap-1.5">
                           <button 
                             onClick={() => handleOpenEdit(item)}
-                            className="p-1.5 text-gray-600 hover:text-[#225091] hover:bg-teal-50 rounded-lg transition-colors" 
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200/60 transition-all shadow-xs" 
                             title="Edit"
                           >
-                            <Edit size={18} />
+                            <Edit size={13} /> Edit
                           </button>
                           <button 
                             onClick={() => handleOpenDelete(item)}
-                            className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors" 
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200/60 transition-all shadow-xs" 
                             title="Delete"
                           >
-                            <Trash2 size={18} />
+                            <Trash2 size={13} /> Delete
                           </button>
                         </div>
                       </td>

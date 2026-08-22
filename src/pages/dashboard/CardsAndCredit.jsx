@@ -449,7 +449,7 @@ const CardsAndCredit = () => {
         setStatusLog("Opening Razorpay Payment Popup...");
 
         const options = {
-          key: orderData.keyId || orderData.razorpayKeyId,
+          key: orderData.keyId || orderData.razorpayKeyId || import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_live_TCxyw6opRmwTiR',
           amount: orderData.amountInPaise,
           currency: orderData.currency || "INR",
           name: "Advita Enterprise ERP",
@@ -1001,29 +1001,29 @@ const CardsAndCredit = () => {
           {/* Table */}
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-gray-200/80 text-[12px] font-semibold text-gray-500 uppercase tracking-wider bg-gray-50/50">
-                  <th className="py-3.5 px-4 rounded-l-xl">Order ID</th>
-                  <th className="py-3.5 px-4">Type / Units</th>
-                  <th className="py-3.5 px-4">Subtotal</th>
-                  <th className="py-3.5 px-4">GST (18%)</th>
-                  <th className="py-3.5 px-4">Total Amount</th>
-                  <th className="py-3.5 px-4">Status</th>
-                  <th className="py-3.5 px-4">Date</th>
-                  <th className="py-3.5 px-4 rounded-r-xl text-right">Actions</th>
+              <thead className="bg-[#F8FAFC] text-gray-600 text-xs uppercase tracking-wider font-semibold border-b border-gray-200/80">
+                <tr>
+                  <th className="py-3.5 px-5 font-semibold">Order ID</th>
+                  <th className="py-3.5 px-5 font-semibold">Type / Units</th>
+                  <th className="py-3.5 px-5 font-semibold">Subtotal</th>
+                  <th className="py-3.5 px-5 font-semibold">GST (18%)</th>
+                  <th className="py-3.5 px-5 font-semibold">Total Amount</th>
+                  <th className="py-3.5 px-5 font-semibold">Status</th>
+                  <th className="py-3.5 px-5 font-semibold">Date</th>
+                  <th className="py-3.5 px-5 font-semibold text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 text-sm">
                 {historyLoading ? (
                   <tr>
-                    <td colSpan={8} className="py-8 text-center text-gray-400">
+                    <td colSpan={8} className="py-12 text-center text-gray-400">
                       <RefreshCcw size={20} className="animate-spin mx-auto mb-2 text-[#225091]" />
-                      Loading purchase history...
+                      <span className="text-sm font-medium">Loading purchase history...</span>
                     </td>
                   </tr>
                 ) : purchaseHistoryList.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="py-8 text-center text-gray-400">
+                    <td colSpan={8} className="py-10 text-center text-gray-500 text-sm font-medium">
                       No purchase orders found matching the filter.
                     </td>
                   </tr>
@@ -1031,12 +1031,12 @@ const CardsAndCredit = () => {
                   purchaseHistoryList.map((po, idx) => {
                     const status = (po.paymentStatus || 'PENDING').toUpperCase();
                     return (
-                      <tr key={po.id || po._id || idx} className="hover:bg-gray-50/60 transition-colors">
-                        <td className="py-3.5 px-4 font-mono font-medium text-gray-800 text-xs">
+                      <tr key={po.id || po._id || idx} className="hover:bg-slate-50/70 transition-colors">
+                        <td className="py-3.5 px-5 font-mono font-medium text-gray-900 text-xs">
                           {po.orderId || po.id}
                         </td>
-                        <td className="py-3.5 px-4">
-                          <div className="font-semibold text-gray-800 text-xs">
+                        <td className="py-3.5 px-5">
+                          <div className="font-semibold text-gray-900 text-xs">
                             {po.purchaseType || 'PURCHASE'}
                           </div>
                           <div className="text-[11px] text-gray-500">
@@ -1045,22 +1045,22 @@ const CardsAndCredit = () => {
                             {po.verificationQuantity > 0 && `${po.verificationQuantity} Credits`}
                           </div>
                         </td>
-                        <td className="py-3.5 px-4 font-medium text-gray-700">
+                        <td className="py-3.5 px-5 text-sm font-semibold text-gray-800 tabular-nums">
                           ₹{(po.subtotal || 0).toLocaleString()}
                         </td>
-                        <td className="py-3.5 px-4 text-xs text-gray-500">
+                        <td className="py-3.5 px-5 text-xs text-gray-500 tabular-nums">
                           ₹{((po.cgst || 0) + (po.sgst || 0)).toLocaleString()}
                         </td>
-                        <td className="py-3.5 px-4 font-bold text-[#1b2559]">
+                        <td className="py-3.5 px-5 font-bold text-gray-900 text-sm tabular-nums">
                           ₹{(po.total || po.totalAmount || 0).toLocaleString()}
                         </td>
-                        <td className="py-3.5 px-4">
-                          <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold ${
+                        <td className="py-3.5 px-5">
+                          <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[12px] font-semibold border uppercase tracking-wide ${
                             status === 'SUCCESS' 
-                              ? 'bg-emerald-50 text-emerald-600' 
+                              ? 'bg-emerald-50 text-emerald-700 border-emerald-200/60' 
                               : status === 'PENDING'
-                              ? 'bg-amber-50 text-amber-600'
-                              : 'bg-red-50 text-red-600'
+                              ? 'bg-amber-50 text-amber-700 border-amber-200/60'
+                              : 'bg-rose-50 text-rose-700 border-rose-200/60'
                           }`}>
                             {status === 'SUCCESS' && <CheckCircle2 size={12} />}
                             {status === 'PENDING' && <Clock size={12} />}
@@ -1068,15 +1068,15 @@ const CardsAndCredit = () => {
                             {status}
                           </span>
                         </td>
-                        <td className="py-3.5 px-4 text-xs text-gray-500">
+                        <td className="py-3.5 px-5 text-xs text-gray-500">
                           {po.createdAt ? new Date(po.createdAt).toLocaleDateString('en-GB') : '-'}
                         </td>
-                        <td className="py-3.5 px-4 text-right">
+                        <td className="py-3.5 px-5 text-right">
                           <button
                             onClick={() => setSelectedOrderDetails(po)}
-                            className="px-3 py-1 rounded-lg border border-gray-200 text-xs font-semibold text-gray-600 hover:border-[#225091] hover:text-[#225091] transition-colors"
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-[#225091] bg-[#EAF2FB] hover:bg-[#d8e8f8] border border-[#225091]/15 transition-all shadow-xs"
                           >
-                            View Invoice
+                            <Eye size={13} /> View Invoice
                           </button>
                         </td>
                       </tr>
@@ -1123,18 +1123,18 @@ const CardsAndCredit = () => {
 
       {/* TAB 3: TRANSFER HISTORY */}
       {activeTab === 'transfers' && (
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+        <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h3 className="text-lg font-bold text-[#1b2559]">Branch Stock Transfer Log</h3>
-              <p className="text-xs text-gray-400">Audit trail of cards and credits transferred to branches</p>
+              <h3 className="text-lg font-bold text-gray-900">Stock Transfer History</h3>
+              <p className="text-xs text-gray-500">Audit trail of cards and credits allocated to branches.</p>
             </div>
-            
-            <div className="relative w-72">
+            {/* Search */}
+            <div className="relative w-full sm:w-64">
               <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
-                placeholder="Search branch name or code..."
+                placeholder="Search by branch..."
                 value={transferSearch}
                 onChange={(e) => setTransferSearch(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && fetchTransferHistory(1)}
@@ -1146,36 +1146,36 @@ const CardsAndCredit = () => {
           {/* Table */}
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-gray-200/80 text-[12px] font-semibold text-gray-500 uppercase tracking-wider bg-gray-50/50">
-                  <th className="py-3.5 px-4 rounded-l-xl">Branch</th>
-                  <th className="py-3.5 px-4">EMI Cards</th>
-                  <th className="py-3.5 px-4">Verification Credits</th>
-                  <th className="py-3.5 px-4">Branch Balance (After)</th>
-                  <th className="py-3.5 px-4">Remarks</th>
-                  <th className="py-3.5 px-4">Allocated By</th>
-                  <th className="py-3.5 px-4 rounded-r-xl">Date</th>
+              <thead className="bg-[#F8FAFC] text-gray-600 text-xs uppercase tracking-wider font-semibold border-b border-gray-200/80">
+                <tr>
+                  <th className="py-3.5 px-5 font-semibold">Branch</th>
+                  <th className="py-3.5 px-5 font-semibold">EMI Cards</th>
+                  <th className="py-3.5 px-5 font-semibold">Verification Credits</th>
+                  <th className="py-3.5 px-5 font-semibold">Branch Balance (After)</th>
+                  <th className="py-3.5 px-5 font-semibold">Remarks</th>
+                  <th className="py-3.5 px-5 font-semibold">Allocated By</th>
+                  <th className="py-3.5 px-5 font-semibold">Date</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 text-sm">
                 {historyLoading ? (
                   <tr>
-                    <td colSpan={7} className="py-8 text-center text-gray-400">
+                    <td colSpan={7} className="py-12 text-center text-gray-400">
                       <RefreshCcw size={20} className="animate-spin mx-auto mb-2 text-[#225091]" />
-                      Loading transfer history...
+                      <span className="text-sm font-medium">Loading transfer history...</span>
                     </td>
                   </tr>
                 ) : transferHistoryList.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="py-8 text-center text-gray-400">
+                    <td colSpan={7} className="py-10 text-center text-gray-500 text-sm font-medium">
                       No stock transfers found.
                     </td>
                   </tr>
                 ) : (
                   transferHistoryList.map((tr, idx) => (
-                    <tr key={tr.id || tr._id || idx} className="hover:bg-gray-50/60 transition-colors">
-                      <td className="py-3.5 px-4">
-                        <div className="font-semibold text-gray-800">
+                    <tr key={tr.id || tr._id || idx} className="hover:bg-slate-50/70 transition-colors">
+                      <td className="py-3.5 px-5">
+                        <div className="font-semibold text-gray-900 text-sm">
                           {tr.branch?.name || tr.branch || 'Branch'}
                         </div>
                         {tr.branch?.code && (
@@ -1184,23 +1184,23 @@ const CardsAndCredit = () => {
                           </div>
                         )}
                       </td>
-                      <td className="py-3.5 px-4 font-bold text-blue-600">
+                      <td className="py-3.5 px-5 font-bold text-blue-600 tabular-nums text-sm">
                         +{tr.emiQuantity || 0}
                       </td>
-                      <td className="py-3.5 px-4 font-bold text-teal-600">
+                      <td className="py-3.5 px-5 font-bold text-emerald-600 tabular-nums text-sm">
                         +{tr.verificationQuantity || 0}
                       </td>
-                      <td className="py-3.5 px-4 text-xs text-gray-600">
+                      <td className="py-3.5 px-5 text-xs text-gray-600">
                         <div>EMI: {tr.balanceAfter?.availableEmiCards ?? '-'}</div>
                         <div>Credits: {tr.balanceAfter?.availableVerificationCredits ?? '-'}</div>
                       </td>
-                      <td className="py-3.5 px-4 text-xs text-gray-500 max-w-[200px] truncate">
+                      <td className="py-3.5 px-5 text-xs text-gray-500 max-w-[200px] truncate">
                         {tr.remarks || '-'}
                       </td>
-                      <td className="py-3.5 px-4 text-xs text-gray-600">
+                      <td className="py-3.5 px-5 text-xs text-gray-600 font-medium">
                         {tr.createdBy?.fullName || tr.createdBy?.email || 'Bank Admin'}
                       </td>
-                      <td className="py-3.5 px-4 text-xs text-gray-500">
+                      <td className="py-3.5 px-5 text-xs text-gray-500">
                         {tr.createdAt ? new Date(tr.createdAt).toLocaleDateString('en-GB') : '-'}
                       </td>
                     </tr>

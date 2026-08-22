@@ -754,25 +754,24 @@ const DailyWorkReport = () => {
         {/* Table View */}
         <div className="overflow-x-auto min-h-[320px] relative">
           <table ref={tableRef} className="w-full min-w-[900px]">
-            <thead>
-              <tr className="border-b border-gray-100 bg-[#f8f9fb]">
-                
-                <th className="px-6 py-4 font-bold">Sr.No.</th>
-                <th className="py-4 px-6 text-left text-[13px] font-bold whitespace-nowrap">Employee Name</th>
-                <th className="py-4 px-6 text-left text-[13px] font-bold whitespace-nowrap">Designation</th>
-                <th className="py-4 px-6 text-left text-[13px] font-bold whitespace-nowrap">Branch</th>
-                <th className="py-4 px-6 text-left text-[13px] font-bold whitespace-nowrap">Product / Tasks</th>
-                <th className="py-4 px-6 text-left text-[13px] font-bold whitespace-nowrap">Amount / Hours</th>
-                <th className="py-4 px-6 text-left text-[13px] font-bold whitespace-nowrap">Remarks / Details</th>
-                <th className="py-4 px-6 text-left text-[13px] font-bold whitespace-nowrap">Date</th>
+            <thead className="bg-[#F8FAFC] text-gray-600 text-xs uppercase tracking-wider font-semibold border-b border-gray-200/80">
+              <tr>
+                <th className="py-3.5 px-5 font-semibold">Sr.No.</th>
+                <th className="py-3.5 px-5 font-semibold text-left whitespace-nowrap">Employee Name</th>
+                <th className="py-3.5 px-5 font-semibold text-left whitespace-nowrap">Designation</th>
+                <th className="py-3.5 px-5 font-semibold text-left whitespace-nowrap">Branch</th>
+                <th className="py-3.5 px-5 font-semibold text-left whitespace-nowrap">Product / Tasks</th>
+                <th className="py-3.5 px-5 font-semibold text-left whitespace-nowrap">Amount / Hours</th>
+                <th className="py-3.5 px-5 font-semibold text-left whitespace-nowrap">Remarks / Details</th>
+                <th className="py-3.5 px-5 font-semibold text-left whitespace-nowrap">Date</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-gray-100">
               {loading ? (
                 <tr>
                   <td colSpan="8" className="py-16 text-center text-gray-500">
-                    <div className="flex flex-col items-center justify-center gap-3">
-                      <Loader2 className="animate-spin text-[#225091]" size={32} />
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      <Loader2 className="animate-spin text-[#225091]" size={24} />
                       <span className="text-sm font-medium">Loading daily work reports...</span>
                     </div>
                   </td>
@@ -781,8 +780,8 @@ const DailyWorkReport = () => {
                 <tr>
                   <td colSpan="8" className="py-16 text-center text-gray-500">
                     <div className="flex flex-col items-center justify-center gap-2">
-                      <FileSpreadsheet className="text-gray-300 w-12 h-12 mb-1" />
-                      <span className="text-base font-semibold text-gray-700">No Daily Work Reports Found</span>
+                      <FileSpreadsheet className="text-gray-300 w-10 h-10 mb-1" />
+                      <span className="text-sm font-semibold text-gray-800">No Daily Work Reports Found</span>
                       <span className="text-xs text-gray-400">Try logging a work report or adjusting filters</span>
                     </div>
                   </td>
@@ -800,29 +799,29 @@ const DailyWorkReport = () => {
                   return (
                     <tr 
                       key={row.id || row._id || index} 
-                      className={`border-b border-gray-50 hover:bg-teal-50/30 transition-colors ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50/30'}`}
+                      className="hover:bg-slate-50/70 transition-colors"
                     >
-                      <td className="py-4 px-6 text-[14px] text-gray-600 font-medium">{srNo}</td>
-                      <td className="py-4 px-6">
+                      <td className="py-3.5 px-5 text-[13px] text-gray-500 font-medium">{srNo}</td>
+                      <td className="py-3.5 px-5">
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center text-indigo-600 font-bold text-xs shrink-0">
+                          <div className="w-8 h-8 rounded-full bg-blue-50 text-[#225091] border border-blue-100 flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
                             {initials}
                           </div>
-                          <span className="text-[14px] font-semibold text-gray-800 whitespace-nowrap">{empName}</span>
+                          <span className="text-sm font-semibold text-gray-900 whitespace-nowrap">{empName}</span>
                         </div>
                       </td>
-                      <td className="py-4 px-6 text-[14px] text-gray-600">{row.designation || '—'}</td>
-                      <td className="py-4 px-6 text-[14px] text-gray-600">{row.branch || row.branchName || '—'}</td>
-                      <td className="py-4 px-6 text-[14px] text-gray-700 font-medium max-w-xs truncate" title={taskText}>
+                      <td className="py-3.5 px-5 text-xs text-gray-600 font-medium">{row.designation || '—'}</td>
+                      <td className="py-3.5 px-5 text-xs text-gray-600 font-medium">{row.branch || row.branchName || '—'}</td>
+                      <td className="py-3.5 px-5 text-xs text-gray-700 font-medium max-w-xs truncate" title={taskText}>
                         {taskText}
                       </td>
-                      <td className="py-4 px-6 text-[14px] text-gray-800 font-semibold">{formatAmount(row)}</td>
-                      <td className="py-4 px-6 text-[13px] text-gray-500 max-w-xs truncate" title={remarkText}>
+                      <td className="py-3.5 px-5 text-sm font-semibold text-gray-900 tabular-nums">{formatAmount(row)}</td>
+                      <td className="py-3.5 px-5 text-xs text-gray-500 max-w-xs truncate" title={remarkText}>
                         {remarkText}
                       </td>
-                      <td className="py-4 px-6 text-[13px] text-gray-600 whitespace-nowrap">
+                      <td className="py-3.5 px-5 text-xs text-gray-600 whitespace-nowrap">
                         <div className="flex items-center gap-1.5">
-                          <Clock size={13} className="text-gray-400" />
+                          <Clock size={12} className="text-gray-400" />
                           <span>{formatDate(row.date)}</span>
                         </div>
                       </td>
@@ -876,6 +875,7 @@ const DailyWorkReport = () => {
               <button 
                 onClick={() => setIsLogModalOpen(false)}
                 className="text-gray-400 hover:text-gray-700 transition-colors"
+
               >
                 <X size={20} />
               </button>

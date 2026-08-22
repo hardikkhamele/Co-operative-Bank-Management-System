@@ -1,18 +1,20 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { toast } from "react-toastify";
 import { Link, useNavigate } from "react-router-dom";
 import {
   ChevronRight,
   Search,
-  SlidersHorizontal,
   Eye,
   Edit,
   Trash2,
   ChevronLeft,
   X,
-  ChevronDown,
-  Calendar,
-  ArrowLeft,
+  Users,
+  UserCheck,
+  UserX,
+  UserCog,
+  RotateCcw,
+  Loader2,
 } from "lucide-react";
 import { employeeService } from "../../api/employeeService";
 import { roleService } from "../../api/roleService";
@@ -23,98 +25,168 @@ const Employees = () => {
 
   // Data State
   const [employees, setEmployees] = useState([]);
+  const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   // Pagination State
   const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
 
-  // Filter/Search State
+  // Search & Filter State
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
-
-  // Dropdown Options State (fetched from APIs)
-  const [roleOptions, setRoleOptions] = useState([]);
-
-  // Selected Filters
-  const globalBranchId = useBranchStore((state) => state.globalBranchId);
-  const [selectedRoleId, setSelectedRoleId] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("");
+  const [selectedRoleId, setSelectedRoleId] = useState("");
+  const [selectedBranchId, setSelectedBranchId] = useState("");
+  const [selectedState, setSelectedState] = useState("");
+  const [selectedCity, setSelectedCity] = useState("");
+  const [includeBranchManagers, setIncludeBranchManagers] = useState(true);
+
+  // Dropdown Options State
+  const [roleOptions, setRoleOptions] = useState([]);
+  const { globalBranchId, branchOptions, fetchBranches } = useBranchStore();
 
   // Modals
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [employeeToDelete, setEmployeeToDelete] = useState(null);
 
-  // Debounce search
+  // Load branch list if not already available
+  useEffect(() => {
+    if (!branchOptions || branchOptions.length === 0) {
+      fetchBranches();
+    }
+  }, [branchOptions, fetchBranches]);
+
+  // Extract unique States and State-to-City map from branchOptions
+  const { statesList, stateCityMap } = useMemo(() => {
+    const statesSet = new Set();
+    const map = {};
+
+    (branchOptions || []).forEach((b) => {
+      if (b.state) {
+        statesSet.add(b.state);
+        if (!map[b.state]) map[b.state] = new Set();
+        if (b.city) map[b.state].add(b.city);
+      }
+    });
+
+    const states = Array.from(statesSet).sort();
+    const finalMap = {};
+    Object.keys(map).forEach((s) => {
+      finalMap[s] = Array.from(map[s]).sort();
+    });
+
+    return { statesList: states, stateCityMap: finalMap };
+  }, [branchOptions]);
+
+  // Available cities for the selected state
+  const availableCities = useMemo(() => {
+    if (!selectedState) return [];
+    return stateCityMap[selectedState] || [];
+  }, [selectedState, stateCityMap]);
+
+  // Debounce search input
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(searchTerm);
       setPage(1);
-    }, 500);
+    }, 400);
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
-  // Fetch Roles for Filters
+  // Fetch Roles for Filter Dropdown
   useEffect(() => {
-    const fetchOptions = async () => {
+    const fetchRoles = async () => {
       try {
         const roleRes = await roleService.list({ limit: 100 });
-        if (roleRes.success) setRoleOptions(roleRes.data);
+        if (roleRes && roleRes.success) {
+          const list = Array.isArray(roleRes.data)
+            ? roleRes.data
+            : roleRes.data?.items || [];
+          setRoleOptions(list);
+        }
       } catch (err) {
-        console.error("Failed to load filter options", err);
+        console.warn("Failed to load roles:", err);
       }
     };
-    fetchOptions();
+    fetchRoles();
   }, []);
 
-  // Fetch Employees
-  const fetchEmployees = async () => {
+  // Fetch Employees API Call
+  const fetchEmployees = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       const params = {
         page,
-        limit: 10,
-        includeBranchManagers: true,
+        limit,
+        includeBranchManagers,
       };
 
-      if (debouncedSearch) params.search = debouncedSearch;
-      if (globalBranchId) params.branchId = globalBranchId;
+      if (debouncedSearch.trim()) params.search = debouncedSearch.trim();
+      if (selectedBranchId) {
+        params.branchId = selectedBranchId;
+      } else if (globalBranchId) {
+        params.branchId = globalBranchId;
+      }
+
       if (selectedRoleId) params.roleId = selectedRoleId;
-      if (selectedStatus) params.status = selectedStatus;
+      if (selectedState) params.state = selectedState;
+      if (selectedCity) params.city = selectedCity;
+      if (selectedStatus && selectedStatus !== "ALL") {
+        params.status = selectedStatus.toUpperCase();
+      }
 
       const response = await employeeService.list(params);
-      if (response.success) {
-        setEmployees(response.data);
-        setTotalPages(
-          response.meta?.totalPages ||
-            response.pagination?.totalPages ||
-            response.data?.meta?.totalPages ||
-            response.data?.pagination?.totalPages ||
-            1,
-        );
-        setTotalRecords(
-          response.meta?.totalRecords ||
-            response.pagination?.totalRecords ||
-            response.data?.meta?.totalRecords ||
-            response.data?.pagination?.totalRecords ||
-            0,
-        );
+      if (response && response.success) {
+        const listData = Array.isArray(response.data)
+          ? response.data
+          : response.data?.items || response.data?.employees || response.items || [];
+        setEmployees(listData);
+
+        if (response.data?.stats) {
+          setStats(response.data.stats);
+        } else if (response.stats) {
+          setStats(response.stats);
+        }
+
+        const meta =
+          response.meta ||
+          response.pagination ||
+          response.data?.meta ||
+          response.data?.pagination ||
+          {};
+
+        setTotalPages(meta.totalPages || 1);
+        setTotalRecords(meta.totalRecords || listData.length);
+      } else {
+        setEmployees([]);
       }
     } catch (err) {
-      console.error("Failed to fetch employees", err);
-      setError("Failed to load employees.");
+      console.error("Failed to fetch employees:", err);
+      setError("Failed to load employees list.");
     } finally {
       setLoading(false);
     }
-  };
+  }, [
+    page,
+    limit,
+    debouncedSearch,
+    globalBranchId,
+    selectedBranchId,
+    selectedRoleId,
+    selectedState,
+    selectedCity,
+    selectedStatus,
+    includeBranchManagers,
+  ]);
 
   useEffect(() => {
     fetchEmployees();
-  }, [page, debouncedSearch, globalBranchId, selectedRoleId, selectedStatus]);
+  }, [fetchEmployees]);
 
   const handleDeleteClick = (employee) => {
     setEmployeeToDelete(employee);
@@ -125,6 +197,7 @@ const Employees = () => {
     if (!employeeToDelete) return;
     try {
       await employeeService.delete(employeeToDelete.id);
+      toast.success("Employee deactivated successfully");
       setIsDeleteModalOpen(false);
       setEmployeeToDelete(null);
       fetchEmployees();
@@ -134,7 +207,7 @@ const Employees = () => {
   };
 
   const getInitials = (name) => {
-    if (!name) return "U";
+    if (!name) return "E";
     return name
       .split(" ")
       .map((n) => n[0])
@@ -143,249 +216,490 @@ const Employees = () => {
       .substring(0, 2);
   };
 
-  const resetFilters = () => {
-    setSelectedRoleId("");
+  const handleResetFilters = () => {
+    setSearchTerm("");
+    setDebouncedSearch("");
     setSelectedStatus("");
+    setSelectedRoleId("");
+    setSelectedBranchId("");
+    setSelectedState("");
+    setSelectedCity("");
+    setIncludeBranchManagers(true);
     setPage(1);
-    setIsFilterOpen(false);
   };
 
-  const applyFilters = () => {
-    setPage(1);
-    setIsFilterOpen(false);
-  };
+  // Calculated Stats with safe fallback
+  const totalCount =
+    stats?.totalEmployees ??
+    stats?.totalRecords ??
+    totalRecords ??
+    employees.length;
+
+  const activeCount =
+    stats?.activeEmployees ??
+    stats?.active ??
+    employees.filter((e) => e.status === "ACTIVE").length;
+
+  const inactiveCount =
+    stats?.inactiveEmployees ??
+    stats?.inactive ??
+    employees.filter((e) => e.status === "INACTIVE").length;
+
+  const managerCount =
+    stats?.totalManagers ??
+    stats?.branchManagers ??
+    employees.filter(
+      (e) => e.type === "MANAGER" || e.role?.code === "BRANCH_MANAGER"
+    ).length;
+
+  const hasActiveFilters =
+    Boolean(debouncedSearch) ||
+    Boolean(selectedStatus) ||
+    Boolean(selectedRoleId) ||
+    Boolean(selectedBranchId) ||
+    Boolean(selectedState) ||
+    Boolean(selectedCity) ||
+    !includeBranchManagers;
 
   return (
-    <div className="h-full flex flex-col gap-6 w-full">
-      {/* Header Card */}
-      <div className="bg-white rounded-lg p-5 shadow-sm border border-gray-100 shrink-0">
-        <div className="flex items-center gap-3 mb-2">
-          <h1 className="text-2xl font-bold text-[#225091] m-0">Employees</h1>
-        </div>
-        <div className="flex items-center text-sm font-medium text-gray-600">
-          <Link
-            to="/dashboard"
-            className="hover:text-gray-900 transition-colors"
-          >
-            Dashboard
-          </Link>
-          <ChevronRight size={16} className="mx-1 text-gray-400" />
-          <span className="hover:text-gray-900 transition-colors">
-            HR Management
-          </span>
-          <ChevronRight size={16} className="mx-1 text-gray-400" />
-          <span className="text-[#225091]">Employee</span>
-        </div>
-      </div>
-
-      {/* Toolbar */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center shrink-0 gap-4">
-        <div className="flex items-center gap-4 w-full sm:w-auto">
-          <div className="relative w-full sm:w-64">
-            <Search
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-              size={18}
-            />
-            <input
-              type="text"
-              placeholder="Search employees..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition-all shadow-sm text-sm"
-            />
-          </div>
-          <div className="relative">
-            <button
-              onClick={() => setIsFilterOpen(!isFilterOpen)}
-              className="p-2.5 bg-white border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors shadow-sm relative focus:outline-none"
-            >
-              <SlidersHorizontal size={18} />
-              {(selectedRoleId || selectedStatus) && (
-                <span className="absolute -top-1 -right-1 w-3 h-3 bg-[#1D4ED8] rounded-full border border-white"></span>
-              )}
-            </button>
-
-            {/* Filter Popover */}
-            {isFilterOpen && (
-              <div className="absolute top-full left-0 sm:left-auto sm:right-0 mt-2 z-50 w-72 bg-[#f4f3fb] rounded-2xl shadow-2xl flex flex-col border border-gray-200">
-                <div className="flex justify-between items-center p-5 pb-3">
-                  <h2 className="text-xl font-bold text-[#1b2559]">Filter</h2>
-                  <button
-                    onClick={() => setIsFilterOpen(false)}
-                    className="text-gray-500 hover:text-gray-800 transition-colors focus:outline-none"
-                  >
-                    <X size={20} />
-                  </button>
-                </div>
-
-                <div className="p-5 pt-2 space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Department
-                    </label>
-                    <select
-                      value={selectedRoleId}
-                      onChange={(e) => setSelectedRoleId(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#1D4ED8] bg-white text-sm"
-                    >
-                      <option value="">All Departments</option>
-                      {roleOptions.map((r) => (
-                        <option key={r.id} value={r.id}>
-                          {r.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Status
-                    </label>
-                    <select
-                      value={selectedStatus}
-                      onChange={(e) => setSelectedStatus(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#1D4ED8] bg-white text-sm"
-                    >
-                      <option value="">All</option>
-                      <option value="ACTIVE">Active</option>
-                      <option value="INACTIVE">Inactive</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="p-5 pt-2 flex gap-3">
-                  <button
-                    onClick={resetFilters}
-                    className="flex-1 py-2 rounded-full border border-[#225091] text-[#225091] font-semibold hover:bg-gray-50 transition-colors bg-white text-sm focus:outline-none"
-                  >
-                    Reset
-                  </button>
-                  <button
-                    onClick={applyFilters}
-                    className="flex-1 py-2 rounded-full bg-[#225091] text-white font-semibold hover:bg-[#163a6c] transition-colors shadow-sm text-sm focus:outline-none"
-                  >
-                    Apply
-                  </button>
-                </div>
-              </div>
-            )}
+    <div className="w-full max-w-none space-y-6 pb-12">
+      {/* Top Header Card */}
+      <div className="bg-white rounded-xl p-5 shadow-xs border border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-[#225091] m-0">
+            Society Employees
+          </h1>
+          <div className="flex items-center text-sm font-medium text-gray-500 mt-1">
+            <Link to="/dashboard" className="hover:text-gray-900 transition-colors">
+              Dashboard
+            </Link>
+            <ChevronRight size={15} className="mx-1 text-gray-400" />
+            <span className="text-gray-600">HR Management</span>
+            <ChevronRight size={15} className="mx-1 text-gray-400" />
+            <span className="text-[#225091] font-semibold">Employees</span>
           </div>
         </div>
 
         <Link
           to="/employees/create"
-          className="bg-[#225091] hover:bg-[#163a6c] text-white px-5 py-2.5 rounded-full font-semibold transition-colors shadow-sm flex items-center gap-2 text-sm shrink-0"
+          className="bg-[#225091] hover:bg-[#1b427b] text-white px-5 py-2.5 rounded-full font-semibold transition-all shadow-sm flex items-center gap-2 text-sm shrink-0 hover:shadow"
         >
           + Add Staff
         </Link>
       </div>
 
-      {/* Table */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-100 flex-1 overflow-hidden flex flex-col">
+      {/* Top Stats Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {/* Total Staff Card */}
+        <div
+          onClick={() => {
+            setSelectedStatus("");
+            setSelectedRoleId("");
+            setPage(1);
+          }}
+          className={`bg-white rounded-xl p-4.5 border shadow-xs flex flex-col items-center justify-center cursor-pointer transition-all hover:shadow-md ${
+            !selectedStatus && !selectedRoleId
+              ? "border-[#225091] ring-2 ring-[#225091]/10 bg-blue-50/20"
+              : "border-gray-100 hover:border-gray-200"
+          }`}
+        >
+          <div className="flex items-center gap-2 text-[#225091] mb-1">
+            <Users size={18} />
+            <span className="text-[26px] font-bold leading-none">
+              {totalCount}
+            </span>
+          </div>
+          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider text-center">
+            Total Staff
+          </span>
+        </div>
+
+        {/* Active Staff Card */}
+        <div
+          onClick={() => {
+            setSelectedStatus(selectedStatus === "ACTIVE" ? "" : "ACTIVE");
+            setPage(1);
+          }}
+          className={`bg-white rounded-xl p-4.5 border shadow-xs flex flex-col items-center justify-center cursor-pointer transition-all hover:shadow-md ${
+            selectedStatus === "ACTIVE"
+              ? "border-emerald-500 ring-2 ring-emerald-500/10 bg-emerald-50/20"
+              : "border-gray-100 hover:border-gray-200"
+          }`}
+        >
+          <div className="flex items-center gap-2 text-emerald-600 mb-1">
+            <UserCheck size={18} />
+            <span className="text-[26px] font-bold leading-none">
+              {activeCount}
+            </span>
+          </div>
+          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider text-center">
+            Active Staff
+          </span>
+        </div>
+
+        {/* Inactive Staff Card */}
+        <div
+          onClick={() => {
+            setSelectedStatus(selectedStatus === "INACTIVE" ? "" : "INACTIVE");
+            setPage(1);
+          }}
+          className={`bg-white rounded-xl p-4.5 border shadow-xs flex flex-col items-center justify-center cursor-pointer transition-all hover:shadow-md ${
+            selectedStatus === "INACTIVE"
+              ? "border-rose-500 ring-2 ring-rose-500/10 bg-rose-50/20"
+              : "border-gray-100 hover:border-gray-200"
+          }`}
+        >
+          <div className="flex items-center gap-2 text-rose-600 mb-1">
+            <UserX size={18} />
+            <span className="text-[26px] font-bold leading-none">
+              {inactiveCount}
+            </span>
+          </div>
+          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider text-center">
+            Inactive Staff
+          </span>
+        </div>
+
+        {/* Branch Managers Card */}
+        <div
+          onClick={() => {
+            setSelectedRoleId(
+              selectedRoleId === "BRANCH_MANAGER" ? "" : "BRANCH_MANAGER"
+            );
+            setPage(1);
+          }}
+          className={`bg-white rounded-xl p-4.5 border shadow-xs flex flex-col items-center justify-center cursor-pointer transition-all hover:shadow-md ${
+            selectedRoleId === "BRANCH_MANAGER"
+              ? "border-purple-500 ring-2 ring-purple-500/10 bg-purple-50/20"
+              : "border-gray-100 hover:border-gray-200"
+          }`}
+        >
+          <div className="flex items-center gap-2 text-purple-600 mb-1">
+            <UserCog size={18} />
+            <span className="text-[26px] font-bold leading-none">
+              {managerCount}
+            </span>
+          </div>
+          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider text-center">
+            Branch Managers
+          </span>
+        </div>
+      </div>
+
+      {/* Filter Toolbar Card */}
+      <div className="bg-white rounded-xl p-4 shadow-xs border border-gray-100 space-y-3.5">
+        {/* Top Search & Reset Row */}
+        <div className="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-3">
+          <div className="relative flex-1">
+            <Search
+              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
+              size={18}
+            />
+            <input
+              type="text"
+              placeholder="Search by name, employee code, email, phone number..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-9 py-2.5 bg-gray-50/70 hover:bg-gray-50 focus:bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all"
+            />
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                <X size={16} />
+              </button>
+            )}
+          </div>
+
+          <div className="flex items-center gap-2.5">
+            <label className="flex items-center gap-2 text-xs font-semibold text-gray-600 cursor-pointer select-none bg-gray-50 px-3 py-2 rounded-lg border border-gray-200/80 hover:bg-gray-100/70 transition-colors">
+              <input
+                type="checkbox"
+                checked={includeBranchManagers}
+                onChange={(e) => {
+                  setIncludeBranchManagers(e.target.checked);
+                  setPage(1);
+                }}
+                className="w-4 h-4 rounded text-[#225091] focus:ring-[#225091] border-gray-300"
+              />
+              <span>Include Managers</span>
+            </label>
+
+            {hasActiveFilters && (
+              <button
+                onClick={handleResetFilters}
+                className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-gray-600 hover:text-rose-600 bg-gray-50 hover:bg-rose-50 rounded-lg border border-gray-200 transition-colors"
+                title="Reset all filters"
+              >
+                <RotateCcw size={14} />
+                Reset
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Bottom Inline Filter Controls */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 pt-2 border-t border-gray-100">
+          {/* Status Filter */}
+          <div className="relative">
+            <select
+              value={selectedStatus}
+              onChange={(e) => {
+                setSelectedStatus(e.target.value);
+                setPage(1);
+              }}
+              className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-xs font-medium text-gray-700 shadow-2xs"
+            >
+              <option value="">All Statuses</option>
+              <option value="ACTIVE">Active</option>
+              <option value="INACTIVE">Inactive</option>
+            </select>
+          </div>
+
+          {/* Department / Role Filter */}
+          <div className="relative">
+            <select
+              value={selectedRoleId}
+              onChange={(e) => {
+                setSelectedRoleId(e.target.value);
+                setPage(1);
+              }}
+              className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-xs font-medium text-gray-700 shadow-2xs"
+            >
+              <option value="">All Roles / Depts</option>
+              <option value="BRANCH_MANAGER">Branch Manager</option>
+              {roleOptions.map((r) => (
+                <option key={r.id} value={r.id}>
+                  {r.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* State Filter (Bank Owner location filtering) */}
+          <div className="relative">
+            <select
+              value={selectedState}
+              onChange={(e) => {
+                setSelectedState(e.target.value);
+                setSelectedCity("");
+                setPage(1);
+              }}
+              className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-xs font-medium text-gray-700 shadow-2xs"
+            >
+              <option value="">All States</option>
+              {statesList.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* City Filter (Bank Owner location filtering) */}
+          <div className="relative">
+            <select
+              value={selectedCity}
+              disabled={!selectedState || availableCities.length === 0}
+              onChange={(e) => {
+                setSelectedCity(e.target.value);
+                setPage(1);
+              }}
+              className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-xs font-medium text-gray-700 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed shadow-2xs"
+            >
+              <option value="">
+                {selectedState ? "All Cities" : "Select State First"}
+              </option>
+              {availableCities.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Branch Filter */}
+          <div className="relative">
+            <select
+              value={selectedBranchId}
+              onChange={(e) => {
+                setSelectedBranchId(e.target.value);
+                setPage(1);
+              }}
+              className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-xs font-medium text-gray-700 shadow-2xs"
+            >
+              <option value="">All Branches</option>
+              {(branchOptions || []).map((b) => (
+                <option key={b.id} value={b.id}>
+                  {b.name} {b.code ? `(${b.code})` : ""}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Employees Table */}
+      <div className="bg-white rounded-xl shadow-xs border border-gray-100 overflow-hidden flex flex-col">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse min-w-[800px]">
-            <thead>
-              <tr className="bg-[#f4f3fb] text-[#4b5563] text-sm font-bold border-b border-gray-100">
-                <th className="py-4 px-6">Sr.No.</th>
-                <th className="py-4 px-6">Employee Name</th>
-                <th className="py-4 px-6">Emp Code</th>
-                <th className="py-4 px-6">Designation</th>
-                <th className="py-4 px-6">Branch</th>
-                <th className="py-4 px-6">Status</th>
-                <th className="py-4 px-6 text-center">Action</th>
+          <table className="w-full text-left border-collapse min-w-[850px]">
+            <thead className="bg-[#F8FAFC] text-gray-600 text-xs uppercase tracking-wider font-semibold border-b border-gray-200/80">
+              <tr>
+                <th className="py-3.5 px-5 font-semibold">Sr.No.</th>
+                <th className="py-3.5 px-5 font-semibold">Employee</th>
+                <th className="py-3.5 px-5 font-semibold">Emp Code</th>
+                <th className="py-3.5 px-5 font-semibold">Designation / Role</th>
+                <th className="py-3.5 px-5 font-semibold">Branch & State</th>
+                <th className="py-3.5 px-5 font-semibold">Status</th>
+                <th className="py-3.5 px-5 font-semibold text-center">Actions</th>
               </tr>
             </thead>
-            <tbody>
-              {loading && employees.length === 0 ? null : error ? (
+            <tbody className="divide-y divide-gray-100 text-sm">
+              {loading && employees.length === 0 ? (
                 <tr>
-                  <td colSpan="7" className="py-8 text-center text-red-500">
+                  <td colSpan="7" className="py-16 text-center text-gray-500">
+                    <div className="flex items-center justify-center gap-2">
+                      <Loader2
+                        size={22}
+                        className="animate-spin text-[#225091]"
+                      />
+                      <span className="text-sm font-medium">
+                        Loading society employees...
+                      </span>
+                    </div>
+                  </td>
+                </tr>
+              ) : error ? (
+                <tr>
+                  <td
+                    colSpan="7"
+                    className="py-10 text-center text-rose-600 text-sm font-medium"
+                  >
                     {error}
                   </td>
                 </tr>
               ) : employees.length === 0 ? (
                 <tr>
-                  <td colSpan="7" className="py-8 text-center text-gray-500">
-                    No employees found.
+                  <td
+                    colSpan="7"
+                    className="py-14 text-center text-gray-500 text-sm"
+                  >
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      <Users size={32} className="text-gray-300" />
+                      <span className="font-semibold text-gray-700">
+                        No employees found
+                      </span>
+                      <span className="text-xs text-gray-400">
+                        Try adjusting your search or active filters
+                      </span>
+                    </div>
                   </td>
                 </tr>
               ) : (
                 employees.map((row, index) => (
                   <tr
-                    key={row.id}
-                    className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors text-sm group"
+                    key={row.id || index}
+                    className="hover:bg-slate-50/70 transition-colors"
                   >
-                    <td className="py-4 px-6 text-gray-600">
-                      {row.srNo || (page - 1) * 10 + index + 1}
+                    <td className="py-3.5 px-5 text-[13px] text-gray-500 font-medium">
+                      {row.srNo || (page - 1) * limit + index + 1}
                     </td>
-                    <td className="py-4 px-6">
+
+                    {/* Employee Profile */}
+                    <td className="py-3.5 px-5">
                       <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold shrink-0">
+                        <div className="w-9 h-9 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center text-[#225091] font-bold text-xs shrink-0 shadow-2xs">
                           {getInitials(row.fullName)}
                         </div>
                         <div className="flex flex-col">
-                          <span className="font-semibold text-gray-800">
+                          <span className="font-semibold text-gray-900 text-sm">
                             {row.fullName}
                           </span>
                           <span className="text-xs text-gray-500">
-                            {row.email}
+                            {row.email || "-"}
                           </span>
-                          <span className="text-xs text-gray-500">
-                            {row.phoneNumber}
+                          <span className="text-[11px] text-gray-400">
+                            {row.phoneNumber || ""}
                           </span>
                         </div>
                       </div>
                     </td>
-                    <td className="py-4 px-6">
-                      <span className="text-gray-600 font-medium">
-                        {row.employeeCode || "-"}
+
+                    {/* Employee Code & Badge */}
+                    <td className="py-3.5 px-5">
+                      <span className="text-gray-800 font-mono font-semibold text-xs bg-gray-100 px-2 py-0.5 rounded">
+                        {row.employeeId || row.employeeCode || "-"}
                       </span>
-                      {row.type === "MANAGER" && (
-                        <div className="text-[10px] bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full inline-block mt-1">
+                      {row.type === "MANAGER" || row.role?.code === "BRANCH_MANAGER" ? (
+                        <div className="text-[10px] bg-purple-50 border border-purple-200/60 text-purple-700 font-semibold px-2 py-0.5 rounded-full inline-block mt-1">
                           Branch Manager
                         </div>
-                      )}
+                      ) : null}
                     </td>
-                    <td className="py-4 px-6">
-                      <span className="text-gray-700 font-medium">
-                        {row.designation || row.role?.name || "-"}
-                      </span>
-                    </td>
-                    <td className="py-4 px-6 text-gray-600">
+
+                    {/* Designation / Department */}
+                    <td className="py-3.5 px-5 text-xs text-gray-700 font-medium">
                       <div className="flex flex-col">
-                        <span>{row.branch?.name || "-"}</span>
-                        <span className="text-xs text-gray-400">
-                          {row.branch?.code || ""}
+                        <span className="font-semibold text-gray-800">
+                          {row.designation || row.role?.name || "-"}
+                        </span>
+                        {row.department && (
+                          <span className="text-[11px] text-gray-400">
+                            {row.department}
+                          </span>
+                        )}
+                      </div>
+                    </td>
+
+                    {/* Branch & State */}
+                    <td className="py-3.5 px-5 text-xs text-gray-600">
+                      <div className="flex flex-col">
+                        <span className="font-semibold text-gray-800">
+                          {row.branch?.name || "-"}
+                        </span>
+                        <span className="text-[11px] text-gray-400">
+                          {row.branch?.state || row.branch?.city || row.branch?.code || ""}
                         </span>
                       </div>
                     </td>
-                    <td className="py-4 px-6">
+
+                    {/* Status Badge */}
+                    <td className="py-3.5 px-5">
                       <span
-                        className={`px-2 py-1 rounded-full text-xs font-semibold ${row.status === "ACTIVE" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold border uppercase tracking-wide ${
+                          row.status === "ACTIVE"
+                            ? "bg-emerald-50 text-emerald-700 border-emerald-200/60"
+                            : "bg-rose-50 text-rose-700 border-rose-200/60"
+                        }`}
                       >
-                        {row.status || "UNKNOWN"}
+                        {row.status || "ACTIVE"}
                       </span>
                     </td>
-                    <td className="py-4 px-6">
-                      <div className="flex items-center justify-center gap-3">
+
+                    {/* Actions */}
+                    <td className="py-3.5 px-5">
+                      <div className="flex items-center justify-center gap-1.5">
                         <button
                           onClick={() => navigate(`/employees/view/${row.id}`)}
-                          className="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center hover:bg-blue-100 transition-colors"
-                          title="View"
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-[#225091] bg-[#EAF2FB] hover:bg-[#d8e8f8] border border-[#225091]/15 transition-all shadow-2xs"
+                          title="View Employee Profile"
                         >
-                          <Eye size={16} />
+                          <Eye size={13} /> View
                         </button>
                         <button
                           onClick={() => navigate(`/employees/edit/${row.id}`)}
-                          className="w-8 h-8 rounded-full bg-teal-50 text-teal-600 flex items-center justify-center hover:bg-teal-100 transition-colors"
-                          title="Edit"
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200/60 transition-all shadow-2xs"
+                          title="Edit Staff"
                         >
-                          <Edit size={16} />
+                          <Edit size={13} /> Edit
                         </button>
                         <button
                           onClick={() => handleDeleteClick(row)}
-                          className="w-8 h-8 rounded-full bg-red-50 text-red-600 flex items-center justify-center hover:bg-red-100 transition-colors"
-                          title="Delete"
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200/60 transition-all shadow-2xs"
+                          title="Delete / Deactivate"
                         >
-                          <Trash2 size={16} />
+                          <Trash2 size={13} /> Delete
                         </button>
                       </div>
                     </td>
@@ -396,27 +710,29 @@ const Employees = () => {
           </table>
         </div>
 
-        {/* Pagination */}
+        {/* Pagination Footer */}
         {!loading && employees.length > 0 && (
-          <div className="px-6 py-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4 mt-auto">
-            <div className="text-sm text-gray-500 font-medium">
-              Showing page {page} of {totalPages} ({totalRecords} total entries)
+          <div className="px-6 py-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4 mt-auto bg-gray-50/40">
+            <div className="text-xs text-gray-500 font-medium">
+              Showing page <span className="font-semibold text-gray-800">{page}</span> of{" "}
+              <span className="font-semibold text-gray-800">{totalPages}</span> (
+              <span className="font-semibold text-gray-800">{totalRecords}</span> total entries)
             </div>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
-                className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-[#1D4ED8] hover:bg-[#1D4ED8] hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-[#225091] hover:bg-[#225091] hover:text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-xs font-semibold"
               >
                 <ChevronLeft size={16} />
               </button>
-              <button className="w-8 h-8 flex items-center justify-center rounded-full bg-[#1D4ED8] text-white font-medium shadow-sm border border-[#1D4ED8]">
+              <span className="px-3 py-1 bg-[#225091] text-white text-xs font-bold rounded-full shadow-2xs">
                 {page}
-              </button>
+              </span>
               <button
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={page === totalPages}
-                className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-[#1D4ED8] hover:bg-[#1D4ED8] hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-[#225091] hover:bg-[#225091] hover:text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-xs font-semibold"
               >
                 <ChevronRight size={16} />
               </button>
@@ -427,20 +743,20 @@ const Employees = () => {
 
       {/* Delete Confirmation Modal */}
       {isDeleteModalOpen && employeeToDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 transition-opacity">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4 transition-opacity animate-in fade-in">
           <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl p-6 text-center">
-            <div className="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Trash2 size={32} />
+            <div className="w-16 h-16 bg-rose-50 text-rose-500 rounded-full flex items-center justify-center mx-auto mb-4 border border-rose-100">
+              <Trash2 size={28} />
             </div>
             <h3 className="text-xl font-bold text-gray-800 mb-2">
-              Delete Employee
+              Deactivate Employee
             </h3>
             <p className="text-gray-500 text-sm mb-6">
-              Are you sure you want to delete{" "}
-              <span className="font-semibold text-gray-700">
+              Are you sure you want to deactivate{" "}
+              <span className="font-semibold text-gray-800">
                 {employeeToDelete.fullName}
               </span>
-              ? This action cannot be undone.
+              ? They will no longer be able to log in.
             </p>
             <div className="flex gap-3">
               <button
@@ -448,15 +764,15 @@ const Employees = () => {
                   setIsDeleteModalOpen(false);
                   setEmployeeToDelete(null);
                 }}
-                className="flex-1 py-2.5 rounded-full border-2 border-gray-200 text-gray-600 font-semibold hover:bg-gray-50 transition-colors"
+                className="flex-1 py-2.5 rounded-full border-2 border-gray-200 text-gray-600 font-semibold hover:bg-gray-50 transition-colors text-sm"
               >
                 Cancel
               </button>
               <button
                 onClick={confirmDelete}
-                className="flex-1 py-2.5 rounded-full bg-red-500 text-white font-semibold hover:bg-red-600 transition-colors shadow-sm"
+                className="flex-1 py-2.5 rounded-full bg-rose-600 text-white font-semibold hover:bg-rose-700 transition-colors shadow-sm text-sm"
               >
-                Delete
+                Deactivate
               </button>
             </div>
           </div>
