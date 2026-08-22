@@ -626,144 +626,106 @@ const CardsAndCredit = () => {
   };
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-12">
-      {/* Header and Breadcrumb */}
-      <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100/80 flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="w-full flex flex-col gap-5 font-sans antialiased pb-16">
+      {/* 1. Header Card - Exact Match with Employees.jsx */}
+      <div className="bg-white rounded-xl p-5 shadow-xs border border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-[#1b2559] tracking-tight mb-1">
+          <h1 className="text-2xl font-bold text-[#225091] m-0 font-heading">
             EMI Cards & Verification Credits
           </h1>
-          <div className="flex items-center text-sm font-medium text-gray-500">
-            <Link to="/dashboard" className="hover:text-[#225091] transition-colors">Dashboard</Link>
+          <div className="flex items-center text-sm font-medium text-gray-500 mt-1">
+            <Link to="/dashboard" className="hover:text-gray-900 transition-colors">Dashboard</Link>
             <ChevronRight size={15} className="mx-1 text-gray-400" />
-            <span>EMI Cards & Verification Credits</span>
+            <span className="text-gray-600">Stock & Verification</span>
             <ChevronRight size={15} className="mx-1 text-gray-400" />
-            <span className="text-[#225091] font-semibold">Cards & Credit</span>
+            <span className="text-[#225091] font-semibold">Cards & Credits</span>
           </div>
         </div>
 
         {/* Top Action Buttons */}
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2.5">
           <button
             onClick={fetchDashboardData}
             title="Refresh Metrics"
-            className="p-2.5 rounded-xl border border-gray-200 text-gray-600 hover:text-[#225091] hover:bg-teal-50/50 transition-colors shadow-sm"
+            className="p-2.5 rounded-full border border-gray-200 text-gray-600 hover:text-[#225091] hover:bg-blue-50 transition-colors shadow-2xs cursor-pointer"
           >
-            <RefreshCcw size={18} className={dashboardLoading ? 'animate-spin text-[#225091]' : ''} />
+            <RefreshCcw size={16} className={dashboardLoading ? 'animate-spin text-[#225091]' : ''} />
           </button>
           <button 
             onClick={() => setIsDistributeModalOpen(true)}
-            className="px-5 py-2.5 rounded-xl border-[1.5px] border-[#225091] text-[#225091] font-semibold hover:bg-[#225091]/10 transition-all text-sm bg-white shadow-sm flex items-center gap-2 active:scale-98 cursor-pointer"
+            className="px-4 py-2.5 rounded-full border border-[#225091] text-[#225091] hover:bg-blue-50 font-semibold transition-all text-xs flex items-center gap-2 shadow-2xs cursor-pointer"
           >
-            <Send size={16} />
+            <Send size={14} />
             <span>Distribute / Transfer Stock</span>
           </button>
           <button 
             onClick={() => setIsPurchaseModalOpen(true)}
-            className="px-5 py-2.5 rounded-xl bg-[#225091] hover:bg-[#159a9f] text-white font-semibold transition-all text-sm shadow-sm flex items-center gap-2 active:scale-98 cursor-pointer"
+            className="bg-[#225091] hover:bg-[#1b427b] text-white px-5 py-2.5 rounded-full font-semibold transition-all shadow-sm flex items-center gap-2 text-xs cursor-pointer"
           >
-            <ShoppingCart size={16} />
+            <ShoppingCart size={14} />
             <span>Purchase Card & Credit</span>
           </button>
         </div>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* EMI Card Metric Card */}
-        <div className="bg-gradient-to-br from-white to-blue-50/30 rounded-2xl p-6 shadow-sm border border-blue-100/80 flex flex-col justify-between relative overflow-hidden group hover:shadow-md transition-shadow">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none"></div>
-          
-          <div>
-            <div className="flex justify-between items-start mb-4">
-              <div>
-                <span className="text-xs font-bold tracking-wider uppercase text-blue-600 bg-blue-100/60 px-2.5 py-1 rounded-md">
-                  Inventory
-                </span>
-                <h3 className="text-lg font-bold text-gray-800 mt-2">EMI Card Stock</h3>
-              </div>
-              <div className="w-12 h-12 rounded-2xl bg-blue-600 text-white flex items-center justify-center shadow-lg shadow-blue-500/20">
-                <CreditCard size={24} />
-              </div>
-            </div>
-
-            <div className="flex items-baseline gap-3 mb-4">
-              <span className="text-4xl font-extrabold text-[#1b2559] tracking-tight">
-                {dashboardLoading ? '...' : (walletMetrics?.emiCards?.available || 0).toLocaleString()}
-              </span>
-              <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full flex items-center gap-1">
-                <TrendingUp size={12} /> Available
-              </span>
-            </div>
+      {/* 2. Top Stats Overview (4 KPI Cards Matching Employees.jsx) */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-white rounded-xl p-4.5 border border-gray-100 shadow-xs flex flex-col items-center justify-center transition-all hover:shadow-md">
+          <div className="flex items-center gap-2 text-[#225091] mb-1">
+            <CreditCard size={18} />
+            <span className="text-[26px] font-bold leading-none font-heading">
+              {dashboardLoading ? '...' : (walletMetrics?.emiCards?.available || 0).toLocaleString()}
+            </span>
           </div>
-
-          <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-100 text-sm">
-            <div className="bg-white/80 rounded-xl p-3 border border-gray-100">
-              <span className="text-xs text-gray-500 block">Total Purchased</span>
-              <span className="font-bold text-gray-800 text-base">
-                {dashboardLoading ? '...' : (walletMetrics?.emiCards?.purchased || 0).toLocaleString()}
-              </span>
-            </div>
-            <div className="bg-white/80 rounded-xl p-3 border border-gray-100">
-              <span className="text-xs text-gray-500 block">Allocated / Used</span>
-              <span className="font-bold text-gray-800 text-base">
-                {dashboardLoading ? '...' : (walletMetrics?.emiCards?.used || 0).toLocaleString()}
-              </span>
-            </div>
-          </div>
+          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider text-center">
+            AVAILABLE EMI CARDS
+          </span>
         </div>
 
-        {/* Verification Credit Metric Card */}
-        <div className="bg-gradient-to-br from-white to-teal-50/30 rounded-2xl p-6 shadow-sm border border-teal-100/80 flex flex-col justify-between relative overflow-hidden group hover:shadow-md transition-shadow">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-teal-500/5 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none"></div>
-
-          <div>
-            <div className="flex justify-between items-start mb-4">
-              <div>
-                <span className="text-xs font-bold tracking-wider uppercase text-teal-600 bg-teal-100/60 px-2.5 py-1 rounded-md">
-                  Verification
-                </span>
-                <h3 className="text-lg font-bold text-gray-800 mt-2">Verification Credits</h3>
-              </div>
-              <div className="w-12 h-12 rounded-2xl bg-[#225091] text-white flex items-center justify-center shadow-lg shadow-teal-500/20">
-                <ShieldCheck size={24} />
-              </div>
-            </div>
-
-            <div className="flex items-baseline gap-3 mb-4">
-              <span className="text-4xl font-extrabold text-[#1b2559] tracking-tight">
-                {dashboardLoading ? '...' : (walletMetrics?.verificationCredits?.available || 0).toLocaleString()}
-              </span>
-              <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full flex items-center gap-1">
-                <TrendingUp size={12} /> Available
-              </span>
-            </div>
+        <div className="bg-white rounded-xl p-4.5 border border-gray-100 shadow-xs flex flex-col items-center justify-center transition-all hover:shadow-md">
+          <div className="flex items-center gap-2 text-emerald-600 mb-1">
+            <ShieldCheck size={18} />
+            <span className="text-[26px] font-bold leading-none font-heading">
+              {dashboardLoading ? '...' : (walletMetrics?.verificationCredits?.available || 0).toLocaleString()}
+            </span>
           </div>
+          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider text-center">
+            AVAILABLE VERIFICATIONS
+          </span>
+        </div>
 
-          <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-100 text-sm">
-            <div className="bg-white/80 rounded-xl p-3 border border-gray-100">
-              <span className="text-xs text-gray-500 block">Total Purchased</span>
-              <span className="font-bold text-gray-800 text-base">
-                {dashboardLoading ? '...' : (walletMetrics?.verificationCredits?.purchased || 0).toLocaleString()}
-              </span>
-            </div>
-            <div className="bg-white/80 rounded-xl p-3 border border-gray-100">
-              <span className="text-xs text-gray-500 block">Consumed / Used</span>
-              <span className="font-bold text-gray-800 text-base">
-                {dashboardLoading ? '...' : (walletMetrics?.verificationCredits?.used || 0).toLocaleString()}
-              </span>
-            </div>
+        <div className="bg-white rounded-xl p-4.5 border border-gray-100 shadow-xs flex flex-col items-center justify-center transition-all hover:shadow-md">
+          <div className="flex items-center gap-2 text-purple-600 mb-1">
+            <TrendingUp size={18} />
+            <span className="text-[26px] font-bold leading-none font-heading">
+              {dashboardLoading ? '...' : (walletMetrics?.emiCards?.purchased || 0).toLocaleString()}
+            </span>
           </div>
+          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider text-center">
+            TOTAL CARDS PURCHASED
+          </span>
+        </div>
+
+        <div className="bg-white rounded-xl p-4.5 border border-gray-100 shadow-xs flex flex-col items-center justify-center transition-all hover:shadow-md">
+          <div className="flex items-center gap-2 text-amber-600 mb-1">
+            <Send size={18} />
+            <span className="text-[26px] font-bold leading-none font-heading">
+              {dashboardLoading ? '...' : (walletMetrics?.emiCards?.used || 0).toLocaleString()}
+            </span>
+          </div>
+          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider text-center">
+            ALLOCATED / DISTRIBUTED
+          </span>
         </div>
       </div>
 
-      {/* Navigation Tabs for Views */}
+      {/* 3. Navigation Tabs for Views */}
       <div className="flex items-center gap-2 border-b border-gray-200 pb-2">
         <button
           onClick={() => setActiveTab('overview')}
-          className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all cursor-pointer ${
+          className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
             activeTab === 'overview'
-              ? 'bg-[#225091] text-white shadow-sm'
+              ? 'bg-[#225091] text-white shadow-xs'
               : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
           }`}
         >
@@ -771,9 +733,9 @@ const CardsAndCredit = () => {
         </button>
         <button
           onClick={() => setActiveTab('purchases')}
-          className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all cursor-pointer ${
+          className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
             activeTab === 'purchases'
-              ? 'bg-[#225091] text-white shadow-sm'
+              ? 'bg-[#225091] text-white shadow-xs'
               : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
           }`}
         >
@@ -781,9 +743,9 @@ const CardsAndCredit = () => {
         </button>
         <button
           onClick={() => setActiveTab('transfers')}
-          className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all cursor-pointer ${
+          className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
             activeTab === 'transfers'
-              ? 'bg-[#225091] text-white shadow-sm'
+              ? 'bg-[#225091] text-white shadow-xs'
               : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
           }`}
         >
@@ -791,9 +753,9 @@ const CardsAndCredit = () => {
         </button>
         <button
           onClick={() => setActiveTab('branchWallet')}
-          className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all cursor-pointer ${
+          className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
             activeTab === 'branchWallet'
-              ? 'bg-[#225091] text-white shadow-sm'
+              ? 'bg-[#225091] text-white shadow-xs'
               : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
           }`}
         >

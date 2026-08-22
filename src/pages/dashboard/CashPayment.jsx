@@ -287,29 +287,130 @@ const CashPayment = () => {
     setIsExportOpen(false);
   };
 
+  // Calculate overview totals
+  const overviewTotals = React.useMemo(() => {
+    let collection = 0;
+    let submitted = 0;
+    let pending = 0;
+    items.forEach(item => {
+      collection += Number(item.totalCashCollection) || 0;
+      submitted += Number(item.totalCashSubmitted) || 0;
+      pending += Number(item.totalCashPending) || 0;
+    });
+    return { collection, submitted, pending, count: items.length };
+  }, [items]);
+
   return (
-<div className="space-y-6">
-      {/* Header and Breadcrumb */}
-      <div className="bg-white rounded-lg p-5 shadow-sm border border-gray-100">
-        <h1 className="text-2xl font-semibold text-[#1b2559] mb-2">Payment</h1>
-        <div className="flex items-center text-sm font-medium text-gray-500">
-          <Link to="/dashboard" className="hover:text-[#1b2559] transition-colors">Dashboard</Link>
-          <ChevronRight size={16} className="mx-1" />
-          <span className="text-[#1b2559]">Payment</span>
+    <div className="w-full flex flex-col gap-5 font-sans antialiased pb-16">
+      {/* 1. Header Card - Exact Match with Employees.jsx */}
+      <div className="bg-white rounded-xl p-5 shadow-xs border border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-[#225091] m-0 font-heading">
+            Cash Payment Management
+          </h1>
+          <div className="flex items-center text-sm font-medium text-gray-500 mt-1">
+            <Link to="/dashboard" className="hover:text-gray-900 transition-colors">Dashboard</Link>
+            <ChevronRight size={15} className="mx-1 text-gray-400" />
+            <span className="text-gray-600">Payment Operations</span>
+            <ChevronRight size={15} className="mx-1 text-gray-400" />
+            <span className="text-[#225091] font-semibold">Cash Payments</span>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <div className="relative flex-shrink-0">
+            <button 
+              onClick={() => setIsExportOpen(!isExportOpen)}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-full font-semibold transition-colors text-sm shadow-sm border bg-white text-gray-700 border-gray-300 hover:bg-gray-50 cursor-pointer"
+            >
+              <Download size={16} />
+              <span>Export</span>
+              <ChevronDown size={14} />
+            </button>
+            
+            {isExportOpen && (
+              <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-100 rounded-xl shadow-lg z-50 overflow-hidden">
+                <div className="p-1">
+                  <button onClick={exportToCSV} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors text-left cursor-pointer">
+                    <Table size={16} className="text-green-600" />
+                    Export to CSV
+                  </button>
+                  <button onClick={exportToExcel} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors text-left cursor-pointer">
+                    <FileSpreadsheet size={16} className="text-green-600" />
+                    Export to Excel
+                  </button>
+                  <button onClick={exportToWord} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors text-left cursor-pointer">
+                    <FileText size={16} className="text-blue-600" />
+                    Export to Word
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Action Bar */}
+      {/* 2. Top Stats Overview (4 KPI Cards Matching Employees.jsx) */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-white rounded-xl p-4.5 border border-gray-100 shadow-xs flex flex-col items-center justify-center transition-all hover:shadow-md">
+          <div className="flex items-center gap-2 text-[#225091] mb-1">
+            <span className="text-[26px] font-bold leading-none font-heading">
+              {overviewTotals.count}
+            </span>
+          </div>
+          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider text-center">
+            STAFF HANDLERS
+          </span>
+        </div>
+
+        <div className="bg-white rounded-xl p-4.5 border border-gray-100 shadow-xs flex flex-col items-center justify-center transition-all hover:shadow-md">
+          <div className="flex items-center gap-1.5 text-gray-900 mb-1">
+            <span className="text-lg font-bold text-gray-500">₹</span>
+            <span className="text-[24px] font-bold leading-none font-heading">
+              {formatCurrency(overviewTotals.collection)}
+            </span>
+          </div>
+          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider text-center">
+            TOTAL CASH COLLECTED
+          </span>
+        </div>
+
+        <div className="bg-white rounded-xl p-4.5 border border-gray-100 shadow-xs flex flex-col items-center justify-center transition-all hover:shadow-md">
+          <div className="flex items-center gap-1.5 text-emerald-600 mb-1">
+            <span className="text-lg font-bold text-emerald-500">₹</span>
+            <span className="text-[24px] font-bold leading-none font-heading">
+              {formatCurrency(overviewTotals.submitted)}
+            </span>
+          </div>
+          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider text-center">
+            TOTAL CASH SUBMITTED
+          </span>
+        </div>
+
+        <div className="bg-white rounded-xl p-4.5 border border-gray-100 shadow-xs flex flex-col items-center justify-center transition-all hover:shadow-md">
+          <div className="flex items-center gap-1.5 text-amber-600 mb-1">
+            <span className="text-lg font-bold text-amber-500">₹</span>
+            <span className="text-[24px] font-bold leading-none font-heading">
+              {formatCurrency(overviewTotals.pending)}
+            </span>
+          </div>
+          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider text-center">
+            TOTAL PENDING CASH
+          </span>
+        </div>
+      </div>
+
+      {/* 3. Action Bar */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex items-center gap-4 w-full sm:w-auto">
           <div className="relative w-full sm:w-80">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Search size={18} className="text-gray-400" />
+            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+              <Search size={16} className="text-gray-400" />
             </div>
             <input
               type="text"
-              className="block w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#225091] focus:border-[#225091] text-sm bg-white text-gray-800"
-              placeholder="Search employee by name"
+              className="block w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] text-sm bg-gray-50/70 hover:bg-gray-50 focus:bg-white text-gray-800 transition-all shadow-2xs"
+              placeholder="Search employee by name..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
