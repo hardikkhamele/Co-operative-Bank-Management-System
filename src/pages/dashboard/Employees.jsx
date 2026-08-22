@@ -25,9 +25,19 @@ const Employees = () => {
 
   // Data State
   const [employees, setEmployees] = useState([]);
-  const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Persistent Global Overview Stats (does not get wiped by table pagination/filters)
+  const [overviewStats, setOverviewStats] = useState({
+    total: 0,
+    active: 0,
+    inactive: 0,
+    managers: 0,
+  });
+
+  // Active Stat Card Filter ('ALL' | 'ACTIVE' | 'INACTIVE' | 'MANAGERS')
+  const [activeStatCard, setActiveStatCard] = useState("ALL");
 
   // Pagination State
   const [page, setPage] = useState(1);
@@ -115,7 +125,50 @@ const Employees = () => {
     fetchRoles();
   }, []);
 
-  // Fetch Employees API Call
+  // 1. Fetch Global Overview Stats (unfiltered accurate count)
+  const fetchOverviewStats = useCallback(async () => {
+    try {
+      const params = {
+        limit: 1000,
+        includeBranchManagers: true,
+      };
+      if (globalBranchId) params.branchId = globalBranchId;
+      if (selectedBranchId) params.branchId = selectedBranchId;
+
+      const response = await employeeService.list(params);
+      if (response && response.success) {
+        const listData = Array.isArray(response.data)
+          ? response.data
+          : response.data?.items || response.data?.employees || response.items || [];
+
+        // Calculate accurate overall metrics
+        const total = listData.length;
+        const active = listData.filter((e) => e.status === "ACTIVE" || !e.status).length;
+        const inactive = listData.filter((e) => e.status === "INACTIVE").length;
+        const managers = listData.filter(
+          (e) =>
+            e.type === "MANAGER" ||
+            e.role?.code === "BRANCH_MANAGER" ||
+            (e.designation && e.designation.toLowerCase().includes("manager"))
+        ).length;
+
+        setOverviewStats({
+          total,
+          active,
+          inactive,
+          managers,
+        });
+      }
+    } catch (err) {
+      console.warn("Failed to load overview stats:", err);
+    }
+  }, [globalBranchId, selectedBranchId]);
+
+  useEffect(() => {
+    fetchOverviewStats();
+  }, [fetchOverviewStats]);
+
+  // 2. Fetch Paginated / Filtered Employees for Table
   const fetchEmployees = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -136,22 +189,44 @@ const Employees = () => {
       if (selectedRoleId) params.roleId = selectedRoleId;
       if (selectedState) params.state = selectedState;
       if (selectedCity) params.city = selectedCity;
-      if (selectedStatus && selectedStatus !== "ALL") {
+
+      // Apply status from dropdown or stat card
+      if (activeStatCard === "ACTIVE") {
+        params.status = "ACTIVE";
+      } else if (activeStatCard === "INACTIVE") {
+        params.status = "INACTIVE";
+      } else if (selectedStatus && selectedStatus !== "ALL") {
         params.status = selectedStatus.toUpperCase();
+      }
+
+      // If Branch Managers stat card is active
+      if (activeStatCard === "MANAGERS") {
+        params.includeBranchManagers = true;
+        const managerRole = roleOptions.find(
+          (r) => r.code === "BRANCH_MANAGER" || r.name?.toLowerCase().includes("manager")
+        );
+        if (managerRole?.id) {
+          params.roleId = managerRole.id;
+        }
       }
 
       const response = await employeeService.list(params);
       if (response && response.success) {
-        const listData = Array.isArray(response.data)
+        let listData = Array.isArray(response.data)
           ? response.data
           : response.data?.items || response.data?.employees || response.items || [];
-        setEmployees(listData);
 
-        if (response.data?.stats) {
-          setStats(response.data.stats);
-        } else if (response.stats) {
-          setStats(response.stats);
+        // If filtering by managers card and backend didn't narrow it, filter client-side
+        if (activeStatCard === "MANAGERS" && !params.roleId) {
+          listData = listData.filter(
+            (e) =>
+              e.type === "MANAGER" ||
+              e.role?.code === "BRANCH_MANAGER" ||
+              (e.designation && e.designation.toLowerCase().includes("manager"))
+          );
         }
+
+        setEmployees(listData);
 
         const meta =
           response.meta ||
@@ -160,7 +235,7 @@ const Employees = () => {
           response.data?.pagination ||
           {};
 
-        setTotalPages(meta.totalPages || 1);
+        setTotalPages(meta.totalPages || Math.ceil(listData.length / limit) || 1);
         setTotalRecords(meta.totalRecords || listData.length);
       } else {
         setEmployees([]);
@@ -182,6 +257,8 @@ const Employees = () => {
     selectedCity,
     selectedStatus,
     includeBranchManagers,
+    activeStatCard,
+    roleOptions,
   ]);
 
   useEffect(() => {
@@ -201,6 +278,7 @@ const Employees = () => {
       setIsDeleteModalOpen(false);
       setEmployeeToDelete(null);
       fetchEmployees();
+      fetchOverviewStats();
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to delete employee");
     }
@@ -224,33 +302,10 @@ const Employees = () => {
     setSelectedBranchId("");
     setSelectedState("");
     setSelectedCity("");
+    setActiveStatCard("ALL");
     setIncludeBranchManagers(true);
     setPage(1);
   };
-
-  // Calculated Stats with safe fallback
-  const totalCount =
-    stats?.totalEmployees ??
-    stats?.totalRecords ??
-    totalRecords ??
-    employees.length;
-
-  const activeCount =
-    stats?.activeEmployees ??
-    stats?.active ??
-    employees.filter((e) => e.status === "ACTIVE").length;
-
-  const inactiveCount =
-    stats?.inactiveEmployees ??
-    stats?.inactive ??
-    employees.filter((e) => e.status === "INACTIVE").length;
-
-  const managerCount =
-    stats?.totalManagers ??
-    stats?.branchManagers ??
-    employees.filter(
-      (e) => e.type === "MANAGER" || e.role?.code === "BRANCH_MANAGER"
-    ).length;
 
   const hasActiveFilters =
     Boolean(debouncedSearch) ||
@@ -259,6 +314,7 @@ const Employees = () => {
     Boolean(selectedBranchId) ||
     Boolean(selectedState) ||
     Boolean(selectedCity) ||
+    activeStatCard !== "ALL" ||
     !includeBranchManagers;
 
   return (
@@ -293,12 +349,13 @@ const Employees = () => {
         {/* Total Staff Card */}
         <div
           onClick={() => {
+            setActiveStatCard("ALL");
             setSelectedStatus("");
             setSelectedRoleId("");
             setPage(1);
           }}
           className={`bg-white rounded-xl p-4.5 border shadow-xs flex flex-col items-center justify-center cursor-pointer transition-all hover:shadow-md ${
-            !selectedStatus && !selectedRoleId
+            activeStatCard === "ALL" && !selectedStatus && !selectedRoleId
               ? "border-[#225091] ring-2 ring-[#225091]/10 bg-blue-50/20"
               : "border-gray-100 hover:border-gray-200"
           }`}
@@ -306,7 +363,7 @@ const Employees = () => {
           <div className="flex items-center gap-2 text-[#225091] mb-1">
             <Users size={18} />
             <span className="text-[26px] font-bold leading-none">
-              {totalCount}
+              {overviewStats.total}
             </span>
           </div>
           <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider text-center">
@@ -317,11 +374,12 @@ const Employees = () => {
         {/* Active Staff Card */}
         <div
           onClick={() => {
-            setSelectedStatus(selectedStatus === "ACTIVE" ? "" : "ACTIVE");
+            setActiveStatCard(activeStatCard === "ACTIVE" ? "ALL" : "ACTIVE");
+            setSelectedStatus("");
             setPage(1);
           }}
           className={`bg-white rounded-xl p-4.5 border shadow-xs flex flex-col items-center justify-center cursor-pointer transition-all hover:shadow-md ${
-            selectedStatus === "ACTIVE"
+            activeStatCard === "ACTIVE"
               ? "border-emerald-500 ring-2 ring-emerald-500/10 bg-emerald-50/20"
               : "border-gray-100 hover:border-gray-200"
           }`}
@@ -329,7 +387,7 @@ const Employees = () => {
           <div className="flex items-center gap-2 text-emerald-600 mb-1">
             <UserCheck size={18} />
             <span className="text-[26px] font-bold leading-none">
-              {activeCount}
+              {overviewStats.active}
             </span>
           </div>
           <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider text-center">
@@ -340,11 +398,12 @@ const Employees = () => {
         {/* Inactive Staff Card */}
         <div
           onClick={() => {
-            setSelectedStatus(selectedStatus === "INACTIVE" ? "" : "INACTIVE");
+            setActiveStatCard(activeStatCard === "INACTIVE" ? "ALL" : "INACTIVE");
+            setSelectedStatus("");
             setPage(1);
           }}
           className={`bg-white rounded-xl p-4.5 border shadow-xs flex flex-col items-center justify-center cursor-pointer transition-all hover:shadow-md ${
-            selectedStatus === "INACTIVE"
+            activeStatCard === "INACTIVE"
               ? "border-rose-500 ring-2 ring-rose-500/10 bg-rose-50/20"
               : "border-gray-100 hover:border-gray-200"
           }`}
@@ -352,7 +411,7 @@ const Employees = () => {
           <div className="flex items-center gap-2 text-rose-600 mb-1">
             <UserX size={18} />
             <span className="text-[26px] font-bold leading-none">
-              {inactiveCount}
+              {overviewStats.inactive}
             </span>
           </div>
           <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider text-center">
@@ -363,13 +422,12 @@ const Employees = () => {
         {/* Branch Managers Card */}
         <div
           onClick={() => {
-            setSelectedRoleId(
-              selectedRoleId === "BRANCH_MANAGER" ? "" : "BRANCH_MANAGER"
-            );
+            setActiveStatCard(activeStatCard === "MANAGERS" ? "ALL" : "MANAGERS");
+            setSelectedRoleId("");
             setPage(1);
           }}
           className={`bg-white rounded-xl p-4.5 border shadow-xs flex flex-col items-center justify-center cursor-pointer transition-all hover:shadow-md ${
-            selectedRoleId === "BRANCH_MANAGER"
+            activeStatCard === "MANAGERS"
               ? "border-purple-500 ring-2 ring-purple-500/10 bg-purple-50/20"
               : "border-gray-100 hover:border-gray-200"
           }`}
@@ -377,7 +435,7 @@ const Employees = () => {
           <div className="flex items-center gap-2 text-purple-600 mb-1">
             <UserCog size={18} />
             <span className="text-[26px] font-bold leading-none">
-              {managerCount}
+              {overviewStats.managers}
             </span>
           </div>
           <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider text-center">
