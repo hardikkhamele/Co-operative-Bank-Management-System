@@ -2,10 +2,16 @@ import axios from 'axios';
 import useAuthStore from '../store/authStore';
 import useLoadingStore from '../store/loadingStore';
 
-// Ensure the base URL always ends with /api if it's an external URL
-let apiBaseUrl = import.meta.env.VITE_API_URL || '/api';
-if (apiBaseUrl !== '/api' && !apiBaseUrl.match(/\/api\/?$/)) {
-  apiBaseUrl = apiBaseUrl.endsWith('/') ? `${apiBaseUrl}api` : `${apiBaseUrl}/api`;
+// Always prefer the relative '/api' proxy for both local Vite dev and Netlify production.
+// This routes all requests through Netlify / Vite proxy and completely eliminates CORS issues.
+let apiBaseUrl = '/api';
+const envUrl = import.meta.env.VITE_API_URL;
+
+if (envUrl && !envUrl.includes('onrender.com') && envUrl !== '/api') {
+  const trimmed = envUrl.trim();
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+    apiBaseUrl = trimmed.endsWith('/api') ? trimmed : `${trimmed.replace(/\/+$/, '')}/api`;
+  }
 }
 
 const axiosInstance = axios.create({
