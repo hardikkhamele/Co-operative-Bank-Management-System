@@ -284,6 +284,21 @@ const Employees = () => {
     }
   };
 
+  const formatName = (name) => {
+    if (!name) return "Employee";
+    return name
+      .toLowerCase()
+      .split(" ")
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(" ");
+  };
+
+  const formatEmpCode = (code, id) => {
+    if (code && code.length <= 12) return code;
+    if (id && id.length === 24) return `EMP-${id.substring(18, 24).toUpperCase()}`;
+    return code || id || "—";
+  };
+
   const getInitials = (name) => {
     if (!name) return "E";
     return name
@@ -672,7 +687,7 @@ const Employees = () => {
                         </div>
                         <div className="flex flex-col">
                           <span className="font-semibold text-gray-900 text-sm">
-                            {row.fullName}
+                            {formatName(row.fullName)}
                           </span>
                           <span className="text-xs text-gray-500">
                             {row.email || "-"}
@@ -686,8 +701,8 @@ const Employees = () => {
 
                     {/* Employee Code & Badge */}
                     <td className="py-3.5 px-5">
-                      <span className="text-gray-800 font-mono font-semibold text-xs bg-gray-100 px-2 py-0.5 rounded">
-                        {row.employeeId || row.employeeCode || "-"}
+                      <span className="text-gray-800 font-mono font-semibold text-xs bg-gray-100 px-2 py-0.5 rounded border border-gray-200">
+                        {formatEmpCode(row.employeeCode || row.employeeId, row.id)}
                       </span>
                       {row.type === "MANAGER" || row.role?.code === "BRANCH_MANAGER" ? (
                         <div className="text-[10px] bg-purple-50 border border-purple-200/60 text-purple-700 font-semibold px-2 py-0.5 rounded-full inline-block mt-1">
