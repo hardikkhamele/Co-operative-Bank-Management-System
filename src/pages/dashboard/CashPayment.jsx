@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { cashPaymentService } from '../../api/cashPaymentService';
 import useBranchStore from '../../store/branchStore';
+import PageHeader from '../../components/common/PageHeader';
 
 const CashPayment = () => {
 
@@ -302,21 +303,15 @@ const CashPayment = () => {
 
   return (
     <div className="w-full flex flex-col gap-5 font-sans antialiased pb-16">
-      {/* 1. Header Card - Exact Match with Employees.jsx */}
-      <div className="bg-white rounded-xl p-5 shadow-xs border border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-[#225091] m-0 font-heading">
-            Cash Payment Management
-          </h1>
-          <div className="flex items-center text-sm font-medium text-gray-500 mt-1">
-            <Link to="/dashboard" className="hover:text-gray-900 transition-colors">Dashboard</Link>
-            <ChevronRight size={15} className="mx-1 text-gray-400" />
-            <span className="text-gray-600">Payment Operations</span>
-            <ChevronRight size={15} className="mx-1 text-gray-400" />
-            <span className="text-[#225091] font-semibold">Cash Payments</span>
-          </div>
-        </div>
-
+      {/* 1. Header Card */}
+      <PageHeader
+        title="Cash Payment Management"
+        breadcrumbs={[
+          { label: "Dashboard", to: "/dashboard" },
+          { label: "Payment Operations" },
+          { label: "Cash Payments" }
+        ]}
+      >
         <div className="flex items-center gap-3">
           <div className="relative flex-shrink-0">
             <button 
@@ -348,7 +343,7 @@ const CashPayment = () => {
             )}
           </div>
         </div>
-      </div>
+      </PageHeader>
 
       {/* 2. Top Stats Overview (4 KPI Cards Matching Employees.jsx) */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

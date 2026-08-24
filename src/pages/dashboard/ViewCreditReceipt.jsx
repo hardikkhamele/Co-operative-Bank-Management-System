@@ -4,6 +4,7 @@ import { Link, useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { creditReceiptService } from '../../api/creditReceiptService';
 import useAuthStore from '../../store/authStore';
+import PageHeader from '../../components/common/PageHeader';
 
 const ViewCreditReceipt = () => {
   const { id } = useParams();
@@ -157,30 +158,20 @@ const ViewCreditReceipt = () => {
   return (
     <div className="w-full max-w-none space-y-6">
       {/* Header and Breadcrumb */}
-      <div className="w-full bg-white rounded-lg p-5 shadow-sm border border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 print:hidden">
-        <div>
-          <div className="flex items-center gap-3 mb-2">
-            <button 
-              onClick={() => navigate(-1)}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors shrink-0"
-              type="button"
-            >
-              <ArrowLeft size={16} /> Back
-            </button>
-            <h1 className="text-xl font-bold text-[#225091] m-0">View Credit Receipt</h1>
-          </div>
-          <div className="flex items-center text-xs font-medium text-gray-500 uppercase tracking-wide pl-[40px]">
-            <Link to="/dashboard" className="hover:text-[#225091] transition-colors">Dashboard</Link>
-            <ChevronRight size={14} className="mx-1" />
-            <span>Receipt Management</span>
-            <ChevronRight size={14} className="mx-1" />
-            <Link to="/credit" className="hover:text-[#225091] transition-colors">Credit Receipt</Link>
-            <ChevronRight size={14} className="mx-1" />
-            <span className="text-[#225091]">View Receipt</span>
-          </div>
-        </div>
+      <PageHeader
+        title="View Credit Receipt"
+        breadcrumbs={[
+          { label: 'Dashboard', to: '/dashboard' },
+          { label: 'Receipt Management' },
+          { label: 'Credit Receipt', to: '/credit' },
+          { label: 'View Receipt' }
+        ]}
+        showBack={true}
+        backUrl="/credit"
+        className="print:hidden"
+      >
         {isPending && canApprove ? (
-          <div className="flex items-center gap-3">
+          <>
             <button 
               type="button"
               disabled={updating}
@@ -188,40 +179,40 @@ const ViewCreditReceipt = () => {
                 setRejectionReason('');
                 setIsRejectModalOpen(true);
               }}
-              className="px-5 py-2.5 rounded-xl border border-rose-300 text-rose-700 bg-rose-50 hover:bg-rose-100 font-semibold text-sm transition-colors shadow-xs disabled:opacity-50 flex items-center gap-2"
+              className="px-5 py-2 rounded-full border border-rose-300 text-rose-700 bg-rose-50 hover:bg-rose-100 font-semibold text-xs transition-colors shadow-xs disabled:opacity-50 flex items-center gap-2 cursor-pointer"
             >
-              <XCircle size={16} />
-              Reject
+              <XCircle size={14} />
+              <span>Reject</span>
             </button>
             <button 
               type="button"
               disabled={updating}
               onClick={handleApprove}
-              className="px-6 py-2.5 rounded-xl bg-emerald-600 text-white font-semibold hover:bg-emerald-700 transition-colors shadow-sm text-sm disabled:opacity-50 flex items-center gap-2"
+              className="px-6 py-2 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold transition-colors shadow-sm text-xs disabled:opacity-50 flex items-center gap-2 cursor-pointer"
             >
-              {updating ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle size={16} />}
-              Approve Receipt
+              {updating ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle size={14} />}
+              <span>Approve Receipt</span>
             </button>
-          </div>
+          </>
         ) : (
-          <div className="flex items-center gap-3">
+          <>
             <button 
               onClick={handleDownload}
-              className="flex items-center gap-2 px-4 py-2 border border-gray-200 text-gray-700 hover:bg-gray-50 rounded-lg font-semibold text-sm transition-colors shadow-sm"
+              className="flex items-center gap-2 px-4 py-2 border border-gray-200 text-gray-700 hover:bg-gray-50 rounded-full font-semibold text-xs transition-colors shadow-sm cursor-pointer"
             >
-              <Download size={16} />
-              Download
+              <Download size={14} />
+              <span>Download</span>
             </button>
             <button 
               onClick={handlePrint}
-              className="flex items-center gap-2 px-4 py-2 bg-[#225091] text-white hover:bg-[#1b427b] rounded-lg font-semibold text-sm transition-colors shadow-sm"
+              className="flex items-center gap-2 px-4 py-2 bg-[#225091] hover:bg-[#1b427b] text-white rounded-full font-semibold text-xs transition-colors shadow-sm cursor-pointer"
             >
-              <Printer size={16} />
-              Print
+              <Printer size={14} />
+              <span>Print</span>
             </button>
-          </div>
+          </>
         )}
-      </div>
+      </PageHeader>
 
       {/* Main Receipt Voucher */}
       <div className="w-full bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden relative pb-24">

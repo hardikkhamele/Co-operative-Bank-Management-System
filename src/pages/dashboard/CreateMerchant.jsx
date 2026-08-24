@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft,  Eye, EyeOff, ChevronRight, UploadCloud, CheckCircle2, Store, MapPin, Building, CreditCard, X } from 'lucide-react';
 import { toast } from 'react-toastify';
+import PageHeader from '../../components/common/PageHeader';
 import { merchantService } from '../../api/merchantService';
 import { branchService } from '../../api/branchService';
 
@@ -117,27 +118,18 @@ const CreateMerchant = () => {
   return (
     <div className="flex flex-col gap-6 w-full pb-10">
       {/* Header Card */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 shrink-0">
-        <div className="flex items-center gap-3 mb-2">
-            <button 
-            onClick={() => navigate(-1)}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors shrink-0"
-            type="button"
-          >
-            <ArrowLeft size={16} /> Back
-          </button>
-            <h1 className="text-xl font-bold text-[#225091] m-0">Create Merchant</h1>
-          </div>
-        <div className="flex items-center text-sm text-gray-500 pl-[40px]">
-          <Link to="/dashboard" className="hover:text-gray-700">Dashboard</Link>
-          <ChevronRight size={14} className="mx-2" />
-          <span className="hover:text-gray-700">Partner Management</span>
-          <ChevronRight size={14} className="mx-2" />
-          <Link to="/merchant" className="hover:text-gray-700">Merchant</Link>
-          <ChevronRight size={14} className="mx-2" />
-          <span className="text-[#225091]">Create</span>
-        </div>
-      </div>
+      {/* Header Card */}
+      <PageHeader
+        title="Create Merchant"
+        breadcrumbs={[
+          { label: 'Dashboard', to: '/dashboard' },
+          { label: 'Partner Management' },
+          { label: 'Merchant', to: '/merchant' },
+          { label: 'Create' }
+        ]}
+        showBack={true}
+        backUrl="/merchant"
+      />
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
         <form onSubmit={handleSubmit}>

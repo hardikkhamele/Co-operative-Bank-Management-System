@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronRight, Search, SlidersHorizontal, Edit, Trash2, ChevronLeft, X, ChevronDown, Camera } from 'lucide-react';
+import { Search, SlidersHorizontal, Edit, Trash2, ChevronLeft, X, ChevronDown, Camera } from 'lucide-react';
+import PageHeader from '../../components/common/PageHeader';
 
 const ProductBrands = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -25,16 +26,14 @@ const ProductBrands = () => {
   return (
     <div className="h-full flex flex-col gap-6">
       {/* Header Card */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 shrink-0">
-        <h1 className="text-xl font-bold text-[#225091] mb-2">Product Brands</h1>
-        <div className="flex items-center text-sm text-gray-500">
-          <Link to="/dashboard" className="hover:text-gray-700">Dashboard</Link>
-          <ChevronRight size={14} className="mx-2" />
-          <span className="hover:text-gray-700">Product Management</span>
-          <ChevronRight size={14} className="mx-2" />
-          <span className="text-[#225091]">Product Sub-Categories</span>
-        </div>
-      </div>
+      <PageHeader
+        title="Product Brands"
+        breadcrumbs={[
+          { label: "Dashboard", to: "/dashboard" },
+          { label: "Product Management" },
+          { label: "Product Sub-Categories" }
+        ]}
+      />
 
       {/* Toolbar */}
       <div className="flex justify-between items-center shrink-0">

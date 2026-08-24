@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { ChevronRight, Calendar, Phone, Mail, Lock, Map, MapPin, Clock, Banknote, Users, Check, ArrowUpToLine, AlertCircle, ArrowLeftRight, ArrowLeft } from 'lucide-react';
+import PageHeader from '../../components/common/PageHeader';
 
 const DetailCard = ({ icon: Icon, label, value }) => (
   <div className="bg-[#f8f9fa] rounded-xl p-4 flex items-center gap-4">
@@ -34,28 +35,19 @@ const ViewManager = () => {
   };
 
   return (
-    <div className="flex flex-col gap-6 w-full">
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 shrink-0 overflow-hidden p-5">
-        <div className="flex items-center gap-3 mb-2">
-          <button 
-            onClick={() => window.history.back()}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors shrink-0"
-            type="button"
-          >
-            <ArrowLeft size={16} /> Back
-          </button>
-          <h1 className="text-[22px] font-bold text-[#225091] m-0">Manager Details</h1>
-        </div>
-        <div className="flex items-center text-[14px] text-gray-600 font-medium pl-[40px]">
-          <Link to="/dashboard" className="hover:text-gray-800">Dashboard</Link>
-          <ChevronRight size={16} className="mx-2 text-gray-400" />
-          <span className="hover:text-gray-800 cursor-pointer">User Management</span>
-          <ChevronRight size={16} className="mx-2 text-gray-400" />
-          <Link to="/managers" className="hover:text-gray-800">Managers</Link>
-          <ChevronRight size={16} className="mx-2 text-gray-400" />
-          <span className="text-[#225091]">Manager Details</span>
-        </div>
-      </div>
+    <div className="flex flex-col gap-6 w-full font-sans antialiased pb-16">
+      {/* Header Card */}
+      <PageHeader
+        title="Manager Details"
+        breadcrumbs={[
+          { label: 'Dashboard', to: '/dashboard' },
+          { label: 'User Management' },
+          { label: 'Managers', to: '/managers' },
+          { label: 'Manager Details' }
+        ]}
+        showBack={true}
+        backUrl="/managers"
+      />
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 md:p-8">
         {/* Profile Banner */}

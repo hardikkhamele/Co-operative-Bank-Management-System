@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { ChevronRight, X, ChevronDown } from 'lucide-react';
+import { X, ChevronDown } from 'lucide-react';
+import PageHeader from '../../components/common/PageHeader';
 
 const LoanDetails = () => {
   const { id, loanId } = useParams();
@@ -28,20 +29,18 @@ const LoanDetails = () => {
   return (
     <div className="space-y-6 max-w-[1200px] pb-10">
       {/* Header and Breadcrumb */}
-      <div className="bg-white rounded-lg p-5 shadow-sm border border-gray-100">
-        <h1 className="text-xl font-bold text-[#225091] mb-2">Loan History</h1>
-        <div className="flex items-center text-sm font-medium text-gray-600">
-          <Link to="/dashboard" className="hover:text-gray-900 transition-colors">Dashboard</Link>
-          <ChevronRight size={16} className="mx-1 text-gray-400" />
-          <span>Lead Management</span>
-          <ChevronRight size={16} className="mx-1 text-gray-400" />
-          <Link to="/customers" className="hover:text-gray-900 transition-colors">Customers</Link>
-          <ChevronRight size={16} className="mx-1 text-gray-400" />
-          <Link to={`/customers/${id || '1'}/loans`} className="hover:text-gray-900 transition-colors">Loan History</Link>
-          <ChevronRight size={16} className="mx-1 text-gray-400" />
-          <span className="text-[#225091]">Loan Details</span>
-        </div>
-      </div>
+      <PageHeader
+        title="Loan Details"
+        breadcrumbs={[
+          { label: "Dashboard", to: "/dashboard" },
+          { label: "Lead Management" },
+          { label: "Customers", to: "/customers" },
+          { label: "Loan History", to: `/customers/${id || '1'}/loans` },
+          { label: "Loan Details" }
+        ]}
+        showBack={true}
+        backUrl={`/customers/${id || '1'}/loans`}
+      />
 
       <div className="text-sm font-medium text-gray-700">
         Application Number: <span className="text-[#225091]">APPL15655946</span>

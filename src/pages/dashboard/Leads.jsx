@@ -22,6 +22,7 @@ import { leadService } from "../../api/leadService";
 import { creditReceiptService } from "../../api/creditReceiptService";
 import { branchService } from "../../api/branchService";
 import useBranchStore from "../../store/branchStore";
+import PageHeader from "../../components/common/PageHeader";
 
 const getStatusBadge = (status) => {
   const normalized = (status || "").toUpperCase();
@@ -492,45 +493,18 @@ const Leads = ({ leadType: propLeadType, systemTitle: propSystemTitle }) => {
   return (
     <div className="max-w-[1400px] w-full">
       {/* Header Card */}
-      <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => navigate('/leads')}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 hover:text-[#225091] transition-colors shrink-0"
-              type="button"
-              title="Back to Select Lead System"
-            >
-              <ArrowLeft size={14} /> Back
-            </button>
-            <h2 className="text-xl font-bold text-[#225091] m-0">
-              {resolvedTitle ? `${resolvedTitle} Leads` : "Leads"}
-            </h2>
-          </div>
-        </div>
-        <div className="flex items-center text-sm font-medium text-gray-500">
-          <Link
-            to="/dashboard"
-            className="hover:text-gray-800 transition-colors"
-          >
-            Dashboard
-          </Link>
-          <ChevronRight size={16} className="mx-1 text-gray-400" />
-          <span>CRM Management</span>
-          <ChevronRight size={16} className="mx-1 text-gray-400" />
-          <Link
-            to="/leads"
-            className="hover:text-[#225091] transition-colors"
-          >
-            Leads
-          </Link>
-          {resolvedTitle && (
-            <>
-              <ChevronRight size={16} className="mx-1 text-gray-400" />
-              <span className="text-[#225091] font-semibold">{resolvedTitle}</span>
-            </>
-          )}
-        </div>
+      <div className="mb-6">
+        <PageHeader
+          title={resolvedTitle ? `${resolvedTitle} Leads` : "Leads"}
+          breadcrumbs={[
+            { label: "Dashboard", to: "/dashboard" },
+            { label: "CRM Management" },
+            { label: "Leads", to: resolvedTitle ? "/leads" : undefined },
+            ...(resolvedTitle ? [{ label: resolvedTitle }] : [])
+          ]}
+          showBack={true}
+          backUrl="/leads"
+        />
       </div>
 
       {/* Stats Cards */}

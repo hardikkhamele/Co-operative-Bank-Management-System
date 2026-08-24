@@ -140,6 +140,16 @@ export const branchService = {
       throw error;
     }
   },
+
+  // 15. Get Available Cities & States Dropdown
+  getAvailableLocations: async () => {
+    try {
+      const response = await axiosInstance.get('/v1/society/branches/available-locations');
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
 };
 
 export default branchService;

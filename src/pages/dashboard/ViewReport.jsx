@@ -8,13 +8,13 @@ import {
   Target, 
   ChevronDown, 
   Loader2, 
-  ArrowLeft,
   Calendar,
   Layers,
   Award,
   TrendingUp,
   RefreshCw
 } from 'lucide-react';
+import PageHeader from '../../components/common/PageHeader';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { kpaReportService } from '../../api/kpaReportService';
 import useBranchStore from '../../store/branchStore';
@@ -165,28 +165,18 @@ const ViewReport = () => {
   return (
     <div className="flex flex-col gap-6 w-full max-w-7xl mx-auto pb-10">
       
-      {/* Breadcrumb */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 shrink-0 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-[22px] font-bold text-[#225091] mb-3">View Report</h1>
-          <div className="flex items-center text-[13px] font-medium text-gray-500 flex-wrap gap-y-2">
-            <Link to="/dashboard" className="hover:text-gray-800 transition-colors">Dashboard</Link>
-            <ChevronRight size={14} className="mx-1" />
-            <span>HR Management</span>
-            <ChevronRight size={14} className="mx-1" />
-            <Link to="/kpa-report" className="hover:text-gray-800 transition-colors">KPA Report</Link>
-            <ChevronRight size={14} className="mx-1" />
-            <span className="text-[#225091]">View Report</span>
-          </div>
-        </div>
-
-        <button
-          onClick={() => navigate('/kpa-report')}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 text-sm font-semibold transition-colors self-start sm:self-center"
-        >
-          <ArrowLeft size={16} /> Back to KPA Report
-        </button>
-      </div>
+      {/* Header */}
+      <PageHeader
+        title="View Report"
+        breadcrumbs={[
+          { label: 'Dashboard', to: '/dashboard' },
+          { label: 'HR Management' },
+          { label: 'KPA Report', to: '/kpa-report' },
+          { label: 'View Report' }
+        ]}
+        showBack={true}
+        backUrl="/kpa-report"
+      />
 
       {/* Employee Profile Header */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex flex-col md:flex-row md:items-center justify-between gap-6">

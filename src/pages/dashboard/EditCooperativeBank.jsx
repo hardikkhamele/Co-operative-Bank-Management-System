@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft,  ChevronRight, CheckCircle2, Eye, EyeOff } from 'lucide-react';
+import { CheckCircle2, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'react-toastify';
+import PageHeader from '../../components/common/PageHeader';
 import { 
   validateEmail, 
   validatePhone, 
@@ -125,27 +126,17 @@ const EditCooperativeBank = () => {
   return (
     <div className="flex flex-col gap-6 w-full pb-10">
       {/* Header Card */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 shrink-0">
-        <div className="flex items-center gap-3 mb-2">
-            <button 
-            onClick={() => navigate(-1)}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors shrink-0"
-            type="button"
-          >
-            <ArrowLeft size={16} /> Back
-          </button>
-            <h1 className="text-xl font-bold text-[#225091] m-0">Edit Co-operative Bank</h1>
-          </div>
-        <div className="flex items-center text-sm text-gray-500 pl-[40px]">
-          <Link to="/dashboard" className="hover:text-gray-700">Dashboard</Link>
-          <ChevronRight size={14} className="mx-2" />
-          <span className="hover:text-gray-700">Partner Management</span>
-          <ChevronRight size={14} className="mx-2" />
-          <Link to="/co-operative-bank" className="hover:text-gray-700">Co-operative Bank</Link>
-          <ChevronRight size={14} className="mx-2" />
-          <span className="text-[#225091]">Edit</span>
-        </div>
-      </div>
+      <PageHeader
+        title="Edit Co-operative Bank"
+        breadcrumbs={[
+          { label: 'Dashboard', to: '/dashboard' },
+          { label: 'Partner Management' },
+          { label: 'Co-operative Bank', to: '/co-operative-bank' },
+          { label: 'Edit' }
+        ]}
+        showBack={true}
+        backUrl="/co-operative-bank"
+      />
 
       <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
         {/* General Info */}
@@ -312,7 +303,7 @@ const EditCooperativeBank = () => {
           <Link to="/co-operative-bank" className="px-6 py-3 rounded-xl border border-gray-200 text-gray-700 font-medium hover:bg-gray-50 transition-colors shadow-sm text-[15px]">
             Cancel
           </Link>
-          <button type="submit" className="px-8 py-3 rounded-xl bg-[#225091] text-white font-medium hover:bg-[#159499] transition-colors shadow-sm text-[15px]">
+          <button type="submit" className="px-8 py-3 rounded-xl bg-[#225091] text-white font-medium hover:bg-[#159499] transition-colors shadow-sm text-[15px] cursor-pointer">
             Save Changes
           </button>
         </div>

@@ -19,8 +19,10 @@ import {
   Building, 
   CheckCircle2, 
   Loader2,
-  UploadCloud
+  UploadCloud,
+  AlertCircle
 } from 'lucide-react';
+import PageHeader from '../../components/common/PageHeader';
 import { toast } from 'react-toastify';
 import { 
   validatePhone, 
@@ -359,24 +361,21 @@ const MyProfile = () => {
       />
 
       {/* Header Breadcrumb Card */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-[#225091] mb-1">My Profile</h1>
-          <div className="flex items-center text-sm font-medium">
-            <Link to="/dashboard" className="text-gray-500 hover:text-gray-800 transition-colors">Dashboard</Link>
-            <ChevronRight size={16} className="mx-1 text-gray-400" />
-            <span className="text-[#225091]">My Profile</span>
-          </div>
-        </div>
-        
+      <PageHeader
+        title="My Profile"
+        breadcrumbs={[
+          { label: "Dashboard", to: "/dashboard" },
+          { label: "My Profile" }
+        ]}
+      >
         <button
           onClick={handleOpenEdit}
-          className="flex items-center gap-2 bg-[#225091] text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-[#17969b] transition-all shadow-sm active:scale-95"
+          className="flex items-center gap-2 bg-[#225091] text-white px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-[#17969b] transition-all shadow-sm active:scale-95 cursor-pointer"
         >
           <Edit size={16} />
-          Edit Profile
+          <span>Edit Profile</span>
         </button>
-      </div>
+      </PageHeader>
 
       {/* Profile Banner */}
       <div className="bg-gradient-to-r from-[#4a34b8] via-[#2f75b8] to-[#225091] rounded-xl p-6 md:p-8 flex flex-col md:flex-row items-start md:items-center justify-between text-white shadow-md relative overflow-hidden gap-6">

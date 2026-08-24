@@ -21,6 +21,7 @@ import useAuthStore from "../../store/authStore";
 import { toast } from "react-toastify";
 import { transferReceiptService } from "../../api/transferReceiptService";
 import useBranchStore from "../../store/branchStore";
+import PageHeader from "../../components/common/PageHeader";
 
 const GL_HEAD_OPTIONS = [
   { code: "410105", name: "Daily Deposit" },
@@ -641,23 +642,14 @@ const Transfer = () => {
   return (
     <div className="w-full max-w-none space-y-6">
       {/* Header and Breadcrumb */}
-      <div className="bg-white rounded-lg p-5 shadow-sm border border-gray-100">
-        <h1 className="text-2xl font-semibold text-[#225091] mb-2">
-          Transfer Receipt
-        </h1>
-        <div className="flex items-center text-sm font-medium text-gray-500">
-          <Link
-            to="/dashboard"
-            className="hover:text-[#1b2559] transition-colors"
-          >
-            Dashboard
-          </Link>
-          <ChevronRight size={16} className="mx-1" />
-          <span>Receipt Management</span>
-          <ChevronRight size={16} className="mx-1" />
-          <span className="text-[#1b2559]">Transfer Receipt</span>
-        </div>
-      </div>
+      <PageHeader
+        title="Transfer Receipt"
+        breadcrumbs={[
+          { label: "Dashboard", to: "/dashboard" },
+          { label: "Receipt Management" },
+          { label: "Transfer Receipt" }
+        ]}
+      />
 
       {/* Stats Cards */}
       {stats && (

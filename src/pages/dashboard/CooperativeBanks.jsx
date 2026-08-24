@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronRight, Search, Eye, Edit, Trash2, X, ArrowLeft } from 'lucide-react';
+import { Search, Eye, Edit, Trash2, X } from 'lucide-react';
+import PageHeader from '../../components/common/PageHeader';
 
 const mockBanks = [];
 
@@ -26,25 +27,14 @@ const CooperativeBanks = () => {
   return (
     <div className="flex flex-col gap-6 w-full max-w-[1600px] mx-auto pb-10">
       {/* Page Header */}
-      <div className="flex items-center gap-4">
-        <button 
-          onClick={() => window.history.back()}
-          className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold text-[#225091] bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors shrink-0 shadow-sm"
-          type="button"
-        >
-          <ArrowLeft size={16} /> Back
-        </button>
-        <div>
-          <h1 className="text-[22px] font-bold text-[#225091] m-0">Co-operative Banks</h1>
-          <div className="flex items-center text-[12px] font-medium text-gray-500 mt-1">
-            <Link to="/dashboard" className="hover:text-[#225091] transition-colors">Dashboard</Link>
-            <ChevronRight size={14} className="mx-1 text-gray-400" />
-            <span className="hover:text-[#225091] transition-colors cursor-pointer">Partner Management</span>
-            <ChevronRight size={14} className="mx-1 text-gray-400" />
-            <span className="text-[#225091]">Co-operative Bank</span>
-          </div>
-        </div>
-      </div>
+      <PageHeader
+        title="Co-operative Banks"
+        breadcrumbs={[
+          { label: "Dashboard", to: "/dashboard" },
+          { label: "Partner Management" },
+          { label: "Co-operative Bank" }
+        ]}
+      />
 
       {/* Toolbar */}
       <div className="flex flex-col xl:flex-row justify-between items-end gap-5">

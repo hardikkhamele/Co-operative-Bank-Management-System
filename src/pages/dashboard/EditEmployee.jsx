@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { toast } from 'react-toastify';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, ChevronRight, Camera, Calendar, ChevronDown, CheckCircle2, Eye, EyeOff, Check, Search, AlertCircle } from 'lucide-react';
+import { ArrowLeft, ChevronRight, Camera, Calendar, ChevronDown, CheckCircle2, Eye, EyeOff, Check, Search, AlertCircle, Clock, CalendarDays, Award } from 'lucide-react';
 import { employeeService } from '../../api/employeeService';
 import { branchService } from '../../api/branchService';
 import { roleService } from '../../api/roleService';
+import PageHeader from '../../components/common/PageHeader';
 import { 
   validatePassword, 
   validatePhone, 
@@ -124,15 +125,14 @@ const StateDropdown = ({ value, onChange, options, loading }) => {
 };
 
 const EditEmployee = () => {
-  const navigate = useNavigate();
   const { id } = useParams();
-  
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('Personal Details');
   const [loading, setLoading] = useState(true);
   const [submittingTab, setSubmittingTab] = useState(null);
-  const [imagePreview, setImagePreview] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
-  
+  const [imagePreview, setImagePreview] = useState(null);
+
   // Dynamic Options
   const [branches, setBranches] = useState([]);
   const [roles, setRoles] = useState([]);
@@ -144,37 +144,22 @@ const EditEmployee = () => {
     fullName: '', gender: '', dateOfBirth: '', phoneNumber: '', email: '', password: '', address: '', profileImage: null
   });
 
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setPersonalDetails({ ...personalDetails, profileImage: file });
-      setImagePreview(URL.createObjectURL(file));
-    }
-  };
-
   const [jobDetails, setJobDetails] = useState({
     roleId: '', branchId: '', designation: '', state: '', salary: '', joiningDate: '', probationPeriodMonths: 6
   });
+
   const [shiftSettings, setShiftSettings] = useState({
-    punchInTime: '09:30', punchOutTime: '18:30', weeklyOffDay: 'SUNDAY', weeklyOffPayable: true,
-    variableWeeklyOff: false, secondWeeklyOff: false,
-    lateAllowedMins: 15, lateAllowedAsPerShift: false,
-    earlyAllowedMins: 15, earlyAllowedAsPerShift: false,
-    halfDayMins: 240, halfDayAsPerShift: false,
-    fullDayMins: 480, fullDayAsPerShift: false
+    punchInTime: '09:30', punchOutTime: '18:30', weeklyOffDay: 'SUNDAY', lateAllowedMins: 15, earlyAllowedMins: 15
   });
+
   const [attendanceSettings, setAttendanceSettings] = useState({
-    punchType: 'DOUBLE', noOutPunchAction: 'MARK_HALF_DAY', presentOnWeeklyOffHolidayAction: 'EXTRA_PAY',
-    lateCutAllowedDays: 3, lateCutAction: 'MARK_HALF_DAY', lateCutAllowed: false, extraLateCutDeduction: false, additionalLateCutInLeaveBalance: false,
-    lunchAllowedMins: 0, lunchAsPerShift: false, lunchAllowed: false, earlyGoingAllowed: false,
-    overtimeAllowed: false, customOT: false, beforeOT: false, gracePeriodMinutes: 5, oneDayOTHrs: 4, otAsPerShift: false, considerOTAsCOFF: false
+    punchType: 'DOUBLE', noOutPunchAction: 'MARK_HALF_DAY', lateCutAction: 'MARK_HALF_DAY', overtimeAllowed: false
   });
+
   const [woffHoffSettings, setWoffHoffSettings] = useState({
-    woAbsentBefore: true, woAbsentAfter: true, woAbsentBeforeOrAfter: false, woAddWorkingHrs: false, woLateDeductionNotApplied: false, woLWP: false,
-    holAbsentBefore: false, holAbsentAfter: false, holAbsentBeforeAndAfter: false, holAddWorkingHrs: false, holLateDeductionNotApplied: false, holLWP: false,
-    considerWOInLeave: true, considerHolInLeave: true, absentWOLeaveWOAbsent: true, leaveWOAbsentWOAbsent: false, absentHolLeaveHolAbsent: false, leaveHolAbsentHolAbsent: false,
-    leaveInCash: true, leaveCarryForward: true
+    sandwichWeeklyOff: true, sandwichHoliday: true, considerWOInLeave: true, considerHolInLeave: true
   });
+
   const [kraSettings, setKraSettings] = useState({
     year: new Date().getFullYear(),
     targets: [{ product: 'Fixed Deposit', targetValue: 2400000 }, { product: 'Loan Disbursement', targetValue: 2400000 }, { product: 'Savings Account', targetValue: 1200 }]
@@ -242,17 +227,8 @@ const EditEmployee = () => {
               punchInTime: emp.shiftSettings.punchInTime || '09:30',
               punchOutTime: emp.shiftSettings.punchOutTime || '18:30',
               weeklyOffDay: emp.shiftSettings.weeklyOff?.day || 'SUNDAY',
-              weeklyOffPayable: emp.shiftSettings.weeklyOff?.payable ?? true,
-              variableWeeklyOff: emp.shiftSettings.weeklyOff?.variable ?? false,
-              secondWeeklyOff: emp.shiftSettings.weeklyOff?.secondWeeklyOff ?? false,
               lateAllowedMins: emp.shiftSettings.lateAllowedMinutes ?? 15,
-              lateAllowedAsPerShift: emp.shiftSettings.lateAllowedAsPerShift ?? false,
-              earlyAllowedMins: emp.shiftSettings.earlyAllowedMinutes ?? 15,
-              earlyAllowedAsPerShift: emp.shiftSettings.earlyAllowedAsPerShift ?? false,
-              halfDayMins: emp.shiftSettings.halfDayMinutes ?? 240,
-              halfDayAsPerShift: emp.shiftSettings.halfDayAsPerShift ?? false,
-              fullDayMins: emp.shiftSettings.fullDayMinutes ?? 480,
-              fullDayAsPerShift: emp.shiftSettings.fullDayAsPerShift ?? false
+              earlyAllowedMins: emp.shiftSettings.earlyAllowedMinutes ?? 15
             });
           }
 
@@ -260,29 +236,17 @@ const EditEmployee = () => {
             setAttendanceSettings({
               punchType: emp.attendanceSettings.punchType || 'DOUBLE',
               noOutPunchAction: emp.attendanceSettings.noOutPunchAction || 'MARK_HALF_DAY',
-              presentOnWeeklyOffHolidayAction: emp.attendanceSettings.presentOnWeeklyOffHolidayAction || 'EXTRA_PAY',
-              lateCutAllowedDays: emp.attendanceSettings.lateCut?.allowedDays ?? 3,
               lateCutAction: emp.attendanceSettings.lateCut?.action || 'MARK_HALF_DAY',
-              lateCutAllowed: emp.attendanceSettings.lateCut?.allowed ?? false,
-              extraLateCutDeduction: emp.attendanceSettings.lateCut?.extraDeduction ?? false,
-              additionalLateCutInLeaveBalance: emp.attendanceSettings.lateCut?.additionalInLeaveBalance ?? false,
-              lunchAllowedMins: emp.attendanceSettings.lunchAndEarlyGoing?.lunchAllowedMins ?? 0,
-              lunchAsPerShift: emp.attendanceSettings.lunchAndEarlyGoing?.lunchAsPerShift ?? false,
-              lunchAllowed: emp.attendanceSettings.lunchAndEarlyGoing?.lunchAllowed ?? false,
-              earlyGoingAllowed: emp.attendanceSettings.lunchAndEarlyGoing?.earlyGoingAllowed ?? false,
-              overtimeAllowed: emp.attendanceSettings.overtime?.allowed ?? false,
-              customOT: emp.attendanceSettings.overtime?.customOT ?? false,
-              beforeOT: emp.attendanceSettings.overtime?.beforeOT ?? false,
-              gracePeriodMinutes: emp.attendanceSettings.overtime?.gracePeriodMinutes ?? 5,
-              oneDayOTHrs: emp.attendanceSettings.overtime?.oneDayOTHrs ?? 4,
-              otAsPerShift: emp.attendanceSettings.overtime?.otAsPerShift ?? false,
-              considerOTAsCOFF: emp.attendanceSettings.overtime?.considerOTAsCOFF ?? false
+              overtimeAllowed: !!emp.attendanceSettings.overtime?.allowed
             });
           }
 
           if (emp.woffHoffSettings) {
             setWoffHoffSettings({
-              ...emp.woffHoffSettings
+              sandwichWeeklyOff: emp.woffHoffSettings.woAbsentBefore ?? true,
+              sandwichHoliday: emp.woffHoffSettings.holAbsentBefore ?? true,
+              considerWOInLeave: emp.woffHoffSettings.considerWOInLeave ?? true,
+              considerHolInLeave: emp.woffHoffSettings.considerHolInLeave ?? true
             });
           }
 
@@ -348,7 +312,7 @@ const EditEmployee = () => {
 
       case 'dateOfBirth': {
         if (value) {
-          const dobCheck = validateDOB(value, { required: false });
+          const dobCheck = validateDOB(value, { minAge: 18, maxAge: 100, required: false });
           if (!dobCheck.isValid) errorMsg = dobCheck.error;
         }
         break;
@@ -373,18 +337,6 @@ const EditEmployee = () => {
         }
         break;
 
-      case 'punchInTime':
-        if (!value) errorMsg = 'Punch In Time is required.';
-        break;
-
-      case 'punchOutTime':
-        if (!value) errorMsg = 'Punch Out Time is required.';
-        break;
-
-      case 'weeklyOffDay':
-        if (!value) errorMsg = 'Weekly Off Day is required.';
-        break;
-
       default:
         break;
     }
@@ -404,38 +356,47 @@ const EditEmployee = () => {
 
   // Section Save Handlers
   const savePersonalDetails = async () => {
-    const fieldsToValidate = [
-      { name: 'fullName', val: personalDetails.fullName },
-      { name: 'email', val: personalDetails.email },
-      { name: 'password', val: personalDetails.password },
-      { name: 'phoneNumber', val: personalDetails.phoneNumber },
-      { name: 'dateOfBirth', val: personalDetails.dateOfBirth }
-    ];
-
-    let hasError = false;
-    let firstMsg = null;
-    fieldsToValidate.forEach(f => {
-      const err = validateSingleField(f.name, f.val);
-      if (err) {
-        hasError = true;
-        if (!firstMsg) firstMsg = err;
-      }
-    });
-
-    if (hasError) {
-      toast.error(firstMsg || "Please fix errors in Personal Details.");
+    if (!personalDetails.fullName?.trim()) {
+      toast.error("Full Name is required.");
       return;
+    }
+    if (!personalDetails.email?.trim()) {
+      toast.error("Email is required.");
+      return;
+    }
+    const emailCheck = validateEmail(personalDetails.email, { required: true });
+    if (!emailCheck.isValid) {
+      toast.error(emailCheck.error);
+      return;
+    }
+    if (personalDetails.password && personalDetails.password.length < 6) {
+      toast.error("Password must be at least 6 characters.");
+      return;
+    }
+    if (personalDetails.phoneNumber) {
+      const phoneCheck = validatePhone(personalDetails.phoneNumber, { required: false });
+      if (!phoneCheck.isValid) {
+        toast.error(phoneCheck.error);
+        return;
+      }
+    }
+    if (personalDetails.dateOfBirth) {
+      const dobCheck = validateDOB(personalDetails.dateOfBirth, { minAge: 18, maxAge: 100, required: false });
+      if (!dobCheck.isValid) {
+        toast.error(dobCheck.error);
+        return;
+      }
     }
 
     setSubmittingTab('Personal Details');
     try {
       const res = await employeeService.updateSection(id, 'personal-details', {
         fullName: personalDetails.fullName.trim(),
-        gender: personalDetails.gender,
-        dateOfBirth: personalDetails.dateOfBirth,
+        gender: personalDetails.gender || undefined,
+        dateOfBirth: personalDetails.dateOfBirth || undefined,
         phoneNumber: personalDetails.phoneNumber.trim(),
         email: personalDetails.email.trim(),
-        address: personalDetails.address,
+        address: personalDetails.address || undefined,
         ...(personalDetails.password ? { password: personalDetails.password } : {})
       });
       if (res.success) toast.success("Personal details updated successfully!");
@@ -466,7 +427,7 @@ const EditEmployee = () => {
       const res = await employeeService.updateSection(id, 'job-details', {
         ...jobDetails,
         salary: Math.max(0, Number(jobDetails.salary) || 0),
-        probationPeriodMonths: Math.max(0, Number(jobDetails.probationPeriodMonths) || 0)
+        probationPeriodMonths: Math.max(0, Number(jobDetails.probationPeriodMonths) || 6)
       });
       if (res.success) toast.success("Job details updated successfully!");
     } catch (err) {
@@ -481,22 +442,18 @@ const EditEmployee = () => {
     setSubmittingTab('Shift & WOFF');
     try {
       const res = await employeeService.updateSection(id, 'shift-settings', {
-        punchInTime: shiftSettings.punchInTime,
-        punchOutTime: shiftSettings.punchOutTime,
+        punchInTime: shiftSettings.punchInTime || '09:30',
+        punchOutTime: shiftSettings.punchOutTime || '18:30',
         weeklyOff: {
-          day: shiftSettings.weeklyOffDay,
-          payable: shiftSettings.weeklyOffPayable,
-          variable: shiftSettings.variableWeeklyOff,
-          secondWeeklyOff: shiftSettings.secondWeeklyOff
+          day: shiftSettings.weeklyOffDay || 'SUNDAY',
+          payable: true,
+          variable: false,
+          secondWeeklyOff: false
         },
-        lateAllowedMinutes: shiftSettings.lateAllowedMins,
-        lateAllowedAsPerShift: shiftSettings.lateAllowedAsPerShift,
-        earlyAllowedMinutes: shiftSettings.earlyAllowedMins,
-        earlyAllowedAsPerShift: shiftSettings.earlyAllowedAsPerShift,
-        halfDayMinutes: shiftSettings.halfDayMins,
-        halfDayAsPerShift: shiftSettings.halfDayAsPerShift,
-        fullDayMinutes: shiftSettings.fullDayMins,
-        fullDayAsPerShift: shiftSettings.fullDayAsPerShift
+        lateAllowedMinutes: Number(shiftSettings.lateAllowedMins) || 15,
+        earlyAllowedMinutes: Number(shiftSettings.earlyAllowedMins) || 15,
+        halfDayMinutes: 240,
+        fullDayMinutes: 480
       });
       if (res.success) toast.success("Shift settings updated successfully!");
     } catch (err) {
@@ -511,30 +468,30 @@ const EditEmployee = () => {
     setSubmittingTab('Attendance');
     try {
       const res = await employeeService.updateSection(id, 'attendance-settings', {
-        punchType: attendanceSettings.punchType,
-        noOutPunchAction: attendanceSettings.noOutPunchAction,
-        presentOnWeeklyOffHolidayAction: attendanceSettings.presentOnWeeklyOffHolidayAction,
+        punchType: attendanceSettings.punchType || 'DOUBLE',
+        noOutPunchAction: attendanceSettings.noOutPunchAction || 'MARK_HALF_DAY',
+        presentOnWeeklyOffHolidayAction: 'EXTRA_PAY',
         lateCut: {
-          allowedDays: attendanceSettings.lateCutAllowedDays,
-          action: attendanceSettings.lateCutAction,
-          allowed: attendanceSettings.lateCutAllowed,
-          extraDeduction: attendanceSettings.extraLateCutDeduction,
-          additionalInLeaveBalance: attendanceSettings.additionalLateCutInLeaveBalance
+          allowedDays: 3,
+          action: attendanceSettings.lateCutAction || 'MARK_HALF_DAY',
+          allowed: true,
+          extraDeduction: false,
+          additionalInLeaveBalance: false
         },
         lunchAndEarlyGoing: {
-          lunchAllowedMins: attendanceSettings.lunchAllowedMins,
-          lunchAsPerShift: attendanceSettings.lunchAsPerShift,
-          lunchAllowed: attendanceSettings.lunchAllowed,
-          earlyGoingAllowed: attendanceSettings.earlyGoingAllowed
+          lunchAllowedMins: 0,
+          lunchAsPerShift: false,
+          lunchAllowed: false,
+          earlyGoingAllowed: false
         },
         overtime: {
-          allowed: attendanceSettings.overtimeAllowed,
-          customOT: attendanceSettings.customOT,
-          beforeOT: attendanceSettings.beforeOT,
-          gracePeriodMinutes: Math.max(0, Number(attendanceSettings.gracePeriodMinutes) || 0),
-          oneDayOTHrs: attendanceSettings.oneDayOTHrs,
-          otAsPerShift: attendanceSettings.otAsPerShift,
-          considerOTAsCOFF: attendanceSettings.considerOTAsCOFF
+          allowed: !!attendanceSettings.overtimeAllowed,
+          customOT: false,
+          beforeOT: false,
+          gracePeriodMinutes: 5,
+          oneDayOTHrs: 4,
+          otAsPerShift: false,
+          considerOTAsCOFF: false
         }
       });
       if (res.success) toast.success("Attendance settings updated successfully!");
@@ -550,7 +507,26 @@ const EditEmployee = () => {
     setSubmittingTab('WOFF & HOFF');
     try {
       const res = await employeeService.updateSection(id, 'woff-hoff-settings', {
-        ...woffHoffSettings
+        woAbsentBefore: !!woffHoffSettings.sandwichWeeklyOff,
+        woAbsentAfter: !!woffHoffSettings.sandwichWeeklyOff,
+        woAbsentBeforeOrAfter: false,
+        woAddWorkingHrs: false,
+        woLateDeductionNotApplied: false,
+        woLWP: false,
+        holAbsentBefore: !!woffHoffSettings.sandwichHoliday,
+        holAbsentAfter: !!woffHoffSettings.sandwichHoliday,
+        holAbsentBeforeAndAfter: false,
+        holAddWorkingHrs: false,
+        holLateDeductionNotApplied: false,
+        holLWP: false,
+        considerWOInLeave: !!woffHoffSettings.considerWOInLeave,
+        considerHolInLeave: !!woffHoffSettings.considerHolInLeave,
+        absentWOLeaveWOAbsent: true,
+        leaveWOAbsentWOAbsent: false,
+        absentHolLeaveHolAbsent: false,
+        leaveHolAbsentHolAbsent: false,
+        leaveInCash: true,
+        leaveCarryForward: true
       });
       if (res.success) toast.success("WOFF/HOFF rules updated successfully!");
     } catch (err) {
@@ -565,8 +541,10 @@ const EditEmployee = () => {
     setSubmittingTab('KRA Settings');
     try {
       const res = await employeeService.updateSection(id, 'kra-settings', {
-        year: Math.max(2000, Number(kraSettings.year)),
-        targets: kraSettings.targets.map(t => ({ ...t, targetValue: Math.max(0, Number(t.targetValue) || 0) }))
+        year: Math.max(2000, Number(kraSettings.year) || new Date().getFullYear()),
+        targets: kraSettings.targets
+          .filter(t => t.product && t.product.trim())
+          .map(t => ({ product: t.product, targetValue: Math.max(0, Number(t.targetValue) || 0) }))
       });
       if (res.success) toast.success("KRA targets updated successfully!");
     } catch (err) {
@@ -590,47 +568,59 @@ const EditEmployee = () => {
   return (
     <div className="flex flex-col gap-6 w-full">
       {/* Header Card */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 shrink-0 flex justify-between items-center">
-        <div>
-          <div className="flex items-center gap-3 mb-2">
-            <button 
-              onClick={() => navigate(-1)}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors shrink-0"
-              type="button"
-            >
-              <ArrowLeft size={16} /> Back
-            </button>
-            <h1 className="text-xl font-bold text-[#225091] m-0">Edit Employee</h1>
-          </div>
-          <div className="flex items-center text-sm text-gray-500 pl-[40px]">
-            <Link to="/dashboard" className="hover:text-gray-700">Dashboard</Link>
-            <ChevronRight size={14} className="mx-2" />
-            <Link to="/employees" className="hover:text-gray-700">Employees</Link>
-            <ChevronRight size={14} className="mx-2" />
-            <span className="text-[#225091]">Edit Employee</span>
-          </div>
-        </div>
-      </div>
+      <PageHeader
+        title="Edit Employee"
+        breadcrumbs={[
+          { label: 'Dashboard', to: '/dashboard' },
+          { label: 'Employees', to: '/employees' },
+          { label: 'Edit Employee' }
+        ]}
+        showBack={true}
+        backUrl="/employees"
+      />
 
-      {/* Tabs */}
+      {/* Stepper Tabs */}
       <div className="flex flex-wrap gap-2 mb-2">
-        {tabs.map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors ${
-              activeTab === tab ? 'bg-[#e9e8fa] text-[#1b2559]' : 'text-gray-500 bg-white hover:bg-gray-50'
-            }`}
-          >
-            {tab}
-          </button>
-        ))}
+        {tabs.map((tab, idx) => {
+          const isActive = activeTab === tab;
+          return (
+            <button
+              key={tab}
+              type="button"
+              onClick={() => setActiveTab(tab)}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all border cursor-pointer ${
+                isActive 
+                  ? 'bg-[#225091] text-white border-[#225091] shadow-xs' 
+                  : 'text-gray-600 bg-white border-gray-200 hover:bg-gray-50'
+              }`}
+            >
+              <span className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold ${
+                isActive ? 'bg-white text-[#225091]' : 'bg-gray-100 text-gray-600'
+              }`}>
+                {idx + 1}
+              </span>
+              {tab}
+            </button>
+          );
+        })}
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-10">
+      {/* Main Tab Content Card */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-2">
         {activeTab === 'Personal Details' && (
           <div>
-            <h2 className="text-xl font-bold text-gray-800 mb-6">General Info</h2>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-bold text-gray-800">General Info</h2>
+              <button
+                type="button"
+                onClick={savePersonalDetails}
+                disabled={submittingTab === 'Personal Details'}
+                className="px-6 py-2 bg-[#225091] hover:bg-[#163a6c] text-white text-sm font-semibold rounded-xl shadow-xs transition-colors cursor-pointer disabled:opacity-50"
+              >
+                {submittingTab === 'Personal Details' ? 'Saving...' : 'Save Changes'}
+              </button>
+            </div>
+            
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-semibold text-gray-800 mb-2">
@@ -691,7 +681,9 @@ const EditEmployee = () => {
                 )}
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-800 mb-2">Password (Leave blank to keep current)</label>
+                <label className="block text-sm font-semibold text-gray-800 mb-2">
+                  Change Password (Optional)
+                </label>
                 <div className="relative">
                   <input 
                     type={showPassword ? "text" : "password"} 
@@ -701,11 +693,7 @@ const EditEmployee = () => {
                       setPersonalDetails({...personalDetails, password: val});
                       if (touched.password || errors.password) validateSingleField('password', val);
                     }}
-                    onBlur={() => {
-                      setTouched(t => ({ ...t, password: true }));
-                      validateSingleField('password', personalDetails.password);
-                    }}
-                    placeholder="New password (optional)"
+                    placeholder="Leave blank to keep current password"
                     className={`w-full pl-4 pr-10 py-3 rounded-xl border bg-white text-sm transition-all ${
                       errors.password 
                         ? 'border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-rose-500' 
@@ -715,7 +703,7 @@ const EditEmployee = () => {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 focus:outline-none"
+                    className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 focus:outline-none cursor-pointer"
                   >
                     {showPassword ? <Eye size={18} /> : <EyeOff size={18} />}
                   </button>
@@ -727,7 +715,9 @@ const EditEmployee = () => {
                 )}
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-800 mb-2">Phone</label>
+                <label className="block text-sm font-semibold text-gray-800 mb-2">
+                  Phone
+                </label>
                 <input 
                   type="tel" 
                   value={personalDetails.phoneNumber} 
@@ -735,10 +725,6 @@ const EditEmployee = () => {
                     const val = sanitizeDigits(e.target.value, 10);
                     setPersonalDetails({...personalDetails, phoneNumber: val});
                     if (touched.phoneNumber || errors.phoneNumber) validateSingleField('phoneNumber', val);
-                  }}
-                  onBlur={() => {
-                    setTouched(t => ({ ...t, phoneNumber: true }));
-                    validateSingleField('phoneNumber', personalDetails.phoneNumber);
                   }}
                   placeholder="10-digit mobile number"
                   maxLength={10}
@@ -748,63 +734,54 @@ const EditEmployee = () => {
                       : 'border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091]'
                   }`} 
                 />
-                {errors.phoneNumber && (
-                  <p className="text-xs text-rose-500 mt-1.5 font-medium flex items-center gap-1">
-                    <AlertCircle size={13} /> {errors.phoneNumber}
-                  </p>
-                )}
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-800 mb-2">Gender</label>
+                <label className="block text-sm font-semibold text-gray-800 mb-2">
+                  Gender
+                </label>
                 <select value={personalDetails.gender} onChange={e => setPersonalDetails({...personalDetails, gender: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-sm">
-                  <option value="">Select</option>
+                  <option value="">Select Gender</option>
                   <option value="MALE">Male</option>
                   <option value="FEMALE">Female</option>
+                  <option value="OTHER">Other</option>
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-800 mb-2">Date Of Birth</label>
+                <label className="block text-sm font-semibold text-gray-800 mb-2">
+                  Date Of Birth
+                </label>
                 <input 
                   type="date" 
                   max={new Date().toISOString().split('T')[0]}
                   value={personalDetails.dateOfBirth} 
-                  onChange={e => {
-                    const val = e.target.value;
-                    setPersonalDetails({...personalDetails, dateOfBirth: val});
-                    if (touched.dateOfBirth || errors.dateOfBirth) validateSingleField('dateOfBirth', val);
-                  }}
-                  onBlur={() => {
-                    setTouched(t => ({ ...t, dateOfBirth: true }));
-                    validateSingleField('dateOfBirth', personalDetails.dateOfBirth);
-                  }}
-                  className={`w-full px-4 py-3 rounded-xl border bg-white text-sm transition-all ${
-                    errors.dateOfBirth 
-                      ? 'border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-rose-500' 
-                      : 'border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091]'
-                  }`} 
+                  onChange={e => setPersonalDetails({...personalDetails, dateOfBirth: e.target.value})}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-sm" 
                 />
-                {errors.dateOfBirth && (
-                  <p className="text-xs text-rose-500 mt-1.5 font-medium flex items-center gap-1">
-                    <AlertCircle size={13} /> {errors.dateOfBirth}
-                  </p>
-                )}
               </div>
               <div className="md:col-span-2">
-                <label className="block text-sm font-semibold text-gray-800 mb-2">Address</label>
-                <input type="text" value={personalDetails.address} onChange={e => setPersonalDetails({...personalDetails, address: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-sm" />
+                <label className="block text-sm font-semibold text-gray-800 mb-2">
+                  Address
+                </label>
+                <input type="text" value={personalDetails.address} onChange={e => setPersonalDetails({...personalDetails, address: e.target.value})} placeholder="Enter address" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-sm" />
               </div>
-            </div>
-            <div className="mt-8 flex justify-end">
-              <button onClick={savePersonalDetails} disabled={submittingTab === 'Personal Details'} className="px-6 py-2 rounded-full bg-[#225091] text-white font-semibold hover:bg-[#168f94] transition-colors shadow-sm text-sm disabled:opacity-50">
-                {submittingTab === 'Personal Details' ? 'Saving...' : 'Save Personal Details'}
-              </button>
             </div>
           </div>
         )}
 
         {activeTab === 'Job Details' && (
           <div>
-            <h2 className="text-xl font-bold text-gray-800 mb-6">Employment Info</h2>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-bold text-gray-800">Employment Info</h2>
+              <button
+                type="button"
+                onClick={saveJobDetails}
+                disabled={submittingTab === 'Job Details'}
+                className="px-6 py-2 bg-[#225091] hover:bg-[#163a6c] text-white text-sm font-semibold rounded-xl shadow-xs transition-colors cursor-pointer disabled:opacity-50"
+              >
+                {submittingTab === 'Job Details' ? 'Saving...' : 'Save Changes'}
+              </button>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-semibold text-gray-800 mb-2">
@@ -812,29 +789,12 @@ const EditEmployee = () => {
                 </label>
                 <select 
                   value={jobDetails.branchId} 
-                  onChange={e => {
-                    const val = e.target.value;
-                    setJobDetails({...jobDetails, branchId: val});
-                    if (touched.branchId || errors.branchId) validateSingleField('branchId', val);
-                  }}
-                  onBlur={() => {
-                    setTouched(t => ({ ...t, branchId: true }));
-                    validateSingleField('branchId', jobDetails.branchId);
-                  }}
-                  className={`w-full px-4 py-3 rounded-xl border bg-white text-sm transition-all ${
-                    errors.branchId 
-                      ? 'border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-rose-500' 
-                      : 'border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091]'
-                  }`}
+                  onChange={e => setJobDetails({...jobDetails, branchId: e.target.value})}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-sm"
                 >
                   <option value="">Select Branch</option>
                   {branches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
                 </select>
-                {errors.branchId && (
-                  <p className="text-xs text-rose-500 mt-1.5 font-medium flex items-center gap-1">
-                    <AlertCircle size={13} /> {errors.branchId}
-                  </p>
-                )}
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-800 mb-2">
@@ -842,36 +802,23 @@ const EditEmployee = () => {
                 </label>
                 <select 
                   value={jobDetails.roleId} 
-                  onChange={e => {
-                    const val = e.target.value;
-                    setJobDetails({...jobDetails, roleId: val});
-                    if (touched.roleId || errors.roleId) validateSingleField('roleId', val);
-                  }}
-                  onBlur={() => {
-                    setTouched(t => ({ ...t, roleId: true }));
-                    validateSingleField('roleId', jobDetails.roleId);
-                  }}
-                  className={`w-full px-4 py-3 rounded-xl border bg-white text-sm transition-all ${
-                    errors.roleId 
-                      ? 'border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-rose-500' 
-                      : 'border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091]'
-                  }`}
+                  onChange={e => setJobDetails({...jobDetails, roleId: e.target.value})}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-sm"
                 >
                   <option value="">Select Department</option>
                   {roles.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
                 </select>
-                {errors.roleId && (
-                  <p className="text-xs text-rose-500 mt-1.5 font-medium flex items-center gap-1">
-                    <AlertCircle size={13} /> {errors.roleId}
-                  </p>
-                )}
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-800 mb-2">Designation</label>
-                <input type="text" value={jobDetails.designation} onChange={e => setJobDetails({...jobDetails, designation: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-sm" />
+                <label className="block text-sm font-semibold text-gray-800 mb-2">
+                  Designation
+                </label>
+                <input type="text" value={jobDetails.designation} onChange={e => setJobDetails({...jobDetails, designation: e.target.value})} placeholder="e.g. Field Officer, Cashier" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-sm" />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-800 mb-2">State</label>
+                <label className="block text-sm font-semibold text-gray-800 mb-2">
+                  State
+                </label>
                 <StateDropdown 
                   value={jobDetails.state}
                   onChange={(val) => setJobDetails({...jobDetails, state: val})}
@@ -880,520 +827,286 @@ const EditEmployee = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-800 mb-2">Salary (Monthly)</label>
+                <label className="block text-sm font-semibold text-gray-800 mb-2">
+                  Salary (Monthly)
+                </label>
                 <input 
                   type="number" 
                   min="0" 
                   value={jobDetails.salary} 
-                  onChange={e => {
-                    const val = e.target.value;
-                    setJobDetails({...jobDetails, salary: val});
-                    if (touched.salary || errors.salary) validateSingleField('salary', val);
-                  }}
-                  onBlur={() => {
-                    setTouched(t => ({ ...t, salary: true }));
-                    validateSingleField('salary', jobDetails.salary);
-                  }}
-                  className={`w-full px-4 py-3 rounded-xl border bg-white text-sm transition-all ${
-                    errors.salary 
-                      ? 'border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-rose-500' 
-                      : 'border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091]'
-                  }`} 
+                  onChange={e => setJobDetails({...jobDetails, salary: e.target.value})}
+                  placeholder="₹ Monthly salary"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-sm" 
                 />
-                {errors.salary && (
-                  <p className="text-xs text-rose-500 mt-1.5 font-medium flex items-center gap-1">
-                    <AlertCircle size={13} /> {errors.salary}
-                  </p>
-                )}
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-800 mb-2">Joining Date</label>
+                <label className="block text-sm font-semibold text-gray-800 mb-2">
+                  Joining Date
+                </label>
                 <input type="date" value={jobDetails.joiningDate} onChange={e => setJobDetails({...jobDetails, joiningDate: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-sm" />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-800 mb-2">Probation Period (Months)</label>
-                <input type="number" min="0" value={jobDetails.probationPeriodMonths} onChange={e => setJobDetails({...jobDetails, probationPeriodMonths: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-sm" />
+                <label className="block text-sm font-semibold text-gray-800 mb-2">
+                  Probation Period (Months)
+                </label>
+                <input type="number" min="0" value={jobDetails.probationPeriodMonths} onChange={e => setJobDetails({...jobDetails, probationPeriodMonths: e.target.value})} placeholder="Default: 6 months" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-sm" />
               </div>
-            </div>
-            <div className="mt-8 flex justify-end">
-              <button onClick={saveJobDetails} disabled={submittingTab === 'Job Details'} className="px-6 py-2 rounded-full bg-[#225091] text-white font-semibold hover:bg-[#168f94] transition-colors shadow-sm text-sm disabled:opacity-50">
-                {submittingTab === 'Job Details' ? 'Saving...' : 'Save Job Details'}
-              </button>
             </div>
           </div>
         )}
 
         {activeTab === 'Shift & WOFF' && (
           <div className="space-y-6">
+            <div className="flex justify-between items-center mb-2">
+              <h2 className="text-xl font-bold text-gray-800">Shift & Timings</h2>
+              <button
+                type="button"
+                onClick={saveShiftSettings}
+                disabled={submittingTab === 'Shift & WOFF'}
+                className="px-6 py-2 bg-[#225091] hover:bg-[#163a6c] text-white text-sm font-semibold rounded-xl shadow-xs transition-colors cursor-pointer disabled:opacity-50"
+              >
+                {submittingTab === 'Shift & WOFF' ? 'Saving...' : 'Save Changes'}
+              </button>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Shift Card */}
-              <div className="border border-gray-200 rounded-xl p-6 shadow-sm bg-white">
-                <h3 className="text-lg font-bold text-gray-800 mb-6">Shift</h3>
+              {/* Shift Timing Card */}
+              <div className="border border-gray-200 rounded-xl p-6 shadow-xs bg-white">
+                <div className="flex items-center gap-2 mb-6">
+                  <Clock className="text-[#225091]" size={20} />
+                  <h3 className="text-lg font-bold text-gray-800">Shift Timings (Optional)</h3>
+                </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-semibold text-gray-800 mb-2">Punch In Time</label>
+                    <label className="block text-sm font-semibold text-gray-800 mb-2">Punch In Time (Optional)</label>
                     <input 
                       type="time" 
                       value={shiftSettings.punchInTime} 
-                      onChange={e => {
-                        const val = e.target.value;
-                        setShiftSettings({...shiftSettings, punchInTime: val});
-                        if (touched.punchInTime || errors.punchInTime) validateSingleField('punchInTime', val);
-                      }}
-                      onBlur={() => {
-                        setTouched(t => ({ ...t, punchInTime: true }));
-                        validateSingleField('punchInTime', shiftSettings.punchInTime);
-                      }}
-                      className={`w-full px-4 py-3 rounded-xl border bg-white text-sm transition-all ${
-                        errors.punchInTime 
-                          ? 'border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-rose-500' 
-                          : 'border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091]'
-                      }`} 
+                      onChange={e => setShiftSettings({...shiftSettings, punchInTime: e.target.value})}
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-sm" 
                     />
-                    {errors.punchInTime && (
-                      <p className="text-xs text-rose-500 mt-1.5 font-medium flex items-center gap-1">
-                        <AlertCircle size={13} /> {errors.punchInTime}
-                      </p>
-                    )}
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-gray-800 mb-2">Punch Out Time</label>
+                    <label className="block text-sm font-semibold text-gray-800 mb-2">Punch Out Time (Optional)</label>
                     <input 
                       type="time" 
                       value={shiftSettings.punchOutTime} 
-                      onChange={e => {
-                        const val = e.target.value;
-                        setShiftSettings({...shiftSettings, punchOutTime: val});
-                        if (touched.punchOutTime || errors.punchOutTime) validateSingleField('punchOutTime', val);
-                      }}
-                      onBlur={() => {
-                        setTouched(t => ({ ...t, punchOutTime: true }));
-                        validateSingleField('punchOutTime', shiftSettings.punchOutTime);
-                      }}
-                      className={`w-full px-4 py-3 rounded-xl border bg-white text-sm transition-all ${
-                        errors.punchOutTime 
-                          ? 'border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-rose-500' 
-                          : 'border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091]'
-                      }`} 
+                      onChange={e => setShiftSettings({...shiftSettings, punchOutTime: e.target.value})}
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-sm" 
                     />
-                    {errors.punchOutTime && (
-                      <p className="text-xs text-rose-500 mt-1.5 font-medium flex items-center gap-1">
-                        <AlertCircle size={13} /> {errors.punchOutTime}
-                      </p>
-                    )}
                   </div>
                 </div>
               </div>
 
               {/* Weekly Off Card */}
-              <div className="border border-gray-200 rounded-xl p-6 shadow-sm bg-white">
-                <h3 className="text-lg font-bold text-gray-800 mb-6">Weekly Off</h3>
-                <div className="flex flex-col gap-4">
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-800 mb-2">Weekly Off Day</label>
-                    <select 
-                      value={shiftSettings.weeklyOffDay} 
-                      onChange={e => {
-                        const val = e.target.value;
-                        setShiftSettings({...shiftSettings, weeklyOffDay: val});
-                        if (touched.weeklyOffDay || errors.weeklyOffDay) validateSingleField('weeklyOffDay', val);
-                      }}
-                      onBlur={() => {
-                        setTouched(t => ({ ...t, weeklyOffDay: true }));
-                        validateSingleField('weeklyOffDay', shiftSettings.weeklyOffDay);
-                      }}
-                      className={`w-full px-4 py-3 rounded-xl border bg-white text-sm transition-all ${
-                        errors.weeklyOffDay 
-                          ? 'border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-rose-500' 
-                          : 'border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091]'
-                      }`}
-                    >
-                      <option value="">Select</option>
-                      <option value="SUNDAY">Sunday</option>
-                      <option value="SATURDAY">Saturday</option>
-                      <option value="MONDAY">Monday</option>
-                      <option value="TUESDAY">Tuesday</option>
-                      <option value="WEDNESDAY">Wednesday</option>
-                      <option value="THURSDAY">Thursday</option>
-                      <option value="FRIDAY">Friday</option>
-                    </select>
-                    {errors.weeklyOffDay && (
-                      <p className="text-xs text-rose-500 mt-1.5 font-medium flex items-center gap-1">
-                        <AlertCircle size={13} /> {errors.weeklyOffDay}
-                      </p>
-                    )}
-                  </div>
-                  <label className="flex items-center gap-3 border border-gray-200 rounded-xl px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors mt-2">
-                    <input type="checkbox" checked={shiftSettings.weeklyOffPayable} onChange={e => setShiftSettings({...shiftSettings, weeklyOffPayable: e.target.checked})} className="w-5 h-5 rounded border-gray-300 text-[#225091] focus:ring-[#225091]" />
-                    <span className="text-sm font-medium text-gray-700">Weekly Off Payable</span>
-                  </label>
-                  <label className="flex items-center gap-3 border border-gray-200 rounded-xl px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors">
-                    <input type="checkbox" checked={shiftSettings.variableWeeklyOff} onChange={e => setShiftSettings({...shiftSettings, variableWeeklyOff: e.target.checked})} className="w-5 h-5 rounded border-gray-300 text-[#225091] focus:ring-[#225091]" />
-                    <span className="text-sm font-medium text-gray-700">Variable Weekly Off</span>
-                  </label>
-                  <label className="flex items-center gap-3 border border-gray-200 rounded-xl px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors">
-                    <input type="checkbox" checked={shiftSettings.secondWeeklyOff} onChange={e => setShiftSettings({...shiftSettings, secondWeeklyOff: e.target.checked})} className="w-5 h-5 rounded border-gray-300 text-[#225091] focus:ring-[#225091]" />
-                    <span className="text-sm font-medium text-gray-700">Second Weekly Off</span>
-                  </label>
+              <div className="border border-gray-200 rounded-xl p-6 shadow-xs bg-white">
+                <div className="flex items-center gap-2 mb-6">
+                  <CalendarDays className="text-[#225091]" size={20} />
+                  <h3 className="text-lg font-bold text-gray-800">Weekly Off (Optional)</h3>
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-800 mb-2">Weekly Off Day (Optional)</label>
+                  <select 
+                    value={shiftSettings.weeklyOffDay} 
+                    onChange={e => setShiftSettings({...shiftSettings, weeklyOffDay: e.target.value})}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-sm"
+                  >
+                    <option value="SUNDAY">Sunday</option>
+                    <option value="SATURDAY">Saturday</option>
+                    <option value="MONDAY">Monday</option>
+                    <option value="TUESDAY">Tuesday</option>
+                    <option value="WEDNESDAY">Wednesday</option>
+                    <option value="THURSDAY">Thursday</option>
+                    <option value="FRIDAY">Friday</option>
+                  </select>
                 </div>
               </div>
             </div>
 
-            {/* Other Details Card */}
-            <div className="border border-gray-200 rounded-xl p-6 shadow-sm bg-white mt-6">
-              <h3 className="text-lg font-bold text-gray-800 mb-6">Other Details</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* Grace Period Card */}
+            <div className="border border-gray-200 rounded-xl p-6 shadow-xs bg-white">
+              <h3 className="text-lg font-bold text-gray-800 mb-6">Grace Period Rules (Optional)</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-800 mb-2">Late Allowed (Mins)</label>
-                  <input type="number" min="0" value={shiftSettings.lateAllowedMins} onChange={e => setShiftSettings({...shiftSettings, lateAllowedMins: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-sm mb-3" />
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" checked={shiftSettings.lateAllowedAsPerShift} onChange={e => setShiftSettings({...shiftSettings, lateAllowedAsPerShift: e.target.checked})} className="w-5 h-5 rounded border-gray-300 text-[#225091] focus:ring-[#225091]" />
-                    <span className="text-sm font-medium text-gray-600">As Per Shift</span>
-                  </label>
+                  <label className="block text-sm font-semibold text-gray-800 mb-2">Late Allowed (Minutes) (Optional)</label>
+                  <input type="number" min="0" value={shiftSettings.lateAllowedMins} onChange={e => setShiftSettings({...shiftSettings, lateAllowedMins: e.target.value})} placeholder="Default: 15 mins" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-sm" />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-800 mb-2">Early Allowed (Mins)</label>
-                  <input type="number" min="0" value={shiftSettings.earlyAllowedMins} onChange={e => setShiftSettings({...shiftSettings, earlyAllowedMins: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-sm mb-3" />
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" checked={shiftSettings.earlyAllowedAsPerShift} onChange={e => setShiftSettings({...shiftSettings, earlyAllowedAsPerShift: e.target.checked})} className="w-5 h-5 rounded border-gray-300 text-[#225091] focus:ring-[#225091]" />
-                    <span className="text-sm font-medium text-gray-600">As Per Shift</span>
-                  </label>
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-800 mb-2">Half Day (Mins)</label>
-                  <input type="number" min="0" value={shiftSettings.halfDayMins} onChange={e => setShiftSettings({...shiftSettings, halfDayMins: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-sm mb-3" />
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" checked={shiftSettings.halfDayAsPerShift} onChange={e => setShiftSettings({...shiftSettings, halfDayAsPerShift: e.target.checked})} className="w-5 h-5 rounded border-gray-300 text-[#225091] focus:ring-[#225091]" />
-                    <span className="text-sm font-medium text-gray-600">As Per Shift</span>
-                  </label>
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-800 mb-2">Full Day (Mins)</label>
-                  <input type="number" min="0" value={shiftSettings.fullDayMins} onChange={e => setShiftSettings({...shiftSettings, fullDayMins: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-sm mb-3" />
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" checked={shiftSettings.fullDayAsPerShift} onChange={e => setShiftSettings({...shiftSettings, fullDayAsPerShift: e.target.checked})} className="w-5 h-5 rounded border-gray-300 text-[#225091] focus:ring-[#225091]" />
-                    <span className="text-sm font-medium text-gray-600">As Per Shift</span>
-                  </label>
+                  <label className="block text-sm font-semibold text-gray-800 mb-2">Early Allowed (Minutes) (Optional)</label>
+                  <input type="number" min="0" value={shiftSettings.earlyAllowedMins} onChange={e => setShiftSettings({...shiftSettings, earlyAllowedMins: e.target.value})} placeholder="Default: 15 mins" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-sm" />
                 </div>
               </div>
-            </div>
-            <div className="mt-8 flex justify-end">
-              <button onClick={saveShiftSettings} disabled={submittingTab === 'Shift & WOFF'} className="px-6 py-2 rounded-full bg-[#225091] text-white font-semibold hover:bg-[#168f94] transition-colors shadow-sm text-sm disabled:opacity-50">
-                {submittingTab === 'Shift & WOFF' ? 'Saving...' : 'Save Shift Settings'}
-              </button>
             </div>
           </div>
         )}
 
         {activeTab === 'Attendance' && (
           <div className="space-y-6">
+            <div className="flex justify-between items-center mb-2">
+              <h2 className="text-xl font-bold text-gray-800">Attendance Settings</h2>
+              <button
+                type="button"
+                onClick={saveAttendanceSettings}
+                disabled={submittingTab === 'Attendance'}
+                className="px-6 py-2 bg-[#225091] hover:bg-[#163a6c] text-white text-sm font-semibold rounded-xl shadow-xs transition-colors cursor-pointer disabled:opacity-50"
+              >
+                {submittingTab === 'Attendance' ? 'Saving...' : 'Save Changes'}
+              </button>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              
               {/* Punch Card */}
-              <div className="border border-gray-200 rounded-xl p-6 shadow-sm bg-white">
-                <h3 className="text-lg font-bold text-gray-800 mb-6">Punch</h3>
+              <div className="border border-gray-200 rounded-xl p-6 shadow-xs bg-white">
+                <h3 className="text-lg font-bold text-gray-800 mb-6">Punch Mode (Optional)</h3>
                 <div className="flex flex-col gap-5">
                   <div>
-                    <label className="block text-sm font-semibold text-gray-800 mb-3">Punch Type</label>
+                    <label className="block text-sm font-semibold text-gray-800 mb-3">Punch Type (Optional)</label>
                     <div className="flex items-center gap-6">
                       <label className="flex items-center gap-2 cursor-pointer">
-                        <input type="radio" name="punchType" value="SINGLE" checked={attendanceSettings.punchType === 'SINGLE'} onChange={e => setAttendanceSettings({...attendanceSettings, punchType: e.target.value})} className="w-5 h-5 text-[#225091] focus:ring-[#225091]" />
-                        <span className="text-sm text-gray-700">Single</span>
+                        <input type="radio" name="punchType" value="SINGLE" checked={attendanceSettings.punchType === 'SINGLE'} onChange={e => setAttendanceSettings({...attendanceSettings, punchType: e.target.value})} className="w-4 h-4 text-[#225091] focus:ring-[#225091]" />
+                        <span className="text-sm text-gray-700">Single Punch</span>
                       </label>
                       <label className="flex items-center gap-2 cursor-pointer">
-                        <input type="radio" name="punchType" value="DOUBLE" checked={attendanceSettings.punchType === 'DOUBLE'} onChange={e => setAttendanceSettings({...attendanceSettings, punchType: e.target.value})} className="w-5 h-5 text-[#225091] focus:ring-[#225091]" />
-                        <span className="text-sm text-gray-700">Double</span>
-                      </label>
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <input type="radio" name="punchType" value="MULTIPLE" checked={attendanceSettings.punchType === 'MULTIPLE'} onChange={e => setAttendanceSettings({...attendanceSettings, punchType: e.target.value})} className="w-5 h-5 text-[#225091] focus:ring-[#225091]" />
-                        <span className="text-sm text-gray-700">Multiple</span>
+                        <input type="radio" name="punchType" value="DOUBLE" checked={attendanceSettings.punchType === 'DOUBLE'} onChange={e => setAttendanceSettings({...attendanceSettings, punchType: e.target.value})} className="w-4 h-4 text-[#225091] focus:ring-[#225091]" />
+                        <span className="text-sm text-gray-700">Double Punch (In / Out)</span>
                       </label>
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-gray-800 mb-2">No Out-Punch Found — Action</label>
+                    <label className="block text-sm font-semibold text-gray-800 mb-2">No Out-Punch Found Action (Optional)</label>
                     <select value={attendanceSettings.noOutPunchAction} onChange={e => setAttendanceSettings({...attendanceSettings, noOutPunchAction: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-sm">
-                      <option value="">Select</option>
                       <option value="MARK_HALF_DAY">Mark Half Day</option>
                       <option value="MARK_ABSENT">Mark Absent</option>
                     </select>
                   </div>
+                </div>
+              </div>
+
+              {/* Late Cut & Overtime Card */}
+              <div className="border border-gray-200 rounded-xl p-6 shadow-xs bg-white">
+                <h3 className="text-lg font-bold text-gray-800 mb-6">Attendance Policies (Optional)</h3>
+                <div className="flex flex-col gap-5">
                   <div>
-                    <label className="block text-sm font-semibold text-gray-800 mb-2">Present On WO / Holiday — Action</label>
-                    <select value={attendanceSettings.presentOnWeeklyOffHolidayAction} onChange={e => setAttendanceSettings({...attendanceSettings, presentOnWeeklyOffHolidayAction: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-sm">
-                      <option value="">Select</option>
-                      <option value="EXTRA_PAY">Extra Pay</option>
-                      <option value="COMPENSATORY_OFF">Compensatory Off</option>
+                    <label className="block text-sm font-semibold text-gray-800 mb-2">Late Cut Action (Optional)</label>
+                    <select value={attendanceSettings.lateCutAction} onChange={e => setAttendanceSettings({...attendanceSettings, lateCutAction: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-sm">
+                      <option value="MARK_HALF_DAY">Mark Half Day</option>
+                      <option value="MARK_ABSENT">Mark Absent</option>
                     </select>
                   </div>
-                </div>
-              </div>
-
-              {/* Late Cut Card */}
-              <div className="border border-gray-200 rounded-xl p-6 shadow-sm bg-white">
-                <h3 className="text-lg font-bold text-gray-800 mb-6">Late Cut</h3>
-                <div className="flex flex-col gap-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-800 mb-2">Allowed Days</label>
-                      <input type="number" min="0" value={attendanceSettings.lateCutAllowedDays} onChange={e => setAttendanceSettings({...attendanceSettings, lateCutAllowedDays: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-sm" />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-800 mb-2">Action</label>
-                      <select value={attendanceSettings.lateCutAction} onChange={e => setAttendanceSettings({...attendanceSettings, lateCutAction: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-sm">
-                        <option value="">Select</option>
-                        <option value="MARK_HALF_DAY">Mark Half Day</option>
-                        <option value="MARK_ABSENT">Mark Absent</option>
-                      </select>
-                    </div>
-                  </div>
-                  <label className="flex items-center gap-3 border border-gray-200 rounded-xl px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors mt-2">
-                    <input type="checkbox" checked={attendanceSettings.lateCutAllowed} onChange={e => setAttendanceSettings({...attendanceSettings, lateCutAllowed: e.target.checked})} className="w-5 h-5 rounded border-gray-300 text-[#225091] focus:ring-[#225091]" />
-                    <span className="text-sm font-medium text-gray-700">Late Cut Allowed</span>
-                  </label>
-                  <label className="flex items-center gap-3 border border-gray-200 rounded-xl px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors">
-                    <input type="checkbox" checked={attendanceSettings.extraLateCutDeduction} onChange={e => setAttendanceSettings({...attendanceSettings, extraLateCutDeduction: e.target.checked})} className="w-5 h-5 rounded border-gray-300 text-[#225091] focus:ring-[#225091]" />
-                    <span className="text-sm font-medium text-gray-700">Extra Late Cut Deduction</span>
-                  </label>
-                  <label className="flex items-center gap-3 border border-gray-200 rounded-xl px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors">
-                    <input type="checkbox" checked={attendanceSettings.additionalLateCutInLeaveBalance} onChange={e => setAttendanceSettings({...attendanceSettings, additionalLateCutInLeaveBalance: e.target.checked})} className="w-5 h-5 rounded border-gray-300 text-[#225091] focus:ring-[#225091]" />
-                    <span className="text-sm font-medium text-gray-700">Additional Late Cut In Leave Balance</span>
-                  </label>
-                </div>
-              </div>
-
-              {/* Lunch & Early Going Card */}
-              <div className="border border-gray-200 rounded-xl p-6 shadow-sm bg-white">
-                <h3 className="text-lg font-bold text-gray-800 mb-6">Lunch & Early Going</h3>
-                <div className="flex flex-col gap-4">
-                  <div className="flex gap-4 items-end mb-2">
-                    <div className="flex-1">
-                      <label className="block text-sm font-semibold text-gray-800 mb-2">Lunch Allowed Mins</label>
-                      <input type="number" min="0" value={attendanceSettings.lunchAllowedMins} onChange={e => setAttendanceSettings({...attendanceSettings, lunchAllowedMins: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-sm" />
-                    </div>
-                    <label className="flex items-center gap-2 cursor-pointer pb-3">
-                      <input type="checkbox" checked={attendanceSettings.lunchAsPerShift} onChange={e => setAttendanceSettings({...attendanceSettings, lunchAsPerShift: e.target.checked})} className="w-5 h-5 rounded border-gray-300 text-[#225091] focus:ring-[#225091]" />
-                      <span className="text-sm font-medium text-gray-600">As Per Shift</span>
-                    </label>
-                  </div>
-                  <label className="flex items-center gap-3 border border-gray-200 rounded-xl px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors">
-                    <input type="checkbox" checked={attendanceSettings.lunchAllowed} onChange={e => setAttendanceSettings({...attendanceSettings, lunchAllowed: e.target.checked})} className="w-5 h-5 rounded border-gray-300 text-[#225091] focus:ring-[#225091]" />
-                    <span className="text-sm font-medium text-gray-700">Lunch Allowed</span>
-                  </label>
-                  <label className="flex items-center gap-3 border border-gray-200 rounded-xl px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors">
-                    <input type="checkbox" checked={attendanceSettings.earlyGoingAllowed} onChange={e => setAttendanceSettings({...attendanceSettings, earlyGoingAllowed: e.target.checked})} className="w-5 h-5 rounded border-gray-300 text-[#225091] focus:ring-[#225091]" />
-                    <span className="text-sm font-medium text-gray-700">Early Going Allowed</span>
-                  </label>
-                </div>
-              </div>
-
-              {/* Overtime Card */}
-              <div className="border border-gray-200 rounded-xl p-6 shadow-sm bg-white">
-                <h3 className="text-lg font-bold text-gray-800 mb-6">Overtime</h3>
-                <div className="flex flex-col gap-4">
-                  <label className="flex items-center gap-3 border border-gray-200 rounded-xl px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors">
+                  <label className="flex items-center gap-3 border border-gray-200 rounded-xl px-4 py-3.5 cursor-pointer hover:bg-gray-50 transition-colors mt-1">
                     <input type="checkbox" checked={attendanceSettings.overtimeAllowed} onChange={e => setAttendanceSettings({...attendanceSettings, overtimeAllowed: e.target.checked})} className="w-5 h-5 rounded border-gray-300 text-[#225091] focus:ring-[#225091]" />
-                    <span className="text-sm font-medium text-gray-700">Overtime Allowed</span>
-                  </label>
-                  <div className="grid grid-cols-2 gap-4 mt-2">
-                    <label className="flex items-center gap-3 border border-gray-200 rounded-xl px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors">
-                      <input type="checkbox" checked={attendanceSettings.customOT} onChange={e => setAttendanceSettings({...attendanceSettings, customOT: e.target.checked})} className="w-5 h-5 rounded border-gray-300 text-[#225091] focus:ring-[#225091]" />
-                      <span className="text-sm font-medium text-gray-700">Custom OT</span>
-                    </label>
-                    <label className="flex items-center gap-3 border border-gray-200 rounded-xl px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors">
-                      <input type="checkbox" checked={attendanceSettings.beforeOT} onChange={e => setAttendanceSettings({...attendanceSettings, beforeOT: e.target.checked})} className="w-5 h-5 rounded border-gray-300 text-[#225091] focus:ring-[#225091]" />
-                      <span className="text-sm font-medium text-gray-700">Before OT</span>
-                    </label>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4 mt-2">
                     <div>
-                      <label className="block text-sm font-semibold text-gray-800 mb-2">OT Grace Period (Mins)</label>
-                      <input type="number" min="0" value={attendanceSettings.gracePeriodMinutes} onChange={e => setAttendanceSettings({...attendanceSettings, gracePeriodMinutes: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-sm" />
+                      <span className="text-sm font-semibold text-gray-800 block">Overtime Allowed (Optional)</span>
+                      <span className="text-xs text-gray-500">Enable overtime calculation for extra working hours</span>
                     </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-800 mb-2">1 Day OT Hrs</label>
-                      <input type="number" min="0" value={attendanceSettings.oneDayOTHrs} onChange={e => setAttendanceSettings({...attendanceSettings, oneDayOTHrs: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-sm" />
-                    </div>
-                  </div>
-                  <label className="flex items-center gap-3 border border-gray-200 rounded-xl px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors mt-2">
-                    <input type="checkbox" checked={attendanceSettings.otAsPerShift} onChange={e => setAttendanceSettings({...attendanceSettings, otAsPerShift: e.target.checked})} className="w-5 h-5 rounded border-gray-300 text-[#225091] focus:ring-[#225091]" />
-                    <span className="text-sm font-medium text-gray-700">OT As Per Shift</span>
-                  </label>
-                  <label className="flex items-center gap-3 border border-gray-200 rounded-xl px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors">
-                    <input type="checkbox" checked={attendanceSettings.considerOTAsCOFF} onChange={e => setAttendanceSettings({...attendanceSettings, considerOTAsCOFF: e.target.checked})} className="w-5 h-5 rounded border-gray-300 text-[#225091] focus:ring-[#225091]" />
-                    <span className="text-sm font-medium text-gray-700">Consider OT As COFF</span>
                   </label>
                 </div>
               </div>
-            </div>
-            <div className="mt-8 flex justify-end">
-              <button onClick={saveAttendanceSettings} disabled={submittingTab === 'Attendance'} className="px-6 py-2 rounded-full bg-[#225091] text-white font-semibold hover:bg-[#168f94] transition-colors shadow-sm text-sm disabled:opacity-50">
-                {submittingTab === 'Attendance' ? 'Saving...' : 'Save Attendance Settings'}
-              </button>
             </div>
           </div>
         )}
         
         {activeTab === 'WOFF & HOFF' && (
           <div className="space-y-6">
-            {/* Sandwich Absence Rules — Weekly Off */}
-            <div className="border border-gray-200 rounded-xl p-6 shadow-sm bg-white">
-              <h3 className="text-xl font-bold text-gray-800 mb-6">Sandwich Absence Rules — Weekly Off</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <label className="flex items-center gap-3 border border-gray-200 rounded-xl px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors">
-                  <input type="checkbox" checked={woffHoffSettings.woAbsentBefore} onChange={e => setWoffHoffSettings({...woffHoffSettings, woAbsentBefore: e.target.checked})} className="w-5 h-5 rounded border-gray-300 text-[#225091] focus:ring-[#225091]" />
-                  <div>
-                    <span className="block text-sm font-medium text-gray-700">Absent Before Weekly Off</span>
-                    <span className="block text-xs text-gray-500 mt-1">Mark Absent If Employee Absent The Day Before WO.</span>
-                  </div>
-                </label>
-                <label className="flex items-center gap-3 border border-gray-200 rounded-xl px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors">
-                  <input type="checkbox" checked={woffHoffSettings.woAbsentAfter} onChange={e => setWoffHoffSettings({...woffHoffSettings, woAbsentAfter: e.target.checked})} className="w-5 h-5 rounded border-gray-300 text-[#225091] focus:ring-[#225091]" />
-                  <div>
-                    <span className="block text-sm font-medium text-gray-700">Absent After Weekly Off</span>
-                    <span className="block text-xs text-gray-500 mt-1">Mark Absent If Employee Absent The Day After WO.</span>
-                  </div>
-                </label>
-                <label className="flex items-center gap-3 border border-gray-200 rounded-xl px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors">
-                  <input type="checkbox" checked={woffHoffSettings.woAbsentBeforeOrAfter} onChange={e => setWoffHoffSettings({...woffHoffSettings, woAbsentBeforeOrAfter: e.target.checked})} className="w-5 h-5 rounded border-gray-300 text-[#225091] focus:ring-[#225091]" />
-                  <div>
-                    <span className="block text-sm font-medium text-gray-700">Absent Before Or After Weekly Off</span>
-                    <span className="block text-xs text-gray-500 mt-1">Either Side Triggers WO Absent.</span>
-                  </div>
-                </label>
-                <label className="flex items-center gap-3 border border-gray-200 rounded-xl px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors">
-                  <input type="checkbox" checked={woffHoffSettings.woAddWorkingHrs} onChange={e => setWoffHoffSettings({...woffHoffSettings, woAddWorkingHrs: e.target.checked})} className="w-5 h-5 rounded border-gray-300 text-[#225091] focus:ring-[#225091]" />
-                  <span className="text-sm font-medium text-gray-700">Add Working Hrs On Weekly Off Day</span>
-                </label>
-                <label className="flex items-center gap-3 border border-gray-200 rounded-xl px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors">
-                  <input type="checkbox" checked={woffHoffSettings.woLateDeductionNotApplied} onChange={e => setWoffHoffSettings({...woffHoffSettings, woLateDeductionNotApplied: e.target.checked})} className="w-5 h-5 rounded border-gray-300 text-[#225091] focus:ring-[#225091]" />
-                  <span className="text-sm font-medium text-gray-700">Late Deduction Not Applied On WO If Present</span>
-                </label>
-                <label className="flex items-center gap-3 border border-gray-200 rounded-xl px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors">
-                  <input type="checkbox" checked={woffHoffSettings.woLWP} onChange={e => setWoffHoffSettings({...woffHoffSettings, woLWP: e.target.checked})} className="w-5 h-5 rounded border-gray-300 text-[#225091] focus:ring-[#225091]" />
-                  <span className="text-sm font-medium text-gray-700">LWP</span>
-                </label>
-              </div>
-            </div>
-
-            {/* Sandwich Absence Rules — Holiday */}
-            <div className="border border-gray-200 rounded-xl p-6 shadow-sm bg-white">
-              <h3 className="text-xl font-bold text-gray-800 mb-6">Sandwich Absence Rules — Holiday</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <label className="flex items-center gap-3 border border-gray-200 rounded-xl px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors">
-                  <input type="checkbox" checked={woffHoffSettings.holAbsentBefore} onChange={e => setWoffHoffSettings({...woffHoffSettings, holAbsentBefore: e.target.checked})} className="w-5 h-5 rounded border-gray-300 text-[#225091] focus:ring-[#225091]" />
-                  <span className="text-sm font-medium text-gray-700">Absent Before Holiday</span>
-                </label>
-                <label className="flex items-center gap-3 border border-gray-200 rounded-xl px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors">
-                  <input type="checkbox" checked={woffHoffSettings.holAbsentAfter} onChange={e => setWoffHoffSettings({...woffHoffSettings, holAbsentAfter: e.target.checked})} className="w-5 h-5 rounded border-gray-300 text-[#225091] focus:ring-[#225091]" />
-                  <span className="text-sm font-medium text-gray-700">Absent After Holiday</span>
-                </label>
-                <label className="flex items-center gap-3 border border-gray-200 rounded-xl px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors">
-                  <input type="checkbox" checked={woffHoffSettings.holAbsentBeforeAndAfter} onChange={e => setWoffHoffSettings({...woffHoffSettings, holAbsentBeforeAndAfter: e.target.checked})} className="w-5 h-5 rounded border-gray-300 text-[#225091] focus:ring-[#225091]" />
-                  <span className="text-sm font-medium text-gray-700">Absent Before & After Holiday</span>
-                </label>
-                <label className="flex items-center gap-3 border border-gray-200 rounded-xl px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors">
-                  <input type="checkbox" checked={woffHoffSettings.holAddWorkingHrs} onChange={e => setWoffHoffSettings({...woffHoffSettings, holAddWorkingHrs: e.target.checked})} className="w-5 h-5 rounded border-gray-300 text-[#225091] focus:ring-[#225091]" />
-                  <span className="text-sm font-medium text-gray-700">Add Working Hours On Holiday Day</span>
-                </label>
-                <label className="flex items-center gap-3 border border-gray-200 rounded-xl px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors">
-                  <input type="checkbox" checked={woffHoffSettings.holLateDeductionNotApplied} onChange={e => setWoffHoffSettings({...woffHoffSettings, holLateDeductionNotApplied: e.target.checked})} className="w-5 h-5 rounded border-gray-300 text-[#225091] focus:ring-[#225091]" />
-                  <span className="text-sm font-medium text-gray-700">Late Deduction Not Applied On Holiday If Present</span>
-                </label>
-                <label className="flex items-center gap-3 border border-gray-200 rounded-xl px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors">
-                  <input type="checkbox" checked={woffHoffSettings.holLWP} onChange={e => setWoffHoffSettings({...woffHoffSettings, holLWP: e.target.checked})} className="w-5 h-5 rounded border-gray-300 text-[#225091] focus:ring-[#225091]" />
-                  <span className="text-sm font-medium text-gray-700">LWP</span>
-                </label>
-              </div>
-            </div>
-
-            {/* Leave Between Holiday Or Weekly Off */}
-            <div className="border border-gray-200 rounded-xl p-6 shadow-sm bg-white">
-              <h3 className="text-xl font-bold text-gray-800 mb-6">Leave Between Holiday Or Weekly Off</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <label className="flex items-center gap-3 border border-gray-200 rounded-xl px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors">
-                  <input type="checkbox" checked={woffHoffSettings.considerWOInLeave} onChange={e => setWoffHoffSettings({...woffHoffSettings, considerWOInLeave: e.target.checked})} className="w-5 h-5 rounded border-gray-300 text-[#225091] focus:ring-[#225091]" />
-                  <span className="text-sm font-medium text-gray-700">Consider "Weekly Off" In Leave Application</span>
-                </label>
-                <label className="flex items-center gap-3 border border-gray-200 rounded-xl px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors">
-                  <input type="checkbox" checked={woffHoffSettings.considerHolInLeave} onChange={e => setWoffHoffSettings({...woffHoffSettings, considerHolInLeave: e.target.checked})} className="w-5 h-5 rounded border-gray-300 text-[#225091] focus:ring-[#225091]" />
-                  <span className="text-sm font-medium text-gray-700">Consider "Holiday" In Leave Application</span>
-                </label>
-                <label className="flex items-center gap-3 border border-gray-200 rounded-xl px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors">
-                  <input type="checkbox" checked={woffHoffSettings.absentWOLeaveWOAbsent} onChange={e => setWoffHoffSettings({...woffHoffSettings, absentWOLeaveWOAbsent: e.target.checked})} className="w-5 h-5 rounded border-gray-300 text-[#225091] focus:ring-[#225091]" />
-                  <span className="text-sm font-medium text-gray-700">Absent — WO — Leave = WO Absent</span>
-                </label>
-                <label className="flex items-center gap-3 border border-gray-200 rounded-xl px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors">
-                  <input type="checkbox" checked={woffHoffSettings.leaveWOAbsentWOAbsent} onChange={e => setWoffHoffSettings({...woffHoffSettings, leaveWOAbsentWOAbsent: e.target.checked})} className="w-5 h-5 rounded border-gray-300 text-[#225091] focus:ring-[#225091]" />
-                  <span className="text-sm font-medium text-gray-700">Leave — WO — Absent = WO Absent</span>
-                </label>
-                <label className="flex items-center gap-3 border border-gray-200 rounded-xl px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors">
-                  <input type="checkbox" checked={woffHoffSettings.absentHolLeaveHolAbsent} onChange={e => setWoffHoffSettings({...woffHoffSettings, absentHolLeaveHolAbsent: e.target.checked})} className="w-5 h-5 rounded border-gray-300 text-[#225091] focus:ring-[#225091]" />
-                  <span className="text-sm font-medium text-gray-700">Absent — Holiday — Leave = Holiday Absent</span>
-                </label>
-                <label className="flex items-center gap-3 border border-gray-200 rounded-xl px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors">
-                  <input type="checkbox" checked={woffHoffSettings.leaveHolAbsentHolAbsent} onChange={e => setWoffHoffSettings({...woffHoffSettings, leaveHolAbsentHolAbsent: e.target.checked})} className="w-5 h-5 rounded border-gray-300 text-[#225091] focus:ring-[#225091]" />
-                  <span className="text-sm font-medium text-gray-700">Leave — Holiday — Absent = Holiday Absent</span>
-                </label>
-              </div>
-            </div>
-
-            {/* Leave Settings */}
-            <div className="border border-gray-200 rounded-xl p-6 shadow-sm bg-white">
-              <h3 className="text-xl font-bold text-gray-800 mb-6">Leave Settings</h3>
-              <div className="flex flex-col gap-6">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-800 mb-3">Leave In Cash</label>
-                  <div className="flex items-center gap-6">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input type="radio" name="leaveInCash" checked={woffHoffSettings.leaveInCash} onChange={() => setWoffHoffSettings({...woffHoffSettings, leaveInCash: true})} className="w-5 h-5 text-[#225091] focus:ring-[#225091]" />
-                      <span className="text-sm text-gray-700">Yes</span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input type="radio" name="leaveInCash" checked={!woffHoffSettings.leaveInCash} onChange={() => setWoffHoffSettings({...woffHoffSettings, leaveInCash: false})} className="w-5 h-5 text-[#225091] focus:ring-[#225091]" />
-                      <span className="text-sm text-gray-700">No</span>
-                    </label>
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-800 mb-3">Leave Carry Forward</label>
-                  <div className="flex items-center gap-6">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input type="radio" name="leaveCarryForward" checked={woffHoffSettings.leaveCarryForward} onChange={() => setWoffHoffSettings({...woffHoffSettings, leaveCarryForward: true})} className="w-5 h-5 text-[#225091] focus:ring-[#225091]" />
-                      <span className="text-sm text-gray-700">Yes</span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input type="radio" name="leaveCarryForward" checked={!woffHoffSettings.leaveCarryForward} onChange={() => setWoffHoffSettings({...woffHoffSettings, leaveCarryForward: false})} className="w-5 h-5 text-[#225091] focus:ring-[#225091]" />
-                      <span className="text-sm text-gray-700">No</span>
-                    </label>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <div className="mt-8 flex justify-end">
-              <button onClick={saveWoffHoffSettings} disabled={submittingTab === 'WOFF & HOFF'} className="px-6 py-2 rounded-full bg-[#225091] text-white font-semibold hover:bg-[#168f94] transition-colors shadow-sm text-sm disabled:opacity-50">
-                {submittingTab === 'WOFF & HOFF' ? 'Saving...' : 'Save WOFF/HOFF Rules'}
+            <div className="flex justify-between items-center mb-2">
+              <h2 className="text-xl font-bold text-gray-800">WOFF & HOFF Rules</h2>
+              <button
+                type="button"
+                onClick={saveWoffHoffSettings}
+                disabled={submittingTab === 'WOFF & HOFF'}
+                className="px-6 py-2 bg-[#225091] hover:bg-[#163a6c] text-white text-sm font-semibold rounded-xl shadow-xs transition-colors cursor-pointer disabled:opacity-50"
+              >
+                {submittingTab === 'WOFF & HOFF' ? 'Saving...' : 'Save Changes'}
               </button>
+            </div>
+
+            {/* Sandwich Rules */}
+            <div className="border border-gray-200 rounded-xl p-6 shadow-xs bg-white">
+              <h3 className="text-lg font-bold text-gray-800 mb-6">Sandwich Absence Rules (Optional)</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <label className="flex items-center gap-3 border border-gray-200 rounded-xl px-4 py-3.5 cursor-pointer hover:bg-gray-50 transition-colors">
+                  <input type="checkbox" checked={woffHoffSettings.sandwichWeeklyOff} onChange={e => setWoffHoffSettings({...woffHoffSettings, sandwichWeeklyOff: e.target.checked})} className="w-5 h-5 rounded border-gray-300 text-[#225091] focus:ring-[#225091]" />
+                  <div>
+                    <span className="block text-sm font-semibold text-gray-800">Sandwich Rule on Weekly Off (Optional)</span>
+                    <span className="block text-xs text-gray-500 mt-0.5">Mark absent on Weekly Off if absent on adjacent days.</span>
+                  </div>
+                </label>
+                <label className="flex items-center gap-3 border border-gray-200 rounded-xl px-4 py-3.5 cursor-pointer hover:bg-gray-50 transition-colors">
+                  <input type="checkbox" checked={woffHoffSettings.sandwichHoliday} onChange={e => setWoffHoffSettings({...woffHoffSettings, sandwichHoliday: e.target.checked})} className="w-5 h-5 rounded border-gray-300 text-[#225091] focus:ring-[#225091]" />
+                  <div>
+                    <span className="block text-sm font-semibold text-gray-800">Sandwich Rule on Holiday (Optional)</span>
+                    <span className="block text-xs text-gray-500 mt-0.5">Mark absent on Holiday if absent on adjacent days.</span>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            {/* Leave Integration */}
+            <div className="border border-gray-200 rounded-xl p-6 shadow-xs bg-white">
+              <h3 className="text-lg font-bold text-gray-800 mb-6">Leave Rules (Optional)</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <label className="flex items-center gap-3 border border-gray-200 rounded-xl px-4 py-3.5 cursor-pointer hover:bg-gray-50 transition-colors">
+                  <input type="checkbox" checked={woffHoffSettings.considerWOInLeave} onChange={e => setWoffHoffSettings({...woffHoffSettings, considerWOInLeave: e.target.checked})} className="w-5 h-5 rounded border-gray-300 text-[#225091] focus:ring-[#225091]" />
+                  <div>
+                    <span className="block text-sm font-semibold text-gray-800">Consider "Weekly Off" In Leave Application (Optional)</span>
+                    <span className="block text-xs text-gray-500 mt-0.5">Include weekly off days in total leave count.</span>
+                  </div>
+                </label>
+                <label className="flex items-center gap-3 border border-gray-200 rounded-xl px-4 py-3.5 cursor-pointer hover:bg-gray-50 transition-colors">
+                  <input type="checkbox" checked={woffHoffSettings.considerHolInLeave} onChange={e => setWoffHoffSettings({...woffHoffSettings, considerHolInLeave: e.target.checked})} className="w-5 h-5 rounded border-gray-300 text-[#225091] focus:ring-[#225091]" />
+                  <div>
+                    <span className="block text-sm font-semibold text-gray-800">Consider "Holiday" In Leave Application (Optional)</span>
+                    <span className="block text-xs text-gray-500 mt-0.5">Include declared holidays in total leave count.</span>
+                  </div>
+                </label>
+              </div>
             </div>
           </div>
         )}
 
         {activeTab === 'KRA Settings' && (
           <div className="space-y-6">
-            <div className="border border-gray-200 rounded-xl p-6 shadow-sm bg-white">
-              <h3 className="text-xl font-bold text-gray-800 mb-6">KRA Settings (Yearly)</h3>
+            <div className="border border-gray-200 rounded-xl p-6 shadow-xs bg-white">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-2">
+                  <Award className="text-[#225091]" size={20} />
+                  <h3 className="text-lg font-bold text-gray-800">Performance Targets (Yearly) (Optional)</h3>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
+                    <label className="text-xs font-semibold text-gray-600">Year:</label>
+                    <input 
+                      type="number" 
+                      value={kraSettings.year} 
+                      onChange={e => setKraSettings({...kraSettings, year: e.target.value})} 
+                      className="w-24 px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-semibold text-[#225091] focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={saveKraSettings}
+                    disabled={submittingTab === 'KRA Settings'}
+                    className="px-5 py-1.5 bg-[#225091] hover:bg-[#163a6c] text-white text-xs font-semibold rounded-lg shadow-xs transition-colors cursor-pointer disabled:opacity-50"
+                  >
+                    {submittingTab === 'KRA Settings' ? 'Saving...' : 'Save Targets'}
+                  </button>
+                </div>
+              </div>
               
-              <div className="flex flex-col gap-6">
+              <div className="flex flex-col gap-5">
                 {kraSettings.targets.map((target, index) => (
-                  <div key={index} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div key={index} className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end bg-gray-50/60 p-4 rounded-xl border border-gray-100">
                     <div>
-                      <label className="block text-sm font-semibold text-gray-800 mb-2">Product</label>
-                      <select value={target.product} onChange={e => {
-                        const newTargets = [...kraSettings.targets];
-                        newTargets[index].product = e.target.value;
-                        setKraSettings({...kraSettings, targets: newTargets});
-                      }} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-sm">
+                      <label className="block text-xs font-semibold text-gray-700 mb-1.5">Product (Optional)</label>
+                      <select 
+                        value={target.product} 
+                        onChange={e => {
+                          const newTargets = [...kraSettings.targets];
+                          newTargets[index].product = e.target.value;
+                          setKraSettings({...kraSettings, targets: newTargets});
+                        }} 
+                        className="w-full px-3.5 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-sm"
+                      >
                         <option value="">Select Product</option>
                         <option value="Fixed Deposit">Fixed Deposit</option>
                         <option value="Loan Disbursement">Loan Disbursement</option>
@@ -1402,31 +1115,47 @@ const EditEmployee = () => {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-sm font-semibold text-gray-800 mb-2">Target</label>
-                      <input type="number" min="0" value={target.targetValue} onChange={e => {
-                        const newTargets = [...kraSettings.targets];
-                        newTargets[index].targetValue = e.target.value;
-                        setKraSettings({...kraSettings, targets: newTargets});
-                      }} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-sm" />
+                      <label className="block text-xs font-semibold text-gray-700 mb-1.5">Target Value (Optional)</label>
+                      <input 
+                        type="number" 
+                        min="0" 
+                        value={target.targetValue} 
+                        onChange={e => {
+                          const newTargets = [...kraSettings.targets];
+                          newTargets[index].targetValue = e.target.value;
+                          setKraSettings({...kraSettings, targets: newTargets});
+                        }} 
+                        placeholder="Target amount or count"
+                        className="w-full px-3.5 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-sm" 
+                      />
                     </div>
                   </div>
                 ))}
                 
-                <div className="flex justify-end mt-2">
-                  <button type="button" onClick={() => setKraSettings({...kraSettings, targets: [...kraSettings.targets, { product: '', targetValue: 0 }]})} className="text-[#225091] font-semibold text-sm hover:underline flex items-center gap-1">
-                    <span>+</span> Add More Target
+                <div className="flex justify-end mt-1">
+                  <button 
+                    type="button" 
+                    onClick={() => setKraSettings({...kraSettings, targets: [...kraSettings.targets, { product: '', targetValue: 0 }]})} 
+                    className="text-[#225091] font-semibold text-xs hover:underline flex items-center gap-1 cursor-pointer bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-100"
+                  >
+                    <span>+</span> Add Target
                   </button>
                 </div>
               </div>
             </div>
-            
-            <div className="mt-8 flex justify-end">
-              <button onClick={saveKraSettings} disabled={submittingTab === 'KRA Settings'} className="px-6 py-2 rounded-full bg-[#225091] text-white font-semibold hover:bg-[#168f94] transition-colors shadow-sm text-sm disabled:opacity-50">
-                {submittingTab === 'KRA Settings' ? 'Saving...' : 'Save KRA Targets'}
-              </button>
-            </div>
           </div>
         )}
+      </div>
+      
+      {/* Bottom Navigation Buttons */}
+      <div className="flex justify-between items-center mt-2">
+        <button 
+          type="button"
+          onClick={() => navigate('/employees')} 
+          className="px-6 py-2.5 rounded-xl border border-gray-300 text-gray-700 font-semibold hover:bg-gray-50 transition-colors bg-white shadow-xs cursor-pointer text-sm flex items-center gap-2"
+        >
+          <ArrowLeft size={16} /> Back to Employees
+        </button>
       </div>
     </div>
   );

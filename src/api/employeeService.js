@@ -129,5 +129,15 @@ export const employeeService = {
     } catch (error) {
       throw error;
     }
+  },
+
+  // Helper to update by section name
+  updateSection: async (id, section, data) => {
+    try {
+      const response = await axiosInstance.patch(`/v1/society/employees/${id}/${section}`, data);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   }
 };

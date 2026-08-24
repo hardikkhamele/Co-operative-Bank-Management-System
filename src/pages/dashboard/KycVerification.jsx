@@ -4,6 +4,7 @@ import { Download, CheckCircle2, User, Calendar, Users, MapPin, CreditCard, File
 import { kycService } from '../../api/kycService';
 import { toast } from 'react-toastify';
 import { validateAadhaar, validatePAN, sanitizeDigits, sanitizePAN } from '../../utils/validation';
+import PageHeader from '../../components/common/PageHeader';
 
 const KycVerification = () => {
   const location = useLocation();
@@ -239,16 +240,14 @@ const KycVerification = () => {
       {step === 'form' ? (
         <div className="flex flex-col gap-6 w-full">
           {/* Header Card */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <h1 className="text-xl font-bold text-[#225091] mb-2">KYC Verification</h1>
-            <div className="text-sm text-gray-500 flex items-center gap-2">
-              <Link to="/dashboard" className="hover:text-[#225091] transition-colors">Dashboard</Link>
-              <span>&gt;</span>
-              <span>Verification</span>
-              <span>&gt;</span>
-              <span className="text-[#225091] font-medium">KYC Verification</span>
-            </div>
-          </div>
+          <PageHeader
+            title="KYC Verification"
+            breadcrumbs={[
+              { label: "Dashboard", to: "/dashboard" },
+              { label: "Verification" },
+              { label: "KYC Verification" }
+            ]}
+          />
 
           {/* Tabs */}
           <div className="flex items-center gap-3">
@@ -456,18 +455,17 @@ const KycVerification = () => {
       ) : (
         <div className="flex flex-col gap-6 w-full">
           {/* Result Header Card */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <h1 className="text-xl font-bold text-[#225091] mb-2">KYC Report</h1>
-            <div className="text-sm text-gray-500 flex items-center gap-2">
-              <Link to="/dashboard" className="hover:text-[#225091] transition-colors">Dashboard</Link>
-              <span>&gt;</span>
-              <span>Verification</span>
-              <span>&gt;</span>
-              <span className="text-gray-500 hover:text-[#225091] cursor-pointer transition-colors" onClick={() => { setStep('form'); setReportData(null); setCurrentRefId(null); }}>KYC Verification</span>
-              <span>&gt;</span>
-              <span className="text-[#225091] font-medium">Result</span>
-            </div>
-          </div>
+          <PageHeader
+            title="KYC Report"
+            breadcrumbs={[
+              { label: "Dashboard", to: "/dashboard" },
+              { label: "Verification" },
+              { label: "KYC Verification", to: "/kyc-verification" },
+              { label: "Result" }
+            ]}
+            showBack={true}
+            onBack={() => { setStep('form'); setReportData(null); setCurrentRefId(null); }}
+          />
 
           {/* Success Banner */}
           <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-center justify-between">

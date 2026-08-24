@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate, useParams, useLocation } from 'react-router-dom';
-import { ChevronRight, Loader2, ArrowLeft } from 'lucide-react';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
+import { Loader2 } from 'lucide-react';
 import { toast } from 'react-toastify';
+import PageHeader from '../../components/common/PageHeader';
 import { inventoryService } from '../../api/inventoryService';
 import { preventInvalidNumberKeys } from '../../utils/validation';
 
@@ -86,29 +87,19 @@ const EditInventory = () => {
   };
 
   return (
-    <div className="flex flex-col gap-6 w-full max-w-6xl mx-auto">
-      {/* Breadcrumb Card */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 shrink-0 relative">
-        <div className="flex items-center gap-3 mb-3">
-          <button 
-            onClick={() => window.history.back()}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors shrink-0"
-            type="button"
-          >
-            <ArrowLeft size={16} /> Back
-          </button>
-          <h1 className="text-[22px] font-bold text-[#225091] m-0">Edit Inventory</h1>
-        </div>
-        <div className="flex items-center text-sm font-medium text-gray-500 pl-[40px]">
-          <Link to="/dashboard" className="hover:text-gray-800 transition-colors">Dashboard</Link>
-          <ChevronRight size={16} className="mx-1.5 text-gray-400" />
-          <span className="hover:text-gray-800 transition-colors">CRM Management</span>
-          <ChevronRight size={16} className="mx-1.5 text-gray-400" />
-          <Link to="/inventory" className="hover:text-gray-800 transition-colors">Inventory</Link>
-          <ChevronRight size={16} className="mx-1.5 text-gray-400" />
-          <span className="text-[#225091]">Edit Inventory</span>
-        </div>
-      </div>
+    <div className="flex flex-col gap-6 w-full max-w-6xl mx-auto pb-10">
+      {/* Header Card */}
+      <PageHeader
+        title="Edit Inventory"
+        breadcrumbs={[
+          { label: 'Dashboard', to: '/dashboard' },
+          { label: 'CRM Management' },
+          { label: 'Inventory', to: '/inventory' },
+          { label: 'Edit Inventory' }
+        ]}
+        showBack={true}
+        backUrl="/inventory"
+      />
 
       {/* Form Card */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
@@ -152,17 +143,18 @@ const EditInventory = () => {
               <button 
                 type="submit" 
                 disabled={submitting}
-                className="bg-[#225091] hover:bg-[#159a9f] text-white px-8 py-2.5 rounded-full text-[15px] font-semibold transition-colors shadow-sm flex items-center gap-2 disabled:opacity-50"
+                className="bg-[#225091] hover:bg-[#159a9f] text-white px-8 py-2.5 rounded-full text-[15px] font-semibold transition-colors shadow-sm flex items-center gap-2 disabled:opacity-50 cursor-pointer"
               >
                 {submitting ? <Loader2 size={16} className="animate-spin" /> : null}
-                <span>{submitting ? 'Updating...' : 'Update'}</span>
+                Update Inventory
               </button>
-              <Link 
-                to="/inventory"
-                className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-8 py-2.5 rounded-full text-[15px] font-semibold transition-colors shadow-sm"
+              <button 
+                type="button" 
+                onClick={() => navigate('/inventory')}
+                className="px-6 py-2.5 rounded-full border border-gray-300 text-gray-700 hover:bg-gray-50 text-[15px] font-semibold transition-colors cursor-pointer"
               >
                 Cancel
-              </Link>
+              </button>
             </div>
           </form>
         </div>

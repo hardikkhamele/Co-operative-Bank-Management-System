@@ -19,6 +19,7 @@ import {
   Lock
 } from "lucide-react";
 import { roleService } from "../../api/roleService";
+import PageHeader from "../../components/common/PageHeader";
 
 const RolesAndPermissions = () => {
   const navigate = useNavigate();
@@ -126,35 +127,22 @@ const RolesAndPermissions = () => {
   return (
     <div className="w-full flex flex-col gap-5 font-sans pb-16 antialiased">
       {/* 1. Header Card */}
-      <div className="bg-white rounded-xl p-5 shadow-xs border border-slate-200/90 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl font-bold text-[#225091] tracking-tight m-0">
-              Roles & Permissions
-            </h1>
-            <span className="px-2 py-0.5 text-[11px] font-semibold bg-slate-100 text-slate-600 rounded-md border border-slate-200">
-              Access Control
-            </span>
-          </div>
-          <div className="flex items-center text-xs font-medium text-slate-500 mt-1">
-            <Link to="/dashboard" className="hover:text-[#225091] transition-colors">
-              Dashboard
-            </Link>
-            <ChevronRight size={13} className="mx-1 text-slate-400" />
-            <span className="text-slate-500">Security</span>
-            <ChevronRight size={13} className="mx-1 text-slate-400" />
-            <span className="text-[#225091] font-semibold">Roles & Permissions</span>
-          </div>
-        </div>
-
+      <PageHeader
+        title="Roles & Permissions"
+        breadcrumbs={[
+          { label: "Dashboard", to: "/dashboard" },
+          { label: "Security" },
+          { label: "Roles & Permissions" }
+        ]}
+      >
         <Link
           to="/roles-permissions/create"
-          className="bg-[#225091] hover:bg-[#1a3f73] active:scale-[0.99] text-white px-4 py-2 rounded-lg font-semibold transition-all shadow-xs flex items-center gap-2 text-xs shrink-0 tracking-normal cursor-pointer"
+          className="bg-[#225091] hover:bg-[#1a3f73] active:scale-[0.99] text-white px-5 py-2.5 rounded-full font-semibold transition-all shadow-sm flex items-center gap-2 text-sm shrink-0 tracking-normal cursor-pointer"
         >
-          <Plus size={15} />
+          <Plus size={16} />
           <span>Create Role</span>
         </Link>
-      </div>
+      </PageHeader>
 
       {/* Error Alert with Retry */}
       {errorMsg && (

@@ -1,102 +1,121 @@
 import axiosInstance from './axiosConfig';
 
-const postPdfRequest = async (path, data) => {
+/**
+ * Helper to perform letter generation requests
+ * Supports both JSON response (metadata + S3 fileUrl) and direct binary PDF stream.
+ */
+const postLetterRequest = async (path, data, options = {}) => {
+  const { format = 'json' } = options;
+  const isJson = format === 'json';
+
+  const config = {
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: isJson ? 'application/json' : 'application/pdf',
+    },
+    params: isJson ? { format: 'json' } : {},
+    responseType: isJson ? 'json' : 'blob',
+  };
+
   try {
-    try {
-      const response = await axiosInstance.post(path, data, {
-        responseType: 'blob',
-      });
-      return response.data;
-    } catch (err) {
-      if (err.response?.status === 404) {
-        // Fallback with/without /api prefix
-        const alternatePath = path.startsWith('/v1/') ? `/api${path}` : path.replace('/api/', '/');
-        const response = await axiosInstance.post(alternatePath, data, {
-          responseType: 'blob',
-        });
-        return response.data;
-      }
-      // If error returned JSON blob (e.g. 422 or 400), try to parse it
-      if (err.response?.data instanceof Blob) {
-        try {
-          const text = await err.response.data.text();
-          const json = JSON.parse(text);
-          err.response.data = json;
-        } catch {
-          // ignore
-        }
-      }
-      throw err;
-    }
-  } catch (error) {
-    if (error.response?.data instanceof Blob) {
+    const response = await axiosInstance.post(path, data, config);
+    return response.data;
+  } catch (err) {
+    // If backend returned a JSON error inside a blob
+    if (err.response?.data instanceof Blob) {
       try {
-        const text = await error.response.data.text();
+        const text = await err.response.data.text();
         const json = JSON.parse(text);
-        error.response.data = json;
+        err.response.data = json;
       } catch {
-        // ignore
+        // ignore parse error
       }
     }
-    throw error;
+    throw err;
   }
 };
 
 export const letterService = {
-  // 1. Offer Letter PDF
+  // 1. Offer / Appointment Letter API
   // POST /api/v1/society/employees/hr/letters/offer
-  // Body: { employeeId, designation }
-  generateOfferLetter: async (data) => {
-    return await postPdfRequest('/v1/society/employees/hr/letters/offer', data);
+  // Body: { employeeId, candidateName, designation, joiningDate, annualSalary }
+  generateOfferLetter: async (data, options = {}) => {
+    return await postLetterRequest('/v1/society/employees/hr/letters/offer', data, options);
   },
 
-  // 2. Employment Confirmation Letter PDF
+  // 2. Employment Confirmation Letter API
   // POST /api/v1/society/employees/hr/letters/confirmation
-  // Body: { employeeId, confirmationDate, designation }
-  generateConfirmationLetter: async (data) => {
-    return await postPdfRequest('/v1/society/employees/hr/letters/confirmation', data);
+  // Body: { employeeId, probationStartDate, probationEndDate, confirmationDate, noticePeriodDays }
+  generateConfirmationLetter: async (data, options = {}) => {
+    return await postLetterRequest('/v1/society/employees/hr/letters/confirmation', data, options);
   },
 
-  // 3. Performance Review Letter PDF
+  // 3. Performance Appraisal Letter API
   // POST /api/v1/society/employees/hr/letters/performance
-  // Body: { employeeId, letterText }
-  generatePerformanceLetter: async (data) => {
-    return await postPdfRequest('/v1/society/employees/hr/letters/performance', data);
+  // Body: { employeeId, reviewPeriod, overallRating, managerComments, appraisalOutcome, kraRatings: [...] }
+  generatePerformanceLetter: async (data, options = {}) => {
+    return await postLetterRequest('/v1/society/employees/hr/letters/performance', data, options);
   },
 
-  // 4. Promotion Letter PDF
+  // 4. Promotion Letter API
   // POST /api/v1/society/employees/hr/letters/promotion
-  // Body: { employeeId, promotedToDesignation, promotionDate }
-  generatePromotionLetter: async (data) => {
-    return await postPdfRequest('/v1/society/employees/hr/letters/promotion', data);
+  // Body: { employeeId, newRole }
+  generatePromotionLetter: async (data, options = {}) => {
+    return await postLetterRequest('/v1/society/employees/hr/letters/promotion', data, options);
   },
 
-  // 5. Branch Transfer Letter PDF
+  // 5. Transfer Letter API
   // POST /api/v1/society/employees/hr/letters/transfer
-  // Body: { employeeId, transferToBranchId, transferDate }
-  generateTransferLetter: async (data) => {
-    return await postPdfRequest('/v1/society/employees/hr/letters/transfer', data);
+  // Body: { employeeId, transferToBranchId, effectiveDate, reportingDate }
+  generateTransferLetter: async (data, options = {}) => {
+    return await postLetterRequest('/v1/society/employees/hr/letters/transfer', data, options);
   },
 
-  // 6. Monthly Salary Slip PDF
-  // POST /api/v1/society/employees/hr/letters/salary-slip
-  // Body: { employeeId, fromMonth, toMonth }
-  generateSalarySlip: async (data) => {
-    return await postPdfRequest('/v1/society/employees/hr/letters/salary-slip', data);
-  },
-
-  // 7. Salary Increment Revision PDF
+  // 6. Salary Increment Letter API
   // POST /api/v1/society/employees/hr/letters/salary-increment
-  // Body: { employeeId, newSalary, effectiveDate }
-  generateSalaryIncrement: async (data) => {
-    return await postPdfRequest('/v1/society/employees/hr/letters/salary-increment', data);
+  // Body: { employeeId, reviewPeriod, effectiveDate, incrementPercentage, currentCtc, revisedCtc }
+  generateSalaryIncrement: async (data, options = {}) => {
+    return await postLetterRequest('/v1/society/employees/hr/letters/salary-increment', data, options);
   },
 
-  // 8. Termination Letter PDF
+  // 7. Monthly Salary Slip API
+  // POST /api/v1/society/employees/hr/letters/salary-slip
+  // Body: { employeeId, salaryDate, payDate, payPeriod, workingDays, presentDays, paidDays, lopDays, accountNumber, earnings: [...], deductions: [...], employerContributions: [...] }
+  generateSalarySlip: async (data, options = {}) => {
+    return await postLetterRequest('/v1/society/employees/hr/letters/salary-slip', data, options);
+  },
+
+  // 8. Termination Letter API
   // POST /api/v1/society/employees/hr/letters/termination
   // Body: { employeeId, terminationDate, reason, noticePeriodDays, handoverTo }
-  generateTerminationLetter: async (data) => {
-    return await postPdfRequest('/v1/society/employees/hr/letters/termination', data);
+  generateTerminationLetter: async (data, options = {}) => {
+    return await postLetterRequest('/v1/society/employees/hr/letters/termination', data, options);
+  },
+
+  // Unified Dispatcher Method
+  generate: async (payload, options = {}) => {
+    const { letterType, ...data } = payload;
+    const normType = (letterType || '').toLowerCase().trim();
+
+    if (normType.includes('offer')) {
+      return await letterService.generateOfferLetter(data, options);
+    } else if (normType.includes('confirmation')) {
+      return await letterService.generateConfirmationLetter(data, options);
+    } else if (normType.includes('performance') || normType.includes('appraisal')) {
+      return await letterService.generatePerformanceLetter(data, options);
+    } else if (normType.includes('promotion')) {
+      return await letterService.generatePromotionLetter(data, options);
+    } else if (normType.includes('transfer')) {
+      return await letterService.generateTransferLetter(data, options);
+    } else if (normType.includes('increment')) {
+      return await letterService.generateSalaryIncrement(data, options);
+    } else if (normType.includes('slip') || normType.includes('salary slip')) {
+      return await letterService.generateSalarySlip(data, options);
+    } else if (normType.includes('termination')) {
+      return await letterService.generateTerminationLetter(data, options);
+    } else {
+      throw new Error(`Unsupported letter type: ${letterType}`);
+    }
   },
 };
 

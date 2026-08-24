@@ -19,6 +19,45 @@ import {
 import { employeeService } from "../../api/employeeService";
 import { roleService } from "../../api/roleService";
 import useBranchStore from "../../store/branchStore";
+import PageHeader from "../../components/common/PageHeader";
+
+// Comprehensive Indian States and Prominent Cities Map
+const INDIAN_STATES_WITH_CITIES = {
+  "Andhra Pradesh": ["Visakhapatnam", "Vijayawada", "Guntur", "Nellore", "Kurnool", "Rajahmundry", "Tirupati", "Kadapa", "Kakinada", "Anantapur"],
+  "Arunachal Pradesh": ["Itanagar", "Naharlagun", "Pasighat", "Tawang", "Ziro"],
+  "Assam": ["Guwahati", "Silchar", "Dibrugarh", "Jorhat", "Nagaon", "Tinsukia", "Tezpur"],
+  "Bihar": ["Patna", "Gaya", "Bhagalpur", "Muzaffarpur", "Purnia", "Darbhanga", "Bihar Sharif", "Arrah", "Begusarai", "Katihar"],
+  "Chandigarh": ["Chandigarh"],
+  "Chhattisgarh": ["Raipur", "Bhilai", "Bilaspur", "Korba", "Rajnandgaon", "Durg", "Jagdalpur", "Ambikapur"],
+  "Dadra and Nagar Haveli and Daman and Diu": ["Daman", "Diu", "Silvassa"],
+  "Delhi": ["New Delhi", "North Delhi", "South Delhi", "East Delhi", "West Delhi", "Central Delhi", "Dwarka", "Rohini"],
+  "Goa": ["Panaji", "Margao", "Vasco da Gama", "Mapusa", "Ponda"],
+  "Gujarat": ["Ahmedabad", "Surat", "Vadodara", "Rajkot", "Bhavnagar", "Jamnagar", "Junagadh", "Gandhinagar", "Anand", "Navsari", "Morbi", "Bharuch"],
+  "Haryana": ["Gurugram", "Faridabad", "Panipat", "Ambala", "Yamunanagar", "Rohtak", "Hisar", "Karnal", "Sonipat", "Panchkula"],
+  "Himachal Pradesh": ["Shimla", "Dharamshala", "Mandi", "Solan", "Kullu", "Manali", "Baddi"],
+  "Jammu and Kashmir": ["Srinagar", "Jammu", "Anantnag", "Baramulla", "Udhampur", "Kathua"],
+  "Jharkhand": ["Ranchi", "Jamshedpur", "Dhanbad", "Bokaro Steel City", "Deoghar", "Hazaribagh", "Giridih"],
+  "Karnataka": ["Bengaluru", "Mysuru", "Hubballi", "Dharwad", "Mangaluru", "Belagavi", "Davangere", "Ballari", "Kalaburagi", "Shivamogga", "Tumakuru", "Udupi"],
+  "Kerala": ["Thiruvananthapuram", "Kochi", "Kozhikode", "Kollam", "Thrissur", "Kannur", "Alappuzha", "Palakkad", "Kottayam", "Malappuram"],
+  "Ladakh": ["Leh", "Kargil"],
+  "Madhya Pradesh": ["Indore", "Bhopal", "Jabalpur", "Gwalior", "Ujjain", "Sagar", "Dewas", "Satna", "Ratlam", "Rewa"],
+  "Maharashtra": ["Mumbai", "Pune", "Nagpur", "Thane", "Nashik", "Aurangabad", "Solapur", "Amravati", "Kolhapur", "Navi Mumbai", "Akola", "Latur", "Dhule", "Ahmednagar", "Chandrapur", "Parbhani", "Jalgaon", "Nanded", "Satara", "Sangli"],
+  "Manipur": ["Imphal", "Churachandpur", "Thoubal"],
+  "Meghalaya": ["Shillong", "Tura", "Jowai"],
+  "Mizoram": ["Aizawl", "Lunglei", "Champhai"],
+  "Nagaland": ["Kohima", "Dimapur", "Mokokchung"],
+  "Odisha": ["Bhubaneswar", "Cuttack", "Rourkela", "Berhampur", "Sambalpur", "Puri", "Balasore", "Bhadrak", "Baripada"],
+  "Puducherry": ["Puducherry", "Karaikal", "Mahe", "Yanam"],
+  "Punjab": ["Ludhiana", "Amritsar", "Jalandhar", "Patiala", "Bathinda", "Mohali", "Pathankot", "Hoshiarpur", "Batala"],
+  "Rajasthan": ["Jaipur", "Jodhpur", "Kota", "Bikaner", "Ajmer", "Udaipur", "Bhilwara", "Alwar", "Bharatpur", "Sikar", "Pali", "Sri Ganganagar"],
+  "Sikkim": ["Gangtok", "Namchi", "Gyalshing"],
+  "Tamil Nadu": ["Chennai", "Coimbatore", "Madurai", "Tiruchirappalli", "Salem", "Tirunelveli", "Tiruppur", "Vellore", "Erode", "Thoothukudi", "Dindigul", "Thanjavur"],
+  "Telangana": ["Hyderabad", "Warangal", "Nizamabad", "Karimnagar", "Ramagundam", "Khammam", "Mahbubnagar", "Nalgonda", "Adilabad"],
+  "Tripura": ["Agartala", "Udaipur", "Dharmanagar"],
+  "Uttar Pradesh": ["Lucknow", "Kanpur", "Varanasi", "Agra", "Noida", "Greater Noida", "Ghaziabad", "Prayagraj", "Meerut", "Bareilly", "Aligarh", "Moradabad", "Saharanpur", "Gorakhpur", "Jhansi", "Mathura", "Ayodhya"],
+  "Uttarakhand": ["Dehradun", "Haridwar", "Roorkee", "Haldwani", "Rishikesh", "Nainital", "Rudrapur"],
+  "West Bengal": ["Kolkata", "Howrah", "Siliguri", "Durgapur", "Asansol", "Bardhaman", "Kharagpur", "Malda", "Baharampur", "Habra"]
+};
 
 const Employees = () => {
   const navigate = useNavigate();
@@ -57,6 +96,7 @@ const Employees = () => {
 
   // Dropdown Options State
   const [roleOptions, setRoleOptions] = useState([]);
+  const [apiLocations, setApiLocations] = useState({ states: [], cities: [], locations: [] });
   const { globalBranchId, branchOptions, fetchBranches } = useBranchStore();
 
   // Modals
@@ -70,33 +110,60 @@ const Employees = () => {
     }
   }, [branchOptions, fetchBranches]);
 
-  // Extract unique States and State-to-City map from branchOptions
-  const { statesList, stateCityMap } = useMemo(() => {
-    const statesSet = new Set();
-    const map = {};
-
-    (branchOptions || []).forEach((b) => {
-      if (b.state) {
-        statesSet.add(b.state);
-        if (!map[b.state]) map[b.state] = new Set();
-        if (b.city) map[b.state].add(b.city);
+  // Fetch Available Cities & States from Backend API (/api/v1/society/branches/available-locations)
+  useEffect(() => {
+    const fetchLocations = async () => {
+      try {
+        const res = await branchService.getAvailableLocations();
+        if (res && res.success && res.data) {
+          setApiLocations({
+            states: res.data.states || [],
+            cities: res.data.cities || [],
+            locations: res.data.locations || []
+          });
+        }
+      } catch (err) {
+        console.warn("Failed to fetch available locations from API, fallback to branch data:", err);
       }
+    };
+    fetchLocations();
+  }, []);
+
+  // Compute States list from API locations or fallback to branchOptions
+  const statesList = useMemo(() => {
+    if (apiLocations.states && apiLocations.states.length > 0) {
+      return apiLocations.states;
+    }
+    const statesSet = new Set();
+    (branchOptions || []).forEach((b) => {
+      const bState = (b.state || b.address?.state || b.branchState || "").trim();
+      if (bState) statesSet.add(bState);
     });
+    return Array.from(statesSet).sort();
+  }, [apiLocations.states, branchOptions]);
 
-    const states = Array.from(statesSet).sort();
-    const finalMap = {};
-    Object.keys(map).forEach((s) => {
-      finalMap[s] = Array.from(map[s]).sort();
-    });
-
-    return { statesList: states, stateCityMap: finalMap };
-  }, [branchOptions]);
-
-  // Available cities for the selected state
+  // Available cities for the selected state (from locations mapping or all cities)
   const availableCities = useMemo(() => {
-    if (!selectedState) return [];
-    return stateCityMap[selectedState] || [];
-  }, [selectedState, stateCityMap]);
+    if (selectedState) {
+      const foundLoc = (apiLocations.locations || []).find(
+        (loc) => loc.state?.trim().toLowerCase() === selectedState.trim().toLowerCase()
+      );
+      if (foundLoc && foundLoc.cities && foundLoc.cities.length > 0) {
+        return foundLoc.cities;
+      }
+      // Fallback: extract cities from branch options for that state
+      const cSet = new Set();
+      (branchOptions || []).forEach((b) => {
+        const bState = (b.state || b.address?.state || b.branchState || "").trim().toLowerCase();
+        const bCity = (b.city || b.address?.city || b.branchCity || "").trim();
+        if (bState === selectedState.trim().toLowerCase() && bCity) {
+          cSet.add(bCity);
+        }
+      });
+      return Array.from(cSet).sort();
+    }
+    return apiLocations.cities || [];
+  }, [selectedState, apiLocations, branchOptions]);
 
   // Debounce search input
   useEffect(() => {
@@ -125,50 +192,7 @@ const Employees = () => {
     fetchRoles();
   }, []);
 
-  // 1. Fetch Global Overview Stats (unfiltered accurate count)
-  const fetchOverviewStats = useCallback(async () => {
-    try {
-      const params = {
-        limit: 1000,
-        includeBranchManagers: true,
-      };
-      if (globalBranchId) params.branchId = globalBranchId;
-      if (selectedBranchId) params.branchId = selectedBranchId;
-
-      const response = await employeeService.list(params);
-      if (response && response.success) {
-        const listData = Array.isArray(response.data)
-          ? response.data
-          : response.data?.items || response.data?.employees || response.items || [];
-
-        // Calculate accurate overall metrics
-        const total = listData.length;
-        const active = listData.filter((e) => e.status === "ACTIVE" || !e.status).length;
-        const inactive = listData.filter((e) => e.status === "INACTIVE").length;
-        const managers = listData.filter(
-          (e) =>
-            e.type === "MANAGER" ||
-            e.role?.code === "BRANCH_MANAGER" ||
-            (e.designation && e.designation.toLowerCase().includes("manager"))
-        ).length;
-
-        setOverviewStats({
-          total,
-          active,
-          inactive,
-          managers,
-        });
-      }
-    } catch (err) {
-      console.warn("Failed to load overview stats:", err);
-    }
-  }, [globalBranchId, selectedBranchId]);
-
-  useEffect(() => {
-    fetchOverviewStats();
-  }, [fetchOverviewStats]);
-
-  // 2. Fetch Paginated / Filtered Employees for Table
+  // 2. Fetch Paginated / Filtered Employees & Stats from Backend API
   const fetchEmployees = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -177,6 +201,7 @@ const Employees = () => {
         page,
         limit,
         includeBranchManagers,
+        includeStats: true,
       };
 
       if (debouncedSearch.trim()) params.search = debouncedSearch.trim();
@@ -212,9 +237,44 @@ const Employees = () => {
 
       const response = await employeeService.list(params);
       if (response && response.success) {
+        // Bind Backend Stats directly if provided
+        if (response.stats) {
+          setOverviewStats(prev => ({
+            ...prev,
+            total: response.stats.totalEmployees ?? response.stats.total ?? prev.total,
+            active: response.stats.totalActive ?? response.stats.active ?? prev.active,
+            inactive: response.stats.totalInactive ?? response.stats.inactive ?? prev.inactive,
+            managers: response.stats.totalBranchManagers ?? response.stats.managers ?? prev.managers,
+            softDeleted: response.stats.totalSoftDeleted ?? 0,
+            genderRatio: response.stats.genderRatio || null,
+            newHiresThisMonth: response.stats.newHiresThisMonth ?? 0,
+            upcomingBirthdaysThisMonth: response.stats.upcomingBirthdaysThisMonth ?? 0,
+            departmentWise: response.stats.departmentWise || null,
+            totalMonthlySalaryBudget: response.stats.totalMonthlySalaryBudget ?? 0,
+            averageSalary: response.stats.averageSalary ?? 0
+          }));
+        }
+
         let listData = Array.isArray(response.data)
           ? response.data
           : response.data?.items || response.data?.employees || response.items || [];
+
+        // Apply client-side filtering fallback for state, city, and managers if needed
+        if (selectedState) {
+          const sLower = selectedState.trim().toLowerCase();
+          listData = listData.filter((e) => {
+            const empState = (e.branch?.state || e.state || e.branchState || e.branch?.address?.state || "").trim().toLowerCase();
+            return empState === sLower || empState.includes(sLower);
+          });
+        }
+
+        if (selectedCity) {
+          const cLower = selectedCity.trim().toLowerCase();
+          listData = listData.filter((e) => {
+            const empCity = (e.branch?.city || e.city || e.branchCity || e.branch?.address?.city || "").trim().toLowerCase();
+            return empCity === cLower || empCity.includes(cLower);
+          });
+        }
 
         // If filtering by managers card and backend didn't narrow it, filter client-side
         if (activeStatCard === "MANAGERS" && !params.roleId) {
@@ -335,29 +395,21 @@ const Employees = () => {
   return (
     <div className="w-full max-w-none space-y-6 pb-12">
       {/* Top Header Card */}
-      <div className="bg-white rounded-xl p-5 shadow-xs border border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-[#225091] m-0">
-            Society Employees
-          </h1>
-          <div className="flex items-center text-sm font-medium text-gray-500 mt-1">
-            <Link to="/dashboard" className="hover:text-gray-900 transition-colors">
-              Dashboard
-            </Link>
-            <ChevronRight size={15} className="mx-1 text-gray-400" />
-            <span className="text-gray-600">HR Management</span>
-            <ChevronRight size={15} className="mx-1 text-gray-400" />
-            <span className="text-[#225091] font-semibold">Employees</span>
-          </div>
-        </div>
-
+      <PageHeader
+        title="Society Employees"
+        breadcrumbs={[
+          { label: "Dashboard", to: "/dashboard" },
+          { label: "HR Management" },
+          { label: "Employees" }
+        ]}
+      >
         <Link
           to="/employees/create"
           className="bg-[#225091] hover:bg-[#1b427b] text-white px-5 py-2.5 rounded-full font-semibold transition-all shadow-sm flex items-center gap-2 text-sm shrink-0 hover:shadow"
         >
           + Add Staff
         </Link>
-      </div>
+      </PageHeader>
 
       {/* Top Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -512,9 +564,10 @@ const Employees = () => {
           </div>
         </div>
 
-        {/* Bottom Inline Filter Controls */}
+        {/* Bottom Inline Filter Controls: Status -> Role -> Branch -> State -> City */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 pt-2 border-t border-gray-100">
-          {/* Status Filter */}
+          
+          {/* 1. Status Filter */}
           <div className="relative">
             <select
               value={selectedStatus}
@@ -522,7 +575,7 @@ const Employees = () => {
                 setSelectedStatus(e.target.value);
                 setPage(1);
               }}
-              className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-xs font-medium text-gray-700 shadow-2xs"
+              className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-xs font-medium text-gray-700 shadow-2xs cursor-pointer"
             >
               <option value="">All Statuses</option>
               <option value="ACTIVE">Active</option>
@@ -530,7 +583,7 @@ const Employees = () => {
             </select>
           </div>
 
-          {/* Department / Role Filter */}
+          {/* 2. Department / Role Filter */}
           <div className="relative">
             <select
               value={selectedRoleId}
@@ -538,7 +591,7 @@ const Employees = () => {
                 setSelectedRoleId(e.target.value);
                 setPage(1);
               }}
-              className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-xs font-medium text-gray-700 shadow-2xs"
+              className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-xs font-medium text-gray-700 shadow-2xs cursor-pointer"
             >
               <option value="">All Roles / Depts</option>
               <option value="BRANCH_MANAGER">Branch Manager</option>
@@ -550,16 +603,36 @@ const Employees = () => {
             </select>
           </div>
 
-          {/* State Filter (Bank Owner location filtering) */}
+          {/* 3. Branch Filter (Independent) */}
+          <div className="relative">
+            <select
+              value={selectedBranchId}
+              onChange={(e) => {
+                setSelectedBranchId(e.target.value);
+                setPage(1);
+              }}
+              className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-xs font-medium text-gray-700 shadow-2xs cursor-pointer"
+            >
+              <option value="">All Branches</option>
+              {(branchOptions || []).map((b) => (
+                <option key={b.id} value={b.id}>
+                  {b.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* 4. State Filter (Connected to City only) */}
           <div className="relative">
             <select
               value={selectedState}
               onChange={(e) => {
-                setSelectedState(e.target.value);
+                const newState = e.target.value;
+                setSelectedState(newState);
                 setSelectedCity("");
                 setPage(1);
               }}
-              className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-xs font-medium text-gray-700 shadow-2xs"
+              className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-xs font-medium text-gray-700 shadow-2xs cursor-pointer"
             >
               <option value="">All States</option>
               {statesList.map((s) => (
@@ -570,16 +643,16 @@ const Employees = () => {
             </select>
           </div>
 
-          {/* City Filter (Bank Owner location filtering) */}
+          {/* 5. City Filter (Connected to State) */}
           <div className="relative">
             <select
               value={selectedCity}
-              disabled={!selectedState || availableCities.length === 0}
+              disabled={!selectedState && availableCities.length === 0}
               onChange={(e) => {
                 setSelectedCity(e.target.value);
                 setPage(1);
               }}
-              className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-xs font-medium text-gray-700 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed shadow-2xs"
+              className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-xs font-medium text-gray-700 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed shadow-2xs cursor-pointer"
             >
               <option value="">
                 {selectedState ? "All Cities" : "Select State First"}
@@ -587,25 +660,6 @@ const Employees = () => {
               {availableCities.map((c) => (
                 <option key={c} value={c}>
                   {c}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Branch Filter */}
-          <div className="relative">
-            <select
-              value={selectedBranchId}
-              onChange={(e) => {
-                setSelectedBranchId(e.target.value);
-                setPage(1);
-              }}
-              className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-xs font-medium text-gray-700 shadow-2xs"
-            >
-              <option value="">All Branches</option>
-              {(branchOptions || []).map((b) => (
-                <option key={b.id} value={b.id}>
-                  {b.name} {b.code ? `(${b.code})` : ""}
                 </option>
               ))}
             </select>
@@ -623,7 +677,7 @@ const Employees = () => {
                 <th className="py-3.5 px-5 font-semibold">Employee</th>
                 <th className="py-3.5 px-5 font-semibold">Emp Code</th>
                 <th className="py-3.5 px-5 font-semibold">Designation / Role</th>
-                <th className="py-3.5 px-5 font-semibold">Branch & State</th>
+                <th className="py-3.5 px-5 font-semibold">Branch, State & City</th>
                 <th className="py-3.5 px-5 font-semibold">Status</th>
                 <th className="py-3.5 px-5 font-semibold text-center">Actions</th>
               </tr>
@@ -725,14 +779,21 @@ const Employees = () => {
                       </div>
                     </td>
 
-                    {/* Branch & State */}
+                    {/* Branch, State & City */}
                     <td className="py-3.5 px-5 text-xs text-gray-600">
                       <div className="flex flex-col">
                         <span className="font-semibold text-gray-800">
-                          {row.branch?.name || "-"}
+                          {row.branch?.name || row.branchName || "—"}
                         </span>
-                        <span className="text-[11px] text-gray-400">
-                          {row.branch?.state || row.branch?.city || row.branch?.code || ""}
+                        <span className="text-[11px] text-gray-500 font-medium">
+                          {[
+                            row.branch?.city || row.city || row.branchCity || row.branch?.address?.city,
+                            row.branch?.state || row.state || row.branchState || row.branch?.address?.state,
+                          ]
+                            .filter(Boolean)
+                            .join(", ") ||
+                            row.branch?.code ||
+                            "—"}
                         </span>
                       </div>
                     </td>

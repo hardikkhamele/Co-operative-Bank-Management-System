@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { ArrowLeft,  ChevronRight, Camera, Calendar, ChevronDown, Clock, Eye, EyeOff } from 'lucide-react';
+import { Camera, ChevronDown, Clock, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'react-toastify';
+import PageHeader from '../../components/common/PageHeader';
 import { 
   validateEmail, 
   validatePhone, 
@@ -77,29 +78,19 @@ const EditManager = () => {
   ];
 
   return (
-    <div className="flex flex-col gap-6 w-full">
+    <div className="flex flex-col gap-6 w-full font-sans antialiased pb-16">
       {/* Header Card */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 shrink-0">
-        <div className="flex items-center gap-3 mb-2">
-            <button 
-            onClick={() => navigate(-1)}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors shrink-0"
-            type="button"
-          >
-            <ArrowLeft size={16} /> Back
-          </button>
-            <h1 className="text-xl font-bold text-[#225091] m-0">Edit Manager</h1>
-          </div>
-        <div className="flex items-center text-sm text-gray-500 pl-[40px]">
-          <Link to="/dashboard" className="hover:text-gray-700">Dashboard</Link>
-          <ChevronRight size={14} className="mx-2" />
-          <span className="hover:text-gray-700">User Management</span>
-          <ChevronRight size={14} className="mx-2" />
-          <Link to="/managers" className="hover:text-gray-700">Managers</Link>
-          <ChevronRight size={14} className="mx-2" />
-          <span className="text-[#225091]">Edit Manager</span>
-        </div>
-      </div>
+      <PageHeader
+        title="Edit Manager"
+        breadcrumbs={[
+          { label: 'Dashboard', to: '/dashboard' },
+          { label: 'User Management' },
+          { label: 'Managers', to: '/managers' },
+          { label: 'Edit Manager' }
+        ]}
+        showBack={true}
+        backUrl="/managers"
+      />
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
         {/* Tabs */}
@@ -108,7 +99,7 @@ const EditManager = () => {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`px-5 py-2.5 rounded-lg text-[15px] font-medium transition-colors ${
+              className={`px-5 py-2.5 rounded-lg text-[15px] font-medium transition-colors cursor-pointer ${
                 activeTab === tab.id 
                   ? 'bg-[#eef0ff] text-[#1b2559]' 
                   : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100/50'
@@ -147,7 +138,7 @@ const EditManager = () => {
                   <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">Full Name *</label>
                   <input 
                     type="text" 
-                    value={formData.fullName} 
+                    value={formData.fullName}
                     onChange={e => handleChange('fullName', e.target.value)}
                     placeholder="Enter full name" 
                     className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all bg-white shadow-sm text-[15px]" 
@@ -175,13 +166,11 @@ const EditManager = () => {
                   <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">Date Of Birth</label>
                   <div className="relative">
                     <input 
-                      type="text" 
-                      value={formData.dob} 
+                      type="date" 
+                      value={formData.dob}
                       onChange={e => handleChange('dob', e.target.value)}
-                      placeholder="DD/MM/YYYY" 
                       className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all bg-white shadow-sm text-[15px]" 
                     />
-                    <Calendar size={20} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
                   </div>
                 </div>
                 
@@ -189,7 +178,7 @@ const EditManager = () => {
                   <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">Phone *</label>
                   <input 
                     type="tel" 
-                    value={formData.phone} 
+                    value={formData.phone}
                     onChange={e => handleChange('phone', sanitizeDigits(e.target.value, 10))}
                     placeholder="10-digit Phone Number" 
                     maxLength={10}
@@ -201,7 +190,7 @@ const EditManager = () => {
                   <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">Email *</label>
                   <input 
                     type="email" 
-                    value={formData.email} 
+                    value={formData.email}
                     onChange={e => handleChange('email', e.target.value)}
                     placeholder="Enter email" 
                     className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all bg-white shadow-sm text-[15px]" 
@@ -213,15 +202,15 @@ const EditManager = () => {
                   <div className="relative">
                     <input 
                       type={showPassword ? "text" : "password"} 
-                      value={formData.password} 
+                      value={formData.password}
                       onChange={e => handleChange('password', e.target.value)}
-                      placeholder="Change password (leave empty to keep current)" 
+                      placeholder="Leave empty to keep existing password" 
                       className="w-full pl-4 pr-11 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all bg-white shadow-sm text-[15px]" 
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-gray-400 hover:text-gray-600 focus:outline-none"
+                      className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-gray-400 hover:text-gray-600 focus:outline-none cursor-pointer"
                     >
                       {showPassword ? <Eye size={18} /> : <EyeOff size={18} />}
                     </button>
@@ -232,7 +221,7 @@ const EditManager = () => {
                   <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">Address</label>
                   <input 
                     type="text" 
-                    value={formData.address} 
+                    value={formData.address}
                     onChange={e => handleChange('address', e.target.value)}
                     placeholder="Enter address" 
                     className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all bg-white shadow-sm text-[15px]" 
@@ -250,7 +239,11 @@ const EditManager = () => {
               <div>
                 <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">Manager Type</label>
                 <div className="relative">
-                  <select value={managerType} onChange={(e) => setManagerType(e.target.value)} className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all bg-white appearance-none text-gray-500 shadow-sm text-[15px]">
+                  <select 
+                    value={managerType}
+                    onChange={e => setManagerType(e.target.value)}
+                    className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all bg-white appearance-none text-gray-500 shadow-sm text-[15px]"
+                  >
                     <option value="" disabled>Select</option>
                     <option value="regional">Regional Manager</option>
                     <option value="branch">Branch Manager</option>
@@ -271,8 +264,6 @@ const EditManager = () => {
                     <option value="" disabled>Select</option>
                     <option value="north">North</option>
                     <option value="south">South</option>
-                    <option value="east">East</option>
-                    <option value="west">West</option>
                   </select>
                   <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
                 </div>
@@ -300,7 +291,7 @@ const EditManager = () => {
                   type="number" 
                   min="0"
                   onKeyDown={preventInvalidNumberKeys}
-                  value={formData.salary} 
+                  value={formData.salary}
                   onChange={e => handleChange('salary', e.target.value)}
                   placeholder="Rs." 
                   className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all bg-white shadow-sm text-[15px]" 
@@ -828,13 +819,11 @@ const EditManager = () => {
         <button
           type="button"
           onClick={handleSave}
-          className="px-10 py-3 rounded-full bg-[#225091] hover:bg-[#168f94] text-white font-semibold transition-colors shadow-sm text-[15px]"
+          className="px-10 py-3 rounded-full bg-[#225091] hover:bg-[#168f94] text-white font-semibold transition-colors shadow-sm text-[15px] cursor-pointer"
         >
           Save Changes
         </button>
       </div>
-
-
     </div>
   );
 };

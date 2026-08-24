@@ -4,6 +4,7 @@ import { Search, Edit, Trash2, ChevronRight, SlidersHorizontal, ChevronDown, X, 
 import { Link } from 'react-router-dom';
 import CardCreditSettingsModal from '../../components/modals/CardCreditSettingsModal';
 import { branchService } from '../../api/branchService';
+import PageHeader from '../../components/common/PageHeader';
 import { validateEmail, validatePhone, validatePassword, validatePincode, sanitizeDigits, preventInvalidNumberKeys } from '../../utils/validation';
 
 const Branch = () => {
@@ -408,16 +409,14 @@ const Branch = () => {
   return (
     <div className="space-y-6">
       {/* Header and Breadcrumb */}
-      <div className="bg-white rounded-lg p-5 shadow-sm border border-gray-100">
-        <h1 className="text-2xl font-semibold text-[#225091] mb-2">Branch</h1>
-        <div className="flex items-center text-sm font-medium text-gray-600">
-          <Link to="/dashboard" className="hover:text-gray-900 transition-colors">Dashboard</Link>
-          <ChevronRight size={16} className="mx-1 text-gray-400" />
-          <span>Region & Branch Management</span>
-          <ChevronRight size={16} className="mx-1 text-gray-400" />
-          <span className="text-[#225091]">Branch</span>
-        </div>
-      </div>
+      <PageHeader
+        title="Branch"
+        breadcrumbs={[
+          { label: "Dashboard", to: "/dashboard" },
+          { label: "Region & Branch Management" },
+          { label: "Branch" }
+        ]}
+      />
 
       {/* Action Bar */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">

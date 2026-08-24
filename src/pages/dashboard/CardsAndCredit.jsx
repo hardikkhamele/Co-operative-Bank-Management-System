@@ -38,12 +38,15 @@ import {
   ShieldCheck,
   TrendingUp,
   Receipt,
-  Eye
+  Eye,
+  Lock,
+  Loader2
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import cardCreditService from '../../api/cardCreditService';
 import branchService from '../../api/branchService';
+import PageHeader from '../../components/common/PageHeader';
 
 const HistoryIcon = ({ type, action }) => {
   const normAction = (action || '').toUpperCase();
@@ -153,21 +156,15 @@ const CardsAndCredit = () => {
   const [pricingData, setPricingData] = useState(null);
   const [isCalculatingPrice, setIsCalculatingPrice] = useState(false);
 
-  // Razorpay Checkout State
+  // Razorpay Checkout & Multi-stage Loading State
+  const [paymentStage, setPaymentStage] = useState('IDLE'); // 'IDLE' | 'INITIATING_ORDER' | 'OPENING_GATEWAY' | 'GATEWAY_ACTIVE' | 'VERIFYING_SIGNATURE' | 'POLLING_STATUS' | 'SUCCESS' | 'FAILED'
+  const [paymentResult, setPaymentResult] = useState(null);
+  const [pollingAttempt, setPollingAttempt] = useState(0);
   const [statusLog, setStatusLog] = useState('');
   const [polling, setPolling] = useState(false);
   const [paymentLink, setPaymentLink] = useState(null);
   const pollIntervalRef = useRef(null);
   const pollCountRef = useRef(0);
-
-  // Cleanup polling on unmount
-  useEffect(() => {
-    return () => {
-      if (pollIntervalRef.current) {
-        clearInterval(pollIntervalRef.current);
-      }
-    };
-  }, []);
 
   // Distribute / Transfer Form State
   const [distributeType, setDistributeType] = useState('add'); // 'add' (Bank->Branch) | 'transfer' (Branch->Branch)
@@ -177,41 +174,6 @@ const CardsAndCredit = () => {
   const [distributeEmiQty, setDistributeEmiQty] = useState('');
   const [distributeVerificationQty, setDistributeVerificationQty] = useState('');
   const [transferRemarks, setTransferRemarks] = useState('');
-
-  // Dynamic Price Calculation Effect
-  useEffect(() => {
-    const calculateDynamicPrice = async () => {
-      if (!isPurchaseModalOpen) return;
-      
-      const payload = {
-        emiCardQuantity: purchaseEmi ? (Number(emiQty) || 0) : 0,
-        verificationCreditQuantity: purchaseVerification ? (Number(verificationQty) || 0) : 0
-      };
-
-      if (payload.emiCardQuantity === 0 && payload.verificationCreditQuantity === 0) {
-        setPricingData(null);
-        return;
-      }
-
-      setIsCalculatingPrice(true);
-      try {
-        const response = await cardCreditService.calculatePrice(payload);
-        if (response.success && response.data) {
-          setPricingData(response.data);
-        }
-      } catch (error) {
-        console.error('Failed to calculate dynamic pricing', error);
-      } finally {
-        setIsCalculatingPrice(false);
-      }
-    };
-
-    const debounceTimer = setTimeout(() => {
-      calculateDynamicPrice();
-    }, 400);
-
-    return () => clearTimeout(debounceTimer);
-  }, [emiQty, verificationQty, purchaseEmi, purchaseVerification, isPurchaseModalOpen]);
 
   // 1. Fetch Bank Wallet Dashboard
   const fetchDashboardData = useCallback(async () => {
@@ -398,7 +360,67 @@ const CardsAndCredit = () => {
     }
   }, [activeTab, purchaseHistoryPage, transferHistoryPage, fetchPurchaseHistory, fetchTransferHistory]);
 
-  // Handle Purchase Submit
+
+
+  // Dynamic Price Calculation Effect
+  useEffect(() => {
+    const calculateDynamicPrice = async () => {
+      if (!isPurchaseModalOpen) return;
+      
+      const payload = {
+        emiCardQuantity: purchaseEmi ? (Number(emiQty) || 0) : 0,
+        verificationCreditQuantity: purchaseVerification ? (Number(verificationQty) || 0) : 0
+      };
+
+      if (payload.emiCardQuantity === 0 && payload.verificationCreditQuantity === 0) {
+        setPricingData(null);
+        return;
+      }
+
+      setIsCalculatingPrice(true);
+      try {
+        const response = await cardCreditService.calculatePrice(payload);
+        if (response.success && response.data) {
+          setPricingData(response.data);
+        }
+      } catch (error) {
+        console.warn('Price calculation failed:', error);
+      } finally {
+        setIsCalculatingPrice(false);
+      }
+    };
+
+    const timer = setTimeout(calculateDynamicPrice, 300);
+    return () => clearTimeout(timer);
+  }, [isPurchaseModalOpen, purchaseEmi, purchaseVerification, emiQty, verificationQty]);
+
+  // Load Razorpay Script Helper
+  const loadRazorpayScript = () => {
+    return new Promise((resolve) => {
+      if (window.Razorpay) {
+        resolve(true);
+        return;
+      }
+      const script = document.createElement("script");
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  };
+
+  // Helper to open purchase modal cleanly
+  const handleOpenPurchaseModal = () => {
+    setPaymentStage('IDLE');
+    setPaymentResult(null);
+    setStatusLog('');
+    setPaymentLink(null);
+    setSubmittingPurchase(false);
+    setPolling(false);
+    setIsPurchaseModalOpen(true);
+  };
+
+  // Handle Purchase Submit with Multi-stage Progress Tracking
   const handleInitiatePurchase = async () => {
     if (!purchaseEmi && !purchaseVerification) {
       toast.warning('Please select at least one item (EMI Card or Verification Credit) to purchase.');
@@ -423,16 +445,20 @@ const CardsAndCredit = () => {
 
     try {
       setSubmittingPurchase(true);
+      setPaymentStage('INITIATING_ORDER');
+      setPaymentResult(null);
       setPaymentLink(null);
-      setStatusLog("Loading Razorpay SDK...");
+      setStatusLog("Loading Razorpay security SDK...");
+
       const isScriptLoaded = await loadRazorpayScript();
       if (!isScriptLoaded) {
         toast.error("Failed to load Razorpay SDK. Please check your internet connection.");
         setSubmittingPurchase(false);
+        setPaymentStage('FAILED');
         return;
       }
 
-      setStatusLog("Creating payment order on backend...");
+      setStatusLog("Creating secure payment order on banking server...");
       const payload = {
         purchaseType,
         emiQuantity: emiQ,
@@ -447,17 +473,19 @@ const CardsAndCredit = () => {
           setPaymentLink(orderData.paymentLink || orderData.checkoutUrl);
         }
 
-        setStatusLog("Opening Razorpay Payment Popup...");
+        setPaymentStage('OPENING_GATEWAY');
+        setStatusLog("Opening Razorpay Payment Checkout...");
 
         const options = {
-          key: orderData.keyId || orderData.razorpayKeyId || import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_live_TCxyw6opRmwTiR',
+          key: orderData.keyId || orderData.razorpayKeyId || import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_live_TTVmOdCGlRjqaK',
           amount: orderData.amountInPaise,
           currency: orderData.currency || "INR",
           name: "Advita Enterprise ERP",
           description: `Credit Purchase (${purchaseType})`,
           order_id: orderData.orderId,
           handler: async function (paymentResponse) {
-            setStatusLog("Payment completed in popup! Verifying with backend...");
+            setPaymentStage('VERIFYING_SIGNATURE');
+            setStatusLog("Payment authorized! Verifying cryptographic signature with banking gateway...");
             try {
               const verifyRes = await cardCreditService.verifyPayment({
                 razorpay_order_id: paymentResponse.razorpay_order_id || orderData.orderId,
@@ -466,10 +494,19 @@ const CardsAndCredit = () => {
               });
               
               if (verifyRes && verifyRes.success) {
-                toast.success(`Payment Successful! Invoice: ${verifyRes.data?.invoiceNumber || ""}`);
+                const inv = verifyRes.data?.invoiceNumber || orderData.orderId;
+                setPaymentResult({
+                  invoiceNumber: inv,
+                  paymentId: paymentResponse.razorpay_payment_id,
+                  orderId: paymentResponse.razorpay_order_id || orderData.orderId,
+                  amount: pricingData?.totalPayableAmount || (orderData.amountInPaise / 100),
+                  emiQty: emiQ,
+                  verQty: verQ
+                });
+                setPaymentStage('SUCCESS');
+                setStatusLog("Payment verified and credits added to wallet successfully!");
+                toast.success(`Payment Successful! Invoice: ${inv}`);
                 setSubmittingPurchase(false);
-                setIsPurchaseModalOpen(false);
-                setStatusLog("");
                 fetchDashboardData();
                 fetchPurchaseHistory(1);
                 return;
@@ -477,7 +514,7 @@ const CardsAndCredit = () => {
             } catch (err) {
               console.warn("Direct verification failed, falling back to polling...", err);
             }
-            startPolling(orderData.orderId);
+            startPolling(orderData.orderId, emiQ, verQ);
           },
           prefill: orderData.prefill || {
             email: "bank@advita.com",
@@ -485,8 +522,11 @@ const CardsAndCredit = () => {
           },
           modal: {
             ondismiss: function () {
-              setStatusLog("Payment popup closed. You can use the payment link below to retry.");
-              setSubmittingPurchase(false);
+              if (paymentStage !== 'SUCCESS' && paymentStage !== 'VERIFYING_SIGNATURE' && paymentStage !== 'POLLING_STATUS') {
+                setStatusLog("Payment popup was closed. You can retry below.");
+                setSubmittingPurchase(false);
+                setPaymentStage('IDLE');
+              }
             },
             escape: true,
             confirm_close: true,
@@ -501,40 +541,49 @@ const CardsAndCredit = () => {
           setStatusLog(`Payment Failed: ${response.error.description}`);
           toast.error(`Payment Failed: ${response.error.description}`);
           setSubmittingPurchase(false);
+          setPaymentStage('FAILED');
         });
 
         rzp.open();
+        setPaymentStage('GATEWAY_ACTIVE');
       } else {
         toast.error(res?.message || 'Failed to initiate purchase');
         setSubmittingPurchase(false);
+        setPaymentStage('FAILED');
       }
     } catch (error) {
       console.error('Error initiating purchase:', error);
       toast.error(error.response?.data?.message || 'Error occurred while initiating purchase');
       setSubmittingPurchase(false);
+      setPaymentStage('FAILED');
     }
   };
 
-  const startPolling = (orderId) => {
+  // Status Polling Fallback with live attempt tracker
+  const startPolling = (orderId, emiQ = 0, verQ = 0) => {
     setPolling(true);
+    setPaymentStage('POLLING_STATUS');
     pollCountRef.current = 0;
 
     if (pollIntervalRef.current) {
       clearInterval(pollIntervalRef.current);
     }
 
-    setStatusLog("Waiting for payment confirmation... (polling)");
+    setStatusLog("Confirming payment status from gateway... (Attempt 1 of 24)");
 
     pollIntervalRef.current = setInterval(async () => {
       pollCountRef.current += 1;
+      setPollingAttempt(pollCountRef.current);
+      setStatusLog(`Confirming payment status with gateway... (Attempt ${pollCountRef.current} of 24)`);
 
       if (pollCountRef.current > 24) {
         clearInterval(pollIntervalRef.current);
         pollIntervalRef.current = null;
         setPolling(false);
         setSubmittingPurchase(false);
-        setStatusLog("Payment verification timed out. If completed, it will be updated via webhook.");
-        toast.info("Payment verification timed out. Please check your purchase history later.");
+        setPaymentStage('FAILED');
+        setStatusLog("Payment verification timed out. If money was deducted, your wallet will be updated automatically via webhook.");
+        toast.info("Payment verification timed out. Please check your purchase history in a few moments.");
         return;
       }
 
@@ -547,9 +596,18 @@ const CardsAndCredit = () => {
             setPolling(false);
             setSubmittingPurchase(false);
             setPaymentLink(null);
-            setStatusLog("");
-            setIsPurchaseModalOpen(false);
-            toast.success(`Payment Successful! Invoice: ${res.data.invoiceNumber || ""}`);
+            const inv = res.data.invoiceNumber || orderId;
+            setPaymentResult({
+              invoiceNumber: inv,
+              paymentId: res.data.paymentId || orderId,
+              orderId,
+              amount: pricingData?.totalPayableAmount || 0,
+              emiQty: emiQ,
+              verQty: verQ
+            });
+            setPaymentStage('SUCCESS');
+            setStatusLog("Payment verified successfully!");
+            toast.success(`Payment Successful! Invoice: ${inv}`);
             fetchDashboardData();
             fetchPurchaseHistory(1);
           } else if (res.data.paymentStatus === "FAILED") {
@@ -557,6 +615,7 @@ const CardsAndCredit = () => {
             pollIntervalRef.current = null;
             setPolling(false);
             setSubmittingPurchase(false);
+            setPaymentStage('FAILED');
             setStatusLog(`Payment Failed for Order: ${orderId}`);
             toast.error("Payment Failed");
           }
@@ -564,7 +623,7 @@ const CardsAndCredit = () => {
       } catch (err) {
         console.warn(`Status check error: ${err.message} (retrying...)`);
       }
-    }, 5000);
+    }, 4000);
   };
 
   // Handle Stock Transfer Submit
@@ -628,22 +687,15 @@ const CardsAndCredit = () => {
 
   return (
     <div className="w-full flex flex-col gap-5 font-sans antialiased pb-16">
-      {/* 1. Header Card - Exact Match with Employees.jsx */}
-      <div className="bg-white rounded-xl p-5 shadow-xs border border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-[#225091] m-0 font-heading">
-            EMI Cards & Verification Credits
-          </h1>
-          <div className="flex items-center text-sm font-medium text-gray-500 mt-1">
-            <Link to="/dashboard" className="hover:text-gray-900 transition-colors">Dashboard</Link>
-            <ChevronRight size={15} className="mx-1 text-gray-400" />
-            <span className="text-gray-600">Stock & Verification</span>
-            <ChevronRight size={15} className="mx-1 text-gray-400" />
-            <span className="text-[#225091] font-semibold">Cards & Credits</span>
-          </div>
-        </div>
-
-        {/* Top Action Buttons */}
+      {/* 1. Header Card */}
+      <PageHeader
+        title="EMI Cards & Verification Credits"
+        breadcrumbs={[
+          { label: "Dashboard", to: "/dashboard" },
+          { label: "Stock & Verification" },
+          { label: "Cards & Credits" }
+        ]}
+      >
         <div className="flex flex-wrap items-center gap-2.5">
           <button
             onClick={fetchDashboardData}
@@ -657,24 +709,24 @@ const CardsAndCredit = () => {
             className="px-4 py-2.5 rounded-full border border-[#225091] text-[#225091] hover:bg-blue-50 font-semibold transition-all text-xs flex items-center gap-2 shadow-2xs cursor-pointer"
           >
             <Send size={14} />
-            <span>Distribute / Transfer Stock</span>
+            <span>Distribute</span>
           </button>
           <button 
-            onClick={() => setIsPurchaseModalOpen(true)}
-            className="bg-[#225091] hover:bg-[#1b427b] text-white px-5 py-2.5 rounded-full font-semibold transition-all shadow-sm flex items-center gap-2 text-xs cursor-pointer"
+            onClick={handleOpenPurchaseModal}
+            className="px-5 py-2.5 rounded-full bg-[#225091] hover:bg-[#1b427b] text-white font-semibold transition-all text-xs flex items-center gap-2 shadow-sm hover:shadow cursor-pointer"
           >
             <ShoppingCart size={14} />
             <span>Purchase Card & Credit</span>
           </button>
         </div>
-      </div>
+      </PageHeader>
 
-      {/* 2. Top Stats Overview (4 KPI Cards Matching Employees.jsx) */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* 2. Primary 2 Stats Cards (Available EMI Cards & Verification Credits) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="bg-white rounded-xl p-4.5 border border-gray-100 shadow-xs flex flex-col items-center justify-center transition-all hover:shadow-md">
           <div className="flex items-center gap-2 text-[#225091] mb-1">
-            <CreditCard size={18} />
-            <span className="text-[26px] font-bold leading-none font-heading">
+            <CreditCard size={20} />
+            <span className="text-[28px] font-bold leading-none font-heading">
               {dashboardLoading ? '...' : (walletMetrics?.emiCards?.available || 0).toLocaleString()}
             </span>
           </div>
@@ -685,37 +737,13 @@ const CardsAndCredit = () => {
 
         <div className="bg-white rounded-xl p-4.5 border border-gray-100 shadow-xs flex flex-col items-center justify-center transition-all hover:shadow-md">
           <div className="flex items-center gap-2 text-emerald-600 mb-1">
-            <ShieldCheck size={18} />
-            <span className="text-[26px] font-bold leading-none font-heading">
+            <ShieldCheck size={20} />
+            <span className="text-[28px] font-bold leading-none font-heading">
               {dashboardLoading ? '...' : (walletMetrics?.verificationCredits?.available || 0).toLocaleString()}
             </span>
           </div>
           <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider text-center">
-            AVAILABLE VERIFICATIONS
-          </span>
-        </div>
-
-        <div className="bg-white rounded-xl p-4.5 border border-gray-100 shadow-xs flex flex-col items-center justify-center transition-all hover:shadow-md">
-          <div className="flex items-center gap-2 text-purple-600 mb-1">
-            <TrendingUp size={18} />
-            <span className="text-[26px] font-bold leading-none font-heading">
-              {dashboardLoading ? '...' : (walletMetrics?.emiCards?.purchased || 0).toLocaleString()}
-            </span>
-          </div>
-          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider text-center">
-            TOTAL CARDS PURCHASED
-          </span>
-        </div>
-
-        <div className="bg-white rounded-xl p-4.5 border border-gray-100 shadow-xs flex flex-col items-center justify-center transition-all hover:shadow-md">
-          <div className="flex items-center gap-2 text-amber-600 mb-1">
-            <Send size={18} />
-            <span className="text-[26px] font-bold leading-none font-heading">
-              {dashboardLoading ? '...' : (walletMetrics?.emiCards?.used || 0).toLocaleString()}
-            </span>
-          </div>
-          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider text-center">
-            ALLOCATED / DISTRIBUTED
+            AVAILABLE VERIFICATION CREDITS
           </span>
         </div>
       </div>
@@ -1325,154 +1353,371 @@ const CardsAndCredit = () => {
           <div className="bg-[#f8f9fc] rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden flex flex-col border border-gray-100">
             <div className="flex justify-between items-center p-6 pb-4 bg-white border-b border-gray-100">
               <div>
-                <h2 className="text-xl font-bold text-[#1b2559]">Purchase Cards & Credits</h2>
-                <p className="text-xs text-gray-500 mt-0.5">Order official inventory through Razorpay Gateway</p>
+                <h2 className="text-xl font-bold text-[#1b2559]">
+                  {paymentStage === 'SUCCESS' ? 'Purchase Completed' : paymentStage !== 'IDLE' ? 'Payment Transaction' : 'Purchase Cards & Credits'}
+                </h2>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  {paymentStage === 'SUCCESS' ? 'Inventory has been credited to your bank wallet' : paymentStage !== 'IDLE' ? 'Secure banking gateway in progress' : 'Order official inventory through Razorpay Gateway'}
+                </p>
               </div>
               <button 
-                onClick={() => setIsPurchaseModalOpen(false)} 
-                className="text-gray-400 hover:text-gray-700 p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
+                onClick={() => {
+                  if (paymentStage === 'INITIATING_ORDER' || paymentStage === 'VERIFYING_SIGNATURE' || paymentStage === 'POLLING_STATUS') {
+                    toast.warning("Payment verification is in progress. Please wait.");
+                    return;
+                  }
+                  setIsPurchaseModalOpen(false);
+                  setPaymentStage('IDLE');
+                }} 
+                className="text-gray-400 hover:text-gray-700 p-1.5 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
               >
                 <X size={20} />
               </button>
             </div>
             
-            <div className="p-6 space-y-6 max-h-[80vh] overflow-y-auto">
-              <div className="flex items-center gap-6 bg-white p-4 rounded-xl border border-gray-200/80">
-                <label className="flex items-center gap-2.5 cursor-pointer">
-                  <input 
-                    type="checkbox" 
-                    checked={purchaseEmi}
-                    onChange={(e) => setPurchaseEmi(e.target.checked)}
-                    className="w-4 h-4 rounded border-gray-300 text-[#225091] focus:ring-[#225091]"
-                  />
-                  <span className="text-sm font-semibold text-gray-700">EMI Cards</span>
-                </label>
-                <label className="flex items-center gap-2.5 cursor-pointer">
-                  <input 
-                    type="checkbox" 
-                    checked={purchaseVerification}
-                    onChange={(e) => setPurchaseVerification(e.target.checked)}
-                    className="w-4 h-4 rounded border-gray-300 text-[#225091] focus:ring-[#225091]"
-                  />
-                  <span className="text-sm font-semibold text-gray-700">Verification Credits</span>
-                </label>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1.5">
-                    EMI Card Quantity
-                  </label>
-                  <input 
-                    type="number" 
-                    min="0"
-                    value={emiQty}
-                    onChange={(e) => setEmiQty(e.target.value)}
-                    disabled={!purchaseEmi}
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all bg-white text-sm disabled:bg-gray-100 disabled:text-gray-400" 
-                  />
-                  <span className="text-[11px] text-gray-400 block mt-1">
-                    {isCalculatingPrice ? 'Calculating...' : (pricingData?.emiCard?.unitPrice ? `Estimated @ ₹${pricingData.emiCard.unitPrice}/card` : 'Enter quantity')}
-                  </span>
+            {/* SUCCESS STATE */}
+            {paymentStage === 'SUCCESS' ? (
+              <div className="p-7 flex flex-col items-center text-center space-y-5">
+                <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600 shadow-inner">
+                  <CheckCircle2 size={36} />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1.5">
-                    Verification Credit Qty
+                  <h3 className="text-xl font-bold text-[#1b2559]">Payment Confirmed & Stock Added!</h3>
+                  <p className="text-xs text-gray-500 mt-1 max-w-sm">
+                    Your transaction has been securely authorized and verified. New stock is now ready in your Bank inventory.
+                  </p>
+                </div>
+
+                {/* Receipt Card */}
+                <div className="w-full bg-white rounded-xl p-4 border border-emerald-100 shadow-xs space-y-3 text-left">
+                  <div className="flex justify-between items-center pb-2 border-b border-gray-100 text-xs">
+                    <span className="text-gray-500 font-medium">Invoice Reference:</span>
+                    <span className="font-mono font-bold text-[#225091]">{paymentResult?.invoiceNumber || '-'}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-gray-500 font-medium">Payment ID:</span>
+                    <span className="font-mono text-gray-700">{paymentResult?.paymentId || '-'}</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 pt-2 border-t border-gray-100">
+                    <div className="bg-blue-50/70 p-2.5 rounded-lg text-center">
+                      <span className="text-[11px] text-[#225091] font-semibold block">EMI Cards Added</span>
+                      <span className="text-lg font-bold text-blue-700">+{paymentResult?.emiQty || 0}</span>
+                    </div>
+                    <div className="bg-emerald-50/70 p-2.5 rounded-lg text-center">
+                      <span className="text-[11px] text-emerald-700 font-semibold block">Credits Added</span>
+                      <span className="text-lg font-bold text-emerald-700">+{paymentResult?.verQty || 0}</span>
+                    </div>
+                  </div>
+                  <div className="flex justify-between items-center pt-2 border-t border-gray-100 text-xs font-bold text-gray-800">
+                    <span>Total Amount Paid:</span>
+                    <span className="text-sm text-[#1b2559]">₹{(paymentResult?.amount || 0).toLocaleString()}</span>
+                  </div>
+                </div>
+
+                <div className="w-full pt-2 flex justify-center">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsPurchaseModalOpen(false);
+                      setPaymentStage('IDLE');
+                    }}
+                    className="w-full py-3 rounded-xl bg-[#225091] text-white font-semibold hover:bg-[#1b427b] transition-all shadow-sm text-sm cursor-pointer"
+                  >
+                    Done / View Updated Wallet
+                  </button>
+                </div>
+              </div>
+            ) : paymentStage === 'FAILED' ? (
+              /* FAILED STATE */
+              <div className="p-7 flex flex-col items-center text-center space-y-5">
+                <div className="w-16 h-16 bg-rose-100 rounded-full flex items-center justify-center text-rose-600 shadow-inner">
+                  <AlertCircle size={36} />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900">Payment Incomplete</h3>
+                  <p className="text-xs text-gray-500 mt-1 max-w-sm">
+                    {statusLog || "The payment transaction could not be completed or was cancelled."}
+                  </p>
+                </div>
+                {paymentLink && (
+                  <div className="w-full bg-blue-50 border border-blue-100 rounded-xl p-3 text-xs text-blue-800 flex flex-col gap-1">
+                    <span className="font-semibold">Direct payment link is available:</span>
+                    <a href={paymentLink} target="_blank" rel="noopener noreferrer" className="font-bold underline text-[#225091] flex items-center justify-center gap-1">
+                      <span>Open Checkout Page</span>
+                      <ExternalLink size={13} />
+                    </a>
+                  </div>
+                )}
+                <div className="w-full flex gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsPurchaseModalOpen(false);
+                      setPaymentStage('IDLE');
+                    }}
+                    className="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-700 font-semibold hover:bg-gray-100 transition-colors text-sm cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPaymentStage('IDLE');
+                      setStatusLog('');
+                    }}
+                    className="flex-1 py-2.5 rounded-xl bg-[#225091] text-white font-semibold hover:bg-[#1b427b] transition-all text-sm cursor-pointer"
+                  >
+                    Try Again
+                  </button>
+                </div>
+              </div>
+            ) : paymentStage !== 'IDLE' ? (
+              /* IN-PROGRESS PAYMENT PROCESSING OVERLAY */
+              <div className="p-7 flex flex-col items-center text-center space-y-6">
+                <div className="relative flex items-center justify-center">
+                  <div className="w-20 h-20 rounded-full bg-blue-50 flex items-center justify-center">
+                    <Loader2 size={40} className="animate-spin text-[#225091]" />
+                  </div>
+                  <Lock size={16} className="absolute text-[#225091]" />
+                </div>
+
+                <div className="space-y-1">
+                  <h3 className="text-lg font-bold text-[#1b2559]">Processing Secure Payment</h3>
+                  <p className="text-xs text-gray-500 font-medium">
+                    {statusLog || "Please complete the transaction in the Razorpay window..."}
+                  </p>
+                </div>
+
+                {/* 3-Step Live Progress Indicator */}
+                <div className="w-full bg-white rounded-xl p-4 border border-gray-200/80 shadow-2xs space-y-3 text-left">
+                  {/* Step 1: Order Creation */}
+                  <div className="flex items-center gap-3">
+                    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                      paymentStage === 'INITIATING_ORDER'
+                        ? 'bg-blue-100 text-[#225091] animate-pulse'
+                        : 'bg-emerald-100 text-emerald-700'
+                    }`}>
+                      {paymentStage === 'INITIATING_ORDER' ? <Loader2 size={13} className="animate-spin" /> : <CheckCircle2 size={14} />}
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-xs font-semibold text-gray-800">1. Order Generation</p>
+                      <p className="text-[11px] text-gray-400">
+                        {paymentStage === 'INITIATING_ORDER' ? 'Initializing secure order with banking server...' : 'Secure Order generated successfully'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Step 2: Payment Authorization */}
+                  <div className="flex items-center gap-3">
+                    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                      paymentStage === 'OPENING_GATEWAY' || paymentStage === 'GATEWAY_ACTIVE'
+                        ? 'bg-blue-100 text-[#225091] animate-pulse'
+                        : paymentStage === 'VERIFYING_SIGNATURE' || paymentStage === 'POLLING_STATUS'
+                        ? 'bg-emerald-100 text-emerald-700'
+                        : 'bg-gray-100 text-gray-400'
+                    }`}>
+                      {paymentStage === 'OPENING_GATEWAY' || paymentStage === 'GATEWAY_ACTIVE' ? (
+                        <Loader2 size={13} className="animate-spin" />
+                      ) : paymentStage === 'VERIFYING_SIGNATURE' || paymentStage === 'POLLING_STATUS' ? (
+                        <CheckCircle2 size={14} />
+                      ) : (
+                        '2'
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-xs font-semibold text-gray-800">2. Razorpay Authorization</p>
+                      <p className="text-[11px] text-gray-400">
+                        {paymentStage === 'OPENING_GATEWAY' || paymentStage === 'GATEWAY_ACTIVE'
+                          ? 'Complete UPI/Card/NetBanking in Razorpay popup'
+                          : paymentStage === 'VERIFYING_SIGNATURE' || paymentStage === 'POLLING_STATUS'
+                          ? 'Payment authorized by user'
+                          : 'Waiting for authorization'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Step 3: Signature Verification & Ledger Credit */}
+                  <div className="flex items-center gap-3">
+                    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                      paymentStage === 'VERIFYING_SIGNATURE' || paymentStage === 'POLLING_STATUS'
+                        ? 'bg-blue-100 text-[#225091] animate-pulse'
+                        : 'bg-gray-100 text-gray-400'
+                    }`}>
+                      {paymentStage === 'VERIFYING_SIGNATURE' || paymentStage === 'POLLING_STATUS' ? (
+                        <Loader2 size={13} className="animate-spin" />
+                      ) : (
+                        '3'
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-xs font-semibold text-gray-800">3. Signature Verification & Stock Allocation</p>
+                      <p className="text-[11px] text-gray-400">
+                        {paymentStage === 'VERIFYING_SIGNATURE' || paymentStage === 'POLLING_STATUS'
+                          ? 'Verifying HMAC signature & crediting Bank inventory...'
+                          : 'Awaiting signature verification'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Important Security Notice */}
+                <div className="bg-amber-50/80 border border-amber-200/70 rounded-xl p-3 text-left flex items-start gap-2.5">
+                  <ShieldCheck size={16} className="text-amber-700 shrink-0 mt-0.5" />
+                  <p className="text-[11px] text-amber-900 leading-relaxed font-medium">
+                    <strong className="font-semibold">Security Note:</strong> Please do not close or refresh this tab while transaction verification is underway.
+                  </p>
+                </div>
+
+                {paymentLink && (
+                  <div className="text-xs text-gray-500 flex items-center gap-1.5 justify-center">
+                    <span>Popup closed?</span>
+                    <a href={paymentLink} target="_blank" rel="noopener noreferrer" className="text-[#225091] font-semibold underline flex items-center gap-1">
+                      <span>Open Direct Checkout Link</span>
+                      <ExternalLink size={12} />
+                    </a>
+                  </div>
+                )}
+              </div>
+            ) : (
+              /* IDLE STATE: STANDARD FORM */
+              <div className="p-6 space-y-6 max-h-[80vh] overflow-y-auto">
+                <div className="flex items-center gap-6 bg-white p-4 rounded-xl border border-gray-200/80">
+                  <label className="flex items-center gap-2.5 cursor-pointer">
+                    <input 
+                      type="checkbox" 
+                      checked={purchaseEmi}
+                      onChange={(e) => setPurchaseEmi(e.target.checked)}
+                      className="w-4 h-4 rounded border-gray-300 text-[#225091] focus:ring-[#225091]"
+                    />
+                    <span className="text-sm font-semibold text-gray-700">EMI Cards</span>
                   </label>
-                  <input 
-                    type="number" 
-                    min="0"
-                    value={verificationQty}
-                    onChange={(e) => setVerificationQty(e.target.value)}
-                    disabled={!purchaseVerification}
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all bg-white text-sm disabled:bg-gray-100 disabled:text-gray-400" 
-                  />
-                  <span className="text-[11px] text-gray-400 block mt-1">
-                    {isCalculatingPrice ? 'Calculating...' : (pricingData?.verificationCredit?.unitPrice ? `Estimated @ ₹${pricingData.verificationCredit.unitPrice}/credit` : 'Enter quantity')}
-                  </span>
+                  <label className="flex items-center gap-2.5 cursor-pointer">
+                    <input 
+                      type="checkbox" 
+                      checked={purchaseVerification}
+                      onChange={(e) => setPurchaseVerification(e.target.checked)}
+                      className="w-4 h-4 rounded border-gray-300 text-[#225091] focus:ring-[#225091]"
+                    />
+                    <span className="text-sm font-semibold text-gray-700">Verification Credits</span>
+                  </label>
                 </div>
-              </div>
 
-              {/* Price Breakdown Calculation Card */}
-              <div className="bg-white rounded-xl p-5 border border-gray-200 shadow-sm space-y-2.5 relative">
-                {isCalculatingPrice && (
-                  <div className="absolute inset-0 bg-white/70 backdrop-blur-[1px] flex items-center justify-center z-10 rounded-xl">
-                    <RefreshCcw size={20} className="animate-spin text-[#225091]" />
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1.5">
+                      EMI Card Quantity
+                    </label>
+                    <input 
+                      type="number" 
+                      min="0"
+                      value={emiQty}
+                      onChange={(e) => setEmiQty(e.target.value)}
+                      disabled={!purchaseEmi}
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all bg-white text-sm disabled:bg-gray-100 disabled:text-gray-400" 
+                    />
+                    <span className="text-[11px] text-gray-400 block mt-1">
+                      {isCalculatingPrice ? 'Calculating...' : (pricingData?.emiCard?.unitPrice ? `Estimated @ ₹${pricingData.emiCard.unitPrice}/card` : 'Enter quantity')}
+                    </span>
                   </div>
-                )}
-                <div className="flex items-center justify-between border-b border-gray-100 pb-2 mb-1">
-                  <h3 className="font-bold text-[#1b2559] text-sm flex items-center gap-1.5">
-                    <Receipt size={16} className="text-[#225091]" />
-                    Estimated Price Breakdown
-                  </h3>
-                  <span className="text-[11px] bg-teal-50 text-[#225091] font-semibold px-2 py-0.5 rounded">
-                    Total Amount Includes Applicable Taxes
-                  </span>
-                </div>
-                
-                {purchaseEmi && (
-                  <div className="flex justify-between text-xs">
-                    <span className="text-gray-500">EMI Cards ({pricingData?.emiCard?.quantity || 0} Qty)</span>
-                    <span className="font-medium text-gray-800">₹{(pricingData?.emiCard?.totalPrice || 0).toLocaleString()}</span>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1.5">
+                      Verification Credit Qty
+                    </label>
+                    <input 
+                      type="number" 
+                      min="0"
+                      value={verificationQty}
+                      onChange={(e) => setVerificationQty(e.target.value)}
+                      disabled={!purchaseVerification}
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all bg-white text-sm disabled:bg-gray-100 disabled:text-gray-400" 
+                    />
+                    <span className="text-[11px] text-gray-400 block mt-1">
+                      {isCalculatingPrice ? 'Calculating...' : (pricingData?.verificationCredit?.unitPrice ? `Estimated @ ₹${pricingData.verificationCredit.unitPrice}/credit` : 'Enter quantity')}
+                    </span>
                   </div>
-                )}
-                {purchaseVerification && (
-                  <div className="flex justify-between text-xs">
-                    <span className="text-gray-500">Verification Credits ({pricingData?.verificationCredit?.quantity || 0} Qty)</span>
-                    <span className="font-medium text-gray-800">₹{(pricingData?.verificationCredit?.totalPrice || 0).toLocaleString()}</span>
-                  </div>
-                )}
-                
-                <div className="flex justify-between text-xs pt-1 border-t border-gray-100">
-                  <span className="text-gray-600 font-semibold">Subtotal</span>
-                  <span className="font-semibold text-gray-800">₹{(pricingData?.totalAmount || 0).toLocaleString()}</span>
                 </div>
-                
-                <div className="flex justify-between items-baseline pt-2 border-t border-gray-100 mt-2">
-                  <span className="font-bold text-gray-800 text-sm">Estimated Total Payable</span>
-                  <span className="font-bold text-[#1b2559] text-xl">₹{(pricingData?.totalPayableAmount || 0).toLocaleString()}</span>
-                </div>
-              </div>
 
-              {paymentLink && (
-                <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-3 flex flex-col gap-1.5">
-                  <span className="text-xs text-emerald-600 font-medium">If popup didn't open, use this link:</span>
-                  <a href={paymentLink} target="_blank" rel="noopener noreferrer" className="text-sm font-semibold text-emerald-700 underline">
-                    Open Payment Page →
-                  </a>
-                </div>
-              )}
-              {statusLog && (
-                <div className="bg-gray-50 border border-gray-100 rounded-xl p-3 text-xs text-gray-600 font-mono text-center">
-                  {statusLog}
-                </div>
-              )}
-
-              <div className="flex justify-end gap-3 pt-2">
-                <button 
-                  type="button"
-                  onClick={() => setIsPurchaseModalOpen(false)} 
-                  className="px-5 py-2.5 rounded-xl border border-gray-200 text-gray-600 font-semibold hover:bg-gray-100 transition-colors text-sm"
-                >
-                  Cancel
-                </button>
-                <button 
-                  type="button"
-                  disabled={submittingPurchase || (!purchaseEmi && !purchaseVerification) || isCalculatingPrice || polling}
-                  onClick={handleInitiatePurchase} 
-                  className="px-6 py-2.5 rounded-xl bg-[#225091] text-white font-semibold hover:bg-[#168f94] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm text-sm flex items-center gap-2"
-                >
-                  {submittingPurchase || polling ? (
-                    <>
-                      <RefreshCcw size={16} className="animate-spin" />
-                      <span>{polling ? 'Verifying...' : 'Processing...'}</span>
-                    </>
-                  ) : (
-                    <span>Proceed to Pay ₹{(pricingData?.totalPayableAmount || 0).toLocaleString()}</span>
+                {/* Price Breakdown Calculation Card */}
+                <div className="bg-white rounded-xl p-5 border border-gray-200 shadow-sm space-y-2.5 relative">
+                  {isCalculatingPrice && (
+                    <div className="absolute inset-0 bg-white/70 backdrop-blur-[1px] flex items-center justify-center z-10 rounded-xl">
+                      <RefreshCcw size={20} className="animate-spin text-[#225091]" />
+                    </div>
                   )}
-                </button>
+                  <div className="flex items-center justify-between border-b border-gray-100 pb-2 mb-1">
+                    <h3 className="font-bold text-[#1b2559] text-sm flex items-center gap-1.5">
+                      <Receipt size={16} className="text-[#225091]" />
+                      Estimated Price Breakdown
+                    </h3>
+                    <span className="text-[11px] bg-teal-50 text-[#225091] font-semibold px-2 py-0.5 rounded">
+                      Total Amount Includes Applicable Taxes
+                    </span>
+                  </div>
+                  
+                  {purchaseEmi && (
+                    <div className="flex justify-between text-xs">
+                      <span className="text-gray-500">EMI Cards ({pricingData?.emiCard?.quantity || 0} Qty)</span>
+                      <span className="font-medium text-gray-800">₹{(pricingData?.emiCard?.totalPrice || 0).toLocaleString()}</span>
+                    </div>
+                  )}
+                  {purchaseVerification && (
+                    <div className="flex justify-between text-xs">
+                      <span className="text-gray-500">Verification Credits ({pricingData?.verificationCredit?.quantity || 0} Qty)</span>
+                      <span className="font-medium text-gray-800">₹{(pricingData?.verificationCredit?.totalPrice || 0).toLocaleString()}</span>
+                    </div>
+                  )}
+                  
+                  <div className="flex justify-between text-xs pt-1 border-t border-gray-100">
+                    <span className="text-gray-600 font-semibold">Subtotal</span>
+                    <span className="font-semibold text-gray-800">₹{(pricingData?.totalAmount || 0).toLocaleString()}</span>
+                  </div>
+                  
+                  <div className="flex justify-between items-baseline pt-2 border-t border-gray-100 mt-2">
+                    <span className="font-bold text-gray-800 text-sm">Estimated Total Payable</span>
+                    <span className="font-bold text-[#1b2559] text-xl">₹{(pricingData?.totalPayableAmount || 0).toLocaleString()}</span>
+                  </div>
+                </div>
+
+                {paymentLink && (
+                  <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-3 flex flex-col gap-1.5">
+                    <span className="text-xs text-emerald-600 font-medium">If popup didn't open, use this link:</span>
+                    <a href={paymentLink} target="_blank" rel="noopener noreferrer" className="text-sm font-semibold text-emerald-700 underline">
+                      Open Payment Page →
+                    </a>
+                  </div>
+                )}
+                {statusLog && (
+                  <div className="bg-gray-50 border border-gray-100 rounded-xl p-3 text-xs text-gray-600 font-mono text-center">
+                    {statusLog}
+                  </div>
+                )}
+
+                <div className="flex justify-end gap-3 pt-2">
+                  <button 
+                    type="button"
+                    onClick={() => setIsPurchaseModalOpen(false)} 
+                    className="px-5 py-2.5 rounded-xl border border-gray-200 text-gray-600 font-semibold hover:bg-gray-100 transition-colors text-sm cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    type="button"
+                    disabled={submittingPurchase || (!purchaseEmi && !purchaseVerification) || isCalculatingPrice || polling}
+                    onClick={handleInitiatePurchase} 
+                    className="px-6 py-2.5 rounded-xl bg-[#225091] text-white font-semibold hover:bg-[#168f94] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm text-sm flex items-center gap-2 cursor-pointer"
+                  >
+                    {submittingPurchase || polling ? (
+                      <>
+                        <RefreshCcw size={16} className="animate-spin" />
+                        <span>{polling ? 'Verifying...' : 'Processing...'}</span>
+                      </>
+                    ) : (
+                      <span>Proceed to Pay ₹{(pricingData?.totalPayableAmount || 0).toLocaleString()}</span>
+                    )}
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       )}

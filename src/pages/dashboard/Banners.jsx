@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronRight, Search, ChevronDown, Edit, Trash2, X, Upload, Image as ImageIcon } from 'lucide-react';
+import { Search, ChevronDown, Edit, Trash2, X, Upload, Image as ImageIcon } from 'lucide-react';
+import PageHeader from '../../components/common/PageHeader';
 
 const mockBanners = [];
 
@@ -15,15 +16,15 @@ const Banners = () => {
   return (
     <div className="max-w-[1400px] w-full">
       {/* Header Card */}
-      <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-6">
-        <h2 className="text-xl font-bold text-[#225091] mb-2">Banner Management</h2>
-        <div className="flex items-center text-sm font-medium text-gray-500">
-          <Link to="/dashboard" className="hover:text-gray-800 transition-colors">Dashboard</Link>
-          <ChevronRight size={16} className="mx-1 text-gray-400" />
-          <span>App Management</span>
-          <ChevronRight size={16} className="mx-1 text-gray-400" />
-          <span className="text-[#225091]">Banner Management</span>
-        </div>
+      <div className="mb-6">
+        <PageHeader
+          title="Banner Management"
+          breadcrumbs={[
+            { label: "Dashboard", to: "/dashboard" },
+            { label: "App Management" },
+            { label: "Banner Management" }
+          ]}
+        />
       </div>
 
       {/* Toolbar */}

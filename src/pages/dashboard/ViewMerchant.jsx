@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link, useParams } from 'react-router-dom';
 import { ArrowLeft,  ChevronRight, FileText, Download } from 'lucide-react';
 import { toast } from 'react-toastify';
+import PageHeader from '../../components/common/PageHeader';
 import { merchantService } from '../../api/merchantService';
 
 const ViewField = ({ label, value }) => (
@@ -83,29 +84,17 @@ const ViewMerchant = () => {
   return (
     <div className="flex flex-col gap-6 w-full pb-10">
       {/* Header Card */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 shrink-0 flex justify-between items-start">
-        <div>
-          <div className="flex items-center gap-3 mb-2">
-            <button 
-            onClick={() => navigate(-1)}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors shrink-0"
-            type="button"
-          >
-            <ArrowLeft size={16} /> Back
-          </button>
-            <h1 className="text-xl font-bold text-[#225091] m-0">View Merchant</h1>
-          </div>
-          <div className="flex items-center text-sm text-gray-500 pl-[40px]">
-            <Link to="/dashboard" className="hover:text-gray-700">Dashboard</Link>
-            <ChevronRight size={14} className="mx-2" />
-            <span className="hover:text-gray-700">Partner Management</span>
-            <ChevronRight size={14} className="mx-2" />
-            <Link to="/merchant" className="hover:text-gray-700">Merchant</Link>
-            <ChevronRight size={14} className="mx-2" />
-            <span className="text-[#225091]">View</span>
-          </div>
-        </div>
-      </div>
+      <PageHeader
+        title="View Merchant"
+        breadcrumbs={[
+          { label: 'Dashboard', to: '/dashboard' },
+          { label: 'Partner Management' },
+          { label: 'Merchant', to: '/merchant' },
+          { label: 'View Merchant' }
+        ]}
+        showBack={true}
+        backUrl="/merchant"
+      />
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
         {/* General Info */}

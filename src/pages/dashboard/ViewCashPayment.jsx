@@ -15,6 +15,7 @@ import { ArrowLeft,
 } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { cashPaymentService } from '../../api/cashPaymentService';
+import PageHeader from '../../components/common/PageHeader';
 
 const ViewCashPayment = () => {
   const navigate = useNavigate();
@@ -167,25 +168,16 @@ const ViewCashPayment = () => {
   return (
     <div className="space-y-6">
       {/* Header and Breadcrumb */}
-      <div className="bg-white rounded-lg p-5 shadow-sm border border-gray-100">
-        <div className="flex items-center gap-3 mb-2">
-            <button 
-            onClick={() => navigate(-1)}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors shrink-0"
-            type="button"
-          >
-            <ArrowLeft size={16} /> Back
-          </button>
-            <h1 className="text-2xl font-semibold text-[#1b2559] m-0">View Details</h1>
-          </div>
-        <div className="flex items-center text-sm font-medium text-gray-500">
-          <Link to="/dashboard" className="hover:text-[#1b2559] transition-colors">Dashboard</Link>
-          <ChevronRight size={16} className="mx-1" />
-          <Link to="/cash-payment" className="hover:text-[#1b2559] transition-colors">Payment</Link>
-          <ChevronRight size={16} className="mx-1" />
-          <span className="text-[#1b2559]">View Details</span>
-        </div>
-      </div>
+      <PageHeader
+        title="View Details"
+        breadcrumbs={[
+          { label: 'Dashboard', to: '/dashboard' },
+          { label: 'Payment', to: '/cash-payment' },
+          { label: 'View Details' }
+        ]}
+        showBack={true}
+        backUrl="/cash-payment"
+      />
 
       {/* Profile Card */}
       <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col sm:flex-row items-start sm:items-center gap-6">

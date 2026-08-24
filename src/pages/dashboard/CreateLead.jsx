@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft,  ChevronRight, Calendar, ChevronDown, Upload, X } from 'lucide-react';
+import { ChevronRight, ChevronDown, Upload } from 'lucide-react';
 import { toast } from 'react-toastify';
+import PageHeader from '../../components/common/PageHeader';
 import { 
   validatePhone, 
   validatePAN, 
@@ -101,29 +102,19 @@ const CreateLead = () => {
   };
 
   return (
-    <div className="flex flex-col gap-6 w-full">
+    <div className="flex flex-col gap-6 w-full font-sans antialiased pb-16">
       {/* Header Card */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 shrink-0">
-        <div className="flex items-center gap-3 mb-2">
-            <button 
-            onClick={() => navigate(-1)}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors shrink-0"
-            type="button"
-          >
-            <ArrowLeft size={16} /> Back
-          </button>
-            <h1 className="text-xl font-bold text-[#225091] m-0">Create Lead</h1>
-          </div>
-        <div className="flex items-center text-sm text-gray-500 pl-[40px]">
-          <Link to="/dashboard" className="hover:text-gray-700">Dashboard</Link>
-          <ChevronRight size={14} className="mx-2" />
-          <span className="hover:text-gray-700">Lead Management</span>
-          <ChevronRight size={14} className="mx-2" />
-          <Link to="/leads" className="hover:text-gray-700">Leads</Link>
-          <ChevronRight size={14} className="mx-2" />
-          <span className="text-[#225091]">Create Lead</span>
-        </div>
-      </div>
+      <PageHeader
+        title="Create Lead"
+        breadcrumbs={[
+          { label: 'Dashboard', to: '/dashboard' },
+          { label: 'Lead Management' },
+          { label: 'Leads', to: '/leads' },
+          { label: 'Create Lead' }
+        ]}
+        showBack={true}
+        backUrl="/leads"
+      />
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <form onSubmit={handleNext}>

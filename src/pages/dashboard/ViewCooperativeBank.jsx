@@ -1,7 +1,7 @@
-import React from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft,  ChevronRight, FileText, Download, Eye, X } from 'lucide-react';
-import { useState } from 'react';
+import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { FileText, Download, Eye, X } from 'lucide-react';
+import PageHeader from '../../components/common/PageHeader';
 
 const ViewField = ({ label, value }) => (
   <div>
@@ -11,7 +11,6 @@ const ViewField = ({ label, value }) => (
 );
 
 const DocumentViewField = ({ label, filename, url, onViewClick }) => {
-  const navigate = useNavigate();
   if (!filename && !url) {
     return (
       <div className="flex flex-col gap-2">
@@ -46,12 +45,16 @@ const DocumentViewField = ({ label, filename, url, onViewClick }) => {
           <button 
             type="button"
             onClick={(e) => { e.preventDefault(); onViewClick(fileUrl); }}
-            className="text-gray-500 hover:text-[#225091] hover:bg-[#225091]/10 p-2 rounded-lg transition-colors tooltip-trigger" 
+            className="text-gray-500 hover:text-[#225091] hover:bg-[#225091]/10 p-2 rounded-lg transition-colors tooltip-trigger cursor-pointer" 
             title="View Fullscreen"
           >
             <Eye size={18} />
           </button>
-          <button className="text-gray-500 hover:text-[#225091] hover:bg-[#225091]/10 p-2 rounded-lg transition-colors tooltip-trigger" title="Download">
+          <button 
+            type="button" 
+            className="text-gray-500 hover:text-[#225091] hover:bg-[#225091]/10 p-2 rounded-lg transition-colors tooltip-trigger cursor-pointer" 
+            title="Download"
+          >
             <Download size={18} />
           </button>
         </div>
@@ -66,29 +69,17 @@ const ViewCooperativeBank = () => {
   return (
     <div className="flex flex-col gap-6 w-full pb-10">
       {/* Header Card */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 shrink-0 flex justify-between items-start">
-        <div>
-          <div className="flex items-center gap-3 mb-2">
-            <button 
-            onClick={() => navigate(-1)}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors shrink-0"
-            type="button"
-          >
-            <ArrowLeft size={16} /> Back
-          </button>
-            <h1 className="text-xl font-bold text-[#225091] m-0">View Co-operative Bank</h1>
-          </div>
-          <div className="flex items-center text-sm text-gray-500 pl-[40px]">
-            <Link to="/dashboard" className="hover:text-gray-700">Dashboard</Link>
-            <ChevronRight size={14} className="mx-2" />
-            <span className="hover:text-gray-700">Partner Management</span>
-            <ChevronRight size={14} className="mx-2" />
-            <Link to="/co-operative-bank" className="hover:text-gray-700">Co-operative Bank</Link>
-            <ChevronRight size={14} className="mx-2" />
-            <span className="text-[#225091]">View</span>
-          </div>
-        </div>
-      </div>
+      <PageHeader
+        title="View Co-operative Bank"
+        breadcrumbs={[
+          { label: 'Dashboard', to: '/dashboard' },
+          { label: 'Partner Management' },
+          { label: 'Co-operative Bank', to: '/co-operative-bank' },
+          { label: 'View' }
+        ]}
+        showBack={true}
+        backUrl="/co-operative-bank"
+      />
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
         {/* General Info */}

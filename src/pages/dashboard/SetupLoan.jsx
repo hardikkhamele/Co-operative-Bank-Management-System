@@ -8,6 +8,7 @@ import {
   FileCheck, User, Calendar, Image as ImageIcon, Package, PenTool,
   RotateCcw, Check
 , ArrowLeft} from 'lucide-react';
+import PageHeader from '../../components/common/PageHeader';
 import { leadService } from '../../api/leadService';
 import { productService } from '../../api/productService';
 import { validateIFSC, validateAccountNumber, sanitizeIFSC, sanitizeDigits } from '../../utils/validation';
@@ -690,56 +691,36 @@ const SetupLoan = () => {
   return (
     <div className="flex flex-col gap-6 w-full max-w-6xl mx-auto pb-10">
       
-      {/* Breadcrumb & Header Card */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 shrink-0">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-3 mb-2">
-              <button 
-                onClick={() => navigate(-1)}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors shrink-0"
-                type="button"
-              >
-                <ArrowLeft size={16} /> Back
-              </button>
-              <h1 className="text-[22px] font-bold text-[#225091] m-0">Setup Consumer Loan & EMI Slabs</h1>
+      {/* Header Card */}
+      <PageHeader
+        title="Setup Consumer Loan & EMI Slabs"
+        breadcrumbs={[
+          { label: 'Dashboard', to: '/dashboard' },
+          { label: 'CRM Management' },
+          { label: 'Leads', to: '/leads' },
+          ...(loanData.id ? [{ label: 'Lead Details', to: `/leads/view/${loanData.id}` }] : []),
+          { label: 'Loan Setup' }
+        ]}
+        showBack={true}
+      >
+        <div className="flex items-center gap-3">
+          {loanData.applicationId && (
+            <div className="text-right">
+              <span className="text-xs text-gray-400 block font-medium">Application ID</span>
+              <span className="text-sm font-bold text-[#225091]">{loanData.applicationId}</span>
             </div>
-            <div className="flex items-center text-[13px] font-medium text-gray-500 flex-wrap gap-y-2 pl-[40px]">
-              <Link to="/dashboard" className="hover:text-gray-800 transition-colors">Dashboard</Link>
-              <ChevronRight size={14} className="mx-1" />
-              <span>CRM Management</span>
-              <ChevronRight size={14} className="mx-1" />
-              <Link to="/leads" className="hover:text-gray-800 transition-colors">Leads</Link>
-              <ChevronRight size={14} className="mx-1" />
-              {loanData.id && (
-                <>
-                  <Link to={`/leads/view/${loanData.id}`} className="hover:text-gray-800 transition-colors">Lead Details</Link>
-                  <ChevronRight size={14} className="mx-1" />
-                </>
-              )}
-              <span className="text-[#225091] font-semibold">Loan Setup</span>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-3">
-            {loanData.applicationId && (
+          )}
+          {loanData.customer?.fullName && (
+            <>
+              <div className="h-8 w-[1px] bg-gray-200"></div>
               <div className="text-right">
-                <span className="text-xs text-gray-400 block font-medium">Application ID</span>
-                <span className="text-sm font-bold text-[#225091]">{loanData.applicationId}</span>
+                <span className="text-xs text-gray-400 block font-medium">Applicant</span>
+                <span className="text-sm font-bold text-gray-800">{loanData.customer.fullName}</span>
               </div>
-            )}
-            {loanData.customer?.fullName && (
-              <>
-                <div className="h-8 w-[1px] bg-gray-200"></div>
-                <div className="text-right">
-                  <span className="text-xs text-gray-400 block font-medium">Applicant</span>
-                  <span className="text-sm font-bold text-gray-800">{loanData.customer.fullName}</span>
-                </div>
-              </>
-            )}
-          </div>
+            </>
+          )}
         </div>
-      </div>
+      </PageHeader>
 
       {isSubmitted ? (
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-12 text-center flex flex-col items-center justify-center animate-in fade-in">

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronRight, ChevronLeft } from 'lucide-react';
 import WalletIllustration from '../../assets/wallet-illustration.png';
+import PageHeader from '../../components/common/PageHeader';
 
 const tabs = ['All Loans', 'New Application', 'Active Loans', 'Completed Loans', 'Rejected Applications'];
 
@@ -28,17 +28,16 @@ const CustomerLoans = () => {
   return (
     <div className="max-w-[1400px] w-full pb-10">
       {/* Header Card */}
-      <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-6">
-        <h2 className="text-xl font-bold text-[#225091] mb-2">Customers</h2>
-        <div className="flex items-center text-sm font-medium text-gray-500">
-          <Link to="/dashboard" className="hover:text-gray-800 transition-colors">Dashboard</Link>
-          <ChevronRight size={16} className="mx-1 text-gray-400" />
-          <span>Lead Management</span>
-          <ChevronRight size={16} className="mx-1 text-gray-400" />
-          <Link to="/customers" className="hover:text-gray-800 transition-colors">Customers</Link>
-          <ChevronRight size={16} className="mx-1 text-gray-400" />
-          <span className="text-[#225091]">Loans</span>
-        </div>
+      <div className="mb-6">
+        <PageHeader
+          title="Customer Loans"
+          breadcrumbs={[
+            { label: "Dashboard", to: "/dashboard" },
+            { label: "Lead Management" },
+            { label: "Customers", to: "/customers" },
+            { label: "Loans" }
+          ]}
+        />
       </div>
 
       {/* Summary Card */}

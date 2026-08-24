@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { workReportService } from '../../api/workReportService';
 import { branchService } from '../../api/branchService';
+import PageHeader from '../../components/common/PageHeader';
 import { roleService } from '../../api/roleService';
 import useBranchStore from '../../store/branchStore';
 
@@ -295,20 +296,14 @@ const ImportantDates = () => {
 
   return (
     <div className="flex flex-col gap-6 w-full max-w-7xl mx-auto pb-10 relative">
-      
-      {/* Breadcrumb & Header Card */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 shrink-0 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-[22px] font-bold text-[#225091] mb-3">Important Dates</h1>
-          <div className="flex items-center text-[13px] font-medium text-gray-500 flex-wrap gap-y-2">
-            <Link to="/dashboard" className="hover:text-gray-800 transition-colors">Dashboard</Link>
-            <ChevronRight size={14} className="mx-1" />
-            <span>HR Management</span>
-            <ChevronRight size={14} className="mx-1" />
-            <span className="text-[#225091]">Important Dates</span>
-          </div>
-        </div>
-
+      <PageHeader
+        title="Important Dates"
+        breadcrumbs={[
+          { label: "Dashboard", to: "/dashboard" },
+          { label: "HR Management" },
+          { label: "Important Dates" }
+        ]}
+      >
         {/* Celebration Count Chip */}
         <div className="flex items-center gap-2 bg-pink-50 border border-pink-200 px-4 py-2 rounded-xl self-start sm:self-center shadow-2xs">
           <Gift className="text-pink-600" size={18} />
@@ -316,7 +311,7 @@ const ImportantDates = () => {
             {filteredList.length} Upcoming Celebrations
           </span>
         </div>
-      </div>
+      </PageHeader>
 
       {/* Main Content Area */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col overflow-hidden">

@@ -23,6 +23,7 @@ import { workReportService } from '../../api/workReportService';
 import { branchService } from '../../api/branchService';
 import { employeeService } from '../../api/employeeService';
 import { roleService } from '../../api/roleService';
+import PageHeader from '../../components/common/PageHeader';
 import useAuthStore from '../../store/authStore';
 import useBranchStore from '../../store/branchStore';
 
@@ -572,34 +573,27 @@ const DailyWorkReport = () => {
   };
 
   return (
-<div className="flex flex-col gap-6 w-full max-w-7xl mx-auto pb-10">
-      
+    <div className="flex flex-col gap-6 w-full max-w-7xl mx-auto pb-10">
       {/* Breadcrumb & Header Card */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 shrink-0 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-[22px] font-bold text-[#225091] mb-3">Daily Work Report</h1>
-          <div className="flex items-center text-[13px] font-medium text-gray-500 flex-wrap gap-y-2">
-            <Link to="/dashboard" className="hover:text-gray-800 transition-colors">Dashboard</Link>
-            <ChevronRight size={14} className="mx-1" />
-            <span>HR Management</span>
-            <ChevronRight size={14} className="mx-1" />
-            <span className="text-[#225091]">Daily Work Report</span>
-          </div>
-        </div>
-
-        {/* Log Work Report Button */}
+      <PageHeader
+        title="Daily Work Report"
+        breadcrumbs={[
+          { label: "Dashboard", to: "/dashboard" },
+          { label: "HR Management" },
+          { label: "Daily Work Report" }
+        ]}
+      >
         <button 
           onClick={() => setIsLogModalOpen(true)}
-          className="flex items-center gap-2 bg-[#225091] hover:bg-[#159a9f] text-white px-5 py-2.5 rounded-full text-[14px] font-semibold transition-colors shadow-sm self-start sm:self-center"
+          className="flex items-center gap-2 bg-[#225091] hover:bg-[#159a9f] text-white px-5 py-2.5 rounded-full text-[14px] font-semibold transition-colors shadow-sm cursor-pointer"
         >
           <Plus size={18} />
           <span>Log Work Report</span>
         </button>
-      </div>
+      </PageHeader>
 
       {/* Main Content Area */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col overflow-hidden">
-        
         {/* Toolbar */}
         <div className="p-6 flex flex-col sm:flex-row items-center justify-between gap-4 border-b border-gray-100">
           <div className="flex items-center gap-4 w-full sm:w-auto">

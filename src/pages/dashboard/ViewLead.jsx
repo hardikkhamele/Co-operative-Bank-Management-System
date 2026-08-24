@@ -7,6 +7,7 @@ import {
 import { toast } from 'react-toastify';
 import { leadService } from '../../api/leadService';
 import { productService } from '../../api/productService';
+import PageHeader from '../../components/common/PageHeader';
 
 const ViewLead = () => {
   const location = useLocation();
@@ -137,28 +138,18 @@ const ViewLead = () => {
   return (
     <div className="flex flex-col gap-6 w-full max-w-6xl mx-auto pb-10">
       
-      {/* Breadcrumb Card */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 shrink-0 relative">
-        <div className="flex items-center gap-3 mb-3">
-          <button 
-            onClick={() => window.history.back()}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors shrink-0"
-            type="button"
-          >
-            <ArrowLeft size={16} /> Back
-          </button>
-          <h1 className="text-[22px] font-bold text-[#225091] m-0">Lead Details</h1>
-        </div>
-        <div className="flex items-center text-sm font-medium text-gray-500 pl-[40px]">
-          <Link to="/dashboard" className="hover:text-gray-800 transition-colors">Dashboard</Link>
-          <ChevronRight size={16} className="mx-1.5 text-gray-400" />
-          <span className="hover:text-gray-800 transition-colors">CRM Management</span>
-          <ChevronRight size={16} className="mx-1.5 text-gray-400" />
-          <Link to="/leads" className="hover:text-gray-800 transition-colors">Leads</Link>
-          <ChevronRight size={16} className="mx-1.5 text-gray-400" />
-          <span className="text-[#225091]">Lead Details</span>
-        </div>
-      </div>
+      {/* 1. Page Header Card */}
+      <PageHeader
+        title="Lead Details"
+        breadcrumbs={[
+          { label: 'Dashboard', to: '/dashboard' },
+          { label: 'CRM Management' },
+          { label: 'Leads', to: '/leads' },
+          { label: 'Lead Details' }
+        ]}
+        showBack={true}
+        backUrl="/leads"
+      />
 
       {/* App Number & Action Buttons */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 min-h-[44px]">

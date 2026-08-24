@@ -19,6 +19,7 @@ import {
   Download
 } from 'lucide-react';
 import { toast } from 'react-toastify';
+import PageHeader from '../../components/common/PageHeader';
 import { verificationService } from '../../api/verificationService';
 import { validatePAN, sanitizePAN } from '../../utils/validation';
 
@@ -269,28 +270,18 @@ const CheckCibilScore = () => {
   return (
     <div className="w-full h-full flex flex-col">
       {/* Header Card */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 print:hidden">
-        <h1 className="text-xl font-bold text-[#225091] mb-2">
-          {step === 'form' ? 'CIBIL Score & Report' : 'Credit Bureau Report'}
-        </h1>
-        <div className="text-sm text-gray-500 flex items-center gap-2">
-          <Link to="/dashboard" className="hover:text-[#225091] transition-colors">Dashboard</Link>
-          <span>&gt;</span>
-          <span>Verification</span>
-          <span>&gt;</span>
-          <span 
-            className={step === 'form' ? "text-[#225091] font-medium" : "text-gray-500 hover:text-[#225091] cursor-pointer transition-colors"} 
-            onClick={() => { if (step === 'result') handleReset(); }}
-          >
-            CIBIL Score & Report
-          </span>
-          {step === 'result' && (
-            <>
-              <span>&gt;</span>
-              <span className="text-[#225091] font-medium">Bureau Report</span>
-            </>
-          )}
-        </div>
+      <div className="mb-6 print:hidden">
+        <PageHeader
+          title={step === 'form' ? 'CIBIL Score & Report' : 'Credit Bureau Report'}
+          breadcrumbs={[
+            { label: "Dashboard", to: "/dashboard" },
+            { label: "Verification" },
+            { label: "CIBIL Score & Report", to: step === 'result' ? undefined : undefined },
+            ...(step === 'result' ? [{ label: "Bureau Report" }] : [])
+          ]}
+          showBack={step === 'result'}
+          onBack={handleReset}
+        />
       </div>
 
       {step === 'form' ? (

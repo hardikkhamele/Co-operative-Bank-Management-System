@@ -1,21 +1,20 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronRight, Phone, Mail, MessageSquare } from 'lucide-react';
+import { Phone, Mail, MessageSquare } from 'lucide-react';
+import PageHeader from '../../components/common/PageHeader';
 
 const HelpSupport = () => {
   return (
     <div className="flex flex-col gap-6 w-full max-w-6xl mx-auto h-full">
       {/* Header Card */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 shrink-0">
-        <h1 className="text-[22px] font-bold text-[#225091] mb-3">Help & Support</h1>
-        <div className="flex items-center text-[13px] font-medium text-gray-500 flex-wrap gap-y-2">
-          <Link to="/dashboard" className="hover:text-gray-800 transition-colors">Dashboard</Link>
-          <ChevronRight size={14} className="mx-1" />
-          <span>Settings</span>
-          <ChevronRight size={14} className="mx-1" />
-          <span className="text-[#225091]">Help & Support</span>
-        </div>
-      </div>
+      <PageHeader
+        title="Help & Support"
+        breadcrumbs={[
+          { label: "Dashboard", to: "/dashboard" },
+          { label: "Settings" },
+          { label: "Help & Support" }
+        ]}
+      />
 
       <div className="px-2">
         <p className="text-gray-600 text-lg font-medium mb-8 max-w-4xl">

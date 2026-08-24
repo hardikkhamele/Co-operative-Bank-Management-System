@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Search, Edit, Trash2, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import RegionModal from '../../components/modals/RegionModal';
+import PageHeader from '../../components/common/PageHeader';
 
 const mockRegions = [];
 
@@ -26,16 +27,14 @@ const Region = () => {
   return (
     <div className="space-y-6">
       {/* Header and Breadcrumb */}
-      <div className="bg-white rounded-lg p-5 shadow-sm border border-gray-100">
-        <h1 className="text-2xl font-semibold text-[#225091] mb-2">Region</h1>
-        <div className="flex items-center text-sm text-gray-600 gap-2">
-          <Link to="/dashboard" className="hover:text-gray-900 transition-colors">Dashboard</Link>
-          <ChevronRight size={16} className="text-gray-400" />
-          <span>Region & Branch Management</span>
-          <ChevronRight size={16} className="text-gray-400" />
-          <span className="text-[#225091]">Region</span>
-        </div>
-      </div>
+      <PageHeader
+        title="Region"
+        breadcrumbs={[
+          { label: "Dashboard", to: "/dashboard" },
+          { label: "Region & Branch Management" },
+          { label: "Region" }
+        ]}
+      />
 
       {/* Action Bar */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">

@@ -6,6 +6,7 @@ import {
   ChevronDown, X, ChevronLeft, Download, Plus, Loader2, AlertCircle 
 , Table, FileSpreadsheet, FileText} from 'lucide-react';
 import { inventoryService } from '../../api/inventoryService';
+import PageHeader from '../../components/common/PageHeader';
 
 const Inventory = () => {
 
@@ -320,16 +321,14 @@ const Inventory = () => {
 <div className="flex flex-col gap-6 w-full max-w-6xl mx-auto">
       
       {/* Breadcrumb Card */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 shrink-0 relative">
-        <h1 className="text-[22px] font-bold text-[#225091] mb-3">Inventory</h1>
-        <div className="flex items-center text-sm font-medium text-gray-500">
-          <Link to="/dashboard" className="hover:text-gray-800 transition-colors">Dashboard</Link>
-          <ChevronRight size={16} className="mx-1.5 text-gray-400" />
-          <span className="hover:text-gray-800 transition-colors">CRM Management</span>
-          <ChevronRight size={16} className="mx-1.5 text-gray-400" />
-          <span className="text-[#225091]">Inventory</span>
-        </div>
-      </div>
+      <PageHeader
+        title="Inventory"
+        breadcrumbs={[
+          { label: "Dashboard", to: "/dashboard" },
+          { label: "CRM Management" },
+          { label: "Inventory" }
+        ]}
+      />
 
       {/* Action Bar */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">

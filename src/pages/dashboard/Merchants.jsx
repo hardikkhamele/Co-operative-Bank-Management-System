@@ -7,6 +7,7 @@ import {
 import { toast } from 'react-toastify';
 import { merchantService } from '../../api/merchantService';
 import useBranchStore from '../../store/branchStore';
+import PageHeader from '../../components/common/PageHeader';
 
 const Merchants = () => {
   const navigate = useNavigate();
@@ -191,16 +192,14 @@ const Merchants = () => {
   return (
     <div className="space-y-6 max-w-[1600px] mx-auto pb-10">
       {/* Header and Breadcrumb */}
-      <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
-        <h1 className="text-2xl font-bold text-[#225091] mb-2">Merchants</h1>
-        <div className="flex items-center text-sm font-medium text-gray-500">
-          <Link to="/dashboard" className="hover:text-[#225091] transition-colors">Dashboard</Link>
-          <ChevronRight size={16} className="mx-1 text-gray-400" />
-          <span className="hover:text-[#225091] transition-colors">Partner Management</span>
-          <ChevronRight size={16} className="mx-1 text-gray-400" />
-          <span className="text-[#225091]">Merchants</span>
-        </div>
-      </div>
+      <PageHeader
+        title="Merchants"
+        breadcrumbs={[
+          { label: "Dashboard", to: "/dashboard" },
+          { label: "Partner Management" },
+          { label: "Merchants" }
+        ]}
+      />
 
       {/* Toolbar */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">

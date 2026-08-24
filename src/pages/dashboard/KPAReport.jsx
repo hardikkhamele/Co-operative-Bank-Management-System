@@ -23,6 +23,7 @@ import {
 import { kpaReportService } from '../../api/kpaReportService';
 import { branchService } from '../../api/branchService';
 import { roleService } from '../../api/roleService';
+import PageHeader from '../../components/common/PageHeader';
 import useBranchStore from '../../store/branchStore';
 
 const INDIAN_STATES = [
@@ -412,16 +413,14 @@ const KPAReport = () => {
     <div className="flex flex-col gap-6 w-full max-w-7xl mx-auto pb-10">
       
       {/* Breadcrumb & Header Card */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 shrink-0">
-        <h1 className="text-[22px] font-bold text-[#225091] mb-3">KPA Report</h1>
-        <div className="flex items-center text-[13px] font-medium text-gray-500 flex-wrap gap-y-2">
-          <Link to="/dashboard" className="hover:text-gray-800 transition-colors">Dashboard</Link>
-          <ChevronRight size={14} className="mx-1" />
-          <span>HR Management</span>
-          <ChevronRight size={14} className="mx-1" />
-          <span className="text-[#225091]">KPA Report</span>
-        </div>
-      </div>
+      <PageHeader
+        title="KPA Report"
+        breadcrumbs={[
+          { label: "Dashboard", to: "/dashboard" },
+          { label: "HR Management" },
+          { label: "KPA Report" }
+        ]}
+      />
 
       {/* Main Content Area */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col overflow-hidden">
