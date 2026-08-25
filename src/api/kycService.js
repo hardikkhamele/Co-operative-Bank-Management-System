@@ -64,6 +64,46 @@ kycAxiosInstance.interceptors.response.use(
   }
 );
 
+const STORAGE_KEY = 'advita_kyc_verification_history';
+
+/**
+ * Retrieve local verification history
+ */
+const getLocalHistory = () => {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch (e) {
+    console.error('Error reading KYC local storage:', e);
+    return [];
+  }
+};
+
+/**
+ * Save or update a verification record in history
+ */
+const saveLocalRecord = (record) => {
+  if (!record || !record.refid) return;
+  try {
+    const list = getLocalHistory();
+    const existingIndex = list.findIndex((item) => item.refid === record.refid);
+    const updatedRecord = {
+      ...record,
+      updatedAt: record.updatedAt || new Date().toISOString(),
+      createdAt: record.createdAt || (existingIndex >= 0 ? list[existingIndex].createdAt : new Date().toISOString()),
+    };
+
+    if (existingIndex >= 0) {
+      list[existingIndex] = { ...list[existingIndex], ...updatedRecord };
+    } else {
+      list.unshift(updatedRecord);
+    }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+  } catch (e) {
+    console.error('Error saving KYC local record:', e);
+  }
+};
+
 export const kycService = {
   /**
    * Initiate KYC Verification Session
@@ -77,6 +117,16 @@ export const kycService = {
   initiateKyc: async (data) => {
     try {
       const response = await kycAxiosInstance.post('/v1/society/kyc-verification/initiate', data);
+      if (response.data?.data?.refid) {
+        saveLocalRecord({
+          refid: response.data.data.refid,
+          documentType: data.documentType,
+          idNumber: data.idNumber,
+          status: response.data.data.status || 'INITIATED',
+          personalDetails: response.data.data.personalDetails || null,
+          createdAt: new Date().toISOString(),
+        });
+      }
       return response.data;
     } catch (error) {
       throw error;
@@ -92,6 +142,18 @@ export const kycService = {
   completeKyc: async (data) => {
     try {
       const response = await kycAxiosInstance.post('/v1/society/kyc-verification/complete', data);
+      if (response.data?.data) {
+        const item = response.data.data;
+        saveLocalRecord({
+          refid: item.refid || data.refid,
+          documentType: item.documentType || item.personalDetails?.documentType || 'AADHAAR',
+          idNumber: item.idNumber || item.personalDetails?.aadhaarNumber || item.personalDetails?.panNumber,
+          status: item.status || 'VERIFIED',
+          personalDetails: item.personalDetails,
+          verifiedAt: item.verifiedAt || new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        });
+      }
       return response.data;
     } catch (error) {
       throw error;
@@ -106,6 +168,20 @@ export const kycService = {
   getKycReport: async (refid) => {
     try {
       const response = await kycAxiosInstance.get(`/v1/society/kyc-verification/report/${refid}`);
+      if (response.data?.data) {
+        const item = response.data.data;
+        saveLocalRecord({
+          _id: item._id,
+          refid: item.refid || refid,
+          documentType: item.documentType,
+          idNumber: item.idNumber,
+          status: item.status || 'VERIFIED',
+          personalDetails: item.personalDetails,
+          verifiedAt: item.verifiedAt,
+          createdAt: item.createdAt,
+          updatedAt: item.updatedAt,
+        });
+      }
       return response.data;
     } catch (error) {
       throw error;
@@ -127,7 +203,81 @@ export const kycService = {
     } catch (error) {
       throw error;
     }
-  }
+  },
+
+  /**
+   * Get KYC Verification History
+   * @param {Object} [params]
+   * @returns {Promise<Object>} List of verification sessions
+   */
+  getKycHistory: async (params = {}) => {
+    let apiData = [];
+    let serverSuccess = false;
+
+    // Try multiple possible backend endpoints for history
+    const endpoints = [
+      '/v1/society/kyc-verification/history',
+      '/v1/society/kyc-verification',
+      '/v1/society/kyc-verification/reports',
+      '/v1/society/kyc/history'
+    ];
+
+    for (const endpoint of endpoints) {
+      try {
+        const res = await kycAxiosInstance.get(endpoint, { params });
+        if (res.data && (res.data.success || Array.isArray(res.data.data) || res.data.verifications)) {
+          const list = Array.isArray(res.data.data) 
+            ? res.data.data 
+            : (res.data.data?.verifications || res.data.verifications || res.data.data?.history || []);
+          if (Array.isArray(list) && list.length > 0) {
+            apiData = list;
+            serverSuccess = true;
+            break;
+          }
+        }
+      } catch (err) {
+        // Continue to fallback or next endpoint
+      }
+    }
+
+    // Merge server data with local stored records (deduped by refid)
+    const localList = getLocalHistory();
+    const map = new Map();
+
+    // Add local records first
+    localList.forEach((item) => {
+      if (item.refid) map.set(item.refid, item);
+    });
+
+    // Add / override with API data if present
+    apiData.forEach((item) => {
+      if (item.refid) {
+        map.set(item.refid, { ...(map.get(item.refid) || {}), ...item });
+      }
+    });
+
+    const combinedList = Array.from(map.values()).sort((a, b) => {
+      const dateA = new Date(a.verifiedAt || a.createdAt || a.updatedAt || 0);
+      const dateB = new Date(b.verifiedAt || b.createdAt || b.updatedAt || 0);
+      return dateB - dateA;
+    });
+
+    return {
+      success: true,
+      data: combinedList,
+      totalCount: combinedList.length,
+    };
+  },
+
+  /**
+   * Save record helper
+   */
+  saveKycRecord: saveLocalRecord,
+
+  /**
+   * Get all cached local verification history
+   */
+  getLocalKycHistory: getLocalHistory,
 };
 
 export default kycService;
