@@ -2,10 +2,10 @@
   publish = "dist"
   command = "npm run build"
 
-# Proxy all /api requests to Render backend (bypasses browser CORS completely on Netlify)
+# Proxy all /api requests to Production backend
 [[redirects]]
   from = "/api/*"
-  to = "http://devapi.advitacredit.com/api/:splat"
+  to = "https://api.advitacredit.com/api/:splat"
   status = 200
   force = true
 
