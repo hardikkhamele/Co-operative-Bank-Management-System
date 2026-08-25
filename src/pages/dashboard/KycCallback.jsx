@@ -32,7 +32,7 @@ const KycCallback = () => {
           setStatus('SUCCESS');
           setVerifiedData({
             refid: response.data.refid || refid,
-            name: response.data.personalDetails?.name || response.data.name || 'Verified Applicant',
+            name: response.data.personalDetails?.fullName || response.data.personalDetails?.name || response.data.name || 'Verified Applicant',
             documentType: response.data.personalDetails?.documentType || response.data.documentType || 'DigiLocker KYC',
             status: response.data.status || 'VERIFIED',
           });
