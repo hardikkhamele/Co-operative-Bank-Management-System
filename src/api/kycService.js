@@ -212,32 +212,23 @@ export const kycService = {
    */
   getKycHistory: async (params = {}) => {
     let apiData = [];
-    let serverSuccess = false;
 
-    // Try multiple possible backend endpoints for history
-    const endpoints = [
-      '/v1/society/kyc-verification/history',
-      '/v1/society/kyc-verification',
-      '/v1/society/kyc-verification/reports',
-      '/v1/society/kyc/history'
-    ];
-
-    for (const endpoint of endpoints) {
-      try {
-        const res = await kycAxiosInstance.get(endpoint, { params });
-        if (res.data && (res.data.success || Array.isArray(res.data.data) || res.data.verifications)) {
-          const list = Array.isArray(res.data.data) 
-            ? res.data.data 
-            : (res.data.data?.verifications || res.data.verifications || res.data.data?.history || []);
-          if (Array.isArray(list) && list.length > 0) {
-            apiData = list;
-            serverSuccess = true;
-            break;
-          }
+    // Only attempt history endpoint if configured or silent fallback
+    try {
+      const res = await kycAxiosInstance.get('/v1/society/kyc-verification/history', { 
+        params,
+        validateStatus: (status) => (status >= 200 && status < 300) || status === 404
+      });
+      if (res.status === 200 && res.data && (res.data.success || Array.isArray(res.data.data))) {
+        const list = Array.isArray(res.data.data) 
+          ? res.data.data 
+          : (res.data.data?.verifications || res.data.verifications || res.data.data?.history || []);
+        if (Array.isArray(list)) {
+          apiData = list;
         }
-      } catch (err) {
-        // Continue to fallback or next endpoint
       }
+    } catch (err) {
+      // Backend history endpoint not deployed yet - gracefully use client history
     }
 
     // Merge server data with local stored records (deduped by refid)

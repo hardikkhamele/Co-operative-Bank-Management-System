@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { 
   Download, CheckCircle2, User, Calendar, Users, MapPin, CreditCard, 
   FileText, AlertCircle, Loader2, ShieldCheck, Copy, History, Search, 
-  RefreshCw, Eye, ArrowLeft, CheckCircle, Clock, XCircle, Filter, ChevronLeft, ChevronRight, FileCheck
+  RefreshCw, Eye, ArrowLeft, CheckCircle, Clock, XCircle, ChevronLeft, ChevronRight, FileCheck
 } from 'lucide-react';
 import { kycService } from '../../api/kycService';
 import { toast } from 'react-toastify';
@@ -181,13 +181,12 @@ const KycVerification = () => {
     }
   };
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    if (name === 'panNumber') {
-      const clean = sanitizePAN(value);
-      setFormData((prev) => ({ ...prev, panNumber: clean }));
-      setTouched((prev) => ({ ...prev, pan: true }));
-    }
+  // Handle PAN input typing & sanitization
+  const handlePanChange = (e) => {
+    const val = e.target.value || '';
+    const clean = sanitizePAN(val);
+    setFormData((prev) => ({ ...prev, panNumber: clean }));
+    setTouched((prev) => ({ ...prev, pan: true }));
   };
 
   const handleBlur = (field) => {
@@ -197,6 +196,9 @@ const KycVerification = () => {
   // Real-time validation results
   const aadhaarValidation = validateAadhaar(formData.aadhaarNumber, { required: false });
   const panValidation = validatePAN(formData.panNumber, { required: false });
+
+  const isAadhaarValid = formData.aadhaarNumber.length === 12 && aadhaarValidation.isValid;
+  const isPanValid = formData.panNumber.length === 10 && panValidation.isValid;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -516,7 +518,9 @@ const KycVerification = () => {
                     {activeTab === 'aadhaar' ? 'Instant Aadhaar Paperless e-KYC' : 'Instant PAN Verification'}
                   </h3>
                   <p className="text-xs text-gray-500 mt-0.5">
-                    Connects directly to the government DigiLocker repository for instant official authentication.
+                    {activeTab === 'aadhaar' 
+                      ? 'Authenticate directly from the UIDAI Aadhaar repository via DigiLocker.'
+                      : 'Verify identity and PAN status directly against Income Tax Department records.'}
                   </p>
                 </div>
                 <span className="text-[11px] font-semibold bg-[#225091]/10 text-[#225091] px-2.5 py-1 rounded-full border border-[#225091]/20">
@@ -544,6 +548,7 @@ const KycVerification = () => {
                       <input
                         ref={part1Ref}
                         type="text"
+                        name="aadhaarPart1"
                         inputMode="numeric"
                         pattern="[0-9]*"
                         maxLength={4}
@@ -554,7 +559,7 @@ const KycVerification = () => {
                         onBlur={() => handleBlur('aadhaar')}
                         placeholder="1234"
                         className={`w-28 sm:w-32 text-center text-lg font-mono tracking-widest px-3 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-[#225091] focus:border-transparent transition-all shadow-xs ${
-                          touched.aadhaar && (!formData.aadhaarNumber || formData.aadhaarNumber.length !== 12 || !validateAadhaar(formData.aadhaarNumber))
+                          touched.aadhaar && (!formData.aadhaarNumber || formData.aadhaarNumber.length !== 12 || !aadhaarValidation.isValid)
                             ? 'border-red-400 bg-red-50/20'
                             : 'border-gray-200 bg-gray-50/40'
                         }`}
@@ -563,6 +568,7 @@ const KycVerification = () => {
                       <input
                         ref={part2Ref}
                         type="text"
+                        name="aadhaarPart2"
                         inputMode="numeric"
                         pattern="[0-9]*"
                         maxLength={4}
@@ -573,7 +579,7 @@ const KycVerification = () => {
                         onBlur={() => handleBlur('aadhaar')}
                         placeholder="5678"
                         className={`w-28 sm:w-32 text-center text-lg font-mono tracking-widest px-3 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-[#225091] focus:border-transparent transition-all shadow-xs ${
-                          touched.aadhaar && (!formData.aadhaarNumber || formData.aadhaarNumber.length !== 12 || !validateAadhaar(formData.aadhaarNumber))
+                          touched.aadhaar && (!formData.aadhaarNumber || formData.aadhaarNumber.length !== 12 || !aadhaarValidation.isValid)
                             ? 'border-red-400 bg-red-50/20'
                             : 'border-gray-200 bg-gray-50/40'
                         }`}
@@ -582,6 +588,7 @@ const KycVerification = () => {
                       <input
                         ref={part3Ref}
                         type="text"
+                        name="aadhaarPart3"
                         inputMode="numeric"
                         pattern="[0-9]*"
                         maxLength={4}
@@ -592,40 +599,57 @@ const KycVerification = () => {
                         onBlur={() => handleBlur('aadhaar')}
                         placeholder="9012"
                         className={`w-28 sm:w-32 text-center text-lg font-mono tracking-widest px-3 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-[#225091] focus:border-transparent transition-all shadow-xs ${
-                          touched.aadhaar && (!formData.aadhaarNumber || formData.aadhaarNumber.length !== 12 || !validateAadhaar(formData.aadhaarNumber))
+                          touched.aadhaar && (!formData.aadhaarNumber || formData.aadhaarNumber.length !== 12 || !aadhaarValidation.isValid)
                             ? 'border-red-400 bg-red-50/20'
                             : 'border-gray-200 bg-gray-50/40'
                         }`}
                       />
                     </div>
                   ) : (
-                    /* Standard PAN Input */
+                    /* Standard PAN Input with live uppercase sanitization & validation */
                     <div className="relative">
                       <input
                         type="text"
+                        name="panNumber"
+                        id="panNumber"
                         maxLength={10}
                         value={formData.panNumber}
-                        onChange={handleInputChange}
+                        onChange={handlePanChange}
                         onBlur={() => handleBlur('pan')}
                         placeholder="e.g. ABCDE1234F"
+                        autoComplete="off"
                         className={`w-full text-base font-mono tracking-wider px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-[#225091] focus:border-transparent uppercase transition-all shadow-xs ${
-                          touched.pan && (!formData.panNumber || !validatePAN(formData.panNumber))
+                          touched.pan && (!formData.panNumber || !panValidation.isValid)
                             ? 'border-red-400 bg-red-50/20'
+                            : isPanValid
+                            ? 'border-emerald-400 bg-emerald-50/10'
                             : 'border-gray-200 bg-gray-50/40'
                         }`}
                       />
                     </div>
                   )}
 
-                  {touched.aadhaar && activeTab === 'aadhaar' && (!formData.aadhaarNumber || formData.aadhaarNumber.length !== 12 || !validateAadhaar(formData.aadhaarNumber)) && (
-                    <p className="text-xs text-red-500 mt-1.5 flex items-center gap-1">
-                      <AlertCircle size={14} /> Please enter a valid 12-digit Aadhaar number.
+                  {/* Validation Messages for Aadhaar */}
+                  {touched.aadhaar && activeTab === 'aadhaar' && (!formData.aadhaarNumber || formData.aadhaarNumber.length !== 12 || !aadhaarValidation.isValid) && (
+                    <p className="text-xs text-red-500 mt-1.5 flex items-center gap-1 font-medium">
+                      <AlertCircle size={14} className="shrink-0" /> {aadhaarValidation.error || 'Please enter a valid 12-digit Aadhaar number.'}
+                    </p>
+                  )}
+                  {isAadhaarValid && activeTab === 'aadhaar' && (
+                    <p className="text-xs text-emerald-600 mt-1.5 flex items-center gap-1 font-medium">
+                      <CheckCircle size={14} className="shrink-0" /> Valid 12-digit Aadhaar format.
                     </p>
                   )}
 
-                  {touched.pan && activeTab === 'pan' && (!formData.panNumber || !validatePAN(formData.panNumber)) && (
-                    <p className="text-xs text-red-500 mt-1.5 flex items-center gap-1">
-                      <AlertCircle size={14} /> Please enter a valid 10-character PAN (e.g. ABCDE1234F).
+                  {/* Validation Messages for PAN */}
+                  {touched.pan && activeTab === 'pan' && (!formData.panNumber || !panValidation.isValid) && (
+                    <p className="text-xs text-red-500 mt-1.5 flex items-center gap-1 font-medium">
+                      <AlertCircle size={14} className="shrink-0" /> {panValidation.error || 'Invalid PAN format. Must be 5 letters, 4 digits, 1 letter (e.g. ABCDE1234F).'}
+                    </p>
+                  )}
+                  {isPanValid && activeTab === 'pan' && (
+                    <p className="text-xs text-emerald-600 mt-1.5 flex items-center gap-1 font-medium">
+                      <CheckCircle size={14} className="shrink-0" /> Valid PAN format.
                     </p>
                   )}
                 </div>
@@ -635,6 +659,7 @@ const KycVerification = () => {
                   <input
                     type="checkbox"
                     id="consent"
+                    name="consent"
                     checked={isConsentChecked}
                     onChange={(e) => setIsConsentChecked(e.target.checked)}
                     className="mt-1 h-4 w-4 rounded border-gray-300 text-[#225091] focus:ring-[#225091] cursor-pointer"
@@ -658,7 +683,7 @@ const KycVerification = () => {
                     disabled={
                       loading || 
                       !isConsentChecked || 
-                      (activeTab === 'aadhaar' ? (!formData.aadhaarNumber || formData.aadhaarNumber.length !== 12 || !validateAadhaar(formData.aadhaarNumber)) : (!formData.panNumber || !validatePAN(formData.panNumber)))
+                      (activeTab === 'aadhaar' ? !isAadhaarValid : !isPanValid)
                     }
                     className="flex items-center gap-2 px-8 py-2.5 rounded-xl bg-[#225091] text-white font-semibold hover:bg-[#163a6c] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-xs text-sm cursor-pointer"
                   >
