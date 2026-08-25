@@ -41,12 +41,27 @@ export const employeeService = {
     }
   },
 
-  // 5. Deactivate / Soft Delete Employee
-  delete: async (id) => {
+  // 5. Deactivate / Soft Delete or Permanent Delete Employee
+  delete: async (id, options = {}) => {
     try {
-      const response = await axiosInstance.delete(`/v1/society/employees/${id}`);
+      const response = await axiosInstance.delete(`/v1/society/employees/${id}`, { params: options });
       return response.data;
     } catch (error) {
+      throw error;
+    }
+  },
+
+  // 5b. Restore Soft-Deleted Employee
+  restore: async (id) => {
+    try {
+      const response = await axiosInstance.patch(`/v1/society/employees/${id}/restore`);
+      return response.data;
+    } catch (error) {
+      // Fallback to POST if server prefers POST for restore
+      if (error.response?.status === 404 || error.response?.status === 405) {
+        const postRes = await axiosInstance.post(`/v1/society/employees/${id}/restore`);
+        return postRes.data;
+      }
       throw error;
     }
   },

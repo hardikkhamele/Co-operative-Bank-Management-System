@@ -2,8 +2,8 @@ import axios from 'axios';
 import useAuthStore from '../store/authStore';
 import useLoadingStore from '../store/loadingStore';
 
-// Dedicated CIBIL API Base URL (defaults to http://devapi.advitacredit.com)
-let cibilBaseUrl = import.meta.env.VITE_CIBIL_API_URL || import.meta.env.VITE_KYC_API_URL || 'http://devapi.advitacredit.com';
+// Dedicated Verification API Base URL (Shared for CIBIL & KYC, defaults to Development http://devapi.advitacredit.com)
+let cibilBaseUrl = import.meta.env.VITE_VERIFICATION_API_URL || import.meta.env.VITE_CIBIL_API_URL || import.meta.env.VITE_KYC_API_URL || 'http://devapi.advitacredit.com';
 if (!cibilBaseUrl.match(/\/api\/?$/)) {
   cibilBaseUrl = cibilBaseUrl.endsWith('/') ? `${cibilBaseUrl}api` : `${cibilBaseUrl}/api`;
 }

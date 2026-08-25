@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { toast } from 'react-toastify';
 import { Link } from 'react-router-dom';
 import { 
@@ -454,16 +454,14 @@ const LettersAndPayroll = () => {
   const [generatedDocTitle, setGeneratedDocTitle] = useState('');
   const [generatedRefNo, setGeneratedRefNo] = useState('');
 
-  const [historyList, setHistoryList] = useState(() => {
-    try {
-      const saved = localStorage.getItem('advita_letters_history');
-      return saved ? JSON.parse(saved) : INITIAL_HISTORY;
-    } catch {
-      return INITIAL_HISTORY;
-    }
-  });
+  const [historyLogs, setHistoryLogs] = useState([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyTotalRecords, setHistoryTotalRecords] = useState(0);
+  const [historyTotalPages, setHistoryTotalPages] = useState(1);
   const [historySearch, setHistorySearch] = useState('');
   const [historyTypeFilter, setHistoryTypeFilter] = useState('ALL');
+  const [historyBranchFilter, setHistoryBranchFilter] = useState('');
+  const [historyEmployeeFilter, setHistoryEmployeeFilter] = useState('');
   const [historyPage, setHistoryPage] = useState(1);
   const [viewingHistoryItem, setViewingHistoryItem] = useState(null);
   const historyLimit = 10;
@@ -523,13 +521,47 @@ const LettersAndPayroll = () => {
   const [termNoticePeriodDays, setTermNoticePeriodDays] = useState('30');
   const [termHandoverTo, setTermHandoverTo] = useState('Mr. Amit Verma, Senior Branch Officer');
 
-  useEffect(() => {
+  const fetchHistoryLogs = useCallback(async () => {
+    setHistoryLoading(true);
     try {
-      localStorage.setItem('advita_letters_history', JSON.stringify(historyList));
-    } catch (e) {
-      console.error('Failed to persist history', e);
+      const params = {
+        page: historyPage,
+        limit: historyLimit,
+        search: historySearch.trim() || undefined,
+        documentType: historyTypeFilter !== 'ALL' ? historyTypeFilter : undefined,
+        branchId: historyBranchFilter || undefined,
+        employeeId: historyEmployeeFilter || undefined,
+        sortBy: 'issuedDate',
+        sortOrder: 'desc'
+      };
+
+      const response = await letterService.getHistory(params);
+      if (response && response.success) {
+        const list = Array.isArray(response.data) ? response.data : response.data?.items || response.data?.history || [];
+        setHistoryLogs(list);
+        if (response.meta) {
+          setHistoryTotalRecords(response.meta.totalRecords ?? list.length);
+          setHistoryTotalPages(response.meta.totalPages ?? (Math.ceil((response.meta.totalRecords || list.length) / historyLimit) || 1));
+        } else {
+          setHistoryTotalRecords(list.length);
+          setHistoryTotalPages(Math.ceil(list.length / historyLimit) || 1);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to fetch employee letter history logs from API:', err);
+      const saved = localStorage.getItem('advita_letters_history');
+      const fallbackList = saved ? JSON.parse(saved) : INITIAL_HISTORY;
+      setHistoryLogs(fallbackList);
+      setHistoryTotalRecords(fallbackList.length);
+      setHistoryTotalPages(Math.ceil(fallbackList.length / historyLimit) || 1);
+    } finally {
+      setHistoryLoading(false);
     }
-  }, [historyList]);
+  }, [historyPage, historyLimit, historySearch, historyTypeFilter, historyBranchFilter, historyEmployeeFilter]);
+
+  useEffect(() => {
+    fetchHistoryLogs();
+  }, [fetchHistoryLogs]);
 
   useEffect(() => {
     return () => {
@@ -544,7 +576,7 @@ const LettersAndPayroll = () => {
       try {
         setFetchingEmployees(true);
         const [empRes, branchRes] = await Promise.allSettled([
-          employeeService.list({ limit: 150 }),
+          employeeService.list({ limit: 100 }),
           branchService.list({ limit: 100 })
         ]);
 
@@ -828,22 +860,6 @@ const LettersAndPayroll = () => {
 
   const handlePreview = () => { if (generatedPdfUrl) window.open(generatedPdfUrl, '_blank'); };
 
-  const filteredHistory = useMemo(() => {
-    return historyList.filter(item => {
-      const matchType = historyTypeFilter === 'ALL' || item.letterType === historyTypeFilter;
-      const q = historySearch.toLowerCase().trim();
-      const matchSearch = !q || item.employeeName?.toLowerCase().includes(q) || item.referenceNumber?.toLowerCase().includes(q) || item.letterType?.toLowerCase().includes(q) || item.detailsSummary?.toLowerCase().includes(q);
-      return matchType && matchSearch;
-    });
-  }, [historyList, historyTypeFilter, historySearch]);
-
-  const paginatedHistory = useMemo(() => {
-    const start = (historyPage - 1) * historyLimit;
-    return filteredHistory.slice(start, start + historyLimit);
-  }, [filteredHistory, historyPage, historyLimit]);
-
-  const totalHistoryPages = Math.ceil(filteredHistory.length / historyLimit) || 1;
-
   return (
     <div className="w-full flex flex-col gap-5 font-sans antialiased pb-16">
       <PageHeader
@@ -861,7 +877,7 @@ const LettersAndPayroll = () => {
           </button>
           <button type="button" onClick={() => setActiveTab('history')} className={`px-5 py-2.5 rounded-full font-semibold transition-all shadow-sm flex items-center gap-2 text-sm shrink-0 cursor-pointer ${activeTab === 'history' ? 'bg-[#225091] text-white hover:bg-[#1b427b]' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
             <History size={16} />
-            <span>History ({historyList.length})</span>
+            <span>History ({historyTotalRecords})</span>
           </button>
         </div>
       </PageHeader>
@@ -1269,8 +1285,8 @@ const LettersAndPayroll = () => {
 
       {activeTab === 'history' && (
         <div className="bg-white rounded-xl shadow-xs border border-gray-100 overflow-hidden flex flex-col">
-          {/* History Search & Filter Header */}
-          <div className="p-4 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-center gap-3">
+          {/* History Search & Filter Toolbar */}
+          <div className="p-4 border-b border-gray-100 flex flex-col md:flex-row justify-between items-center gap-3">
             <div className="relative flex-1 w-full">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
               <input
@@ -1280,30 +1296,62 @@ const LettersAndPayroll = () => {
                   setHistorySearch(e.target.value);
                   setHistoryPage(1);
                 }}
-                placeholder="Search history by employee name, ref number, type..."
-                className="w-full pl-9 pr-3.5 py-2 bg-gray-50/70 hover:bg-gray-50 focus:bg-white border border-gray-200 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all"
+                placeholder="Search by employee name, code, email, reference number..."
+                className="w-full pl-9 pr-3.5 py-2.5 bg-gray-50/70 hover:bg-gray-50 focus:bg-white border border-gray-200 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all"
               />
             </div>
-            <select
-              value={historyTypeFilter}
-              onChange={(e) => {
-                setHistoryTypeFilter(e.target.value);
-                setHistoryPage(1);
-              }}
-              className="px-3 py-2 bg-white border border-gray-200 rounded-xl text-xs font-semibold text-gray-700 focus:outline-none focus:ring-1 focus:ring-[#225091] cursor-pointer shadow-2xs shrink-0 w-full sm:w-auto"
-            >
-              <option value="ALL">All Document Types</option>
-              {LETTER_TYPES.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-            </select>
+
+            <div className="flex items-center gap-2.5 w-full md:w-auto flex-wrap">
+              {branches.length > 0 && (
+                <select
+                  value={historyBranchFilter}
+                  onChange={(e) => {
+                    setHistoryBranchFilter(e.target.value);
+                    setHistoryPage(1);
+                  }}
+                  className="px-3 py-2.5 bg-white border border-gray-200 rounded-xl text-xs font-semibold text-gray-700 focus:outline-none focus:ring-1 focus:ring-[#225091] cursor-pointer shadow-2xs shrink-0"
+                >
+                  <option value="">All Branches</option>
+                  {branches.map(b => (
+                    <option key={b.id || b._id} value={b.id || b._id}>
+                      {b.name || b.branchName}
+                    </option>
+                  ))}
+                </select>
+              )}
+
+              <select
+                value={historyTypeFilter}
+                onChange={(e) => {
+                  setHistoryTypeFilter(e.target.value);
+                  setHistoryPage(1);
+                }}
+                className="px-3 py-2.5 bg-white border border-gray-200 rounded-xl text-xs font-semibold text-gray-700 focus:outline-none focus:ring-1 focus:ring-[#225091] cursor-pointer shadow-2xs shrink-0"
+              >
+                <option value="ALL">All Document Types</option>
+                {LETTER_TYPES.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+              </select>
+
+              <button
+                type="button"
+                onClick={fetchHistoryLogs}
+                disabled={historyLoading}
+                className="p-2.5 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-xl text-gray-600 hover:text-[#225091] transition-colors cursor-pointer disabled:opacity-50"
+                title="Refresh history logs"
+              >
+                <RefreshCw size={15} className={historyLoading ? 'animate-spin text-[#225091]' : ''} />
+              </button>
+            </div>
           </div>
 
-          {/* View-Only History Table */}
+          {/* History Table */}
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse min-w-[750px]">
+            <table className="w-full text-left border-collapse min-w-[850px]">
               <thead className="bg-[#F8FAFC] text-gray-600 text-xs uppercase tracking-wider font-semibold border-b border-gray-200/80">
                 <tr>
                   <th className="py-3.5 px-5 font-semibold">Ref Number</th>
                   <th className="py-3.5 px-5 font-semibold">Employee</th>
+                  <th className="py-3.5 px-5 font-semibold">Branch</th>
                   <th className="py-3.5 px-5 font-semibold">Document Type</th>
                   <th className="py-3.5 px-5 font-semibold">Issued Date</th>
                   <th className="py-3.5 px-5 font-semibold">Details Summary</th>
@@ -1311,45 +1359,81 @@ const LettersAndPayroll = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 text-xs">
-                {paginatedHistory.length === 0 ? (
+                {historyLoading ? (
                   <tr>
-                    <td colSpan="6" className="py-12 text-center text-gray-400 font-medium">
-                      No document history records found.
+                    <td colSpan="7" className="py-16 text-center text-gray-400">
+                      <div className="flex flex-col items-center justify-center gap-2">
+                        <Loader2 className="w-6 h-6 animate-spin text-[#225091]" />
+                        <span className="text-xs font-medium">Fetching history logs from server...</span>
+                      </div>
+                    </td>
+                  </tr>
+                ) : historyLogs.length === 0 ? (
+                  <tr>
+                    <td colSpan="7" className="py-12 text-center text-gray-400 font-medium">
+                      No employee letter history records found.
                     </td>
                   </tr>
                 ) : (
-                  paginatedHistory.map((item) => {
-                    const typeObj = LETTER_TYPES.find(l => l.id === item.letterType);
+                  historyLogs.map((item, idx) => {
+                    const docType = item.documentType || item.letterType || 'Letter';
+                    const typeObj = LETTER_TYPES.find(l => l.id === docType || l.name === docType);
+                    const refNo = item.referenceNumber || item.id || `HIST-${idx + 1}`;
+                    const issuedDateStr = item.formattedIssuedDate || (item.issuedDate ? new Date(item.issuedDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : (item.generatedAt ? new Date(item.generatedAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'));
+
                     return (
-                      <tr key={item.id} className="hover:bg-slate-50/60 transition-colors">
-                        <td className="py-3.5 px-5 font-mono text-[11px] font-bold text-[#225091]">
-                          {item.referenceNumber || item.id}
+                      <tr key={item.id || item._id || idx} className="hover:bg-slate-50/60 transition-colors">
+                        <td className="py-3.5 px-5 font-mono text-[11px] font-bold text-[#225091] whitespace-nowrap">
+                          {refNo}
                         </td>
                         <td className="py-3.5 px-5">
-                          <div className="font-semibold text-gray-900">{item.employeeName}</div>
+                          <div className="font-semibold text-gray-900 flex items-center gap-1.5">
+                            <span>{item.employeeName || 'Staff'}</span>
+                            {item.employeeCode && (
+                              <span className="text-gray-400 font-mono text-[10px] font-normal">({item.employeeCode})</span>
+                            )}
+                          </div>
                           <div className="text-gray-400 text-[11px] truncate max-w-[180px]">{item.employeeEmail || item.designation || 'Staff'}</div>
+                        </td>
+                        <td className="py-3.5 px-5 text-gray-600 whitespace-nowrap">
+                          <div className="font-medium text-gray-800">{item.branchName || 'Main Branch'}</div>
+                          {item.branchCity && <div className="text-gray-400 text-[10px]">{item.branchCity}{item.branchState ? `, ${item.branchState}` : ''}</div>}
                         </td>
                         <td className="py-3.5 px-5">
                           <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold border ${typeObj?.badgeColor || 'bg-gray-100 text-gray-700 border-gray-200'}`}>
-                            {item.letterType}
+                            {docType}
                           </span>
                         </td>
                         <td className="py-3.5 px-5 text-gray-500 font-medium whitespace-nowrap">
-                          {item.generatedAt ? new Date(item.generatedAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
+                          {issuedDateStr}
                         </td>
-                        <td className="py-3.5 px-5 text-gray-600 text-[11px] max-w-[240px] truncate" title={item.detailsSummary}>
+                        <td className="py-3.5 px-5 text-gray-600 text-[11px] max-w-[220px] truncate" title={item.detailsSummary}>
                           {item.detailsSummary || '—'}
                         </td>
-                        <td className="py-3.5 px-5 text-center">
-                          <button
-                            type="button"
-                            onClick={() => setViewingHistoryItem(item)}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-[#225091] hover:bg-[#225091] hover:text-white rounded-lg font-semibold text-xs transition-colors cursor-pointer border border-blue-200/60"
-                            title="View Document Details"
-                          >
-                            <Eye size={13} />
-                            <span>View</span>
-                          </button>
+                        <td className="py-3.5 px-5 text-center whitespace-nowrap">
+                          <div className="flex items-center justify-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => setViewingHistoryItem(item)}
+                              className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-blue-50 text-[#225091] hover:bg-[#225091] hover:text-white rounded-lg font-semibold text-xs transition-colors cursor-pointer border border-blue-200/60"
+                              title="View Document Details"
+                            >
+                              <Eye size={13} />
+                              <span>View</span>
+                            </button>
+                            {item.fileUrl && (
+                              <a
+                                href={item.fileUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white rounded-lg font-semibold text-xs transition-colors border border-emerald-200/60"
+                                title="Download PDF File"
+                              >
+                                <Download size={13} />
+                                <span>PDF</span>
+                              </a>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     );
@@ -1360,29 +1444,34 @@ const LettersAndPayroll = () => {
           </div>
 
           {/* History Pagination */}
-          {totalHistoryPages > 1 && (
-            <div className="p-4 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500">
-              <span>Page {historyPage} of {totalHistoryPages}</span>
+          <div className="p-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-gray-500">
+            <div>
+              Showing {historyLogs.length > 0 ? (historyPage - 1) * historyLimit + 1 : 0} to {Math.min(historyPage * historyLimit, historyTotalRecords)} of {historyTotalRecords} Entries
+            </div>
+            {historyTotalPages > 1 && (
               <div className="flex items-center gap-1">
                 <button
                   type="button"
-                  disabled={historyPage === 1}
+                  disabled={historyPage === 1 || historyLoading}
                   onClick={() => setHistoryPage(p => Math.max(1, p - 1))}
-                  className="px-2.5 py-1 border rounded-md disabled:opacity-40 hover:bg-gray-50 cursor-pointer"
+                  className="px-3 py-1.5 border border-gray-200 rounded-lg disabled:opacity-40 hover:bg-gray-50 cursor-pointer font-medium"
                 >
-                  Prev
+                  Previous
                 </button>
+                <span className="px-3 py-1.5 bg-gray-100 text-gray-800 font-semibold rounded-lg">
+                  {historyPage} / {historyTotalPages}
+                </span>
                 <button
                   type="button"
-                  disabled={historyPage === totalHistoryPages}
-                  onClick={() => setHistoryPage(p => Math.min(totalHistoryPages, p + 1))}
-                  className="px-2.5 py-1 border rounded-md disabled:opacity-40 hover:bg-gray-50 cursor-pointer"
+                  disabled={historyPage >= historyTotalPages || historyLoading}
+                  onClick={() => setHistoryPage(p => Math.min(historyTotalPages, p + 1))}
+                  className="px-3 py-1.5 border border-gray-200 rounded-lg disabled:opacity-40 hover:bg-gray-50 cursor-pointer font-medium"
                 >
                   Next
                 </button>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       )}
 
@@ -1393,16 +1482,16 @@ const LettersAndPayroll = () => {
             <div className="flex items-start justify-between pb-3 border-b border-gray-100">
               <div>
                 <span className="text-[10px] font-extrabold uppercase text-[#225091] bg-blue-50 px-2.5 py-0.5 rounded-full border border-blue-100">
-                  {viewingHistoryItem.letterType}
+                  {viewingHistoryItem.documentType || viewingHistoryItem.letterType || 'Document'}
                 </span>
                 <h3 className="text-base font-bold text-gray-900 mt-1">
-                  Document Details
+                  Document History Record
                 </h3>
               </div>
               <button
                 type="button"
                 onClick={() => setViewingHistoryItem(null)}
-                className="text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-100 cursor-pointer"
+                className="text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-100 cursor-pointer text-sm"
               >
                 ✕
               </button>
@@ -1411,22 +1500,28 @@ const LettersAndPayroll = () => {
             <div className="grid grid-cols-2 gap-4 text-xs">
               <div className="bg-gray-50/80 p-3 rounded-xl border border-gray-100">
                 <span className="text-gray-400 block font-medium mb-0.5">Reference Number</span>
-                <span className="font-mono font-bold text-[#225091]">{viewingHistoryItem.referenceNumber || '—'}</span>
+                <span className="font-mono font-bold text-[#225091]">{viewingHistoryItem.referenceNumber || viewingHistoryItem.id || '—'}</span>
               </div>
               <div className="bg-gray-50/80 p-3 rounded-xl border border-gray-100">
                 <span className="text-gray-400 block font-medium mb-0.5">Issued Date</span>
                 <span className="font-bold text-gray-800">
-                  {viewingHistoryItem.generatedAt ? new Date(viewingHistoryItem.generatedAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
+                  {viewingHistoryItem.formattedIssuedDate || (viewingHistoryItem.issuedDate ? new Date(viewingHistoryItem.issuedDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : (viewingHistoryItem.generatedAt ? new Date(viewingHistoryItem.generatedAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'))}
                 </span>
               </div>
               <div className="bg-gray-50/80 p-3 rounded-xl border border-gray-100">
                 <span className="text-gray-400 block font-medium mb-0.5">Recipient Employee</span>
-                <span className="font-bold text-gray-900">{viewingHistoryItem.employeeName}</span>
+                <span className="font-bold text-gray-900">{viewingHistoryItem.employeeName || 'Staff'}</span>
+                {viewingHistoryItem.employeeCode && (
+                  <span className="text-gray-500 font-mono block text-[10px]">Code: {viewingHistoryItem.employeeCode}</span>
+                )}
                 <span className="text-gray-400 block text-[11px] truncate">{viewingHistoryItem.employeeEmail}</span>
               </div>
               <div className="bg-gray-50/80 p-3 rounded-xl border border-gray-100">
-                <span className="text-gray-400 block font-medium mb-0.5">Designation</span>
-                <span className="font-bold text-gray-800">{viewingHistoryItem.designation || 'Staff'}</span>
+                <span className="text-gray-400 block font-medium mb-0.5">Branch Location</span>
+                <span className="font-bold text-gray-800">{viewingHistoryItem.branchName || 'Main Branch'}</span>
+                {viewingHistoryItem.branchCity && (
+                  <span className="text-gray-400 block text-[11px]">{viewingHistoryItem.branchCity}{viewingHistoryItem.branchState ? `, ${viewingHistoryItem.branchState}` : ''}</span>
+                )}
               </div>
             </div>
 
@@ -1441,7 +1536,7 @@ const LettersAndPayroll = () => {
                   href={viewingHistoryItem.fileUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="px-4 py-2 bg-[#225091] hover:bg-[#1b427b] text-white text-xs font-bold rounded-xl transition-colors inline-flex items-center gap-1.5"
+                  className="px-4 py-2 bg-[#225091] hover:bg-[#1b427b] text-white text-xs font-bold rounded-xl transition-colors inline-flex items-center gap-1.5 shadow-sm"
                 >
                   <ExternalLink size={13} />
                   <span>Open PDF File</span>

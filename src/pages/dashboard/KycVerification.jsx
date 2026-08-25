@@ -168,11 +168,16 @@ const KycVerification = () => {
 
     setLoading(true);
     try {
+      let redirectUrl = import.meta.env.VITE_KYC_REDIRECT_URL;
+      if (!redirectUrl || !redirectUrl.startsWith('http')) {
+        redirectUrl = `${window.location.origin}/kyc/callback`;
+      }
+      
       const payload = {
         documentType: activeTab.toUpperCase(),
         idNumber: idNumber.toUpperCase(),
         consent: isConsentChecked,
-        redirectUrl: import.meta.env.VITE_KYC_REDIRECT_URL || 'https://www.epochconverter.com/',
+        redirectUrl,
       };
 
       const response = await kycService.initiateKyc(payload);

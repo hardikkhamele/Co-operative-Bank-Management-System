@@ -15,9 +15,15 @@ import {
   UserCog,
   RotateCcw,
   Loader2,
+  Archive,
+  AlertTriangle,
+  ShieldAlert,
+  Undo2,
+  CheckCircle2,
 } from "lucide-react";
 import { employeeService } from "../../api/employeeService";
 import { roleService } from "../../api/roleService";
+import { branchService } from "../../api/branchService";
 import useBranchStore from "../../store/branchStore";
 import PageHeader from "../../components/common/PageHeader";
 
@@ -67,15 +73,16 @@ const Employees = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Persistent Global Overview Stats (does not get wiped by table pagination/filters)
+  // Persistent Global Overview Stats
   const [overviewStats, setOverviewStats] = useState({
     total: 0,
     active: 0,
     inactive: 0,
     managers: 0,
+    softDeleted: 0,
   });
 
-  // Active Stat Card Filter ('ALL' | 'ACTIVE' | 'INACTIVE' | 'MANAGERS')
+  // Active Stat Card Filter ('ALL' | 'ACTIVE' | 'INACTIVE' | 'MANAGERS' | 'DELETED')
   const [activeStatCard, setActiveStatCard] = useState("ALL");
 
   // Pagination State
@@ -93,15 +100,24 @@ const Employees = () => {
   const [selectedState, setSelectedState] = useState("");
   const [selectedCity, setSelectedCity] = useState("");
   const [includeBranchManagers, setIncludeBranchManagers] = useState(true);
+  const [includeDeleted, setIncludeDeleted] = useState(false);
 
   // Dropdown Options State
   const [roleOptions, setRoleOptions] = useState([]);
   const [apiLocations, setApiLocations] = useState({ states: [], cities: [], locations: [] });
   const { globalBranchId, branchOptions, fetchBranches } = useBranchStore();
 
-  // Modals
+  // Modals & Action States
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [employeeToDelete, setEmployeeToDelete] = useState(null);
+
+  const [isRestoreModalOpen, setIsRestoreModalOpen] = useState(false);
+  const [employeeToRestore, setEmployeeToRestore] = useState(null);
+
+  const [isPermanentDeleteModalOpen, setIsPermanentDeleteModalOpen] = useState(false);
+  const [employeeToPermanentDelete, setEmployeeToPermanentDelete] = useState(null);
+
+  const [isActionLoading, setIsActionLoading] = useState(false);
 
   // Load branch list if not already available
   useEffect(() => {
@@ -110,7 +126,7 @@ const Employees = () => {
     }
   }, [branchOptions, fetchBranches]);
 
-  // Fetch Available Cities & States from Backend API (/api/v1/society/branches/available-locations)
+  // Fetch Available Cities & States from Backend API
   useEffect(() => {
     const fetchLocations = async () => {
       try {
@@ -142,7 +158,7 @@ const Employees = () => {
     return Array.from(statesSet).sort();
   }, [apiLocations.states, branchOptions]);
 
-  // Available cities for the selected state (from locations mapping or all cities)
+  // Available cities for the selected state
   const availableCities = useMemo(() => {
     if (selectedState) {
       const foundLoc = (apiLocations.locations || []).find(
@@ -151,7 +167,6 @@ const Employees = () => {
       if (foundLoc && foundLoc.cities && foundLoc.cities.length > 0) {
         return foundLoc.cities;
       }
-      // Fallback: extract cities from branch options for that state
       const cSet = new Set();
       (branchOptions || []).forEach((b) => {
         const bState = (b.state || b.address?.state || b.branchState || "").trim().toLowerCase();
@@ -192,11 +207,13 @@ const Employees = () => {
     fetchRoles();
   }, []);
 
-  // 2. Fetch Paginated / Filtered Employees & Stats from Backend API
+  // Fetch Paginated / Filtered Employees & Stats from Backend API
   const fetchEmployees = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
+      const isFilterDeletedOnly = activeStatCard === "DELETED" || selectedStatus === "DELETED";
+
       const params = {
         page,
         limit,
@@ -215,12 +232,22 @@ const Employees = () => {
       if (selectedState) params.state = selectedState;
       if (selectedCity) params.city = selectedCity;
 
-      // Apply status from dropdown or stat card
-      if (activeStatCard === "ACTIVE") {
+      // Handle Deleted and Status filtering precisely according to API specification:
+      if (isFilterDeletedOnly) {
+        // Exclusively soft-deleted records (Restricted to Bank Owner / Super Admin & Branch Manager)
+        params.isDeleted = true;
+        params.status = "DELETED";
+      } else if (includeDeleted || selectedStatus === "ALL") {
+        // Includes both active and deleted records combined
+        params.includeDeleted = true;
+        if (selectedStatus === "ALL") {
+          params.status = "ALL";
+        }
+      } else if (activeStatCard === "ACTIVE" || selectedStatus === "ACTIVE") {
         params.status = "ACTIVE";
-      } else if (activeStatCard === "INACTIVE") {
+      } else if (activeStatCard === "INACTIVE" || selectedStatus === "INACTIVE") {
         params.status = "INACTIVE";
-      } else if (selectedStatus && selectedStatus !== "ALL") {
+      } else if (selectedStatus) {
         params.status = selectedStatus.toUpperCase();
       }
 
@@ -237,7 +264,7 @@ const Employees = () => {
 
       const response = await employeeService.list(params);
       if (response && response.success) {
-        // Bind Backend Stats directly if provided
+        // Bind Backend Stats directly
         if (response.stats) {
           setOverviewStats(prev => ({
             ...prev,
@@ -245,7 +272,7 @@ const Employees = () => {
             active: response.stats.totalActive ?? response.stats.active ?? prev.active,
             inactive: response.stats.totalInactive ?? response.stats.inactive ?? prev.inactive,
             managers: response.stats.totalBranchManagers ?? response.stats.managers ?? prev.managers,
-            softDeleted: response.stats.totalSoftDeleted ?? 0,
+            softDeleted: response.stats.totalSoftDeleted ?? prev.softDeleted ?? 0,
             genderRatio: response.stats.genderRatio || null,
             newHiresThisMonth: response.stats.newHiresThisMonth ?? 0,
             upcomingBirthdaysThisMonth: response.stats.upcomingBirthdaysThisMonth ?? 0,
@@ -258,23 +285,6 @@ const Employees = () => {
         let listData = Array.isArray(response.data)
           ? response.data
           : response.data?.items || response.data?.employees || response.items || [];
-
-        // Apply client-side filtering fallback for state, city, and managers if needed
-        if (selectedState) {
-          const sLower = selectedState.trim().toLowerCase();
-          listData = listData.filter((e) => {
-            const empState = (e.branch?.state || e.state || e.branchState || e.branch?.address?.state || "").trim().toLowerCase();
-            return empState === sLower || empState.includes(sLower);
-          });
-        }
-
-        if (selectedCity) {
-          const cLower = selectedCity.trim().toLowerCase();
-          listData = listData.filter((e) => {
-            const empCity = (e.branch?.city || e.city || e.branchCity || e.branch?.address?.city || "").trim().toLowerCase();
-            return empCity === cLower || empCity.includes(cLower);
-          });
-        }
 
         // If filtering by managers card and backend didn't narrow it, filter client-side
         if (activeStatCard === "MANAGERS" && !params.roleId) {
@@ -317,6 +327,7 @@ const Employees = () => {
     selectedCity,
     selectedStatus,
     includeBranchManagers,
+    includeDeleted,
     activeStatCard,
     roleOptions,
   ]);
@@ -325,22 +336,74 @@ const Employees = () => {
     fetchEmployees();
   }, [fetchEmployees]);
 
+  // Action Click Triggers
   const handleDeleteClick = (employee) => {
     setEmployeeToDelete(employee);
     setIsDeleteModalOpen(true);
   };
 
-  const confirmDelete = async () => {
+  const handleRestoreClick = (employee) => {
+    setEmployeeToRestore(employee);
+    setIsRestoreModalOpen(true);
+  };
+
+  const handlePermanentDeleteClick = (employee) => {
+    setEmployeeToPermanentDelete(employee);
+    setIsPermanentDeleteModalOpen(true);
+  };
+
+  // Confirm Soft Delete / Deactivate
+  const confirmDeactivate = async () => {
     if (!employeeToDelete) return;
     try {
-      await employeeService.delete(employeeToDelete.id);
+      setIsActionLoading(true);
+      await employeeService.delete(employeeToDelete.id || employeeToDelete._id);
       toast.success("Employee deactivated successfully");
       setIsDeleteModalOpen(false);
       setEmployeeToDelete(null);
       fetchEmployees();
-      fetchOverviewStats();
     } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to delete employee");
+      toast.error(err.response?.data?.message || "Failed to deactivate employee");
+    } finally {
+      setIsActionLoading(false);
+    }
+  };
+
+  // Confirm Restore Soft-Deleted Employee
+  const confirmRestore = async () => {
+    if (!employeeToRestore) return;
+    try {
+      setIsActionLoading(true);
+      await employeeService.restore(employeeToRestore.id || employeeToRestore._id);
+      toast.success("Employee restored successfully");
+      setIsRestoreModalOpen(false);
+      setEmployeeToRestore(null);
+      fetchEmployees();
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to restore employee");
+    } finally {
+      setIsActionLoading(false);
+    }
+  };
+
+  // Confirm Permanent Hard Delete
+  const confirmPermanentDelete = async () => {
+    if (!employeeToPermanentDelete) return;
+    try {
+      setIsActionLoading(true);
+      await employeeService.delete(employeeToPermanentDelete.id || employeeToPermanentDelete._id, {
+        permanent: true,
+        isPermanent: true,
+        force: true
+      });
+      toast.success("Employee permanently deleted");
+      setIsPermanentDeleteModalOpen(false);
+      setEmployeeToPermanentDelete(null);
+      fetchEmployees();
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to permanently delete employee");
+    } finally {
+      setIsActionLoading(false);
     }
   };
 
@@ -379,6 +442,7 @@ const Employees = () => {
     setSelectedCity("");
     setActiveStatCard("ALL");
     setIncludeBranchManagers(true);
+    setIncludeDeleted(false);
     setPage(1);
   };
 
@@ -390,6 +454,7 @@ const Employees = () => {
     Boolean(selectedState) ||
     Boolean(selectedCity) ||
     activeStatCard !== "ALL" ||
+    includeDeleted ||
     !includeBranchManagers;
 
   return (
@@ -411,9 +476,9 @@ const Employees = () => {
         </Link>
       </PageHeader>
 
-      {/* Top Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {/* Total Staff Card */}
+      {/* Top Stats Cards Grid (5 Cards: Total, Active, Inactive, Managers, Soft-Deleted) */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3.5">
+        {/* 1. Total Staff Card */}
         <div
           onClick={() => {
             setActiveStatCard("ALL");
@@ -421,7 +486,7 @@ const Employees = () => {
             setSelectedRoleId("");
             setPage(1);
           }}
-          className={`bg-white rounded-xl p-4.5 border shadow-xs flex flex-col items-center justify-center cursor-pointer transition-all hover:shadow-md ${
+          className={`bg-white rounded-xl p-4 border shadow-xs flex flex-col items-center justify-center cursor-pointer transition-all hover:shadow-md ${
             activeStatCard === "ALL" && !selectedStatus && !selectedRoleId
               ? "border-[#225091] ring-2 ring-[#225091]/10 bg-blue-50/20"
               : "border-gray-100 hover:border-gray-200"
@@ -429,7 +494,7 @@ const Employees = () => {
         >
           <div className="flex items-center gap-2 text-[#225091] mb-1">
             <Users size={18} />
-            <span className="text-[26px] font-bold leading-none">
+            <span className="text-[24px] font-bold leading-none">
               {overviewStats.total}
             </span>
           </div>
@@ -438,14 +503,14 @@ const Employees = () => {
           </span>
         </div>
 
-        {/* Active Staff Card */}
+        {/* 2. Active Staff Card */}
         <div
           onClick={() => {
             setActiveStatCard(activeStatCard === "ACTIVE" ? "ALL" : "ACTIVE");
             setSelectedStatus("");
             setPage(1);
           }}
-          className={`bg-white rounded-xl p-4.5 border shadow-xs flex flex-col items-center justify-center cursor-pointer transition-all hover:shadow-md ${
+          className={`bg-white rounded-xl p-4 border shadow-xs flex flex-col items-center justify-center cursor-pointer transition-all hover:shadow-md ${
             activeStatCard === "ACTIVE"
               ? "border-emerald-500 ring-2 ring-emerald-500/10 bg-emerald-50/20"
               : "border-gray-100 hover:border-gray-200"
@@ -453,7 +518,7 @@ const Employees = () => {
         >
           <div className="flex items-center gap-2 text-emerald-600 mb-1">
             <UserCheck size={18} />
-            <span className="text-[26px] font-bold leading-none">
+            <span className="text-[24px] font-bold leading-none">
               {overviewStats.active}
             </span>
           </div>
@@ -462,22 +527,22 @@ const Employees = () => {
           </span>
         </div>
 
-        {/* Inactive Staff Card */}
+        {/* 3. Inactive Staff Card */}
         <div
           onClick={() => {
             setActiveStatCard(activeStatCard === "INACTIVE" ? "ALL" : "INACTIVE");
             setSelectedStatus("");
             setPage(1);
           }}
-          className={`bg-white rounded-xl p-4.5 border shadow-xs flex flex-col items-center justify-center cursor-pointer transition-all hover:shadow-md ${
+          className={`bg-white rounded-xl p-4 border shadow-xs flex flex-col items-center justify-center cursor-pointer transition-all hover:shadow-md ${
             activeStatCard === "INACTIVE"
-              ? "border-rose-500 ring-2 ring-rose-500/10 bg-rose-50/20"
+              ? "border-amber-500 ring-2 ring-amber-500/10 bg-amber-50/20"
               : "border-gray-100 hover:border-gray-200"
           }`}
         >
-          <div className="flex items-center gap-2 text-rose-600 mb-1">
+          <div className="flex items-center gap-2 text-amber-600 mb-1">
             <UserX size={18} />
-            <span className="text-[26px] font-bold leading-none">
+            <span className="text-[24px] font-bold leading-none">
               {overviewStats.inactive}
             </span>
           </div>
@@ -486,14 +551,14 @@ const Employees = () => {
           </span>
         </div>
 
-        {/* Branch Managers Card */}
+        {/* 4. Branch Managers Card */}
         <div
           onClick={() => {
             setActiveStatCard(activeStatCard === "MANAGERS" ? "ALL" : "MANAGERS");
             setSelectedRoleId("");
             setPage(1);
           }}
-          className={`bg-white rounded-xl p-4.5 border shadow-xs flex flex-col items-center justify-center cursor-pointer transition-all hover:shadow-md ${
+          className={`bg-white rounded-xl p-4 border shadow-xs flex flex-col items-center justify-center cursor-pointer transition-all hover:shadow-md ${
             activeStatCard === "MANAGERS"
               ? "border-purple-500 ring-2 ring-purple-500/10 bg-purple-50/20"
               : "border-gray-100 hover:border-gray-200"
@@ -501,12 +566,42 @@ const Employees = () => {
         >
           <div className="flex items-center gap-2 text-purple-600 mb-1">
             <UserCog size={18} />
-            <span className="text-[26px] font-bold leading-none">
+            <span className="text-[24px] font-bold leading-none">
               {overviewStats.managers}
             </span>
           </div>
           <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider text-center">
             Branch Managers
+          </span>
+        </div>
+
+        {/* 5. Soft-Deleted / Archived Staff Card */}
+        <div
+          onClick={() => {
+            if (activeStatCard === "DELETED") {
+              setActiveStatCard("ALL");
+              setSelectedStatus("");
+            } else {
+              setActiveStatCard("DELETED");
+              setSelectedStatus("DELETED");
+              setIncludeDeleted(true);
+            }
+            setPage(1);
+          }}
+          className={`bg-white rounded-xl p-4 border shadow-xs flex flex-col items-center justify-center cursor-pointer transition-all hover:shadow-md ${
+            activeStatCard === "DELETED" || selectedStatus === "DELETED"
+              ? "border-rose-500 ring-2 ring-rose-500/10 bg-rose-50/20"
+              : "border-gray-100 hover:border-gray-200"
+          }`}
+        >
+          <div className="flex items-center gap-2 text-rose-600 mb-1">
+            <Archive size={18} />
+            <span className="text-[24px] font-bold leading-none">
+              {overviewStats.softDeleted}
+            </span>
+          </div>
+          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider text-center">
+            Soft-Deleted
           </span>
         </div>
       </div>
@@ -537,7 +632,8 @@ const Employees = () => {
             )}
           </div>
 
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2.5 flex-wrap">
+            {/* Include Managers Toggle */}
             <label className="flex items-center gap-2 text-xs font-semibold text-gray-600 cursor-pointer select-none bg-gray-50 px-3 py-2 rounded-lg border border-gray-200/80 hover:bg-gray-100/70 transition-colors">
               <input
                 type="checkbox"
@@ -551,10 +647,24 @@ const Employees = () => {
               <span>Include Managers</span>
             </label>
 
+            {/* Include Deleted Toggle */}
+            <label className="flex items-center gap-2 text-xs font-semibold text-gray-600 cursor-pointer select-none bg-gray-50 px-3 py-2 rounded-lg border border-gray-200/80 hover:bg-gray-100/70 transition-colors">
+              <input
+                type="checkbox"
+                checked={includeDeleted}
+                onChange={(e) => {
+                  setIncludeDeleted(e.target.checked);
+                  setPage(1);
+                }}
+                className="w-4 h-4 rounded text-[#225091] focus:ring-[#225091] border-gray-300"
+              />
+              <span>Include Deleted</span>
+            </label>
+
             {hasActiveFilters && (
               <button
                 onClick={handleResetFilters}
-                className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-gray-600 hover:text-rose-600 bg-gray-50 hover:bg-rose-50 rounded-lg border border-gray-200 transition-colors"
+                className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-gray-600 hover:text-rose-600 bg-gray-50 hover:bg-rose-50 rounded-lg border border-gray-200 transition-colors cursor-pointer"
                 title="Reset all filters"
               >
                 <RotateCcw size={14} />
@@ -572,14 +682,20 @@ const Employees = () => {
             <select
               value={selectedStatus}
               onChange={(e) => {
-                setSelectedStatus(e.target.value);
+                const val = e.target.value;
+                setSelectedStatus(val);
+                if (val === "DELETED") {
+                  setIncludeDeleted(true);
+                }
                 setPage(1);
               }}
               className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-xs font-medium text-gray-700 shadow-2xs cursor-pointer"
             >
-              <option value="">All Statuses</option>
-              <option value="ACTIVE">Active</option>
-              <option value="INACTIVE">Inactive</option>
+              <option value="">All Statuses (Active & Inactive)</option>
+              <option value="ACTIVE">Active Staff</option>
+              <option value="INACTIVE">Inactive / Deactivated</option>
+              <option value="DELETED">Soft-Deleted Staff</option>
+              <option value="ALL">All (Including Deleted)</option>
             </select>
           </div>
 
@@ -667,10 +783,38 @@ const Employees = () => {
         </div>
       </div>
 
+      {/* Active Filter Indicator Tag for Soft-Deleted or Include-Deleted */}
+      {(activeStatCard === "DELETED" || selectedStatus === "DELETED" || includeDeleted) && (
+        <div className="flex items-center justify-between bg-rose-50 border border-rose-200/80 px-4 py-2.5 rounded-xl text-xs text-rose-800 animate-in fade-in">
+          <div className="flex items-center gap-2">
+            <Archive size={16} className="text-rose-600 shrink-0" />
+            <span className="font-semibold">
+              {activeStatCard === "DELETED" || selectedStatus === "DELETED"
+                ? "Currently Viewing: Soft-Deleted / Archived Employees Only"
+                : "Currently Viewing: All Employees (Including Soft-Deleted)"}
+            </span>
+            <span className="bg-rose-200/70 text-rose-800 px-2 py-0.5 rounded-full font-bold text-[10px]">
+              {totalRecords} records
+            </span>
+          </div>
+          <button
+            onClick={() => {
+              setActiveStatCard("ALL");
+              setSelectedStatus("");
+              setIncludeDeleted(false);
+              setPage(1);
+            }}
+            className="text-rose-700 hover:text-rose-900 font-semibold underline text-xs cursor-pointer shrink-0"
+          >
+            Switch to Active Staff
+          </button>
+        </div>
+      )}
+
       {/* Main Employees Table */}
       <div className="bg-white rounded-xl shadow-xs border border-gray-100 overflow-hidden flex flex-col">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse min-w-[850px]">
+          <table className="w-full text-left border-collapse min-w-[880px]">
             <thead className="bg-[#F8FAFC] text-gray-600 text-xs uppercase tracking-wider font-semibold border-b border-gray-200/80">
               <tr>
                 <th className="py-3.5 px-5 font-semibold">Sr.No.</th>
@@ -724,121 +868,172 @@ const Employees = () => {
                   </td>
                 </tr>
               ) : (
-                employees.map((row, index) => (
-                  <tr
-                    key={row.id || index}
-                    className="hover:bg-slate-50/70 transition-colors"
-                  >
-                    <td className="py-3.5 px-5 text-[13px] text-gray-500 font-medium">
-                      {row.srNo || (page - 1) * limit + index + 1}
-                    </td>
+                employees.map((row, index) => {
+                  const isSoftDeleted = Boolean(
+                    row.isDeleted ||
+                    row.deleted ||
+                    row.deletedAt ||
+                    row.status === "DELETED" ||
+                    row.status === "DEACTIVATED" ||
+                    activeStatCard === "DELETED" ||
+                    selectedStatus === "DELETED"
+                  );
+                  
+                  return (
+                    <tr
+                      key={row.id || index}
+                      className={`hover:bg-slate-50/70 transition-colors ${
+                        isSoftDeleted ? "bg-rose-50/20" : ""
+                      }`}
+                    >
+                      <td className="py-3.5 px-5 text-[13px] text-gray-500 font-medium">
+                        {row.srNo || (page - 1) * limit + index + 1}
+                      </td>
 
-                    {/* Employee Profile */}
-                    <td className="py-3.5 px-5">
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center text-[#225091] font-bold text-xs shrink-0 shadow-2xs">
-                          {getInitials(row.fullName)}
+                      {/* Employee Profile */}
+                      <td className="py-3.5 px-5">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-9 h-9 rounded-full border flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs ${
+                            isSoftDeleted
+                              ? "bg-rose-50 border-rose-200 text-rose-600"
+                              : "bg-blue-50 border-blue-100 text-[#225091]"
+                          }`}>
+                            {getInitials(row.fullName)}
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="font-semibold text-gray-900 text-sm">
+                              {formatName(row.fullName)}
+                            </span>
+                            <span className="text-xs text-gray-500">
+                              {row.email || "-"}
+                            </span>
+                            <span className="text-[11px] text-gray-400">
+                              {row.phoneNumber || ""}
+                            </span>
+                          </div>
                         </div>
-                        <div className="flex flex-col">
-                          <span className="font-semibold text-gray-900 text-sm">
-                            {formatName(row.fullName)}
-                          </span>
-                          <span className="text-xs text-gray-500">
-                            {row.email || "-"}
-                          </span>
-                          <span className="text-[11px] text-gray-400">
-                            {row.phoneNumber || ""}
-                          </span>
-                        </div>
-                      </div>
-                    </td>
+                      </td>
 
-                    {/* Employee Code & Badge */}
-                    <td className="py-3.5 px-5">
-                      <span className="text-gray-800 font-mono font-semibold text-xs bg-gray-100 px-2 py-0.5 rounded border border-gray-200">
-                        {formatEmpCode(row.employeeCode || row.employeeId, row.id)}
-                      </span>
-                      {row.type === "MANAGER" || row.role?.code === "BRANCH_MANAGER" ? (
-                        <div className="text-[10px] bg-purple-50 border border-purple-200/60 text-purple-700 font-semibold px-2 py-0.5 rounded-full inline-block mt-1">
-                          Branch Manager
-                        </div>
-                      ) : null}
-                    </td>
-
-                    {/* Designation / Department */}
-                    <td className="py-3.5 px-5 text-xs text-gray-700 font-medium">
-                      <div className="flex flex-col">
-                        <span className="font-semibold text-gray-800">
-                          {row.designation || row.role?.name || "-"}
+                      {/* Employee Code & Badge */}
+                      <td className="py-3.5 px-5">
+                        <span className="text-gray-800 font-mono font-semibold text-xs bg-gray-100 px-2 py-0.5 rounded border border-gray-200">
+                          {formatEmpCode(row.employeeCode || row.employeeId, row.id)}
                         </span>
-                        {row.department && (
-                          <span className="text-[11px] text-gray-400">
-                            {row.department}
+                        {row.type === "MANAGER" || row.role?.code === "BRANCH_MANAGER" ? (
+                          <div className="text-[10px] bg-purple-50 border border-purple-200/60 text-purple-700 font-semibold px-2 py-0.5 rounded-full inline-block mt-1">
+                            Branch Manager
+                          </div>
+                        ) : null}
+                      </td>
+
+                      {/* Designation / Department */}
+                      <td className="py-3.5 px-5 text-xs text-gray-700 font-medium">
+                        <div className="flex flex-col">
+                          <span className="font-semibold text-gray-800">
+                            {row.designation || row.role?.name || "-"}
+                          </span>
+                          {row.department && (
+                            <span className="text-[11px] text-gray-400">
+                              {row.department}
+                            </span>
+                          )}
+                        </div>
+                      </td>
+
+                      {/* Branch, State & City */}
+                      <td className="py-3.5 px-5 text-xs text-gray-600">
+                        <div className="flex flex-col">
+                          <span className="font-semibold text-gray-800">
+                            {row.branch?.name || row.branchName || "—"}
+                          </span>
+                          <span className="text-[11px] text-gray-500 font-medium">
+                            {[
+                              row.branch?.city || row.city || row.branchCity || row.branch?.address?.city,
+                              row.branch?.state || row.state || row.branchState || row.branch?.address?.state,
+                            ]
+                              .filter(Boolean)
+                              .join(", ") ||
+                              row.branch?.code ||
+                              "—"}
+                          </span>
+                        </div>
+                      </td>
+
+                      {/* Status Badge */}
+                      <td className="py-3.5 px-5">
+                        {isSoftDeleted ? (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold border uppercase tracking-wide bg-rose-50 text-rose-700 border-rose-200/60">
+                            DELETED
+                          </span>
+                        ) : row.status === "INACTIVE" ? (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold border uppercase tracking-wide bg-amber-50 text-amber-700 border-amber-200/60">
+                            INACTIVE
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold border uppercase tracking-wide bg-emerald-50 text-emerald-700 border-emerald-200/60">
+                            ACTIVE
                           </span>
                         )}
-                      </div>
-                    </td>
+                      </td>
 
-                    {/* Branch, State & City */}
-                    <td className="py-3.5 px-5 text-xs text-gray-600">
-                      <div className="flex flex-col">
-                        <span className="font-semibold text-gray-800">
-                          {row.branch?.name || row.branchName || "—"}
-                        </span>
-                        <span className="text-[11px] text-gray-500 font-medium">
-                          {[
-                            row.branch?.city || row.city || row.branchCity || row.branch?.address?.city,
-                            row.branch?.state || row.state || row.branchState || row.branch?.address?.state,
-                          ]
-                            .filter(Boolean)
-                            .join(", ") ||
-                            row.branch?.code ||
-                            "—"}
-                        </span>
-                      </div>
-                    </td>
+                      {/* Actions Column (Contextual for Active vs Deleted) */}
+                      <td className="py-3.5 px-5">
+                        <div className="flex items-center justify-center gap-1.5">
+                          {/* View Button */}
+                          <button
+                            onClick={() => navigate(`/employees/view/${row.id}`)}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-[#225091] bg-[#EAF2FB] hover:bg-[#d8e8f8] border border-[#225091]/15 transition-all shadow-2xs cursor-pointer"
+                            title="View Employee Profile"
+                          >
+                            <Eye size={13} /> View
+                          </button>
 
-                    {/* Status Badge */}
-                    <td className="py-3.5 px-5">
-                      <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold border uppercase tracking-wide ${
-                          row.status === "ACTIVE"
-                            ? "bg-emerald-50 text-emerald-700 border-emerald-200/60"
-                            : "bg-rose-50 text-rose-700 border-rose-200/60"
-                        }`}
-                      >
-                        {row.status || "ACTIVE"}
-                      </span>
-                    </td>
+                          {isSoftDeleted ? (
+                            <>
+                              {/* Restore Soft-Deleted Employee Button */}
+                              <button
+                                onClick={() => handleRestoreClick(row)}
+                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/60 transition-all shadow-2xs cursor-pointer"
+                                title="Restore / Reactivate Employee"
+                              >
+                                <RotateCcw size={13} /> Restore
+                              </button>
 
-                    {/* Actions */}
-                    <td className="py-3.5 px-5">
-                      <div className="flex items-center justify-center gap-1.5">
-                        <button
-                          onClick={() => navigate(`/employees/view/${row.id}`)}
-                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-[#225091] bg-[#EAF2FB] hover:bg-[#d8e8f8] border border-[#225091]/15 transition-all shadow-2xs"
-                          title="View Employee Profile"
-                        >
-                          <Eye size={13} /> View
-                        </button>
-                        <button
-                          onClick={() => navigate(`/employees/edit/${row.id}`)}
-                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200/60 transition-all shadow-2xs"
-                          title="Edit Staff"
-                        >
-                          <Edit size={13} /> Edit
-                        </button>
-                        <button
-                          onClick={() => handleDeleteClick(row)}
-                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200/60 transition-all shadow-2xs"
-                          title="Delete / Deactivate"
-                        >
-                          <Trash2 size={13} /> Delete
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
+                              {/* Permanent Delete Button */}
+                              <button
+                                onClick={() => handlePermanentDeleteClick(row)}
+                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200/60 transition-all shadow-2xs cursor-pointer"
+                                title="Permanently Delete Employee"
+                              >
+                                <Trash2 size={13} /> Hard Delete
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              {/* Edit Staff Profile Button */}
+                              <button
+                                onClick={() => navigate(`/employees/edit/${row.id}`)}
+                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200/60 transition-all shadow-2xs cursor-pointer"
+                                title="Edit Staff"
+                              >
+                                <Edit size={13} /> Edit
+                              </button>
+
+                              {/* Deactivate / Soft Delete Button */}
+                              <button
+                                onClick={() => handleDeleteClick(row)}
+                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200/60 transition-all shadow-2xs cursor-pointer"
+                                title="Deactivate Employee (Soft Delete)"
+                              >
+                                <Trash2 size={13} /> Deactivate
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
@@ -856,7 +1051,7 @@ const Employees = () => {
               <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
-                className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-[#225091] hover:bg-[#225091] hover:text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-xs font-semibold"
+                className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-[#225091] hover:bg-[#225091] hover:text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-xs font-semibold cursor-pointer"
               >
                 <ChevronLeft size={16} />
               </button>
@@ -866,7 +1061,7 @@ const Employees = () => {
               <button
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={page === totalPages}
-                className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-[#225091] hover:bg-[#225091] hover:text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-xs font-semibold"
+                className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-[#225091] hover:bg-[#225091] hover:text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-xs font-semibold cursor-pointer"
               >
                 <ChevronRight size={16} />
               </button>
@@ -875,38 +1070,156 @@ const Employees = () => {
         )}
       </div>
 
-      {/* Delete Confirmation Modal */}
+      {/* 1. Deactivate / Soft Delete Modal */}
       {isDeleteModalOpen && employeeToDelete && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4 transition-opacity animate-in fade-in">
-          <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl p-6 text-center">
-            <div className="w-16 h-16 bg-rose-50 text-rose-500 rounded-full flex items-center justify-center mx-auto mb-4 border border-rose-100">
-              <Trash2 size={28} />
+          <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl p-6 text-center space-y-4">
+            <div className="w-14 h-14 bg-rose-50 text-rose-600 rounded-full flex items-center justify-center mx-auto border border-rose-100">
+              <Archive size={26} />
             </div>
-            <h3 className="text-xl font-bold text-gray-800 mb-2">
-              Deactivate Employee
-            </h3>
-            <p className="text-gray-500 text-sm mb-6">
-              Are you sure you want to deactivate{" "}
-              <span className="font-semibold text-gray-800">
-                {employeeToDelete.fullName}
-              </span>
-              ? They will no longer be able to log in.
-            </p>
-            <div className="flex gap-3">
+            <div>
+              <h3 className="text-lg font-bold text-gray-900">
+                Deactivate Employee
+              </h3>
+              <p className="text-gray-500 text-xs mt-1 leading-relaxed">
+                Are you sure you want to deactivate{" "}
+                <span className="font-semibold text-gray-800">
+                  {employeeToDelete.fullName}
+                </span>
+                ? This will mark them as soft-deleted. You can restore them anytime.
+              </p>
+            </div>
+            <div className="flex gap-3 pt-2">
               <button
+                type="button"
+                disabled={isActionLoading}
                 onClick={() => {
                   setIsDeleteModalOpen(false);
                   setEmployeeToDelete(null);
                 }}
-                className="flex-1 py-2.5 rounded-full border-2 border-gray-200 text-gray-600 font-semibold hover:bg-gray-50 transition-colors text-sm"
+                className="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-600 font-semibold hover:bg-gray-50 transition-colors text-xs cursor-pointer"
               >
                 Cancel
               </button>
               <button
-                onClick={confirmDelete}
-                className="flex-1 py-2.5 rounded-full bg-rose-600 text-white font-semibold hover:bg-rose-700 transition-colors shadow-sm text-sm"
+                type="button"
+                disabled={isActionLoading}
+                onClick={confirmDeactivate}
+                className="flex-1 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-semibold transition-colors shadow-sm text-xs cursor-pointer flex items-center justify-center gap-1.5"
               >
-                Deactivate
+                {isActionLoading ? (
+                  <>
+                    <Loader2 size={13} className="animate-spin" />
+                    <span>Deactivating...</span>
+                  </>
+                ) : (
+                  <span>Deactivate Staff</span>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 2. Restore Soft-Deleted Employee Modal */}
+      {isRestoreModalOpen && employeeToRestore && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4 transition-opacity animate-in fade-in">
+          <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl p-6 text-center space-y-4">
+            <div className="w-14 h-14 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mx-auto border border-emerald-100">
+              <RotateCcw size={26} />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-gray-900">
+                Restore Employee
+              </h3>
+              <p className="text-gray-500 text-xs mt-1 leading-relaxed">
+                Restore and reactivate{" "}
+                <span className="font-semibold text-gray-800">
+                  {employeeToRestore.fullName}
+                </span>
+                ? Their status will be set to Active and access will be re-enabled.
+              </p>
+            </div>
+            <div className="flex gap-3 pt-2">
+              <button
+                type="button"
+                disabled={isActionLoading}
+                onClick={() => {
+                  setIsRestoreModalOpen(false);
+                  setEmployeeToRestore(null);
+                }}
+                className="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-600 font-semibold hover:bg-gray-50 transition-colors text-xs cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={isActionLoading}
+                onClick={confirmRestore}
+                className="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold transition-colors shadow-sm text-xs cursor-pointer flex items-center justify-center gap-1.5"
+              >
+                {isActionLoading ? (
+                  <>
+                    <Loader2 size={13} className="animate-spin" />
+                    <span>Restoring...</span>
+                  </>
+                ) : (
+                  <span>Restore Staff</span>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 3. Permanent Hard Delete Modal */}
+      {isPermanentDeleteModalOpen && employeeToPermanentDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4 transition-opacity animate-in fade-in">
+          <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl p-6 text-center space-y-4">
+            <div className="w-14 h-14 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mx-auto border border-rose-200">
+              <ShieldAlert size={28} />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-gray-900">
+                Permanently Delete Employee
+              </h3>
+              <p className="text-rose-600 text-xs mt-1 font-semibold leading-relaxed">
+                CAUTION: This hard delete action cannot be undone!
+              </p>
+              <p className="text-gray-500 text-xs mt-1 leading-relaxed">
+                All records, attendance logs, and account linkages for{" "}
+                <span className="font-semibold text-gray-800">
+                  {employeeToPermanentDelete.fullName}
+                </span>{" "}
+                will be permanently wiped from the database.
+              </p>
+            </div>
+            <div className="flex gap-3 pt-2">
+              <button
+                type="button"
+                disabled={isActionLoading}
+                onClick={() => {
+                  setIsPermanentDeleteModalOpen(false);
+                  setEmployeeToPermanentDelete(null);
+                }}
+                className="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-600 font-semibold hover:bg-gray-50 transition-colors text-xs cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={isActionLoading}
+                onClick={confirmPermanentDelete}
+                className="flex-1 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-semibold transition-colors shadow-sm text-xs cursor-pointer flex items-center justify-center gap-1.5"
+              >
+                {isActionLoading ? (
+                  <>
+                    <Loader2 size={13} className="animate-spin" />
+                    <span>Deleting...</span>
+                  </>
+                ) : (
+                  <span>Hard Delete</span>
+                )}
               </button>
             </div>
           </div>

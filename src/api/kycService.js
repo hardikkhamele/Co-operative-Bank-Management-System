@@ -1,8 +1,8 @@
 import axios from 'axios';
 import useAuthStore from '../store/authStore';
 
-// Dedicated KYC API URL configured via env
-let kycBaseUrl = import.meta.env.VITE_KYC_API_URL || 'http://devapi.advitacredit.com';
+// Dedicated KYC API URL configured via env (Shared for CIBIL & KYC, defaults to Development http://devapi.advitacredit.com)
+let kycBaseUrl = import.meta.env.VITE_VERIFICATION_API_URL || import.meta.env.VITE_KYC_API_URL || import.meta.env.VITE_CIBIL_API_URL || 'http://devapi.advitacredit.com';
 if (!kycBaseUrl.match(/\/api\/?$/)) {
   kycBaseUrl = kycBaseUrl.endsWith('/') ? `${kycBaseUrl}api` : `${kycBaseUrl}/api`;
 }

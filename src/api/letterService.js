@@ -92,6 +92,22 @@ export const letterService = {
     return await postLetterRequest('/v1/society/employees/hr/letters/termination', data, options);
   },
 
+  // 9. Employee Letter History Logs API
+  // GET /api/v1/society/employees/hr/letters/history (or /api/v1/society/employees/hr/letter-history)
+  getHistory: async (params = {}) => {
+    try {
+      const response = await axiosInstance.get('/v1/society/employees/hr/letters/history', { params });
+      return response.data;
+    } catch (err) {
+      if (err.response?.status === 404) {
+        // Fallback to alternative endpoint path if first returns 404
+        const fallbackRes = await axiosInstance.get('/v1/society/employees/hr/letter-history', { params });
+        return fallbackRes.data;
+      }
+      throw err;
+    }
+  },
+
   // Unified Dispatcher Method
   generate: async (payload, options = {}) => {
     const { letterType, ...data } = payload;
