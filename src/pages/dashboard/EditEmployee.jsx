@@ -324,7 +324,7 @@ const EditEmployee = () => {
 
       case 'roleId':
         if (!value) {
-          errorMsg = 'Department (Role) is required.';
+          errorMsg = 'Role is required.';
         }
         break;
 
@@ -796,14 +796,14 @@ const EditEmployee = () => {
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-800 mb-2">
-                  Department <span className="text-rose-500">*</span>
+                  Role <span className="text-rose-500">*</span>
                 </label>
                 <select 
                   value={jobDetails.roleId} 
                   onChange={e => setJobDetails({...jobDetails, roleId: e.target.value})}
                   className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-sm"
                 >
-                  <option value="">Select Department</option>
+                  <option value="">Select Role</option>
                   {roles.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
                 </select>
               </div>

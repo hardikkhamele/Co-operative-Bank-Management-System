@@ -272,7 +272,7 @@ const CreateEmployee = () => {
 
       case 'roleId':
         if (!value) {
-          errorMsg = 'Department (Role) is required.';
+          errorMsg = 'Role is required.';
         }
         break;
 
@@ -360,7 +360,7 @@ const CreateEmployee = () => {
     }
     if (!jobDetails.roleId) {
       setActiveTab('Job Details');
-      toast.error("Please select a Department / Role.");
+      toast.error("Please select a Role.");
       return;
     }
 
@@ -727,7 +727,7 @@ const CreateEmployee = () => {
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-800 mb-2">
-                  Department <span className="text-rose-500">*</span>
+                  Role <span className="text-rose-500">*</span>
                 </label>
                 <select 
                   value={jobDetails.roleId} 
@@ -746,7 +746,7 @@ const CreateEmployee = () => {
                       : 'border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091]'
                   }`}
                 >
-                  <option value="">Select Department</option>
+                  <option value="">Select Role</option>
                   {roles.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
                 </select>
                 {errors.roleId && (
