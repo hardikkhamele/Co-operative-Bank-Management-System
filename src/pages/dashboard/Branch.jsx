@@ -5,10 +5,49 @@ import { Link } from 'react-router-dom';
 import CardCreditSettingsModal from '../../components/modals/CardCreditSettingsModal';
 import { branchService } from '../../api/branchService';
 import PageHeader from '../../components/common/PageHeader';
+import SearchableSelect from '../../components/common/SearchableSelect';
 import { validateEmail, validatePhone, validatePassword, validatePincode, sanitizeDigits, preventInvalidNumberKeys } from '../../utils/validation';
 
-const Branch = () => {
+const INDIAN_STATES_WITH_CITIES = {
+  "Andhra Pradesh": ["Visakhapatnam", "Vijayawada", "Guntur", "Nellore", "Kurnool", "Rajahmundry", "Tirupati", "Kadapa", "Kakinada", "Anantapur"],
+  "Arunachal Pradesh": ["Itanagar", "Naharlagun", "Pasighat", "Tawang", "Ziro"],
+  "Assam": ["Guwahati", "Silchar", "Dibrugarh", "Jorhat", "Nagaon", "Tinsukia", "Tezpur"],
+  "Bihar": ["Patna", "Gaya", "Bhagalpur", "Muzaffarpur", "Purnia", "Darbhanga", "Bihar Sharif", "Arrah", "Begusarai", "Katihar"],
+  "Chandigarh": ["Chandigarh"],
+  "Chhattisgarh": ["Raipur", "Bhilai", "Bilaspur", "Korba", "Rajnandgaon", "Durg", "Jagdalpur", "Ambikapur"],
+  "Dadra and Nagar Haveli and Daman and Diu": ["Daman", "Diu", "Silvassa"],
+  "Delhi": ["New Delhi", "North Delhi", "South Delhi", "East Delhi", "West Delhi", "Central Delhi", "Dwarka", "Rohini"],
+  "Goa": ["Panaji", "Margao", "Vasco da Gama", "Mapusa", "Ponda"],
+  "Gujarat": ["Ahmedabad", "Surat", "Vadodara", "Rajkot", "Bhavnagar", "Jamnagar", "Junagadh", "Gandhinagar", "Anand", "Navsari", "Morbi", "Bharuch"],
+  "Haryana": ["Gurugram", "Faridabad", "Panipat", "Ambala", "Yamunanagar", "Rohtak", "Hisar", "Karnal", "Sonipat", "Panchkula"],
+  "Himachal Pradesh": ["Shimla", "Dharamshala", "Mandi", "Solan", "Kullu", "Manali", "Baddi"],
+  "Jammu and Kashmir": ["Srinagar", "Jammu", "Anantnag", "Baramulla", "Udhampur", "Kathua"],
+  "Jharkhand": ["Ranchi", "Jamshedpur", "Dhanbad", "Bokaro Steel City", "Deoghar", "Hazaribagh", "Giridih"],
+  "Karnataka": ["Bengaluru", "Mysuru", "Hubballi", "Dharwad", "Mangaluru", "Belagavi", "Davangere", "Ballari", "Kalaburagi", "Shivamogga", "Tumakuru", "Udupi"],
+  "Kerala": ["Thiruvananthapuram", "Kochi", "Kozhikode", "Kollam", "Thrissur", "Kannur", "Alappuzha", "Palakkad", "Kottayam", "Malappuram"],
+  "Ladakh": ["Leh", "Kargil"],
+  "Madhya Pradesh": ["Indore", "Bhopal", "Jabalpur", "Gwalior", "Ujjain", "Sagar", "Dewas", "Satna", "Ratlam", "Rewa"],
+  "Maharashtra": ["Mumbai", "Pune", "Nagpur", "Thane", "Nashik", "Aurangabad", "Solapur", "Amravati", "Kolhapur", "Navi Mumbai", "Akola", "Latur", "Dhule", "Ahmednagar", "Chandrapur", "Parbhani", "Jalgaon", "Nanded", "Satara", "Sangli"],
+  "Manipur": ["Imphal", "Churachandpur", "Thoubal"],
+  "Meghalaya": ["Shillong", "Tura", "Jowai"],
+  "Mizoram": ["Aizawl", "Lunglei", "Champhai"],
+  "Nagaland": ["Kohima", "Dimapur", "Mokokchung"],
+  "Odisha": ["Bhubaneswar", "Cuttack", "Rourkela", "Berhampur", "Sambalpur", "Puri", "Balasore", "Bhadrak", "Baripada"],
+  "Puducherry": ["Puducherry", "Karaikal", "Mahe", "Yanam"],
+  "Punjab": ["Ludhiana", "Amritsar", "Jalandhar", "Patiala", "Bathinda", "Mohali", "Pathankot", "Hoshiarpur", "Batala"],
+  "Rajasthan": ["Jaipur", "Jodhpur", "Kota", "Bikaner", "Ajmer", "Udaipur", "Bhilwara", "Alwar", "Bharatpur", "Sikar", "Pali", "Sri Ganganagar"],
+  "Sikkim": ["Gangtok", "Namchi", "Gyalshing"],
+  "Tamil Nadu": ["Chennai", "Coimbatore", "Madurai", "Tiruchirappalli", "Salem", "Tirunelveli", "Tiruppur", "Vellore", "Erode", "Thoothukudi", "Dindigul", "Thanjavur"],
+  "Telangana": ["Hyderabad", "Warangal", "Nizamabad", "Karimnagar", "Ramagundam", "Khammam", "Mahbubnagar", "Nalgonda", "Adilabad"],
+  "Tripura": ["Agartala", "Udaipur", "Dharmanagar"],
+  "Uttar Pradesh": ["Lucknow", "Kanpur", "Varanasi", "Agra", "Noida", "Greater Noida", "Ghaziabad", "Prayagraj", "Meerut", "Bareilly", "Aligarh", "Moradabad", "Saharanpur", "Gorakhpur", "Jhansi", "Mathura", "Ayodhya"],
+  "Uttarakhand": ["Dehradun", "Haridwar", "Roorkee", "Haldwani", "Rishikesh", "Nainital", "Rudrapur"],
+  "West Bengal": ["Kolkata", "Howrah", "Siliguri", "Durgapur", "Asansol", "Bardhaman", "Kharagpur", "Malda", "Baharampur", "Habra"]
+};
 
+const ALL_INDIAN_STATES = Object.keys(INDIAN_STATES_WITH_CITIES).sort((a, b) => a.localeCompare(b));
+
+const Branch = () => {
   const [branches, setBranches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -30,6 +69,41 @@ const Branch = () => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isCardCreditModalOpen, setIsCardCreditModalOpen] = useState(false);
   const [selectedBranch, setSelectedBranch] = useState(null);
+
+  // Locations Data (State and City mapping)
+  const [locationsData, setLocationsData] = useState({
+    states: ALL_INDIAN_STATES,
+    stateCitiesMap: {}
+  });
+
+  useEffect(() => {
+    const fetchLocations = async () => {
+      try {
+        const res = await branchService.getAvailableLocations();
+        const data = res?.data || res || {};
+        const apiStates = Array.isArray(data?.states) ? data.states : (Array.isArray(data?.availableStates) ? data.availableStates : []);
+        const rawMap = data?.stateCitiesMap || data?.stateCityMap || {};
+        const stateCityMap = (typeof rawMap === 'object' && rawMap !== null) ? rawMap : {};
+        const combinedStates = Array.from(new Set([...apiStates, ...ALL_INDIAN_STATES])).sort((a, b) => a.localeCompare(b));
+        setLocationsData({ 
+          states: combinedStates.length > 0 ? combinedStates : ALL_INDIAN_STATES, 
+          stateCitiesMap: stateCityMap 
+        });
+      } catch (err) {
+        console.warn("Failed to fetch available locations for branches:", err);
+        setLocationsData({ states: ALL_INDIAN_STATES, stateCitiesMap: {} });
+      }
+    };
+    fetchLocations();
+  }, []);
+
+  // Helper to get all cities for selected state (combining dictionary and API)
+  const getCitiesForState = (stateName) => {
+    if (!stateName) return [];
+    const fromDictionary = INDIAN_STATES_WITH_CITIES[stateName] || [];
+    const fromApi = (locationsData?.stateCitiesMap && locationsData.stateCitiesMap[stateName]) || [];
+    return Array.from(new Set([...fromDictionary, ...fromApi])).sort((a, b) => a.localeCompare(b));
+  };
   
   // Create Modal State
   const [createStep, setCreateStep] = useState(1);
@@ -53,7 +127,7 @@ const Branch = () => {
     try {
       const params = { page, limit: 10 };
       if (debouncedSearch) params.search = debouncedSearch;
-      if (activeFilters.length > 0) params.state = activeFilters.join(','); // Assuming backend supports comma-separated or we just send the first
+      if (activeFilters.length > 0) params.state = activeFilters.join(',');
       
       const response = await branchService.list(params);
       if (response.success) {
@@ -462,30 +536,32 @@ const Branch = () => {
                       className="w-full px-4 py-3 rounded-xl border border-gray-200 flex justify-between items-center cursor-pointer bg-white"
                       onClick={() => setOpenFilterDropdown(openFilterDropdown === 'state' ? null : 'state')}
                     >
-                      <span className="text-gray-500 text-[14px] font-medium">State/UT</span>
+                      <span className="text-gray-600 text-[14px] font-medium">
+                        {filterState.length > 0 ? `${filterState.length} State${filterState.length > 1 ? 's' : ''} Selected` : "State/UT"}
+                      </span>
                       <ChevronDown size={18} className={`text-gray-400 transition-transform ${openFilterDropdown === 'state' ? 'rotate-180' : ''}`} />
                     </div>
                     {openFilterDropdown === 'state' && (
-                      <div className="absolute z-30 bottom-full mb-2 left-0 w-full bg-white border border-gray-200 rounded-xl shadow-lg py-3 flex flex-col gap-2 max-h-60 overflow-y-auto">
-                        {['Maharashtra', 'Delhi', 'Karnataka', 'Rajasthan', 'Gujarat'].map(opt => (
+                      <div className="mt-2 w-full bg-white border border-gray-200 rounded-xl shadow-sm py-2 flex flex-col gap-1 max-h-52 overflow-y-auto">
+                        {(locationsData?.states || ALL_INDIAN_STATES).map(opt => (
                           <label 
                             key={opt} 
-                            className="flex items-center gap-3 px-4 py-1.5 hover:bg-gray-50 cursor-pointer"
+                            className="flex items-center gap-3 px-3 py-1.5 hover:bg-gray-50 cursor-pointer"
                           >
                             <div className="relative flex items-center justify-center">
                               <input 
                                 type="checkbox" 
-                                className="w-5 h-5 rounded-[4px] border-2 border-gray-400 appearance-none checked:bg-[#225091] checked:border-[#225091] transition-colors cursor-pointer"
+                                className="w-4 h-4 rounded-[4px] border-2 border-gray-400 appearance-none checked:bg-[#225091] checked:border-[#225091] transition-colors cursor-pointer"
                                 checked={filterState.includes(opt)}
                                 onChange={() => toggleFilter(setFilterState, opt)}
                               />
                               {filterState.includes(opt) && (
-                                <svg className="absolute w-3.5 h-3.5 text-white pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                <svg className="absolute w-3 h-3 text-white pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                                   <polyline points="20 6 9 17 4 12"></polyline>
                                 </svg>
                               )}
                             </div>
-                            <span className="text-[15px] font-medium text-gray-700">{opt}</span>
+                            <span className="text-[13px] font-medium text-gray-700">{opt}</span>
                           </label>
                         ))}
                       </div>
@@ -682,36 +758,56 @@ const Branch = () => {
                     <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">Branch Manager Name *</label>
                     <input type="text" value={createForm.manager.fullName} onChange={e => handleCreateChange('manager', 'fullName', e.target.value)} placeholder="Manager Full Name" className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#225091] text-sm" />
                   </div>
-                  <div>
-                    <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">State/UT *</label>
-                    <select value={createForm.branch.state} onChange={e => handleCreateChange('branch', 'state', e.target.value)} className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#225091] text-sm bg-white">
-                      <option value="" disabled>Select State</option>
-                      <option value="Maharashtra">Maharashtra</option>
-                      <option value="Rajasthan">Rajasthan</option>
-                      <option value="Karnataka">Karnataka</option>
-                      <option value="Delhi">Delhi</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">Address Line 1</label>
-                    <input type="text" value={createForm.branch.addressLine1} onChange={e => handleCreateChange('branch', 'addressLine1', e.target.value)} placeholder="Address" className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#225091] text-sm" />
-                  </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">City</label>
-                      <input type="text" value={createForm.branch.city} onChange={e => handleCreateChange('branch', 'city', e.target.value)} placeholder="City" className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#225091] text-sm" />
-                    </div>
-                    <div>
-                      <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">Pincode</label>
-                      <input 
-                        type="text" 
-                        value={createForm.branch.pincode} 
-                        onChange={e => handleCreateChange('branch', 'pincode', sanitizeDigits(e.target.value, 6))} 
-                        placeholder="6-digit Pincode" 
-                        maxLength={6}
-                        className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#225091] text-sm" 
+                      <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">State/UT *</label>
+                      <SearchableSelect
+                        value={createForm.branch.state}
+                        onChange={(newState) => {
+                          handleCreateChange('branch', 'state', newState);
+                          const cities = getCitiesForState(newState);
+                          if (createForm.branch.city && !cities.includes(createForm.branch.city)) {
+                            handleCreateChange('branch', 'city', '');
+                          }
+                        }}
+                        options={locationsData?.states || ALL_INDIAN_STATES}
+                        placeholder="Select State"
+                        searchPlaceholder="Search state..."
                       />
                     </div>
+                    <div>
+                      <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">City</label>
+                      <SearchableSelect
+                        value={createForm.branch.city}
+                        onChange={(newCity) => handleCreateChange('branch', 'city', newCity)}
+                        options={getCitiesForState(createForm.branch.state)}
+                        placeholder="Select City"
+                        disabledPlaceholder="Select State First"
+                        disabled={!createForm.branch.state}
+                        searchPlaceholder="Search city..."
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">Address</label>
+                    <input 
+                      type="text" 
+                      value={createForm.branch.addressLine1} 
+                      onChange={e => handleCreateChange('branch', 'addressLine1', e.target.value)} 
+                      placeholder="Address Line 1" 
+                      className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#225091] text-sm" 
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">Pincode</label>
+                    <input 
+                      type="text" 
+                      value={createForm.branch.pincode} 
+                      onChange={e => handleCreateChange('branch', 'pincode', sanitizeDigits(e.target.value, 6))} 
+                      placeholder="6-digit Pincode" 
+                      maxLength={6}
+                      className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#225091] text-sm" 
+                    />
                   </div>
                 </div>
               ) : (
@@ -845,29 +941,69 @@ const Branch = () => {
                       className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#225091] text-sm" 
                     />
                   </div>
-                  <div>
-                    <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">State/UT</label>
-                    <select value={selectedBranch.state || ''} onChange={(e) => setSelectedBranch({...selectedBranch, state: e.target.value})} className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#225091] text-sm bg-white">
-                      <option value="" disabled>Select State</option>
-                      <option value="Maharashtra">Maharashtra</option>
-                      <option value="Rajasthan">Rajasthan</option>
-                      <option value="Karnataka">Karnataka</option>
-                      <option value="Delhi">Delhi</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">Address Line 1</label>
-                    <input type="text" value={selectedBranch.address?.addressLine1 || ''} onChange={(e) => setSelectedBranch({...selectedBranch, address: { ...selectedBranch.address, addressLine1: e.target.value }})} placeholder="Address" className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#225091] text-sm" />
-                  </div>
+                  {/* State/UT and City */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">City</label>
-                      <input type="text" value={selectedBranch.address?.city || ''} onChange={(e) => setSelectedBranch({...selectedBranch, address: { ...selectedBranch.address, city: e.target.value }})} className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#225091] text-sm" />
+                      <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">State/UT</label>
+                      <SearchableSelect
+                        value={selectedBranch.state || ''}
+                        onChange={(newState) => {
+                          const cities = getCitiesForState(newState);
+                          const currentCity = selectedBranch.address?.city;
+                          setSelectedBranch({
+                            ...selectedBranch, 
+                            state: newState,
+                            address: { 
+                              ...(selectedBranch.address || {}), 
+                              state: newState,
+                              city: (currentCity && !cities.includes(currentCity)) ? '' : currentCity
+                            }
+                          });
+                        }}
+                        options={locationsData?.states || ALL_INDIAN_STATES}
+                        placeholder="Select State"
+                        searchPlaceholder="Search state..."
+                      />
                     </div>
                     <div>
-                      <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">Pincode</label>
-                      <input type="text" value={selectedBranch.address?.pincode || ''} onChange={(e) => setSelectedBranch({...selectedBranch, address: { ...selectedBranch.address, pincode: e.target.value }})} className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#225091] text-sm" />
+                      <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">City</label>
+                      <SearchableSelect
+                        value={selectedBranch.address?.city || ''}
+                        onChange={(newCity) => setSelectedBranch({
+                          ...selectedBranch,
+                          address: { ...(selectedBranch.address || {}), city: newCity }
+                        })}
+                        options={getCitiesForState(selectedBranch.state)}
+                        placeholder="Select City"
+                        disabledPlaceholder="Select State First"
+                        disabled={!selectedBranch.state}
+                        searchPlaceholder="Search city..."
+                      />
                     </div>
+                  </div>
+                  <div>
+                    <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">Address</label>
+                    <input 
+                      type="text" 
+                      value={selectedBranch.address?.addressLine1 || ''} 
+                      onChange={(e) => setSelectedBranch({...selectedBranch, address: { ...(selectedBranch.address || {}), addressLine1: e.target.value }})} 
+                      placeholder="Address Line 1" 
+                      className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#225091] text-sm" 
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">Pincode</label>
+                    <input 
+                      type="text" 
+                      value={selectedBranch.address?.pincode || ''} 
+                      onChange={(e) => setSelectedBranch({
+                        ...selectedBranch, 
+                        address: { ...(selectedBranch.address || {}), pincode: sanitizeDigits(e.target.value, 6) }
+                      })} 
+                      placeholder="6-digit Pincode"
+                      maxLength={6}
+                      className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#225091] text-sm" 
+                    />
                   </div>
                 </>
               ) : (

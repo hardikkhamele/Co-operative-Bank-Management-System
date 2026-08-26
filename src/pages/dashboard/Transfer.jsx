@@ -1222,43 +1222,19 @@ const Transfer = () => {
                 />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">
-                    Receipt Date <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="date"
-                    required
-                    value={createForm.date}
-                    onChange={(e) =>
-                      setCreateForm({ ...createForm, date: e.target.value })
-                    }
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all bg-white text-[15px] text-gray-800"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">
-                    Initial Status
-                  </label>
-                  <div className="relative">
-                    <select
-                      value={createForm.status}
-                      onChange={(e) =>
-                        setCreateForm({ ...createForm, status: e.target.value })
-                      }
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all bg-white appearance-none text-[15px] text-gray-800 font-medium"
-                    >
-                      <option value="NEW">NEW</option>
-                      <option value="APPROVED">APPROVED</option>
-                      <option value="REJECTED">REJECTED</option>
-                    </select>
-                    <ChevronDown
-                      size={18}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
-                    />
-                  </div>
-                </div>
+              <div>
+                <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">
+                  Receipt Date <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="date"
+                  required
+                  value={createForm.date}
+                  onChange={(e) =>
+                    setCreateForm({ ...createForm, date: e.target.value })
+                  }
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all bg-white text-[15px] text-gray-800"
+                />
               </div>
 
               <div>

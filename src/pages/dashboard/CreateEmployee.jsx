@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { toast } from 'react-toastify';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, ChevronRight, Camera, Calendar, ChevronDown, Eye, EyeOff, Check, Search, AlertCircle, Shield, Clock, CalendarDays, Award } from 'lucide-react';
+import { ArrowLeft, ChevronRight, Camera, Calendar, ChevronDown, Eye, EyeOff, Check, Search, AlertCircle, Shield, Clock, CalendarDays, Award, Trash2, Plus } from 'lucide-react';
 import { employeeService } from '../../api/employeeService';
 import { branchService } from '../../api/branchService';
 import { roleService } from '../../api/roleService';
@@ -205,9 +205,7 @@ const CreateEmployee = () => {
   const [kraSettings, setKraSettings] = useState({
     year: new Date().getFullYear(),
     targets: [
-      { product: 'Fixed Deposit', targetValue: 2400000 }, 
-      { product: 'Loan Disbursement', targetValue: 2400000 }, 
-      { product: 'Savings Account', targetValue: 1200 }
+      { product: '', targetValue: '' }
     ]
   });
 
@@ -757,12 +755,7 @@ const CreateEmployee = () => {
                   </p>
                 )}
               </div>
-              <div>
-                <label className="block text-sm font-semibold text-gray-800 mb-2">
-                  Designation
-                </label>
-                <input type="text" value={jobDetails.designation} onChange={e => setJobDetails({...jobDetails, designation: e.target.value})} placeholder="e.g. Field Officer, Cashier" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-sm" />
-              </div>
+
               <div>
                 <label className="block text-sm font-semibold text-gray-800 mb-2">
                   State
@@ -1016,8 +1009,8 @@ const CreateEmployee = () => {
               
               <div className="flex flex-col gap-5">
                 {kraSettings.targets.map((target, index) => (
-                  <div key={index} className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end bg-gray-50/60 p-4 rounded-xl border border-gray-100">
-                    <div>
+                  <div key={index} className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end bg-gray-50/60 p-4 rounded-xl border border-gray-100">
+                    <div className={kraSettings.targets.length > 1 ? "md:col-span-6" : "md:col-span-6"}>
                       <label className="block text-xs font-semibold text-gray-700 mb-1.5">Product (Optional)</label>
                       <select 
                         value={target.product} 
@@ -1031,11 +1024,13 @@ const CreateEmployee = () => {
                         <option value="">Select Product</option>
                         <option value="Fixed Deposit">Fixed Deposit</option>
                         <option value="Loan Disbursement">Loan Disbursement</option>
+                        <option value="Recurring Deposit">Recurring Deposit</option>
                         <option value="Savings Account">Savings Account</option>
                         <option value="Current Account">Current Account</option>
+                        <option value="Insurance Policy">Insurance Policy</option>
                       </select>
                     </div>
-                    <div>
+                    <div className={kraSettings.targets.length > 1 ? "md:col-span-5" : "md:col-span-6"}>
                       <label className="block text-xs font-semibold text-gray-700 mb-1.5">Target Value (Optional)</label>
                       <input 
                         type="number" 
@@ -1050,16 +1045,31 @@ const CreateEmployee = () => {
                         className="w-full px-3.5 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-sm" 
                       />
                     </div>
+                    {kraSettings.targets.length > 1 && (
+                      <div className="md:col-span-1 flex items-end justify-center">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newTargets = kraSettings.targets.filter((_, i) => i !== index);
+                            setKraSettings({...kraSettings, targets: newTargets});
+                          }}
+                          className="p-2.5 rounded-lg text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                          title="Remove target"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </div>
+                    )}
                   </div>
                 ))}
                 
-                <div className="flex justify-end mt-1">
+                <div className="flex justify-start pt-1">
                   <button 
                     type="button" 
-                    onClick={() => setKraSettings({...kraSettings, targets: [...kraSettings.targets, { product: '', targetValue: 0 }]})} 
-                    className="text-[#225091] font-semibold text-xs hover:underline flex items-center gap-1 cursor-pointer bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-100"
+                    onClick={() => setKraSettings({...kraSettings, targets: [...kraSettings.targets, { product: '', targetValue: '' }]})} 
+                    className="text-[#225091] font-semibold text-xs hover:underline flex items-center gap-1.5 cursor-pointer bg-blue-50 px-3.5 py-2 rounded-lg border border-blue-100 hover:bg-blue-100 transition-colors"
                   >
-                    <span>+</span> Add Target
+                    <Plus size={15} /> Add Target
                   </button>
                 </div>
               </div>

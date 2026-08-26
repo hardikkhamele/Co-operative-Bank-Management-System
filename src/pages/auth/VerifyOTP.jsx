@@ -85,7 +85,7 @@ const VerifyOTP = () => {
 
   return (
     <AuthLayout 
-      welcomeHeading={"WELCOME TO\nADVITA COOPERATIVE & BRANCH"}
+      welcomeHeading={"WELCOME TO\nADVITA CO-OPERATIVE & BRANCH"}
       illustration={<img src={otpIllustration} alt="Verify OTP Illustration" className="w-full h-auto object-contain drop-shadow-xl" />}
     >
       {/* Top Logo Badge inside Card */}

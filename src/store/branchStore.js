@@ -4,14 +4,18 @@ import { branchService } from '../api/branchService';
 
 const useBranchStore = create(
   persist(
-    (set) => ({
+    (set, get) => ({
       globalBranchId: '',
       branchOptions: [],
       isLoading: false,
+      hasFetched: false,
       
       setGlobalBranchId: (id) => set({ globalBranchId: id }),
       
-      fetchBranches: async () => {
+      fetchBranches: async (force = false) => {
+        if (get().isLoading) return;
+        if (get().hasFetched && !force) return;
+
         set({ isLoading: true });
         try {
           let list = [];
@@ -33,10 +37,10 @@ const useBranchStore = create(
             }
           }
 
-          set({ branchOptions: list, isLoading: false });
+          set({ branchOptions: list, isLoading: false, hasFetched: true });
         } catch (error) {
           console.error("Failed to fetch branches for global store", error);
-          set({ isLoading: false });
+          set({ isLoading: false, hasFetched: true });
         }
       }
     }),

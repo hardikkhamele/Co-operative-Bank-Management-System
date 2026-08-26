@@ -121,10 +121,8 @@ const Employees = () => {
 
   // Load branch list if not already available
   useEffect(() => {
-    if (!branchOptions || branchOptions.length === 0) {
-      fetchBranches();
-    }
-  }, [branchOptions, fetchBranches]);
+    fetchBranches();
+  }, [fetchBranches]);
 
   // Fetch Available Cities & States from Backend API
   useEffect(() => {
@@ -476,8 +474,8 @@ const Employees = () => {
         </Link>
       </PageHeader>
 
-      {/* Top Stats Cards Grid (5 Cards: Total, Active, Inactive, Managers, Soft-Deleted) */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3.5">
+      {/* Top Stats Cards Grid (4 Cards: Total, Active, Managers, Soft-Deleted) */}
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-3.5">
         {/* 1. Total Staff Card */}
         <div
           onClick={() => {
@@ -524,30 +522,6 @@ const Employees = () => {
           </div>
           <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider text-center">
             Active Staff
-          </span>
-        </div>
-
-        {/* 3. Inactive Staff Card */}
-        <div
-          onClick={() => {
-            setActiveStatCard(activeStatCard === "INACTIVE" ? "ALL" : "INACTIVE");
-            setSelectedStatus("");
-            setPage(1);
-          }}
-          className={`bg-white rounded-xl p-4 border shadow-xs flex flex-col items-center justify-center cursor-pointer transition-all hover:shadow-md ${
-            activeStatCard === "INACTIVE"
-              ? "border-amber-500 ring-2 ring-amber-500/10 bg-amber-50/20"
-              : "border-gray-100 hover:border-gray-200"
-          }`}
-        >
-          <div className="flex items-center gap-2 text-amber-600 mb-1">
-            <UserX size={18} />
-            <span className="text-[24px] font-bold leading-none">
-              {overviewStats.inactive}
-            </span>
-          </div>
-          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider text-center">
-            Inactive Staff
           </span>
         </div>
 

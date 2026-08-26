@@ -288,9 +288,11 @@ function App() {
               </Route>
 
               {/* Coming Soon */}
-              <Route path="upi-autopay" element={<ComingSoon />} />
-              <Route path="whatsapp-banking" element={<ComingSoon />} />
-              <Route path="biomatrix-integration" element={<ComingSoon />} />
+              <Route path="geo-tagging" element={<ComingSoon featureName="Geo Tagging" />} />
+              <Route path="jio-tagging" element={<Navigate to="/geo-tagging" replace />} />
+              <Route path="upi-autopay" element={<ComingSoon featureName="UPI Autopay" />} />
+              <Route path="whatsapp-banking" element={<ComingSoon featureName="WhatsApp Banking" />} />
+              <Route path="biomatrix-integration" element={<ComingSoon featureName="Biomatrix Integration" />} />
               <Route path="coming-soon" element={<ComingSoon />} />
             </Route>
           </Route>

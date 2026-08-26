@@ -1,6 +1,6 @@
 import React from 'react';
 
-const AuthLayout = ({ children, illustration, welcomeHeading = "WELCOME TO\nADVITA COOPERATIVE & BRANCH" }) => {
+const AuthLayout = ({ children, illustration, welcomeHeading = "WELCOME TO\nADVITA CO-OPERATIVE & BRANCH" }) => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#1b4e8c] via-[#174378] to-[#133866] flex items-center justify-center p-4 sm:p-6 lg:p-10 font-sans antialiased select-none">
       <div className="w-full max-w-6xl flex flex-col lg:flex-row items-center justify-between gap-10 lg:gap-16">
@@ -55,7 +55,7 @@ const AuthLayout = ({ children, illustration, welcomeHeading = "WELCOME TO\nADVI
               <span className="text-[4px] font-black text-[#1b58a6] tracking-tight mt-0.5">ADVITA</span>
             </div>
             <h1 className="text-white text-lg sm:text-xl font-black tracking-wider uppercase text-left leading-tight">
-              ADVITA COOPERATIVE<br />& BRANCH
+              ADVITA CO-OPERATIVE<br />& BRANCH
             </h1>
           </div>
           <div className="w-24 h-[3px] bg-[#ef3b3a] rounded-full mt-2.5"></div>

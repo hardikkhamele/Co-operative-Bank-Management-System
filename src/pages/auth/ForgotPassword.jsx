@@ -33,7 +33,7 @@ const ForgotPassword = () => {
 
   return (
     <AuthLayout 
-      welcomeHeading={"WELCOME TO\nADVITA COOPERATIVE & BRANCH"}
+      welcomeHeading={"WELCOME TO\nADVITA CO-OPERATIVE & BRANCH"}
       illustration={<img src={forgotIllustration} alt="Forgot Password Illustration" className="w-full h-auto object-contain drop-shadow-xl" />}
     >
       {/* Top Logo Badge inside Card */}

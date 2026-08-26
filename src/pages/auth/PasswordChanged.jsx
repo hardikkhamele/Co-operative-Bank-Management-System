@@ -5,7 +5,7 @@ import AuthLayout from '../../components/layouts/AuthLayout';
 
 const PasswordChanged = () => {
   return (
-    <AuthLayout welcomeHeading={"WELCOME TO\nADVITA COOPERATIVE & BRANCH"}>
+    <AuthLayout welcomeHeading={"WELCOME TO\nADVITA CO-OPERATIVE & BRANCH"}>
       {/* Top Logo Badge inside Card */}
       <div className="flex flex-col items-center text-center mb-6">
         <div className="bg-white rounded-[16px] shadow-sm border border-gray-100 p-2 flex flex-col items-center justify-center shrink-0 w-[54px] h-[54px] mb-3.5">

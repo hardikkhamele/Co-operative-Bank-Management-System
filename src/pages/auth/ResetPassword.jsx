@@ -71,7 +71,7 @@ const ResetPassword = () => {
   return (
     <>
       <AuthLayout 
-        welcomeHeading={"WELCOME TO\nADVITA COOPERATIVE & BRANCH"}
+        welcomeHeading={"WELCOME TO\nADVITA CO-OPERATIVE & BRANCH"}
         illustration={<img src={resetIllustration} alt="Reset Password Illustration" className="w-full h-auto object-contain drop-shadow-xl" />}
       >
         {/* Top Logo Badge inside Card */}

@@ -107,7 +107,7 @@ const DashboardLayout = () => {
   
   const hiddenRoutes = [
     '/credit', '/debit', '/transfer', '/contra', 
-    '/cash-payment', '/cards-credit', '/upi-autopay', 
+    '/cash-payment', '/cards-credit', '/geo-tagging', '/upi-autopay', 
     '/whatsapp-banking', '/biomatrix-integration', 
     '/roles-permissions', '/settings'
   ];
@@ -335,6 +335,12 @@ const DashboardLayout = () => {
 
           {showMore && (
             <>
+              <SidebarGroup title="Geo Tagging">
+                <NavLink to="/geo-tagging" className={subNavLinkClass}>
+                  <MapPin size={18} /> Geo Tagging
+                </NavLink>
+              </SidebarGroup>
+
               <SidebarGroup title="UPI Smart">
                 {hasAnyPermission(['upi_autopay.view', 'upi.view']) && (
                   <NavLink to="/upi-autopay" className={subNavLinkClass}>

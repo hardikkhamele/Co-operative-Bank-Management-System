@@ -108,6 +108,18 @@ export const letterService = {
     }
   },
 
+  // 10. Send / Resend MSG91 Email Notification for Employee Letters
+  // POST /api/v1/society/employees/hr/letters/send-email (or /:logId/send-email)
+  // Body: { logId, employeeId, documentTypeCode, customEmail, variables }
+  sendLetterEmail: async (payload = {}, logId = null) => {
+    const targetLogId = logId || payload.logId;
+    const url = targetLogId && String(targetLogId).length === 24
+      ? `/v1/society/employees/hr/letters/${targetLogId}/send-email`
+      : '/v1/society/employees/hr/letters/send-email';
+    const response = await axiosInstance.post(url, payload);
+    return response.data;
+  },
+
   // Unified Dispatcher Method
   generate: async (payload, options = {}) => {
     const { letterType, ...data } = payload;
@@ -133,6 +145,18 @@ export const letterService = {
       throw new Error(`Unsupported letter type: ${letterType}`);
     }
   },
+};
+
+export const DOCUMENT_TYPE_CODES = {
+  'Offer Letter': 'OFFER_LETTER',
+  'Confirmation Letter': 'CONFIRMATION_LETTER',
+  'Performance Letter': 'PERFORMANCE_LETTER',
+  'Performance Appraisal': 'PERFORMANCE_LETTER',
+  'Promotion Letter': 'PROMOTION_LETTER',
+  'Transfer Letter': 'TRANSFER_LETTER',
+  'Salary Slip': 'SALARY_SLIP',
+  'Salary Increment': 'INCREMENT_LETTER',
+  'Termination Letter': 'TERMINATION_LETTER',
 };
 
 export default letterService;

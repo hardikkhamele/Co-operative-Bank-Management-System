@@ -40,7 +40,7 @@ import {
 import PageHeader from '../../components/common/PageHeader';
 import { employeeService } from '../../api/employeeService';
 import { branchService } from '../../api/branchService';
-import { letterService } from '../../api/letterService';
+import { letterService, DOCUMENT_TYPE_CODES } from '../../api/letterService';
 
 const MONTHS_LIST = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -464,6 +464,11 @@ const LettersAndPayroll = () => {
   const [historyEmployeeFilter, setHistoryEmployeeFilter] = useState('');
   const [historyPage, setHistoryPage] = useState(1);
   const [viewingHistoryItem, setViewingHistoryItem] = useState(null);
+  const [autoSendEmail, setAutoSendEmail] = useState(false);
+  const [emailModalItem, setEmailModalItem] = useState(null);
+  const [emailModalAddress, setEmailModalAddress] = useState('');
+  const [sendingHistoryEmail, setSendingHistoryEmail] = useState(false);
+  const [sentHistoryIds, setSentHistoryIds] = useState([]);
   const historyLimit = 10;
 
   const [offerCandidateName, setOfferCandidateName] = useState('');
@@ -787,6 +792,7 @@ const LettersAndPayroll = () => {
       const newHistoryItem = {
         id: `HIST-${Date.now().toString().slice(-6)}`,
         letterType: selectedLetterType,
+        documentType: selectedLetterType,
         employeeName: empName,
         employeeEmail: empEmail,
         referenceNumber: finalRefNo,
@@ -796,8 +802,35 @@ const LettersAndPayroll = () => {
         fileUrl: finalFileUrl,
         sentStatus: false
       };
-      setHistoryList(prev => [newHistoryItem, ...prev]);
-      toast.success(`${selectedLetterType} generated successfully!`);
+      setHistoryLogs(prev => [newHistoryItem, ...prev]);
+      setHistoryTotalRecords(prev => prev + 1);
+
+      // Automatic download trigger upon generation
+      if (finalFileUrl) {
+        try {
+          const link = document.createElement('a');
+          link.href = finalFileUrl;
+          link.target = '_blank';
+          link.setAttribute('download', `${finalDocTitle || 'document'}.pdf`);
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        } catch (e) {
+          console.error('Auto download trigger error', e);
+        }
+      }
+
+      toast.success(
+        <div className="flex flex-col">
+          <span className="font-bold">{selectedLetterType} Generated & Downloaded!</span>
+          <span className="text-xs">PDF file automatically downloaded to your device.</span>
+        </div>,
+        { icon: <Download className="text-[#225091]" size={18} /> }
+      );
+
+      if (autoSendEmail) {
+        handleSendToEmployee(newHistoryItem);
+      }
     } catch (err) {
       toast.error(err.response?.data?.message || err.message || 'Failed to generate document.');
     } finally {
@@ -806,36 +839,104 @@ const LettersAndPayroll = () => {
   };
 
   const handleSendToEmployee = async (item = null) => {
-    const targetEmp = item ? { name: item.employeeName, email: item.employeeEmail } : currentEmployee;
-    const empName = targetEmp?.fullName || targetEmp?.name || 'Employee';
-    const empEmail = targetEmp?.email || 'registered email address';
+    const targetEmp = item ? { name: item.employeeName, email: item.employeeEmail, id: item.employeeId } : currentEmployee;
+    const empName = targetEmp?.fullName || targetEmp?.name || (item?.employeeName) || 'Employee';
+    const empEmail = (targetEmp?.email) || (item?.employeeEmail) || (currentEmployee?.email) || '';
+    const empId = (item?.employeeId) || (currentEmployee?._id || currentEmployee?.id) || selectedEmployeeId;
+    const docType = item?.documentType || item?.letterType || selectedLetterType;
+    const docCode = DOCUMENT_TYPE_CODES[docType] || 'OFFER_LETTER';
+    const rawId = item?.id || item?._id;
+    const logId = rawId && String(rawId).length === 24 ? rawId : undefined;
+
     setSendingEmail(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 800));
+      const payload = {
+        employeeId: empId || undefined,
+        documentTypeCode: docCode,
+        customEmail: empEmail.trim() || undefined,
+        logId: logId || undefined,
+      };
+
+      const response = await letterService.sendLetterEmail(payload, logId);
+      
       if (item) {
-        setHistoryList(prev => prev.map(h => h.id === item.id ? { ...h, sentStatus: true } : h));
+        const itemId = item.id || item._id;
+        setSentHistoryIds(prev => [...new Set([...prev, itemId])]);
+        setHistoryLogs(prev => prev.map(h => ((h.id || h._id) === itemId ? { ...h, sentStatus: true, employeeEmail: empEmail } : h)));
       } else {
         setSentSuccess(true);
-        setHistoryList(prev => {
+        setHistoryLogs(prev => {
           if (prev.length > 0) {
             const updated = [...prev];
-            updated[0] = { ...updated[0], sentStatus: true };
+            updated[0] = { ...updated[0], sentStatus: true, employeeEmail: empEmail };
             return updated;
           }
           return prev;
         });
       }
+
+      const successMsg = response?.message || `Successfully sent ${docType} to ${empName} (${empEmail || 'registered email'}).`;
       toast.success(
         <div className="flex flex-col">
           <span className="font-bold">Document Dispatched!</span>
-          <span className="text-xs">Successfully sent {selectedLetterType} to {empName} ({empEmail}).</span>
+          <span className="text-xs">{successMsg}</span>
         </div>,
         { icon: <Send className="text-emerald-500" size={18} /> }
       );
     } catch (err) {
-      toast.error('Failed to send document to employee.');
+      console.error('Failed to send letter email via MSG91:', err);
+      toast.error(err.response?.data?.message || err.message || 'Failed to send document to employee.');
     } finally {
       setSendingEmail(false);
+    }
+  };
+
+  const handleOpenEmailModal = (item) => {
+    setEmailModalItem(item);
+    setEmailModalAddress(item.employeeEmail || (item.employeeName ? `${item.employeeName.toLowerCase().replace(/\s+/g, '.')}@advitabank.com` : ''));
+  };
+
+  const handleSendHistoryEmail = async () => {
+    if (!emailModalItem) return;
+    if (!emailModalAddress.trim()) {
+      toast.error("Please enter a valid recipient email address.");
+      return;
+    }
+    setSendingHistoryEmail(true);
+    try {
+      const rawId = emailModalItem.id || emailModalItem._id;
+      const logId = rawId && String(rawId).length === 24 ? rawId : undefined;
+      const docType = emailModalItem.documentType || emailModalItem.letterType || 'Offer Letter';
+      const docCode = DOCUMENT_TYPE_CODES[docType] || 'OFFER_LETTER';
+      const empId = emailModalItem.employeeId || undefined;
+
+      const payload = {
+        logId: logId || undefined,
+        employeeId: empId,
+        documentTypeCode: docCode,
+        customEmail: emailModalAddress.trim(),
+      };
+
+      const response = await letterService.sendLetterEmail(payload, logId);
+
+      const itemId = emailModalItem.id || emailModalItem._id;
+      setSentHistoryIds(prev => [...new Set([...prev, itemId])]);
+      setHistoryLogs(prev => prev.map(h => ((h.id || h._id) === itemId ? { ...h, sentStatus: true, employeeEmail: emailModalAddress } : h)));
+      
+      const successMsg = response?.message || `Successfully sent ${docType} to ${emailModalItem.employeeName || 'Employee'} (${emailModalAddress}).`;
+      toast.success(
+        <div className="flex flex-col">
+          <span className="font-bold">Email Dispatched!</span>
+          <span className="text-xs">{successMsg}</span>
+        </div>,
+        { icon: <Send className="text-emerald-500" size={18} /> }
+      );
+      setEmailModalItem(null);
+    } catch (err) {
+      console.error('Failed to dispatch history email via MSG91:', err);
+      toast.error(err.response?.data?.message || err.message || 'Failed to dispatch document email.');
+    } finally {
+      setSendingHistoryEmail(false);
     }
   };
 
@@ -1111,9 +1212,45 @@ const LettersAndPayroll = () => {
                     </div>
                   )}
                 </div>
-                <button type="submit" disabled={loading} className="w-full bg-[#225091] text-white py-3 rounded-xl font-bold hover:bg-[#1b427b] disabled:opacity-50">
-                  {loading ? 'Generating...' : `Generate ${selectedLetterType}`}
-                </button>
+
+                {/* Generate Options & Submit Button */}
+                <div className="space-y-3 pt-2">
+                  <label className="flex items-center gap-2.5 p-3 rounded-xl border border-gray-200 bg-gray-50/60 hover:bg-gray-50 cursor-pointer transition-colors">
+                    <input
+                      type="checkbox"
+                      checked={autoSendEmail}
+                      onChange={(e) => setAutoSendEmail(e.target.checked)}
+                      className="w-4 h-4 rounded text-[#225091] focus:ring-[#225091] cursor-pointer"
+                    />
+                    <div className="flex flex-col">
+                      <span className="text-xs font-semibold text-gray-800 flex items-center gap-1.5">
+                        <Mail size={13} className="text-[#225091]" />
+                        <span>Send copy to employee email automatically on generate</span>
+                      </span>
+                      <span className="text-[11px] text-gray-500">
+                        The generated PDF will be downloaded immediately and automatically dispatched to the recipient's email.
+                      </span>
+                    </div>
+                  </label>
+
+                  <button 
+                    type="submit" 
+                    disabled={loading} 
+                    className="w-full bg-[#225091] hover:bg-[#193e73] text-white py-3 rounded-xl font-bold transition-all flex items-center justify-center gap-2 disabled:opacity-50 shadow-sm cursor-pointer"
+                  >
+                    {loading ? (
+                      <>
+                        <Loader2 size={18} className="animate-spin" />
+                        <span>Generating & Preparing Download...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Download size={18} />
+                        <span>Generate & Download {selectedLetterType}</span>
+                      </>
+                    )}
+                  </button>
+                </div>
               </form>
             </div>
             {/* Right Sidebar: Employee Profile Card & PDF Ready Result */}
@@ -1426,6 +1563,7 @@ const LettersAndPayroll = () => {
                                 href={item.fileUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
+                                download={`${refNo || 'document'}.pdf`}
                                 className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white rounded-lg font-semibold text-xs transition-colors border border-emerald-200/60"
                                 title="Download PDF File"
                               >
@@ -1433,6 +1571,28 @@ const LettersAndPayroll = () => {
                                 <span>PDF</span>
                               </a>
                             )}
+                            <button
+                              type="button"
+                              onClick={() => handleOpenEmailModal(item)}
+                              className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg font-semibold text-xs transition-colors border cursor-pointer ${
+                                item.sentStatus || sentHistoryIds.includes(item.id || item._id)
+                                  ? 'bg-purple-50 text-purple-700 border-purple-200/60 hover:bg-purple-100'
+                                  : 'bg-indigo-50 text-indigo-700 border-indigo-200/60 hover:bg-[#225091] hover:text-white'
+                              }`}
+                              title="Send Document to Employee Email"
+                            >
+                              {item.sentStatus || sentHistoryIds.includes(item.id || item._id) ? (
+                                <>
+                                  <CheckCircle2 size={13} className="text-purple-600" />
+                                  <span>Sent</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Mail size={13} />
+                                  <span>Send to Email</span>
+                                </>
+                              )}
+                            </button>
                           </div>
                         </td>
                       </tr>
@@ -1530,16 +1690,29 @@ const LettersAndPayroll = () => {
               <p className="text-gray-700 font-medium leading-relaxed">{viewingHistoryItem.detailsSummary || 'Official document generated and registered in system.'}</p>
             </div>
 
-            <div className="flex items-center justify-end gap-3 pt-2">
+            <div className="flex items-center justify-end gap-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  const item = viewingHistoryItem;
+                  setViewingHistoryItem(null);
+                  handleOpenEmailModal(item);
+                }}
+                className="px-4 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold rounded-xl transition-colors inline-flex items-center gap-1.5 border border-indigo-200 cursor-pointer"
+              >
+                <Mail size={13} />
+                <span>Send to Email</span>
+              </button>
               {viewingHistoryItem.fileUrl && (
                 <a
                   href={viewingHistoryItem.fileUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="px-4 py-2 bg-[#225091] hover:bg-[#1b427b] text-white text-xs font-bold rounded-xl transition-colors inline-flex items-center gap-1.5 shadow-sm"
+                  download={`${viewingHistoryItem.referenceNumber || 'document'}.pdf`}
+                  className="px-4 py-2 bg-[#225091] hover:bg-[#193e73] text-white text-xs font-bold rounded-xl transition-colors inline-flex items-center gap-1.5 shadow-sm"
                 >
-                  <ExternalLink size={13} />
-                  <span>Open PDF File</span>
+                  <Download size={13} />
+                  <span>Download PDF</span>
                 </a>
               )}
               <button
@@ -1548,6 +1721,97 @@ const LettersAndPayroll = () => {
                 className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded-xl transition-colors cursor-pointer"
               >
                 Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Dedicated Send to Email Modal from History */}
+      {emailModalItem && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-gray-100 space-y-4">
+            <div className="flex items-start justify-between pb-3 border-b border-gray-100">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-[#225091]/10 text-[#225091] flex items-center justify-center font-bold">
+                  <Mail size={16} />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-gray-900">Send Document to Email</h3>
+                  <p className="text-[11px] text-gray-500">
+                    {emailModalItem.documentType || emailModalItem.letterType || 'Document'} ({emailModalItem.referenceNumber || 'Official Record'})
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEmailModalItem(null)}
+                className="text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-100 cursor-pointer text-sm"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              <div className="bg-gray-50 p-3 rounded-xl border border-gray-100 space-y-1">
+                <div className="flex justify-between text-gray-500">
+                  <span>Recipient:</span>
+                  <span className="font-bold text-gray-800">{emailModalItem.employeeName || 'Staff Member'}</span>
+                </div>
+                {emailModalItem.branchName && (
+                  <div className="flex justify-between text-gray-500">
+                    <span>Branch:</span>
+                    <span className="font-medium text-gray-700">{emailModalItem.branchName}</span>
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1.5">Recipient Email Address <span className="text-rose-500">*</span></label>
+                <div className="relative">
+                  <Mail size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="email"
+                    required
+                    value={emailModalAddress}
+                    onChange={(e) => setEmailModalAddress(e.target.value)}
+                    placeholder="Enter recipient email (e.g. employee@advitabank.com)"
+                    className="w-full pl-8.5 pr-3 py-2.5 bg-gray-50/60 focus:bg-white border border-gray-200 rounded-xl text-xs font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all"
+                  />
+                </div>
+              </div>
+
+              <div className="bg-blue-50/60 p-3 rounded-xl border border-blue-100 text-[11px] text-[#225091] flex items-start gap-2">
+                <Info size={14} className="shrink-0 mt-0.5" />
+                <span>The official PDF document attachment along with reference details will be dispatched immediately.</span>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => setEmailModalItem(null)}
+                className="px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded-xl transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={sendingHistoryEmail}
+                onClick={handleSendHistoryEmail}
+                className="px-5 py-2.5 bg-[#225091] hover:bg-[#193e73] text-white text-xs font-bold rounded-xl transition-colors inline-flex items-center gap-1.5 shadow-sm disabled:opacity-50 cursor-pointer"
+              >
+                {sendingHistoryEmail ? (
+                  <>
+                    <Loader2 size={14} className="animate-spin" />
+                    <span>Dispatching...</span>
+                  </>
+                ) : (
+                  <>
+                    <Send size={14} />
+                    <span>Send Email Now</span>
+                  </>
+                )}
               </button>
             </div>
           </div>

@@ -288,29 +288,13 @@ const RolesAndPermissions = () => {
                         </span>
                       </td>
                       <td className="py-3 px-4 text-right pr-6">
-                        <div className="flex items-center justify-end gap-1">
+                        <div className="flex items-center justify-end">
                           <button
                             onClick={() => handleView(roleId)}
                             className="p-1.5 text-slate-500 hover:text-[#225091] hover:bg-slate-100 rounded-md transition-colors cursor-pointer"
                             title="View Permissions"
                           >
                             <Eye size={15} />
-                          </button>
-                          <button
-                            onClick={() =>
-                              navigate(`/roles-permissions/edit/${roleId}`)
-                            }
-                            className="p-1.5 text-slate-500 hover:text-amber-600 hover:bg-amber-50 rounded-md transition-colors cursor-pointer"
-                            title="Edit Role"
-                          >
-                            <Edit2 size={15} />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(roleId, row.name)}
-                            className="p-1.5 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-colors cursor-pointer"
-                            title="Delete Role"
-                          >
-                            <Trash2 size={15} />
                           </button>
                         </div>
                       </td>

@@ -66,7 +66,7 @@ const Login = () => {
 
   return (
     <AuthLayout 
-      welcomeHeading={"WELCOME TO\nADVITA COOPERATIVE & BRANCH"}
+      welcomeHeading={"WELCOME TO\nADVITA CO-OPERATIVE & BRANCH"}
       illustration={<img src={loginIllustration} alt="Login Illustration" className="w-full h-auto object-contain drop-shadow-xl" />}
     >
       {/* Top Logo Badge inside Card */}
@@ -82,7 +82,7 @@ const Login = () => {
         </div>
 
         <h2 className="text-[22px] sm:text-[24px] font-black tracking-wide uppercase leading-tight">
-          <span className="text-[#1B4E8C]">COOPERATIVE </span>
+          <span className="text-[#1B4E8C]">CO-OPERATIVE </span>
           <span className="text-[#EF3B3A]">PORTAL</span>
         </h2>
         <p className="text-[13px] text-gray-500 font-medium mt-1.5 leading-normal">
