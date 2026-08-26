@@ -469,6 +469,8 @@ const LettersAndPayroll = () => {
   const [emailModalAddress, setEmailModalAddress] = useState('');
   const [sendingHistoryEmail, setSendingHistoryEmail] = useState(false);
   const [sentHistoryIds, setSentHistoryIds] = useState([]);
+  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
+  const [lastGeneratedSummary, setLastGeneratedSummary] = useState('');
   const historyLimit = 10;
 
   const [offerCandidateName, setOfferCandidateName] = useState('');
@@ -788,6 +790,7 @@ const LettersAndPayroll = () => {
       setGeneratedPdfUrl(finalFileUrl);
       setGeneratedRefNo(finalRefNo);
       setGeneratedDocTitle(finalDocTitle);
+      setLastGeneratedSummary(summaryText);
 
       const newHistoryItem = {
         id: `HIST-${Date.now().toString().slice(-6)}`,
@@ -805,27 +808,12 @@ const LettersAndPayroll = () => {
       setHistoryLogs(prev => [newHistoryItem, ...prev]);
       setHistoryTotalRecords(prev => prev + 1);
 
-      // Automatic download trigger upon generation
-      if (finalFileUrl) {
-        try {
-          const link = document.createElement('a');
-          link.href = finalFileUrl;
-          link.target = '_blank';
-          link.setAttribute('download', `${finalDocTitle || 'document'}.pdf`);
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-        } catch (e) {
-          console.error('Auto download trigger error', e);
-        }
-      }
-
       toast.success(
         <div className="flex flex-col">
-          <span className="font-bold">{selectedLetterType} Generated & Downloaded!</span>
-          <span className="text-xs">PDF file automatically downloaded to your device.</span>
+          <span className="font-bold">{selectedLetterType} Generated Successfully!</span>
+          <span className="text-xs">Document #{finalRefNo} is ready for preview, download, or email.</span>
         </div>,
-        { icon: <Download className="text-[#225091]" size={18} /> }
+        { icon: <FileCheck className="text-[#225091]" size={18} /> }
       );
 
       if (autoSendEmail) {
@@ -942,24 +930,73 @@ const LettersAndPayroll = () => {
 
   const handleDownload = () => {
     if (!generatedPdfUrl) return;
-    const link = document.createElement('a');
-    link.href = generatedPdfUrl;
-    link.target = '_blank';
-    link.setAttribute('download', `${generatedDocTitle || 'document'}.pdf`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    toast.success('Document downloaded successfully!', { icon: <Download className="text-[#225091]" size={18} /> });
+    try {
+      const link = document.createElement('a');
+      link.href = generatedPdfUrl;
+      link.download = `${generatedDocTitle || 'document'}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast.success('Document downloaded successfully!', { icon: <Download className="text-[#225091]" size={18} /> });
+    } catch (e) {
+      console.error('Download error', e);
+    }
   };
 
   const handlePrint = () => {
     if (!generatedPdfUrl) return;
-    const printWindow = window.open(generatedPdfUrl);
-    if (printWindow) { printWindow.focus(); printWindow.print(); }
-    else { toast.info('Pop-up blocked. Please allow pop-ups to print.'); }
+    try {
+      const iframe = document.createElement('iframe');
+      iframe.style.position = 'fixed';
+      iframe.style.right = '0';
+      iframe.style.bottom = '0';
+      iframe.style.width = '0';
+      iframe.style.height = '0';
+      iframe.style.border = '0';
+      iframe.src = generatedPdfUrl;
+      document.body.appendChild(iframe);
+      iframe.onload = () => {
+        setTimeout(() => {
+          try {
+            iframe.focus();
+            iframe.contentWindow?.print();
+          } catch (err) {
+            window.open(generatedPdfUrl, '_blank')?.print();
+          }
+          setTimeout(() => {
+            if (document.body.contains(iframe)) {
+              document.body.removeChild(iframe);
+            }
+          }, 2000);
+        }, 400);
+      };
+    } catch (err) {
+      window.open(generatedPdfUrl, '_blank');
+    }
   };
 
-  const handlePreview = () => { if (generatedPdfUrl) window.open(generatedPdfUrl, '_blank'); };
+  const handleResetForm = () => {
+    setGeneratedPdfUrl('');
+    setGeneratedPdfBlob(null);
+    setGeneratedRefNo('');
+    setGeneratedDocTitle('');
+    setLastGeneratedSummary('');
+    setSentSuccess(false);
+    setSelectedEmployeeId('');
+    setCurrentEmployee(null);
+    setOfferCandidateName('');
+    setOfferDesignation('');
+    setOfferJoiningDate('');
+    setOfferAnnualSalary('');
+    setProbationStartDate('');
+    setProbationEndDate('');
+    setConfirmationDate('');
+    setTransferToBranchId('');
+    setTransferEffectiveDate('');
+    setTransferReportingDate('');
+    setTermDate('');
+    toast.info('Form ready for new document generation.');
+  };
 
   return (
     <div className="w-full flex flex-col gap-5 font-sans antialiased pb-16">
@@ -1299,37 +1336,72 @@ const LettersAndPayroll = () => {
                   <p className="text-[11px] text-gray-400">Choose an employee from Step 2 to preview profile & generate documentation.</p>
                 </div>
               )}
-              {/* Enhanced Live PDF Ready Result Card with Explicit "Send to Email" UX */}
+              {/* Enhanced Live PDF Ready Result Card with In-Place Actions */}
               {generatedPdfUrl && (
-                <div className="bg-white border-2 border-emerald-500/20 rounded-2xl p-5 shadow-sm space-y-4 animate-in fade-in zoom-in-95 duration-200">
+                <div className="bg-white border-2 border-emerald-500/30 rounded-2xl p-5 shadow-sm space-y-4 animate-in fade-in zoom-in-95 duration-200">
                   {/* Status & Document Header */}
                   <div className="flex items-start justify-between gap-3 pb-3 border-b border-gray-100">
                     <div className="flex items-center gap-2.5">
-                      <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-100 shadow-2xs">
-                        <CheckCircle2 size={20} />
+                      <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-100 shadow-2xs">
+                        <FileCheck size={22} />
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
                           <span className="text-[10px] font-extrabold tracking-wider uppercase text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/60">
-                            Document Generated
+                            Document Ready
                           </span>
                         </div>
-                        <h4 className="text-xs font-bold text-gray-900 truncate mt-1 max-w-[200px]" title={`${generatedDocTitle}.pdf`}>
+                        <h4 className="text-xs font-bold text-gray-900 truncate mt-1 max-w-[190px]" title={`${generatedDocTitle}.pdf`}>
                           {generatedDocTitle}.pdf
                         </h4>
                       </div>
                     </div>
-                    <span className="font-mono text-[10px] font-bold text-[#225091] bg-blue-50 px-2 py-1 rounded-md border border-blue-100/80">
+                    <span className="font-mono text-[10px] font-bold text-[#225091] bg-blue-50 px-2.5 py-1 rounded-md border border-blue-100/80">
                       {generatedRefNo}
                     </span>
                   </div>
 
+                  {/* Quick Summary View */}
+                  <div className="bg-gray-50/80 rounded-xl p-3 border border-gray-100 text-xs space-y-1.5">
+                    <div className="flex justify-between text-gray-500">
+                      <span>Recipient:</span>
+                      <span className="font-bold text-gray-800">{currentEmployee?.fullName || currentEmployee?.name || offerCandidateName || 'Employee'}</span>
+                    </div>
+                    {lastGeneratedSummary && (
+                      <div className="flex justify-between text-gray-500 pt-1 border-t border-gray-200/60">
+                        <span>Details:</span>
+                        <span className="font-medium text-gray-700">{lastGeneratedSummary}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Primary In-Place Actions */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <button 
+                      type="button" 
+                      onClick={() => setIsPreviewModalOpen(true)}
+                      className="py-2.5 px-3 rounded-xl bg-[#225091] hover:bg-[#193e73] text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-colors shadow-xs cursor-pointer"
+                    >
+                      <Eye size={14} />
+                      <span>View Full Letter</span>
+                    </button>
+
+                    <button 
+                      type="button" 
+                      onClick={handleDownload}
+                      className="py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-colors shadow-xs cursor-pointer"
+                    >
+                      <Download size={14} />
+                      <span>Download PDF</span>
+                    </button>
+                  </div>
+
                   {/* Dedicated "Send to Email" Section */}
-                  <div className="bg-slate-50/80 rounded-xl p-3.5 border border-slate-200/80 space-y-2.5">
+                  <div className="bg-slate-50/90 rounded-xl p-3.5 border border-slate-200/80 space-y-2.5">
                     <div className="flex items-center justify-between">
                       <label className="text-xs font-bold text-gray-800 flex items-center gap-1.5">
                         <Mail size={14} className="text-[#225091]" />
-                        <span>Send to Employee Email</span>
+                        <span>Send via Email (MSG91)</span>
                       </label>
                       {sentSuccess && (
                         <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full flex items-center gap-1">
@@ -1348,7 +1420,7 @@ const LettersAndPayroll = () => {
                             setCurrentEmployee({ ...currentEmployee, email: e.target.value });
                           }
                         }}
-                        placeholder="Enter employee email address..."
+                        placeholder="Enter recipient email address..."
                         className="w-full pl-8.5 pr-3 py-2 bg-white border border-gray-200 rounded-lg text-xs font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all"
                       />
                     </div>
@@ -1360,7 +1432,7 @@ const LettersAndPayroll = () => {
                       className={`w-full py-2.5 px-4 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-xs cursor-pointer ${
                         sentSuccess
                           ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
-                          : 'bg-[#225091] hover:bg-[#1b427b] text-white hover:shadow-md'
+                          : 'bg-[#225091] hover:bg-[#193e73] text-white hover:shadow-md'
                       } disabled:opacity-50`}
                     >
                       {sendingEmail ? (
@@ -1371,47 +1443,36 @@ const LettersAndPayroll = () => {
                       ) : sentSuccess ? (
                         <>
                           <Check size={14} />
-                          <span>Email Sent Successfully (Resend)</span>
+                          <span>Resend Email Notification</span>
                         </>
                       ) : (
                         <>
                           <Send size={14} />
-                          <span>Send Document to Email</span>
+                          <span>Send Letter to Email</span>
                         </>
                       )}
                     </button>
                   </div>
 
-                  {/* Action Toolbar: Download, Preview & Print */}
-                  <div className="space-y-2">
+                  {/* Secondary Actions: Print & Create Another */}
+                  <div className="grid grid-cols-2 gap-2 pt-1">
                     <button 
                       type="button" 
-                      onClick={handleDownload}
-                      className="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-xs cursor-pointer hover:shadow-md"
+                      onClick={handlePrint}
+                      className="py-2 px-3 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                     >
-                      <Download size={15} />
-                      <span>Download PDF Document</span>
+                      <Printer size={13} />
+                      <span>Print</span>
                     </button>
 
-                    <div className="grid grid-cols-2 gap-2">
-                      <button 
-                        type="button" 
-                        onClick={handlePreview}
-                        className="py-2 px-3 rounded-lg bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-700 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
-                      >
-                        <Eye size={13} />
-                        <span>Preview</span>
-                      </button>
-
-                      <button 
-                        type="button" 
-                        onClick={handlePrint}
-                        className="py-2 px-3 rounded-lg bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-700 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
-                      >
-                        <Printer size={13} />
-                        <span>Print</span>
-                      </button>
-                    </div>
+                    <button 
+                      type="button" 
+                      onClick={handleResetForm}
+                      className="py-2 px-3 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                    >
+                      <Plus size={13} />
+                      <span>Create Another</span>
+                    </button>
                   </div>
                 </div>
               )}
@@ -1813,6 +1874,87 @@ const LettersAndPayroll = () => {
                   </>
                 )}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* In-App Full-Screen Document Preview Modal */}
+      {isPreviewModalOpen && generatedPdfUrl && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-3 sm:p-6 animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl max-w-4xl w-full h-[90vh] flex flex-col shadow-2xl border border-gray-100 overflow-hidden">
+            {/* Modal Top Bar */}
+            <div className="px-5 py-3.5 bg-white border-b border-gray-200 flex items-center justify-between gap-4 shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-[#225091]/10 text-[#225091] flex items-center justify-center font-bold">
+                  <FileText size={16} />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-gray-900">{selectedLetterType} Document Preview</h3>
+                  <span className="text-[11px] font-mono text-gray-500">Ref: {generatedRefNo}</span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleDownload}
+                  className="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+                >
+                  <Download size={13} />
+                  <span>Download PDF</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handlePrint}
+                  className="px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+                >
+                  <Printer size={13} />
+                  <span>Print</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsPreviewModalOpen(false)}
+                  className="p-1.5 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+                  title="Close Preview"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+            </div>
+
+            {/* Embedded Iframe PDF Viewer */}
+            <div className="flex-1 w-full bg-slate-100 overflow-hidden relative">
+              <iframe
+                src={`${generatedPdfUrl}#toolbar=0&navpanes=0`}
+                title="Generated Letter Preview"
+                className="w-full h-full border-0"
+              />
+            </div>
+
+            {/* Modal Footer */}
+            <div className="px-5 py-3 bg-gray-50 border-t border-gray-200 flex items-center justify-between text-xs shrink-0">
+              <div className="text-gray-500">
+                Recipient: <strong className="text-gray-800">{currentEmployee?.fullName || currentEmployee?.name || offerCandidateName || 'Employee'}</strong>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  disabled={sendingEmail}
+                  onClick={() => handleSendToEmployee()}
+                  className="px-4 py-1.5 bg-[#225091] hover:bg-[#193e73] text-white font-bold rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                >
+                  <Send size={12} />
+                  <span>{sendingEmail ? 'Sending...' : 'Send to Email'}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsPreviewModalOpen(false)}
+                  className="px-4 py-1.5 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold rounded-lg transition-colors cursor-pointer"
+                >
+                  Close
+                </button>
+              </div>
             </div>
           </div>
         </div>
