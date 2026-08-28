@@ -3,6 +3,7 @@ import { useNavigate, Link, useParams } from 'react-router-dom';
 import { ArrowLeft,  ChevronRight, FileText, Download } from 'lucide-react';
 import { toast } from 'react-toastify';
 import PageHeader from '../../components/common/PageHeader';
+import { SkeletonDetailView } from '../../components/common/Skeleton';
 import { merchantService } from '../../api/merchantService';
 
 const ViewField = ({ label, value }) => (
@@ -69,7 +70,22 @@ const ViewMerchant = () => {
   }, [id]);
 
   if (isLoading) {
-    return <div className="p-10 text-center text-gray-500">Loading merchant details...</div>;
+    return (
+      <div className="flex flex-col gap-6 w-full pb-10">
+        <PageHeader
+          title="View Merchant"
+          breadcrumbs={[
+            { label: 'Dashboard', to: '/dashboard' },
+            { label: 'Partner Management' },
+            { label: 'Merchant', to: '/merchant' },
+            { label: 'View Merchant' }
+          ]}
+          showBack={true}
+          backUrl="/merchant"
+        />
+        <SkeletonDetailView />
+      </div>
+    );
   }
 
   if (!merchant) {

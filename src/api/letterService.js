@@ -120,6 +120,52 @@ export const letterService = {
     return response.data;
   },
 
+  // 14. Bank Official Signature & Signatory Management APIs
+  // 14.2 Retrieve Bank Signature Settings
+  // GET /api/v1/society/bank/signature (or /api/v1/society/employees/hr/bank/signature)
+  getBankSignatureSettings: async () => {
+    try {
+      const response = await axiosInstance.get('/v1/society/bank/signature');
+      return response.data;
+    } catch (err) {
+      if (err.response?.status === 404) {
+        const fallbackRes = await axiosInstance.get('/v1/society/employees/hr/bank/signature');
+        return fallbackRes.data;
+      }
+      throw err;
+    }
+  },
+
+  // 14.1 Upload & Update Bank Signature Settings
+  // POST /api/v1/society/bank/signature (or /api/v1/society/employees/hr/bank/signature)
+  // Supports multipart/form-data (FormData) or application/json
+  updateBankSignatureSettings: async (payload) => {
+    const isFormData = payload instanceof FormData;
+    const config = isFormData
+      ? { headers: { 'Content-Type': 'multipart/form-data' } }
+      : { headers: { 'Content-Type': 'application/json' } };
+
+    try {
+      // Use POST method on /v1/society/bank/signature
+      const response = await axiosInstance.post('/v1/society/bank/signature', payload, config);
+      return response.data;
+    } catch (err) {
+      if (err.response?.status === 404 || err.response?.status === 405) {
+        try {
+          const fallbackPost = await axiosInstance.post('/v1/society/employees/hr/bank/signature', payload, config);
+          return fallbackPost.data;
+        } catch (fbErr) {
+          if (fbErr.response?.status === 405) {
+            const fallbackPatch = await axiosInstance.patch('/v1/society/bank/signature', payload, config);
+            return fallbackPatch.data;
+          }
+          throw fbErr;
+        }
+      }
+      throw err;
+    }
+  },
+
   // Unified Dispatcher Method
   generate: async (payload, options = {}) => {
     const { letterType, ...data } = payload;

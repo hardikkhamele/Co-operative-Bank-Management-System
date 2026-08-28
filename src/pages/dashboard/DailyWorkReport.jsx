@@ -1,4 +1,4 @@
-import React, { useRef,  useState, useEffect, useMemo  } from 'react';
+import React, { useRef, useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { 
@@ -17,8 +17,12 @@ import {
   FileText,
   User,
   Package,
-  IndianRupee
-, Table, ChevronDown} from 'lucide-react';
+  IndianRupee,
+  Table,
+  ChevronDown,
+  Sparkles,
+  Zap
+} from 'lucide-react';
 import { workReportService } from '../../api/workReportService';
 import { branchService } from '../../api/branchService';
 import { employeeService } from '../../api/employeeService';
@@ -26,64 +30,32 @@ import { roleService } from '../../api/roleService';
 import PageHeader from '../../components/common/PageHeader';
 import useAuthStore from '../../store/authStore';
 import useBranchStore from '../../store/branchStore';
+import { Skeleton, SkeletonAvatar } from '../../components/common/Skeleton';
+import { ALL_KPA_PRODUCTS } from '../../utils/kpaConstants';
 
 const INDIAN_STATES = [
-  'Andhra Pradesh',
-  'Arunachal Pradesh',
-  'Assam',
-  'Bihar',
-  'Chhattisgarh',
-  'Delhi',
-  'Goa',
-  'Gujarat',
-  'Haryana',
-  'Himachal Pradesh',
-  'Jharkhand',
-  'Karnataka',
-  'Kerala',
-  'Madhya Pradesh',
-  'Maharashtra',
-  'Manipur',
-  'Meghalaya',
-  'Mizoram',
-  'Nagaland',
-  'Odisha',
-  'Punjab',
-  'Rajasthan',
-  'Sikkim',
-  'Tamil Nadu',
-  'Telangana',
-  'Tripura',
-  'Uttar Pradesh',
-  'Uttarakhand',
-  'West Bengal',
+  'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh', 
+  'Delhi', 'Goa', 'Gujarat', 'Haryana', 'Himachal Pradesh', 'Jharkhand', 
+  'Karnataka', 'Kerala', 'Madhya Pradesh', 'Maharashtra', 'Manipur', 
+  'Meghalaya', 'Mizoram', 'Nagaland', 'Odisha', 'Punjab', 'Rajasthan', 
+  'Sikkim', 'Tamil Nadu', 'Telangana', 'Tripura', 'Uttar Pradesh', 
+  'Uttarakhand', 'West Bengal'
 ];
 
 const DEFAULT_DESIGNATIONS = [
-  'Branch Manager',
-  'Assistant Branch Manager',
-  'Loan Executive',
-  'Collection Executive',
-  'Senior Clerk',
-  'Clerk',
-  'Cashier',
-  'Accountant',
-  'Field Officer',
+  'Branch Manager', 'Assistant Branch Manager', 'Loan Executive',
+  'Collection Executive', 'Senior Clerk', 'Clerk', 'Cashier',
+  'Accountant', 'Field Officer'
 ];
 
 const AVAILABLE_PRODUCTS = [
-  'Loan Disbursement',
-  'Fixed Deposit',
-  'Recurring Deposit',
-  'Savings Account',
-  'Current Account',
-  'Insurance Policy',
-  'Gold Loan',
-  'Other',
+  'Loan Disbursement', 'Deposit Collection', 'Lead Generation',
+  'Share Capital', 'Staff Onboarding', 'Cash Collection',
+  'Fixed Deposit', 'Recurring Deposit', 'Savings Account',
+  'Current Account', 'Insurance Policy', 'Gold Loan', 'Other'
 ];
 
 const DailyWorkReport = () => {
-
   const { user } = useAuthStore();
 
   // Data States
@@ -754,25 +726,36 @@ const DailyWorkReport = () => {
                 <th className="py-3.5 px-5 font-semibold text-left whitespace-nowrap">Employee Name</th>
                 <th className="py-3.5 px-5 font-semibold text-left whitespace-nowrap">Designation</th>
                 <th className="py-3.5 px-5 font-semibold text-left whitespace-nowrap">Branch</th>
-                <th className="py-3.5 px-5 font-semibold text-left whitespace-nowrap">Product / Tasks</th>
-                <th className="py-3.5 px-5 font-semibold text-left whitespace-nowrap">Amount / Hours</th>
+                <th className="py-3.5 px-5 font-semibold text-left whitespace-nowrap">Product / KPI Area</th>
+                <th className="py-3.5 px-5 font-semibold text-left whitespace-nowrap">Amount / Achievement</th>
+                <th className="py-3.5 px-5 font-semibold text-left whitespace-nowrap">Source</th>
                 <th className="py-3.5 px-5 font-semibold text-left whitespace-nowrap">Remarks / Details</th>
                 <th className="py-3.5 px-5 font-semibold text-left whitespace-nowrap">Date</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {loading ? (
-                <tr>
-                  <td colSpan="8" className="py-16 text-center text-gray-500">
-                    <div className="flex flex-col items-center justify-center gap-2">
-                      <Loader2 className="animate-spin text-[#225091]" size={24} />
-                      <span className="text-sm font-medium">Loading daily work reports...</span>
-                    </div>
-                  </td>
-                </tr>
+                Array.from({ length: 6 }).map((_, rIdx) => (
+                  <tr key={rIdx} className="animate-pulse">
+                    <td className="py-4 px-5"><Skeleton className="h-4 w-6 rounded" /></td>
+                    <td className="py-4 px-5">
+                      <div className="flex items-center gap-3">
+                        <SkeletonAvatar size="w-8 h-8" rounded="rounded-full" />
+                        <Skeleton className="h-4 w-32 rounded" />
+                      </div>
+                    </td>
+                    <td className="py-4 px-5"><Skeleton className="h-4 w-24 rounded" /></td>
+                    <td className="py-4 px-5"><Skeleton className="h-4 w-20 rounded" /></td>
+                    <td className="py-4 px-5"><Skeleton className="h-6 w-28 rounded-full" /></td>
+                    <td className="py-4 px-5"><Skeleton className="h-4 w-24 rounded" /></td>
+                    <td className="py-4 px-5"><Skeleton className="h-5 w-20 rounded-md" /></td>
+                    <td className="py-4 px-5"><Skeleton className="h-4 w-36 rounded" /></td>
+                    <td className="py-4 px-5"><Skeleton className="h-4 w-20 rounded" /></td>
+                  </tr>
+                ))
               ) : reports.length === 0 ? (
                 <tr>
-                  <td colSpan="8" className="py-16 text-center text-gray-500">
+                  <td colSpan="9" className="py-16 text-center text-gray-500">
                     <div className="flex flex-col items-center justify-center gap-2">
                       <FileSpreadsheet className="text-gray-300 w-10 h-10 mb-1" />
                       <span className="text-sm font-semibold text-gray-800">No Daily Work Reports Found</span>
@@ -787,8 +770,10 @@ const DailyWorkReport = () => {
                     ? empName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() 
                     : 'E';
                   const srNo = row.srNo || ((meta.page - 1) * meta.limit + index + 1);
-                  const taskText = row.tasksCompleted || row.product || row.productName || '—';
+                  const taskText = row.product || row.tasksCompleted || row.productName || '—';
                   const remarkText = row.remarks || (row.tasksCompleted && row.product ? row.tasksCompleted : '') || '—';
+                  const isAuto = Boolean(row.isAutoGenerated || row.sourceModule && row.sourceModule !== 'MANUAL');
+                  const sourceModule = (row.sourceModule || (isAuto ? 'AUTO' : 'MANUAL')).toUpperCase();
 
                   return (
                     <tr 
@@ -801,15 +786,36 @@ const DailyWorkReport = () => {
                           <div className="w-8 h-8 rounded-full bg-blue-50 text-[#225091] border border-blue-100 flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
                             {initials}
                           </div>
-                          <span className="text-sm font-semibold text-gray-900 whitespace-nowrap">{empName}</span>
+                          <div>
+                            <span className="text-sm font-semibold text-gray-900 whitespace-nowrap block">{empName}</span>
+                            {row.employeeCode && (
+                              <span className="text-[10px] text-gray-400 font-mono">({row.employeeCode})</span>
+                            )}
+                          </div>
                         </div>
                       </td>
                       <td className="py-3.5 px-5 text-xs text-gray-600 font-medium">{row.designation || '—'}</td>
                       <td className="py-3.5 px-5 text-xs text-gray-600 font-medium">{row.branch || row.branchName || '—'}</td>
-                      <td className="py-3.5 px-5 text-xs text-gray-700 font-medium max-w-xs truncate" title={taskText}>
-                        {taskText}
+                      <td className="py-3.5 px-5 text-xs text-gray-800 font-semibold whitespace-nowrap">
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-800 border border-slate-200">
+                          {taskText}
+                        </span>
                       </td>
-                      <td className="py-3.5 px-5 text-sm font-semibold text-gray-900 tabular-nums">{formatAmount(row)}</td>
+                      <td className="py-3.5 px-5 text-sm font-bold text-emerald-700 tabular-nums whitespace-nowrap">
+                        {formatAmount(row)}
+                      </td>
+                      <td className="py-3.5 px-5 whitespace-nowrap">
+                        {isAuto ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-amber-50 text-amber-800 border border-amber-200/60" title={`Auto Logged via ${sourceModule}`}>
+                            <Zap size={11} className="text-amber-600" />
+                            <span>Auto: {sourceModule}</span>
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium bg-slate-50 text-slate-600 border border-slate-200/60">
+                            Manual Entry
+                          </span>
+                        )}
+                      </td>
                       <td className="py-3.5 px-5 text-xs text-gray-500 max-w-xs truncate" title={remarkText}>
                         {remarkText}
                       </td>

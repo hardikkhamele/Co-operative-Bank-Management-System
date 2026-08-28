@@ -35,9 +35,22 @@ import {
   Phone,
   Layers,
   FileSpreadsheet,
-  Check
+  Check,
+  PenTool,
+  UploadCloud,
+  CheckCircle,
+  AlertCircle,
+  Save,
+  Image as ImageIcon,
+  FileUp,
+  RefreshCcw,
+  Undo2,
+  RotateCcw,
+  Eraser,
+  Pen
 } from 'lucide-react';
 import PageHeader from '../../components/common/PageHeader';
+import { Skeleton, SkeletonTable, SkeletonEmployeeProfile } from '../../components/common/Skeleton';
 import { employeeService } from '../../api/employeeService';
 import { branchService } from '../../api/branchService';
 import { roleService } from '../../api/roleService';
@@ -122,44 +135,7 @@ const INITIAL_KRA_RATINGS = [
   { kraName: 'Team & Stakeholder Management', target: 'Satisfactory', achievement: 'Excellent', rating: '4.0' }
 ];
 
-const INITIAL_HISTORY = [
-  {
-    id: 'HIST-001',
-    letterType: 'Offer Letter',
-    employeeName: 'Aman Sharma',
-    employeeEmail: 'aman.sharma@advitabank.com',
-    referenceNumber: 'KHAMLA/HR/OL/2026/001',
-    designation: 'Senior Loan Officer',
-    generatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(),
-    detailsSummary: 'Designation: Senior Loan Officer | CTC: ₹4,50,000/yr',
-    fileUrl: '',
-    sentStatus: true
-  },
-  {
-    id: 'HIST-002',
-    letterType: 'Salary Slip',
-    employeeName: 'Lala Patil',
-    employeeEmail: 'lala.patil@advitabank.com',
-    referenceNumber: 'KHAMLA/HR/SS/2026/08/001',
-    designation: 'Branch Manager',
-    generatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(),
-    detailsSummary: 'Period: August 2026 | Net Salary: ₹48,000',
-    fileUrl: '',
-    sentStatus: false
-  },
-  {
-    id: 'HIST-003',
-    letterType: 'Confirmation Letter',
-    employeeName: 'Priya Deshmukh',
-    employeeEmail: 'priya.deshmukh@advitabank.com',
-    referenceNumber: 'KHAMLA/HR/CL/2026/001',
-    designation: 'Cashier / Teller',
-    generatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 8).toISOString(),
-    detailsSummary: 'Confirmation: 01/08/2026 | Notice: 60 Days',
-    fileUrl: '',
-    sentStatus: true
-  }
-];
+const INITIAL_HISTORY = [];
 
 // --- High-Performance Searchable Employee Selector ---
 const SearchableEmployeeSelect = ({ employees, selectedEmployeeId, onSelect, loading }) => {
@@ -437,6 +413,287 @@ const SearchableBranchSelect = ({ branches, value, onChange }) => {
   );
 };
 
+// --- Interactive Touchpad & Mouse Signature Pad Canvas Component ---
+const TouchpadSignatureCanvas = ({ onSaveSignature, initialPreview, onClear }) => {
+  const canvasRef = React.useRef(null);
+  const [isDrawing, setIsDrawing] = useState(false);
+  const [penColor, setPenColor] = useState('#1B58A6'); // Bank Blue
+  const [penWidth, setPenWidth] = useState(2.5); // 2.5px
+  const [strokes, setStrokes] = useState([]);
+  const [currentStroke, setCurrentStroke] = useState([]);
+  const [hasDrawn, setHasDrawn] = useState(false);
+
+  const colors = [
+    { name: 'Bank Blue', hex: '#1B58A6', bg: 'bg-[#1B58A6]' },
+    { name: 'Navy Blue', hex: '#0F294A', bg: 'bg-[#0F294A]' },
+    { name: 'Black', hex: '#111827', bg: 'bg-gray-900' }
+  ];
+
+  const strokeWidths = [
+    { name: 'Fine', value: 1.5 },
+    { name: 'Medium', value: 2.5 },
+    { name: 'Bold', value: 4.0 }
+  ];
+
+  const redrawCanvas = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0) return;
+    
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    ctx.scale(dpr, dpr);
+    ctx.clearRect(0, 0, rect.width, rect.height);
+
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+
+    strokes.forEach(stroke => {
+      if (stroke.points.length < 1) return;
+      ctx.strokeStyle = stroke.color;
+      ctx.lineWidth = stroke.width;
+      ctx.beginPath();
+      
+      if (stroke.points.length === 1) {
+        ctx.arc(stroke.points[0].x, stroke.points[0].y, stroke.width / 2, 0, Math.PI * 2);
+        ctx.fillStyle = stroke.color;
+        ctx.fill();
+        return;
+      }
+
+      ctx.moveTo(stroke.points[0].x, stroke.points[0].y);
+      for (let i = 1; i < stroke.points.length; i++) {
+        const xc = (stroke.points[i].x + stroke.points[i - 1].x) / 2;
+        const yc = (stroke.points[i].y + stroke.points[i - 1].y) / 2;
+        ctx.quadraticCurveTo(stroke.points[i - 1].x, stroke.points[i - 1].y, xc, yc);
+      }
+      const lastPoint = stroke.points[stroke.points.length - 1];
+      ctx.lineTo(lastPoint.x, lastPoint.y);
+      ctx.stroke();
+    });
+
+    if (currentStroke.length > 0) {
+      ctx.strokeStyle = penColor;
+      ctx.lineWidth = penWidth;
+      ctx.beginPath();
+      if (currentStroke.length === 1) {
+        ctx.arc(currentStroke[0].x, currentStroke[0].y, penWidth / 2, 0, Math.PI * 2);
+        ctx.fillStyle = penColor;
+        ctx.fill();
+      } else {
+        ctx.moveTo(currentStroke[0].x, currentStroke[0].y);
+        for (let i = 1; i < currentStroke.length; i++) {
+          const xc = (currentStroke[i].x + currentStroke[i - 1].x) / 2;
+          const yc = (currentStroke[i].y + currentStroke[i - 1].y) / 2;
+          ctx.quadraticCurveTo(currentStroke[i - 1].x, currentStroke[i - 1].y, xc, yc);
+        }
+        const lastPoint = currentStroke[currentStroke.length - 1];
+        ctx.lineTo(lastPoint.x, lastPoint.y);
+        ctx.stroke();
+      }
+    }
+  }, [strokes, currentStroke, penColor, penWidth]);
+
+  useEffect(() => {
+    redrawCanvas();
+  }, [redrawCanvas]);
+
+  const getCoordinates = (e) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return { x: 0, y: 0 };
+    const rect = canvas.getBoundingClientRect();
+    return {
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top
+    };
+  };
+
+  const handlePointerDown = (e) => {
+    e.preventDefault();
+    if (e.target.setPointerCapture) {
+      try { e.target.setPointerCapture(e.pointerId); } catch {}
+    }
+    const coords = getCoordinates(e);
+    setIsDrawing(true);
+    setCurrentStroke([coords]);
+    setHasDrawn(true);
+  };
+
+  const handlePointerMove = (e) => {
+    if (!isDrawing) return;
+    e.preventDefault();
+    const coords = getCoordinates(e);
+    setCurrentStroke(prev => [...prev, coords]);
+  };
+
+  const handlePointerUp = (e) => {
+    if (!isDrawing) return;
+    e.preventDefault();
+    if (e.target.releasePointerCapture) {
+      try { e.target.releasePointerCapture(e.pointerId); } catch {}
+    }
+    setIsDrawing(false);
+    if (currentStroke.length > 0) {
+      const newStrokes = [...strokes, { points: currentStroke, color: penColor, width: penWidth }];
+      setStrokes(newStrokes);
+      setCurrentStroke([]);
+      exportSignatureData(newStrokes);
+    }
+  };
+
+  const handleClear = () => {
+    setStrokes([]);
+    setCurrentStroke([]);
+    setHasDrawn(false);
+    if (onClear) onClear();
+    const canvas = canvasRef.current;
+    if (canvas) {
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+    toast.info('Signature canvas cleared.');
+  };
+
+  const handleUndo = () => {
+    if (strokes.length === 0) return;
+    const newStrokes = strokes.slice(0, -1);
+    setStrokes(newStrokes);
+    if (newStrokes.length === 0) {
+      setHasDrawn(false);
+      if (onClear) onClear();
+      toast.info('All strokes undone.');
+    } else {
+      exportSignatureData(newStrokes, false);
+      toast.info('Last signature stroke undone.');
+    }
+  };
+
+  const exportSignatureData = (targetStrokes, notify = true) => {
+    const canvas = canvasRef.current;
+    if (!canvas || targetStrokes.length === 0) return;
+    // Export strictly as transparent PNG
+    const dataUrl = canvas.toDataURL('image/png');
+    if (onSaveSignature) {
+      onSaveSignature(dataUrl);
+    }
+    if (notify) {
+      toast.success('Touchpad signature rendered in PNG format.');
+    }
+  };
+
+  return (
+    <div className="space-y-3 animate-in fade-in duration-150">
+      {/* Control Bar: Pen Color & Stroke Size & Actions */}
+      <div className="flex flex-wrap items-center justify-between gap-2 p-2.5 bg-gray-50/90 rounded-xl border border-gray-200">
+        <div className="flex items-center gap-3">
+          {/* Colors */}
+          <div className="flex items-center gap-1.5">
+            <span className="text-[11px] font-bold text-gray-500 mr-1">Ink:</span>
+            {colors.map(c => (
+              <button
+                key={c.hex}
+                type="button"
+                onClick={() => setPenColor(c.hex)}
+                className={`w-5 h-5 rounded-full transition-all flex items-center justify-center cursor-pointer ${
+                  c.bg
+                } ${penColor === c.hex ? 'ring-2 ring-offset-2 ring-[#225091] scale-110' : 'opacity-70 hover:opacity-100'}`}
+                title={c.name}
+              >
+                {penColor === c.hex && <Check size={10} className="text-white" />}
+              </button>
+            ))}
+          </div>
+
+          <div className="h-4 w-px bg-gray-300" />
+
+          {/* Stroke Widths */}
+          <div className="flex items-center gap-1">
+            <span className="text-[11px] font-bold text-gray-500 mr-1">Tip:</span>
+            {strokeWidths.map(w => (
+              <button
+                key={w.name}
+                type="button"
+                onClick={() => setPenWidth(w.value)}
+                className={`px-2 py-0.5 rounded text-[10px] font-bold transition-all cursor-pointer ${
+                  penWidth === w.value ? 'bg-[#225091] text-white shadow-2xs' : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
+                }`}
+              >
+                {w.name}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Undo & Clear Buttons */}
+        <div className="flex items-center gap-1.5 ml-auto">
+          <button
+            type="button"
+            onClick={handleUndo}
+            disabled={strokes.length === 0}
+            className="px-2.5 py-1 text-xs font-semibold text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-40 transition-colors flex items-center gap-1 cursor-pointer"
+            title="Undo last stroke"
+          >
+            <Undo2 size={12} />
+            <span>Undo</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={handleClear}
+            disabled={strokes.length === 0 && !hasDrawn}
+            className="px-2.5 py-1 text-xs font-semibold text-rose-600 bg-rose-50 border border-rose-100 rounded-lg hover:bg-rose-100 disabled:opacity-40 transition-colors flex items-center gap-1 cursor-pointer"
+            title="Clear signature pad"
+          >
+            <RotateCcw size={12} />
+            <span>Clear</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Touchpad / Mouse Interactive Canvas Box */}
+      <div className="relative border-2 border-dashed border-[#225091]/50 hover:border-[#225091] rounded-2xl bg-white p-1 overflow-hidden shadow-inner transition-colors">
+        <canvas
+          ref={canvasRef}
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          onPointerLeave={handlePointerUp}
+          className="w-full h-44 cursor-crosshair touch-none select-none rounded-xl bg-white block"
+          style={{ touchAction: 'none' }}
+        />
+
+        {/* Watermark Guidelines & Hint */}
+        <div className="absolute inset-0 pointer-events-none flex flex-col justify-between p-4">
+          <div className="flex justify-between items-center text-[10px] font-bold text-gray-300 uppercase tracking-widest">
+            <span className="flex items-center gap-1">
+              <Pen size={11} /> Touchpad / Mouse Signature Pad
+            </span>
+            <span>Smooth Bézier Mode</span>
+          </div>
+
+          <div className="w-full border-b border-dashed border-gray-200 pb-1 text-right">
+            <span className="text-[10px] text-gray-400 italic">Sign with touchpad / mouse above ✍️</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between text-[11px] text-gray-500">
+        <span className="flex items-center gap-1">
+          💡 <strong className="text-gray-700">Touchpad signing:</strong> Click & drag your finger across your touchpad.
+        </span>
+        {hasDrawn && strokes.length > 0 && (
+          <span className="text-emerald-700 font-bold flex items-center gap-1 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
+            <Check size={12} /> Captured ({strokes.length} stroke{strokes.length > 1 ? 's' : ''})
+          </span>
+        )}
+      </div>
+    </div>
+  );
+};
+
 const LettersAndPayroll = () => {
   const [activeTab, setActiveTab] = useState('generate');
   const [selectedLetterType, setSelectedLetterType] = useState('Offer Letter');
@@ -472,6 +729,8 @@ const LettersAndPayroll = () => {
   const [sendingHistoryEmail, setSendingHistoryEmail] = useState(false);
   const [sentHistoryIds, setSentHistoryIds] = useState([]);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
+  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+  const [isMissingSignatureModalOpen, setIsMissingSignatureModalOpen] = useState(false);
   const [lastGeneratedSummary, setLastGeneratedSummary] = useState('');
   const historyLimit = 10;
 
@@ -530,6 +789,177 @@ const LettersAndPayroll = () => {
   const [termNoticePeriodDays, setTermNoticePeriodDays] = useState('30');
   const [termHandoverTo, setTermHandoverTo] = useState('Mr. Amit Verma, Senior Branch Officer');
 
+  // Bank Official Signature & Signatory Management State (API 14)
+  const [bankSignatureData, setBankSignatureData] = useState(null);
+  const [sigLoading, setSigLoading] = useState(false);
+  const [sigSaving, setSigSaving] = useState(false);
+  const [sigSignatoryName, setSigSignatoryName] = useState('Aman Verma');
+  const [sigSignatoryDesignation, setSigSignatoryDesignation] = useState('Head - Human Resources');
+  const [sigFile, setSigFile] = useState(null);
+  const [sigFilePreview, setSigFilePreview] = useState('');
+  const [sigDirectUrl, setSigDirectUrl] = useState('');
+  const [sigMode, setSigMode] = useState('file'); // 'file' | 'url'
+  const [isDraggingSig, setIsDraggingSig] = useState(false);
+
+  const fetchBankSignature = useCallback(async () => {
+    setSigLoading(true);
+    try {
+      const res = await letterService.getBankSignatureSettings();
+      if (res && res.success && res.data) {
+        setBankSignatureData(res.data);
+        if (res.data.signatoryName) setSigSignatoryName(res.data.signatoryName);
+        if (res.data.signatoryDesignation) setSigSignatoryDesignation(res.data.signatoryDesignation);
+        if (res.data.signatureUrl) {
+          setSigDirectUrl(res.data.signatureUrl);
+          setSigFilePreview(res.data.signatureUrl);
+        }
+      }
+    } catch (err) {
+      console.warn('Bank signature settings not yet configured or fetched with fallback:', err);
+    } finally {
+      setSigLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchBankSignature();
+  }, [fetchBankSignature]);
+
+  const handleSignatureFileChange = (file) => {
+    if (!file) return;
+    const isPng = file.type === 'image/png' || file.name.toLowerCase().endsWith('.png');
+    if (!isPng) {
+      toast.error('Invalid format! Official signatures must be strictly in PNG format (.png).');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Signature PNG file size should not exceed 5MB.');
+      return;
+    }
+    setSigFile(file);
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      setSigFilePreview(ev.target.result);
+      toast.success(`PNG signature file "${file.name}" loaded successfully.`);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleSaveBankSignature = async (e) => {
+    if (e) e.preventDefault();
+    if (!sigSignatoryName.trim()) {
+      toast.error('Please enter the Authorized Signatory Name.');
+      return;
+    }
+    if (!sigSignatoryDesignation.trim()) {
+      toast.error('Please enter the Signatory Designation / Title.');
+      return;
+    }
+
+    setSigSaving(true);
+    try {
+      let payload;
+      if (sigMode === 'file' && sigFile) {
+        if (sigFile.type !== 'image/png' && !sigFile.name.toLowerCase().endsWith('.png')) {
+          toast.error('All signatures must be in PNG format (.png).');
+          setSigSaving(false);
+          return;
+        }
+        payload = new FormData();
+        payload.append('signature', sigFile);
+        payload.append('signatoryName', sigSignatoryName.trim());
+        payload.append('signatoryDesignation', sigSignatoryDesignation.trim());
+      } else if (sigMode === 'url' && sigDirectUrl.trim()) {
+        const lowerUrl = sigDirectUrl.toLowerCase();
+        if (!lowerUrl.includes('.png') && !lowerUrl.startsWith('data:image/png')) {
+          toast.warning('Note: Ensure your signature image URL points to a valid transparent PNG graphic.');
+        }
+        payload = {
+          signatoryName: sigSignatoryName.trim(),
+          signatoryDesignation: sigSignatoryDesignation.trim(),
+          signatureUrl: sigDirectUrl.trim()
+        };
+      } else if (sigFilePreview && sigFilePreview.startsWith('data:image')) {
+        payload = {
+          signatoryName: sigSignatoryName.trim(),
+          signatoryDesignation: sigSignatoryDesignation.trim(),
+          signatureBase64: sigFilePreview
+        };
+      } else {
+        payload = {
+          signatoryName: sigSignatoryName.trim(),
+          signatoryDesignation: sigSignatoryDesignation.trim(),
+          signatureUrl: bankSignatureData?.signatureUrl || sigDirectUrl || undefined
+        };
+      }
+
+      const res = await letterService.updateBankSignatureSettings(payload);
+      if (res && res.success) {
+        toast.success(res.message || 'Official bank PNG signature & authorized signatory profile saved successfully!');
+        const updatedData = res.data || {
+          ...bankSignatureData,
+          signatoryName: sigSignatoryName.trim(),
+          signatoryDesignation: sigSignatoryDesignation.trim(),
+          signatureUrl: res.data?.signatureUrl || sigFilePreview || bankSignatureData?.signatureUrl,
+          updatedAt: new Date().toISOString()
+        };
+        setBankSignatureData(updatedData);
+        setSigFile(null);
+      } else {
+        toast.error(res?.message || 'Failed to update bank signature settings.');
+      }
+    } catch (err) {
+      console.error('Error updating bank signature settings:', err);
+      toast.error(err.response?.data?.message || err.message || 'Failed to update signature settings.');
+    } finally {
+      setSigSaving(false);
+    }
+  };
+
+  const handleResetSignatureForm = () => {
+    if (bankSignatureData) {
+      setSigSignatoryName(bankSignatureData.signatoryName || '');
+      setSigSignatoryDesignation(bankSignatureData.signatoryDesignation || '');
+      setSigDirectUrl(bankSignatureData.signatureUrl || '');
+      setSigFilePreview(bankSignatureData.signatureUrl || '');
+      setSigFile(null);
+      toast.info('Reset signature form to current active server configuration.');
+    } else {
+      setSigSignatoryName('Aman Verma');
+      setSigSignatoryDesignation('Head - Human Resources');
+      setSigDirectUrl('');
+      setSigFilePreview('');
+      setSigFile(null);
+    }
+  };
+
+  const getItemTimestamp = (item) => {
+    if (!item) return 0;
+    if (item.createdAt) {
+      const t = new Date(item.createdAt).getTime();
+      if (!isNaN(t) && t > 0) return t;
+    }
+    if (item.generatedAt) {
+      const t = new Date(item.generatedAt).getTime();
+      if (!isNaN(t) && t > 0) return t;
+    }
+    if (item.updatedAt) {
+      const t = new Date(item.updatedAt).getTime();
+      if (!isNaN(t) && t > 0) return t;
+    }
+    // Extract timestamp from 24-hex MongoDB ObjectId
+    const rawId = String(item._id || item.id || '');
+    if (/^[0-9a-fA-F]{24}$/.test(rawId)) {
+      const hexTime = parseInt(rawId.substring(0, 8), 16) * 1000;
+      if (!isNaN(hexTime) && hexTime > 0) return hexTime;
+    }
+    if (item.issuedDate) {
+      const t = new Date(item.issuedDate).getTime();
+      if (!isNaN(t) && t > 0) return t;
+    }
+    return 0;
+  };
+
   const fetchHistoryLogs = useCallback(async () => {
     setHistoryLoading(true);
     try {
@@ -540,26 +970,62 @@ const LettersAndPayroll = () => {
         documentType: historyTypeFilter !== 'ALL' ? historyTypeFilter : undefined,
         branchId: historyBranchFilter || undefined,
         employeeId: historyEmployeeFilter || undefined,
-        sortBy: 'issuedDate',
+        sortBy: 'createdAt',
         sortOrder: 'desc'
       };
 
       const response = await letterService.getHistory(params);
+      let list = [];
       if (response && response.success) {
-        const list = Array.isArray(response.data) ? response.data : response.data?.items || response.data?.history || [];
-        setHistoryLogs(list);
-        if (response.meta) {
-          setHistoryTotalRecords(response.meta.totalRecords ?? list.length);
-          setHistoryTotalPages(response.meta.totalPages ?? (Math.ceil((response.meta.totalRecords || list.length) / historyLimit) || 1));
-        } else {
-          setHistoryTotalRecords(list.length);
-          setHistoryTotalPages(Math.ceil(list.length / historyLimit) || 1);
-        }
+        list = Array.isArray(response.data) ? response.data : response.data?.items || response.data?.history || [];
+      } else {
+        const saved = localStorage.getItem('advita_letters_history');
+        list = saved ? JSON.parse(saved) : [];
       }
+
+      // Filter out any legacy dummy records
+      list = list.filter(item => {
+        const id = String(item.id || item._id || '');
+        const name = String(item.employeeName || '');
+        return !['HIST-001', 'HIST-002', 'HIST-003'].includes(id) && !['Aman Sharma', 'Lala Patil', 'Priya Deshmukh'].includes(name);
+      });
+
+      // Sort newest at the very top (descending by exact millisecond timestamp + ID)
+      list.sort((a, b) => {
+        const timeA = getItemTimestamp(a);
+        const timeB = getItemTimestamp(b);
+        if (timeB !== timeA) {
+          return timeB - timeA;
+        }
+        const idA = String(a._id || a.id || a.referenceNumber || '');
+        const idB = String(b._id || b.id || b.referenceNumber || '');
+        return idB.localeCompare(idA);
+      });
+
+      setHistoryLogs(list);
+      const total = response?.meta?.totalRecords ?? list.length;
+      setHistoryTotalRecords(total);
+      setHistoryTotalPages(Math.ceil(total / historyLimit) || 1);
+      localStorage.setItem('advita_letters_history', JSON.stringify(list));
     } catch (err) {
       console.error('Failed to fetch employee letter history logs from API:', err);
       const saved = localStorage.getItem('advita_letters_history');
-      const fallbackList = saved ? JSON.parse(saved) : INITIAL_HISTORY;
+      let fallbackList = saved ? JSON.parse(saved) : [];
+      fallbackList = fallbackList.filter(item => {
+        const id = String(item.id || item._id || '');
+        const name = String(item.employeeName || '');
+        return !['HIST-001', 'HIST-002', 'HIST-003'].includes(id) && !['Aman Sharma', 'Lala Patil', 'Priya Deshmukh'].includes(name);
+      });
+      fallbackList.sort((a, b) => {
+        const timeA = getItemTimestamp(a);
+        const timeB = getItemTimestamp(b);
+        if (timeB !== timeA) {
+          return timeB - timeA;
+        }
+        const idA = String(a._id || a.id || a.referenceNumber || '');
+        const idB = String(b._id || b.id || b.referenceNumber || '');
+        return idB.localeCompare(idA);
+      });
       setHistoryLogs(fallbackList);
       setHistoryTotalRecords(fallbackList.length);
       setHistoryTotalPages(Math.ceil(fallbackList.length / historyLimit) || 1);
@@ -730,10 +1196,17 @@ const LettersAndPayroll = () => {
   const handleAddDeduction = () => setDeductions(prev => [...prev, { label: '', amount: 0 }]);
   const handleRemoveDeduction = (index) => setDeductions(prev => prev.filter((_, i) => i !== index));
 
-  const handleGenerateDocument = async (e) => {
+  const handleGenerateDocument = async (e, bypassSignatureCheck = false) => {
     if (e) e.preventDefault();
     if (!selectedEmployeeId) {
       toast.warning('Please select an employee first.');
+      return;
+    }
+
+    // Check if official bank PNG signature is configured
+    const hasSignature = !!(bankSignatureData?.signatureUrl || sigFilePreview);
+    if (!hasSignature && !bypassSignatureCheck) {
+      setIsMissingSignatureModalOpen(true);
       return;
     }
 
@@ -747,8 +1220,14 @@ const LettersAndPayroll = () => {
 
       switch (selectedLetterType) {
         case 'Offer Letter':
-          payload = { ...payload, candidateName: offerCandidateName || empName, designation: offerDesignation, joiningDate: offerJoiningDate, annualSalary: Number(offerAnnualSalary) || 0 };
-          summaryText = `Designation: ${offerDesignation} | CTC: ₹${Number(offerAnnualSalary).toLocaleString()}/yr`;
+          payload = { 
+            ...payload, 
+            candidateName: currentEmployee?.fullName || currentEmployee?.name || 'Employee', 
+            designation: currentEmployee?.designation || currentEmployee?.role?.name || 'Staff Member', 
+            joiningDate: currentEmployee?.joiningDate ? new Date(currentEmployee.joiningDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0], 
+            annualSalary: Number(currentEmployee?.salary) || 0 
+          };
+          summaryText = `Designation: ${payload.designation} | CTC: ₹${Number(payload.annualSalary).toLocaleString()}/yr`;
           break;
         case 'Confirmation Letter':
           payload = { ...payload, probationStartDate, probationEndDate, confirmationDate, noticePeriodDays: Number(confirmationNoticePeriod) || 60 };
@@ -799,6 +1278,7 @@ const LettersAndPayroll = () => {
       setGeneratedRefNo(finalRefNo);
       setGeneratedDocTitle(finalDocTitle);
       setLastGeneratedSummary(summaryText);
+      setIsSuccessModalOpen(true);
 
       const newHistoryItem = {
         id: `HIST-${Date.now().toString().slice(-6)}`,
@@ -808,18 +1288,29 @@ const LettersAndPayroll = () => {
         employeeEmail: empEmail,
         referenceNumber: finalRefNo,
         designation: currentEmployee?.designation || offerDesignation || promoNewRole || 'Staff',
+        branchName: currentEmployee?.branch?.name || currentEmployee?.branchName || 'Main Branch',
+        branchCity: currentEmployee?.branch?.city || currentEmployee?.branch?.address?.city || '',
+        branchState: currentEmployee?.branch?.state || currentEmployee?.branch?.address?.state || '',
         generatedAt: new Date().toISOString(),
+        createdAt: new Date().toISOString(),
+        issuedDate: new Date().toISOString(),
         detailsSummary: summaryText,
         fileUrl: finalFileUrl,
         sentStatus: false
       };
-      setHistoryLogs(prev => [newHistoryItem, ...prev]);
+      setHistoryLogs(prev => [newHistoryItem, ...prev.filter(item => (item.id || item._id) !== newHistoryItem.id)]);
       setHistoryTotalRecords(prev => prev + 1);
+
+      const saved = localStorage.getItem('advita_letters_history');
+      const existing = saved ? JSON.parse(saved) : [];
+      localStorage.setItem('advita_letters_history', JSON.stringify([newHistoryItem, ...existing.filter(i => (i.id || i._id) !== newHistoryItem.id)]));
+
+      fetchHistoryLogs();
 
       toast.success(
         <div className="flex flex-col">
           <span className="font-bold">{selectedLetterType} Generated Successfully!</span>
-          <span className="text-xs">Document #{finalRefNo} is ready for preview, download, or email.</span>
+          <span className="text-xs">Document #{finalRefNo} is ready and logged in history.</span>
         </div>,
         { icon: <FileCheck className="text-[#225091]" size={18} /> }
       );
@@ -1016,7 +1507,7 @@ const LettersAndPayroll = () => {
           { label: "Letters & Payroll" }
         ]}
       >
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <button type="button" onClick={() => setActiveTab('generate')} className={`px-5 py-2.5 rounded-full font-semibold transition-all shadow-sm flex items-center gap-2 text-sm shrink-0 cursor-pointer ${activeTab === 'generate' ? 'bg-[#225091] text-white hover:bg-[#1b427b]' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
             <FileCheck size={16} />
             <span>Generate Document</span>
@@ -1025,6 +1516,15 @@ const LettersAndPayroll = () => {
             <History size={16} />
             <span>History ({historyTotalRecords})</span>
           </button>
+          <button type="button" onClick={() => setActiveTab('signature')} className={`px-5 py-2.5 rounded-full font-semibold transition-all shadow-sm flex items-center gap-2 text-sm shrink-0 cursor-pointer ${activeTab === 'signature' ? 'bg-[#225091] text-white hover:bg-[#1b427b]' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
+            <PenTool size={16} />
+            <span>Official Signature</span>
+            {bankSignatureData?.signatureUrl ? (
+              <span className="w-2 h-2 rounded-full bg-emerald-400 ring-2 ring-white" title="Signature Active" />
+            ) : (
+              <span className="text-[10px] font-bold bg-amber-100 text-amber-800 px-1.5 py-0.2 rounded-full">Setup</span>
+            )}
+          </button>
         </div>
       </PageHeader>
 
@@ -1032,21 +1532,66 @@ const LettersAndPayroll = () => {
 
       {activeTab === 'generate' && (
         <div className="flex flex-col gap-5">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 items-start">
-            <div className="lg:col-span-2 bg-white rounded-xl shadow-xs border border-gray-100 p-5 sm:p-6 space-y-6">
+          {/* Bank Authorized Signatory Quick Banner */}
+          <div className="bg-gradient-to-r from-blue-50/90 via-indigo-50/40 to-slate-50 border border-blue-100/90 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-2xs">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-[#225091] text-white flex items-center justify-center shrink-0 shadow-sm">
+                <PenTool size={18} />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-[#225091]">
+                    Official Bank Signatory
+                  </span>
+                  {bankSignatureData?.signatureUrl ? (
+                    <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100/80 px-2 py-0.2 rounded-full flex items-center gap-1">
+                      <CheckCircle2 size={11} /> Graphic Active
+                    </span>
+                  ) : (
+                    <span className="text-[10px] font-bold text-amber-700 bg-amber-100 px-2 py-0.2 rounded-full flex items-center gap-1">
+                      <AlertCircle size={11} /> Graphic Not Uploaded
+                    </span>
+                  )}
+                </div>
+                <div className="text-xs text-gray-800 font-semibold mt-0.5 flex items-center gap-1.5 flex-wrap">
+                  <span className="text-gray-900 font-bold">{bankSignatureData?.signatoryName || sigSignatoryName || 'Authorized Signatory'}</span>
+                  <span className="text-gray-400">•</span>
+                  <span className="text-gray-600">{bankSignatureData?.signatoryDesignation || sigSignatoryDesignation || 'Head - Human Resources'}</span>
+                  {bankSignatureData?.bankName && (
+                    <>
+                      <span className="text-gray-400">•</span>
+                      <span className="text-gray-500 font-normal">{bankSignatureData.bankName}</span>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setActiveTab('signature')}
+              className="px-3.5 py-1.5 bg-white hover:bg-blue-50/80 border border-blue-200 text-[#225091] font-bold text-xs rounded-xl transition-all shadow-2xs flex items-center gap-1.5 shrink-0 cursor-pointer self-end sm:self-auto"
+            >
+              <span>{bankSignatureData?.signatureUrl ? 'Manage Signature' : 'Configure Signature Graphic'}</span>
+              <ChevronRight size={14} />
+            </button>
+          </div>
+
+          <div className="w-full">
+            <div className="bg-white rounded-2xl shadow-xs border border-gray-100 p-6 sm:p-8 space-y-6">
               <form onSubmit={handleGenerateDocument} className="space-y-6">
-                {/* Step 1: Document Type Dropdown */}
+                {/* Step 1: Select Document Type Dropdown */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-bold text-gray-800 uppercase tracking-wider flex items-center gap-2">
                       <span className="w-5 h-5 rounded-full bg-[#225091] text-white text-[11px] font-bold flex items-center justify-center">1</span>
-                      <span>Choose Document Type</span>
+                      <span>Select Document Type</span>
                       <span className="text-rose-500">*</span>
                     </label>
                     <span className="text-xs font-bold text-[#225091] bg-blue-50 px-2.5 py-0.5 rounded-md border border-blue-100/80">
                       {LETTER_TYPES.find(l => l.id === selectedLetterType)?.code} Standard
                     </span>
                   </div>
+
                   <div className="relative">
                     <select
                       value={selectedLetterType}
@@ -1064,70 +1609,131 @@ const LettersAndPayroll = () => {
                 </div>
 
                 {/* Step 2: Searchable Employee Selection Dropdown */}
-                <div className="space-y-2 pt-4 border-t border-gray-100">
-                  <label className="text-xs font-bold text-gray-800 uppercase tracking-wider flex items-center gap-2">
-                    <span className="w-5 h-5 rounded-full bg-[#225091] text-white text-[11px] font-bold flex items-center justify-center">2</span>
-                    <span>Select Society Employee</span>
-                    <span className="text-rose-500">*</span>
-                  </label>
+                <div className="space-y-3 pt-4 border-t border-gray-100">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold text-gray-800 uppercase tracking-wider flex items-center gap-2">
+                      <span className="w-5 h-5 rounded-full bg-[#225091] text-white text-[11px] font-bold flex items-center justify-center">2</span>
+                      <span>Select Society Employee</span>
+                      <span className="text-rose-500">*</span>
+                    </label>
+                    <span className="text-[11px] text-gray-500">
+                      {employees.length} active staff available
+                    </span>
+                  </div>
                   <SearchableEmployeeSelect
                     employees={employees}
                     selectedEmployeeId={selectedEmployeeId}
                     onSelect={(id) => setSelectedEmployeeId(id)}
                     loading={fetchingEmployees}
                   />
-                </div>
 
-                {/* Step 3: Parameter Fields with Labels & Proper Dropdowns */}
-                <div className="pt-4 border-t border-gray-100 space-y-4">
-                  <div>
-                    <label className="text-xs font-bold text-gray-800 uppercase tracking-wider flex items-center gap-2 mb-1">
-                      <span className="w-5 h-5 rounded-full bg-[#225091] text-white text-[11px] font-bold flex items-center justify-center">3</span>
-                      <span>{selectedLetterType} Parameters</span>
-                    </label>
-                    <span className="text-[11px] text-gray-500 font-medium ml-7 block">{LETTER_TYPES.find(l => l.id === selectedLetterType)?.description}</span>
-                  </div>
-
-                  {/* Offer Letter */}
-                  {selectedLetterType === 'Offer Letter' && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-xs font-semibold text-gray-700 mb-1.5">Candidate Full Name <span className="text-rose-500">*</span></label>
-                        <input type="text" required value={offerCandidateName} onChange={(e) => setOfferCandidateName(e.target.value)} placeholder="e.g. Rahul Sharma" className="w-full px-3.5 py-2.5 bg-gray-50/70 focus:bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-[#225091]" />
+                  {/* Selected Employee Profile Details Card */}
+                  {currentEmployee && (
+                    <div className="bg-slate-50/90 border border-slate-200/80 rounded-2xl p-4 sm:p-5 space-y-3.5 animate-in fade-in zoom-in-95 duration-150">
+                      <div className="flex items-center justify-between pb-2.5 border-b border-slate-200/70">
+                        <div className="flex items-center gap-2">
+                          <User size={14} className="text-[#225091]" />
+                          <span className="text-[11px] font-bold uppercase tracking-wider text-gray-600">Selected Employee Profile</span>
+                        </div>
+                        {currentEmployee.status && (
+                          <span className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full ${
+                            currentEmployee.status === 'ACTIVE' ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-200 text-gray-700'
+                          }`}>
+                            {currentEmployee.status}
+                          </span>
+                        )}
                       </div>
-                      <div>
-                        <label className="block text-xs font-semibold text-gray-700 mb-1.5">Role <span className="text-rose-500">*</span></label>
-                        <select 
-                          required 
-                          value={offerDesignation} 
-                          onChange={(e) => setOfferDesignation(e.target.value)}
-                          className="w-full px-3.5 py-2.5 bg-gray-50/70 focus:bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-[#225091] cursor-pointer"
-                        >
-                          <option value="">Select Role</option>
-                          {roles.map((r) => (
-                            <option key={r.id || r._id} value={r.name}>
-                              {r.name}
-                            </option>
-                          ))}
-                          {offerDesignation && !roles.some(r => r.name === offerDesignation) && (
-                            <option value={offerDesignation}>{offerDesignation}</option>
+
+                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        {/* Avatar & Title */}
+                        <div className="flex items-center gap-3">
+                          <div className="w-12 h-12 rounded-xl bg-[#225091] text-white flex items-center justify-center font-bold text-base shadow-xs shrink-0">
+                            {(currentEmployee.fullName || currentEmployee.name || 'E').slice(0, 2).toUpperCase()}
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <h4 className="font-bold text-sm text-gray-900">{currentEmployee.fullName || currentEmployee.name}</h4>
+                              {currentEmployee.employeeCode && (
+                                <span className="font-mono text-[10px] font-bold text-[#225091] bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100">
+                                  {currentEmployee.employeeCode}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs font-semibold text-[#225091] mt-0.5">
+                              {currentEmployee.designation || currentEmployee.role?.name || 'Society Staff Member'}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Metadata Badges & Info */}
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-xs text-gray-600 pt-2 md:pt-0 border-t md:border-t-0 border-slate-200/70">
+                          {(currentEmployee.branch?.name || currentEmployee.branchName) && (
+                            <div className="flex items-center gap-1.5 bg-white px-2.5 py-1.5 rounded-lg border border-gray-200/60">
+                              <Building2 size={13} className="text-[#225091] shrink-0" />
+                              <span className="font-medium text-gray-700 truncate max-w-[130px]" title={currentEmployee.branch?.name || currentEmployee.branchName}>
+                                {currentEmployee.branch?.name || currentEmployee.branchName}
+                              </span>
+                            </div>
                           )}
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-xs font-semibold text-gray-700 mb-1.5">Joining Date <span className="text-rose-500">*</span></label>
-                        <input type="date" required value={offerJoiningDate} onChange={(e) => setOfferJoiningDate(e.target.value)} className="w-full px-3.5 py-2.5 bg-gray-50/70 focus:bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-[#225091]" />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-semibold text-gray-700 mb-1.5">Annual CTC (₹) <span className="text-rose-500">*</span></label>
-                        <input type="number" min="0" required value={offerAnnualSalary} onChange={(e) => setOfferAnnualSalary(e.target.value)} placeholder="e.g. 450000" className="w-full px-3.5 py-2.5 bg-gray-50/70 focus:bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-[#225091]" />
+                          {currentEmployee.email && (
+                            <div className="flex items-center gap-1.5 bg-white px-2.5 py-1.5 rounded-lg border border-gray-200/60 truncate">
+                              <Mail size={13} className="text-[#225091] shrink-0" />
+                              <span className="font-medium text-gray-700 truncate max-w-[130px]" title={currentEmployee.email}>
+                                {currentEmployee.email}
+                              </span>
+                            </div>
+                          )}
+                          {currentEmployee.phoneNumber && (
+                            <div className="flex items-center gap-1.5 bg-white px-2.5 py-1.5 rounded-lg border border-gray-200/60">
+                              <Phone size={13} className="text-[#225091] shrink-0" />
+                              <span className="font-medium text-gray-700">{currentEmployee.phoneNumber}</span>
+                            </div>
+                          )}
+                          {currentEmployee.joiningDate && (
+                            <div className="flex items-center gap-1.5 bg-white px-2.5 py-1.5 rounded-lg border border-gray-200/60">
+                              <Calendar size={13} className="text-[#225091] shrink-0" />
+                              <span className="font-medium text-gray-700">Joined {new Date(currentEmployee.joiningDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+                            </div>
+                          )}
+                          {currentEmployee.salary && (
+                            <div className="flex items-center gap-1.5 bg-white px-2.5 py-1.5 rounded-lg border border-gray-200/60">
+                              <CreditCard size={13} className="text-emerald-600 shrink-0" />
+                              <span className="font-bold text-emerald-700">₹{Number(currentEmployee.salary).toLocaleString()}/yr</span>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
                   )}
 
-                  {/* Confirmation Letter */}
-                  {selectedLetterType === 'Confirmation Letter' && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* Informational Callout for Offer Letter */}
+                  {selectedLetterType === 'Offer Letter' && currentEmployee && (
+                    <div className="p-3.5 bg-blue-50/80 border border-blue-200/80 rounded-xl flex items-start gap-2.5 text-xs text-gray-700 animate-in fade-in duration-150">
+                      <Info size={16} className="text-[#225091] shrink-0 mt-0.5" />
+                      <div>
+                        <span className="font-bold text-[#225091]">Ready to Issue: </span>
+                        <span>
+                          Official Offer Letter will be generated for <strong>{currentEmployee.fullName || currentEmployee.name}</strong> as <strong>{currentEmployee.designation || currentEmployee.role?.name || 'Staff Member'}</strong> with salary and joining date pre-configured.
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Step 3: Parameter Fields (Only for document types that require extra operational inputs) */}
+                {selectedLetterType !== 'Offer Letter' && (
+                  <div className="pt-4 border-t border-gray-100 space-y-4">
+                    <div>
+                      <label className="text-xs font-bold text-gray-800 uppercase tracking-wider flex items-center gap-2 mb-1">
+                        <span className="w-5 h-5 rounded-full bg-[#225091] text-white text-[11px] font-bold flex items-center justify-center">3</span>
+                        <span>{selectedLetterType} Parameters</span>
+                      </label>
+                      <span className="text-[11px] text-gray-500 font-medium ml-7 block">{LETTER_TYPES.find(l => l.id === selectedLetterType)?.description}</span>
+                    </div>
+
+                    {/* Confirmation Letter */}
+                    {selectedLetterType === 'Confirmation Letter' && (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-xs font-semibold text-gray-700 mb-1.5">Probation Start Date <span className="text-rose-500">*</span></label>
                         <input type="date" required value={probationStartDate} onChange={(e) => setProbationStartDate(e.target.value)} className="w-full px-3.5 py-2.5 bg-gray-50/70 focus:bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-[#225091]" />
@@ -1287,6 +1893,7 @@ const LettersAndPayroll = () => {
                     </div>
                   )}
                 </div>
+              )}
 
                 {/* Generate Options & Submit Button */}
                 <div className="space-y-3 pt-2">
@@ -1327,193 +1934,6 @@ const LettersAndPayroll = () => {
                   </button>
                 </div>
               </form>
-            </div>
-            {/* Right Sidebar: Employee Profile Card & PDF Ready Result */}
-            <div className="space-y-4">
-              {currentEmployee ? (
-                <div className="bg-white rounded-xl shadow-xs border border-gray-100 p-5 space-y-3.5">
-                  <div className="flex items-center justify-between pb-3 border-b border-gray-100">
-                    <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Employee Profile</h3>
-                    {currentEmployee.status && (
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${currentEmployee.status === 'ACTIVE' ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-600'}`}>
-                        {currentEmployee.status}
-                      </span>
-                    )}
-                  </div>
-                  
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-[#225091]/10 text-[#225091] flex items-center justify-center font-bold text-base shrink-0">
-                      {(currentEmployee.fullName || currentEmployee.name || 'E').slice(0, 2).toUpperCase()}
-                    </div>
-                    <div className="text-xs space-y-1 flex-1 min-w-0">
-                      <p className="font-bold text-sm text-gray-900 truncate">{currentEmployee.fullName || currentEmployee.name}</p>
-                      <p className="text-[#225091] font-semibold">{currentEmployee.designation || currentEmployee.role?.name || 'Society Staff'}</p>
-                      <p className="text-gray-500 text-[11px] truncate flex items-center gap-1">
-                        <Mail size={12} className="text-gray-400" />
-                        {currentEmployee.email || 'No email registered'}
-                      </p>
-                      {currentEmployee.phoneNumber && (
-                        <p className="text-gray-500 text-[11px] flex items-center gap-1">
-                          <Phone size={12} className="text-gray-400" />
-                          {currentEmployee.phoneNumber}
-                        </p>
-                      )}
-                      {(currentEmployee.branch?.name || currentEmployee.branchName) && (
-                        <p className="text-gray-500 text-[11px] flex items-center gap-1">
-                          <Building2 size={12} className="text-gray-400" />
-                          {currentEmployee.branch?.name || currentEmployee.branchName}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="bg-slate-50/70 border border-dashed border-gray-200 rounded-xl p-5 text-center text-xs text-gray-400 space-y-2">
-                  <User size={24} className="mx-auto text-gray-300" />
-                  <p className="font-semibold text-gray-600">No Employee Selected</p>
-                  <p className="text-[11px] text-gray-400">Choose an employee from Step 2 to preview profile & generate documentation.</p>
-                </div>
-              )}
-              {/* Enhanced Live PDF Ready Result Card with In-Place Actions */}
-              {generatedPdfUrl && (
-                <div className="bg-white border-2 border-emerald-500/30 rounded-2xl p-5 shadow-sm space-y-4 animate-in fade-in zoom-in-95 duration-200">
-                  {/* Status & Document Header */}
-                  <div className="flex items-start justify-between gap-3 pb-3 border-b border-gray-100">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-100 shadow-2xs">
-                        <FileCheck size={22} />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-[10px] font-extrabold tracking-wider uppercase text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/60">
-                            Document Ready
-                          </span>
-                        </div>
-                        <h4 className="text-xs font-bold text-gray-900 truncate mt-1 max-w-[190px]" title={`${generatedDocTitle}.pdf`}>
-                          {generatedDocTitle}.pdf
-                        </h4>
-                      </div>
-                    </div>
-                    <span className="font-mono text-[10px] font-bold text-[#225091] bg-blue-50 px-2.5 py-1 rounded-md border border-blue-100/80">
-                      {generatedRefNo}
-                    </span>
-                  </div>
-
-                  {/* Quick Summary View */}
-                  <div className="bg-gray-50/80 rounded-xl p-3 border border-gray-100 text-xs space-y-1.5">
-                    <div className="flex justify-between text-gray-500">
-                      <span>Recipient:</span>
-                      <span className="font-bold text-gray-800">{currentEmployee?.fullName || currentEmployee?.name || offerCandidateName || 'Employee'}</span>
-                    </div>
-                    {lastGeneratedSummary && (
-                      <div className="flex justify-between text-gray-500 pt-1 border-t border-gray-200/60">
-                        <span>Details:</span>
-                        <span className="font-medium text-gray-700">{lastGeneratedSummary}</span>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Primary In-Place Actions */}
-                  <div className="grid grid-cols-2 gap-2">
-                    <button 
-                      type="button" 
-                      onClick={() => setIsPreviewModalOpen(true)}
-                      className="py-2.5 px-3 rounded-xl bg-[#225091] hover:bg-[#193e73] text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-colors shadow-xs cursor-pointer"
-                    >
-                      <Eye size={14} />
-                      <span>View Full Letter</span>
-                    </button>
-
-                    <button 
-                      type="button" 
-                      onClick={handleDownload}
-                      className="py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-colors shadow-xs cursor-pointer"
-                    >
-                      <Download size={14} />
-                      <span>Download PDF</span>
-                    </button>
-                  </div>
-
-                  {/* Dedicated "Send to Email" Section */}
-                  <div className="bg-slate-50/90 rounded-xl p-3.5 border border-slate-200/80 space-y-2.5">
-                    <div className="flex items-center justify-between">
-                      <label className="text-xs font-bold text-gray-800 flex items-center gap-1.5">
-                        <Mail size={14} className="text-[#225091]" />
-                        <span>Send via Email (MSG91)</span>
-                      </label>
-                      {sentSuccess && (
-                        <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full flex items-center gap-1">
-                          <Check size={11} /> Dispatched
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="relative">
-                      <Mail size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                      <input 
-                        type="email"
-                        value={currentEmployee?.email || offerCandidateName ? (currentEmployee?.email || `${(currentEmployee?.fullName || offerCandidateName || 'employee').toLowerCase().replace(/\s+/g, '.')}@advitabank.com`) : ''}
-                        onChange={(e) => {
-                          if (currentEmployee) {
-                            setCurrentEmployee({ ...currentEmployee, email: e.target.value });
-                          }
-                        }}
-                        placeholder="Enter recipient email address..."
-                        className="w-full pl-8.5 pr-3 py-2 bg-white border border-gray-200 rounded-lg text-xs font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all"
-                      />
-                    </div>
-
-                    <button
-                      type="button"
-                      disabled={sendingEmail}
-                      onClick={() => handleSendToEmployee()}
-                      className={`w-full py-2.5 px-4 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-xs cursor-pointer ${
-                        sentSuccess
-                          ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
-                          : 'bg-[#225091] hover:bg-[#193e73] text-white hover:shadow-md'
-                      } disabled:opacity-50`}
-                    >
-                      {sendingEmail ? (
-                        <>
-                          <Loader2 size={14} className="animate-spin" />
-                          <span>Dispatching Email with PDF...</span>
-                        </>
-                      ) : sentSuccess ? (
-                        <>
-                          <Check size={14} />
-                          <span>Resend Email Notification</span>
-                        </>
-                      ) : (
-                        <>
-                          <Send size={14} />
-                          <span>Send Letter to Email</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
-
-                  {/* Secondary Actions: Print & Create Another */}
-                  <div className="grid grid-cols-2 gap-2 pt-1">
-                    <button 
-                      type="button" 
-                      onClick={handlePrint}
-                      className="py-2 px-3 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
-                    >
-                      <Printer size={13} />
-                      <span>Print</span>
-                    </button>
-
-                    <button 
-                      type="button" 
-                      onClick={handleResetForm}
-                      className="py-2 px-3 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
-                    >
-                      <Plus size={13} />
-                      <span>Create Another</span>
-                    </button>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         </div>
@@ -1596,14 +2016,40 @@ const LettersAndPayroll = () => {
               </thead>
               <tbody className="divide-y divide-gray-100 text-xs">
                 {historyLoading ? (
-                  <tr>
-                    <td colSpan="7" className="py-16 text-center text-gray-400">
-                      <div className="flex flex-col items-center justify-center gap-2">
-                        <Loader2 className="w-6 h-6 animate-spin text-[#225091]" />
-                        <span className="text-xs font-medium">Fetching history logs from server...</span>
-                      </div>
-                    </td>
-                  </tr>
+                  Array.from({ length: 5 }).map((_, rIdx) => (
+                    <tr key={rIdx} className="animate-pulse">
+                      <td className="py-4 px-5">
+                        <Skeleton className="h-4 w-28 rounded" />
+                      </td>
+                      <td className="py-4 px-5">
+                        <div className="space-y-1.5">
+                          <Skeleton className="h-4 w-32 rounded" />
+                          <Skeleton className="h-3 w-40 rounded" />
+                        </div>
+                      </td>
+                      <td className="py-4 px-5">
+                        <div className="space-y-1.5">
+                          <Skeleton className="h-4 w-24 rounded" />
+                          <Skeleton className="h-2.5 w-16 rounded" />
+                        </div>
+                      </td>
+                      <td className="py-4 px-5">
+                        <Skeleton className="h-6 w-28 rounded-full" />
+                      </td>
+                      <td className="py-4 px-5">
+                        <Skeleton className="h-4 w-20 rounded" />
+                      </td>
+                      <td className="py-4 px-5">
+                        <Skeleton className="h-4 w-44 rounded" />
+                      </td>
+                      <td className="py-4 px-5 text-center">
+                        <div className="flex items-center justify-center gap-1.5">
+                          <Skeleton className="h-7 w-12 rounded-lg" />
+                          <Skeleton className="h-7 w-16 rounded-lg" />
+                        </div>
+                      </td>
+                    </tr>
+                  ))
                 ) : historyLogs.length === 0 ? (
                   <tr>
                     <td colSpan="7" className="py-12 text-center text-gray-400 font-medium">
@@ -1730,6 +2176,345 @@ const LettersAndPayroll = () => {
                 </button>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'signature' && (
+        <div className="flex flex-col gap-6 animate-in fade-in duration-200">
+          {/* Header Info Banner */}
+          <div className="bg-gradient-to-r from-[#225091] via-[#1a4077] to-[#153460] rounded-2xl p-6 text-white shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div className="space-y-1.5 max-w-2xl">
+              <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-white/10 backdrop-blur-md text-blue-100 text-xs font-semibold">
+                <ShieldCheck size={14} />
+                <span>Bank Official Signatory & Verification Authority</span>
+              </div>
+              <h2 className="text-xl font-extrabold tracking-tight">Bank Official Signature & Signatory Profile</h2>
+              <p className="text-xs text-blue-100/90 leading-relaxed">
+                Configure your institution's authorized signatory name, title, and signature graphic image once.
+                All 8 employee letters automatically render this signature image directly above the signatory line in generated PDFs.
+              </p>
+            </div>
+            <div className="bg-white/10 backdrop-blur-md border border-white/15 rounded-xl p-3 text-xs text-white shrink-0 min-w-[200px]">
+              <span className="text-blue-200 block text-[11px]">Active Institution</span>
+              <span className="font-bold text-sm block mt-0.5">{bankSignatureData?.bankName || 'Advita Co-operative Bank Society Ltd.'}</span>
+              {bankSignatureData?.updatedAt && (
+                <span className="text-[10px] text-blue-200/80 block mt-1">
+                  Last Updated: {new Date(bankSignatureData.updatedAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            {/* Form Section */}
+            <div className="lg:col-span-7 bg-white rounded-2xl p-6 shadow-xs border border-gray-100 space-y-6">
+              <form onSubmit={handleSaveBankSignature} className="space-y-6">
+                {/* Mode Selector */}
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-gray-800 uppercase tracking-wider block">
+                    Signature Graphic Input Source
+                  </label>
+                  <div className="grid grid-cols-3 gap-2 bg-gray-100 p-1 rounded-xl">
+                    <button
+                      type="button"
+                      onClick={() => setSigMode('file')}
+                      className={`py-2 px-2.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                        sigMode === 'file' ? 'bg-white text-[#225091] shadow-xs' : 'text-gray-600 hover:text-gray-900'
+                      }`}
+                    >
+                      <UploadCloud size={14} />
+                      <span>Upload File</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSigMode('draw')}
+                      className={`py-2 px-2.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                        sigMode === 'draw' ? 'bg-white text-[#225091] shadow-xs' : 'text-gray-600 hover:text-gray-900'
+                      }`}
+                    >
+                      <Pen size={14} />
+                      <span>Draw on Touchpad</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSigMode('url')}
+                      className={`py-2 px-2.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                        sigMode === 'url' ? 'bg-white text-[#225091] shadow-xs' : 'text-gray-600 hover:text-gray-900'
+                      }`}
+                    >
+                      <ExternalLink size={14} />
+                      <span>Image URL</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Draw on Touchpad Mode */}
+                {sigMode === 'draw' && (
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-gray-700 flex items-center justify-between">
+                      <span>Draw Signature with Laptop Touchpad / Mouse <span className="text-rose-500">*</span></span>
+                      <span className="text-[10px] text-[#225091] font-semibold">Real-time vector smoothing</span>
+                    </label>
+                    <TouchpadSignatureCanvas
+                      onSaveSignature={(dataUrl) => {
+                        setSigFilePreview(dataUrl);
+                        setSigFile(null);
+                      }}
+                      onClear={() => {
+                        setSigFilePreview('');
+                        setSigFile(null);
+                      }}
+                    />
+                  </div>
+                )}
+
+                {/* File Upload Mode Dropzone */}
+                {sigMode === 'file' && (
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-gray-700 flex items-center justify-between">
+                      <span>Signature Graphic Image (PNG Only) <span className="text-rose-500">*</span></span>
+                      <span className="text-[10px] font-bold text-[#225091] bg-blue-50 px-2 py-0.5 rounded border border-blue-100">.png format</span>
+                    </label>
+                    <div
+                      onDragOver={(e) => { e.preventDefault(); setIsDraggingSig(true); }}
+                      onDragLeave={() => setIsDraggingSig(false)}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        setIsDraggingSig(false);
+                        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                          handleSignatureFileChange(e.dataTransfer.files[0]);
+                        }
+                      }}
+                      className={`border-2 border-dashed rounded-2xl p-6 text-center transition-all flex flex-col items-center justify-center gap-3 cursor-pointer ${
+                        isDraggingSig
+                          ? 'border-[#225091] bg-blue-50/50 scale-[0.99]'
+                          : 'border-gray-300 hover:border-[#225091] bg-gray-50/50 hover:bg-gray-50'
+                      }`}
+                      onClick={() => document.getElementById('signature-file-input')?.click()}
+                    >
+                      <input
+                        id="signature-file-input"
+                        type="file"
+                        accept="image/png, .png"
+                        className="hidden"
+                        onChange={(e) => {
+                          if (e.target.files && e.target.files[0]) {
+                            handleSignatureFileChange(e.target.files[0]);
+                          }
+                        }}
+                      />
+
+                      {sigFilePreview ? (
+                        <div className="space-y-3">
+                          <div className="max-w-[260px] h-24 mx-auto bg-white border border-gray-200 rounded-xl p-2 flex items-center justify-center shadow-2xs relative group">
+                            <img
+                              src={sigFilePreview}
+                              alt="Signature Preview"
+                              className="max-h-full max-w-full object-contain"
+                            />
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSigFile(null);
+                                setSigFilePreview('');
+                                toast.info('Signature graphic removed.');
+                              }}
+                              className="absolute -top-2 -right-2 bg-rose-500 text-white rounded-full p-1 shadow-md hover:bg-rose-600 transition-colors"
+                              title="Remove Signature"
+                            >
+                              <X size={12} />
+                            </button>
+                          </div>
+                          <p className="text-xs text-gray-500 font-medium">
+                            {sigFile ? `Selected PNG: ${sigFile.name} (${(sigFile.size / 1024).toFixed(1)} KB)` : 'Current Active PNG Graphic'}
+                          </p>
+                          <span className="text-[11px] font-bold text-[#225091] hover:underline block">Click or Drag to Replace PNG Graphic</span>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          <div className="w-12 h-12 rounded-full bg-blue-50 text-[#225091] flex items-center justify-center mx-auto border border-blue-100">
+                            <FileUp size={22} />
+                          </div>
+                          <div>
+                            <span className="text-xs font-bold text-gray-800">Click to browse PNG</span>
+                            <span className="text-xs text-gray-500"> or drag and drop PNG image here</span>
+                          </div>
+                          <p className="text-[11px] text-gray-400">
+                            PNG format only with transparent background (.png, Max: 5MB, Recommended: 400×120px)
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Direct URL Mode */}
+                {sigMode === 'url' && (
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-gray-700 block">
+                      Direct HTTP / S3 Signature Graphic URL <span className="text-rose-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <ImageIcon size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                      <input
+                        type="url"
+                        value={sigDirectUrl}
+                        onChange={(e) => {
+                          setSigDirectUrl(e.target.value);
+                          setSigFilePreview(e.target.value);
+                        }}
+                        placeholder="https://storage.advitacredit.com/society/banks/signature.png"
+                        className="w-full pl-10 pr-3.5 py-2.5 bg-gray-50/70 focus:bg-white border border-gray-200 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091]"
+                      />
+                    </div>
+                    {sigDirectUrl && (
+                      <div className="p-3 bg-gray-50 rounded-xl border border-gray-200 flex items-center gap-3">
+                        <img
+                          src={sigDirectUrl}
+                          alt="Signature Preview"
+                          className="h-12 max-w-[140px] object-contain bg-white rounded border p-1"
+                          onError={(e) => { e.target.style.display = 'none'; }}
+                        />
+                        <span className="text-xs text-gray-600">URL preview rendering</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Signatory Profile Fields */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-gray-100">
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                      Authorized Signatory Name <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={sigSignatoryName}
+                      onChange={(e) => setSigSignatoryName(e.target.value)}
+                      placeholder="e.g. Aman Verma"
+                      className="w-full px-3.5 py-2.5 bg-gray-50/70 focus:bg-white border border-gray-200 rounded-xl text-xs font-semibold text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                      Signatory Designation / Title <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={sigSignatoryDesignation}
+                      onChange={(e) => setSigSignatoryDesignation(e.target.value)}
+                      placeholder="e.g. Head - Human Resources"
+                      className="w-full px-3.5 py-2.5 bg-gray-50/70 focus:bg-white border border-gray-200 rounded-xl text-xs font-semibold text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091]"
+                    />
+                  </div>
+                </div>
+
+                {/* Form Buttons */}
+                <div className="flex items-center justify-between gap-3 pt-4 border-t border-gray-100">
+                  <button
+                    type="button"
+                    onClick={handleResetSignatureForm}
+                    className="px-4 py-2.5 border border-gray-200 hover:bg-gray-50 text-gray-700 font-bold text-xs rounded-xl transition-all flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <RefreshCcw size={13} />
+                    <span>Reset</span>
+                  </button>
+
+                  <button
+                    type="submit"
+                    disabled={sigSaving || sigLoading}
+                    className="px-6 py-2.5 bg-[#225091] hover:bg-[#193e73] text-white font-bold text-xs rounded-xl transition-all shadow-sm hover:shadow flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                  >
+                    {sigSaving ? (
+                      <>
+                        <Loader2 size={14} className="animate-spin" />
+                        <span>Saving Settings...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Save size={14} />
+                        <span>Save Signature & Signatory Profile</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            {/* Live Signatory Preview Card */}
+            <div className="lg:col-span-5 space-y-4">
+              <div className="bg-white rounded-2xl p-6 shadow-xs border border-gray-100 space-y-5">
+                <div className="flex items-center justify-between pb-3 border-b border-gray-100">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
+                      <Sparkles size={16} />
+                    </div>
+                    <div>
+                      <h3 className="text-xs font-bold text-gray-900 uppercase tracking-wider">
+                        Document Stamp Preview
+                      </h3>
+                      <span className="text-[10px] text-gray-400">Live rendering on letter footer</span>
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                    Official Stamp
+                  </span>
+                </div>
+
+                {/* Stamp Simulation Box */}
+                <div className="bg-gradient-to-b from-slate-50/80 to-white border-2 border-dashed border-gray-200 rounded-2xl p-6 text-center space-y-3">
+                  <div className="text-[11px] text-gray-400 font-semibold uppercase tracking-widest">
+                    Authorized Signatory
+                  </div>
+
+                  <div className="h-20 flex items-center justify-center my-2">
+                    {sigFilePreview || bankSignatureData?.signatureUrl ? (
+                      <img
+                        src={sigFilePreview || bankSignatureData?.signatureUrl}
+                        alt="Authorized Signature"
+                        className="max-h-full max-w-[200px] object-contain drop-shadow-xs"
+                      />
+                    ) : (
+                      <div className="border border-dashed border-gray-300 rounded-lg px-6 py-3 text-xs text-gray-400 italic">
+                        [ Signature Graphic Image Space ]
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Signatory line */}
+                  <div className="w-48 mx-auto border-t-2 border-gray-800 pt-1">
+                    <div className="font-extrabold text-xs text-gray-900 tracking-wide uppercase">
+                      {sigSignatoryName.trim() || 'Aman Verma'}
+                    </div>
+                    <div className="text-[11px] font-semibold text-[#225091]">
+                      {sigSignatoryDesignation.trim() || 'Head - Human Resources'}
+                    </div>
+                    <div className="text-[10px] text-gray-500 font-medium mt-0.5">
+                      {bankSignatureData?.bankName || 'Advita Co-operative Bank Society Ltd.'}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Checklist & Instructions */}
+                <div className="bg-blue-50/60 rounded-xl p-4 border border-blue-100 text-xs space-y-2.5 text-gray-700">
+                  <span className="font-bold text-[#225091] flex items-center gap-1.5">
+                    <CheckCircle2 size={14} />
+                    <span>Cross-Document Integration</span>
+                  </span>
+                  <ul className="text-[11px] space-y-1.5 text-gray-600 list-disc list-inside">
+                    <li>Renders above signatory line on Offer, Confirmation & Appraisal letters.</li>
+                    <li>Embedded into Promotion, Branch Transfer, Increment & Termination notices.</li>
+                    <li>Printed in monthly Salary Slips alongside authorized stamp.</li>
+                    <li>Uploaded once and automatically synchronized for all future letter issuances.</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -1993,6 +2778,210 @@ const LettersAndPayroll = () => {
                   Close
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Document Generated Success Modal */}
+      {isSuccessModalOpen && generatedPdfUrl && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-gray-100 space-y-5 animate-in zoom-in-95 duration-200">
+            {/* Header with Success Badge */}
+            <div className="flex items-start justify-between gap-3 pb-3 border-b border-gray-100">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-100 shadow-2xs">
+                  <CheckCircle2 size={26} />
+                </div>
+                <div>
+                  <span className="text-[10px] font-extrabold tracking-wider uppercase text-emerald-700 bg-emerald-100/80 px-2.5 py-0.5 rounded-full">
+                    Generated & Logged in History
+                  </span>
+                  <h3 className="text-base font-bold text-gray-900 mt-1">
+                    {selectedLetterType} Ready
+                  </h3>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsSuccessModalOpen(false)}
+                className="text-gray-400 hover:text-gray-700 p-1.5 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Document & Recipient Details */}
+            <div className="bg-slate-50/80 rounded-xl p-4 border border-slate-200/60 text-xs space-y-2">
+              <div className="flex justify-between items-center text-gray-600">
+                <span>Reference Number:</span>
+                <span className="font-mono font-bold text-[#225091] bg-white px-2 py-0.5 rounded border border-blue-100">
+                  {generatedRefNo}
+                </span>
+              </div>
+              <div className="flex justify-between items-center text-gray-600">
+                <span>Recipient Employee:</span>
+                <span className="font-bold text-gray-900">
+                  {currentEmployee?.fullName || currentEmployee?.name || 'Employee'}
+                </span>
+              </div>
+              {currentEmployee?.designation && (
+                <div className="flex justify-between items-center text-gray-600">
+                  <span>Designation:</span>
+                  <span className="font-medium text-gray-700">{currentEmployee.designation}</span>
+                </div>
+              )}
+              {currentEmployee?.email && (
+                <div className="flex justify-between items-center text-gray-600">
+                  <span>Email:</span>
+                  <span className="font-mono text-gray-700">{currentEmployee.email}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Primary Action Buttons */}
+            <div className="grid grid-cols-2 gap-2.5">
+              <button
+                type="button"
+                onClick={handleDownload}
+                className="py-3 px-4 rounded-xl bg-[#225091] hover:bg-[#193e73] text-white text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-xs cursor-pointer"
+              >
+                <Download size={15} />
+                <span>Download PDF</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setIsSuccessModalOpen(false);
+                  setIsPreviewModalOpen(true);
+                }}
+                className="py-3 px-4 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-800 text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer"
+              >
+                <Eye size={15} />
+                <span>Preview Document</span>
+              </button>
+            </div>
+
+            {/* Email & Print Secondary Actions */}
+            <div className="grid grid-cols-2 gap-2.5">
+              <button
+                type="button"
+                disabled={sendingEmail}
+                onClick={() => handleSendToEmployee()}
+                className={`py-2.5 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all border cursor-pointer ${
+                  sentSuccess
+                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                    : 'bg-white hover:bg-blue-50 text-[#225091] border-blue-200'
+                }`}
+              >
+                {sendingEmail ? (
+                  <Loader2 size={13} className="animate-spin" />
+                ) : sentSuccess ? (
+                  <Check size={13} />
+                ) : (
+                  <Send size={13} />
+                )}
+                <span>{sentSuccess ? 'Email Dispatched' : 'Send via Email'}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handlePrint}
+                className="py-2.5 px-3 rounded-xl bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+              >
+                <Printer size={13} />
+                <span>Print Document</span>
+              </button>
+            </div>
+
+            {/* Footer Navigation */}
+            <div className="pt-3 border-t border-gray-100 flex items-center justify-between gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsSuccessModalOpen(false);
+                  setActiveTab('history');
+                  fetchHistoryLogs();
+                }}
+                className="text-xs font-bold text-[#225091] hover:underline flex items-center gap-1 cursor-pointer"
+              >
+                <History size={14} />
+                <span>Open in History Table ➔</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setIsSuccessModalOpen(false);
+                  handleResetForm();
+                }}
+                className="px-3.5 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
+              >
+                <Plus size={13} />
+                <span>Generate Another</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Missing Signature Confirmation Prompt Modal */}
+      {isMissingSignatureModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-gray-100 space-y-4 animate-in zoom-in-95 duration-200">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center border border-amber-200 shrink-0">
+                  <Pen size={22} />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-gray-900">
+                    Official Signature Not Configured
+                  </h3>
+                  <span className="text-xs text-amber-600 font-semibold">Signature Graphic Missing</span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsMissingSignatureModalOpen(false)}
+                className="text-gray-400 hover:text-gray-700 p-1.5 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="p-3.5 bg-amber-50/70 border border-amber-200/80 rounded-xl text-xs text-gray-700 space-y-2">
+              <p>
+                An official bank PNG signature has not been uploaded yet for <strong>{sigSignatoryName || 'Authorized Signatory'}</strong>.
+              </p>
+              <p className="text-[11px] text-gray-500">
+                You can configure your PNG graphic now to embed a digital stamp, or proceed to generate the certificate with standard text signatory lines.
+              </p>
+            </div>
+
+            <div className="space-y-2 pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsMissingSignatureModalOpen(false);
+                  setActiveTab('signature');
+                }}
+                className="w-full py-3 px-4 rounded-xl bg-[#225091] hover:bg-[#193e73] text-white text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-sm cursor-pointer"
+              >
+                <Pen size={14} />
+                <span>Configure Official Signature Now</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setIsMissingSignatureModalOpen(false);
+                  handleGenerateDocument(null, true);
+                }}
+                className="w-full py-2.5 px-4 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <FileText size={14} />
+                <span>Proceed Without Signature Graphic</span>
+              </button>
             </div>
           </div>
         </div>

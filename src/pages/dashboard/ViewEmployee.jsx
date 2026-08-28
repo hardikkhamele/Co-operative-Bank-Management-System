@@ -8,6 +8,7 @@ import {
 , ArrowLeft} from 'lucide-react';
 import { employeeService } from '../../api/employeeService';
 import PageHeader from '../../components/common/PageHeader';
+import { deriveKpaGoals } from '../../utils/kpaConstants';
 
 const InfoCard = ({ icon: Icon, title, value }) => (
   <div className="bg-[#fafafa] rounded-xl p-4 flex items-center gap-4 border border-gray-100/60">
@@ -428,21 +429,38 @@ const ViewEmployee = () => {
               </div>
               
               <div className="bg-[#f8f9fc] rounded-2xl border border-gray-100 overflow-hidden">
-                <div className="p-6 pb-4">
-                  <h3 className="text-[15px] font-bold text-[#1b2559]">Target List</h3>
+                <div className="p-6 pb-4 flex items-center justify-between flex-wrap gap-3">
+                  <div>
+                    <h3 className="text-[15px] font-bold text-[#1b2559]">KPA Target Milestones</h3>
+                    <p className="text-xs text-gray-500 mt-0.5">Auto-derived daily, weekly, and monthly performance goals.</p>
+                  </div>
+                  <div className="flex items-center gap-2.5">
+                    <Link
+                      to={`/kpa-report/view/${id}`}
+                      className="px-4 py-2 bg-white border border-gray-200 hover:border-[#225091] text-[#225091] text-xs font-semibold rounded-xl transition-all shadow-2xs"
+                    >
+                      View KPA Analytics
+                    </Link>
+                    <Link
+                      to={`/kpa-report/view/${id}/add-kra`}
+                      className="px-4 py-2 bg-[#225091] hover:bg-[#193e73] text-white text-xs font-semibold rounded-xl transition-all shadow-2xs"
+                    >
+                      Configure Targets
+                    </Link>
+                  </div>
                 </div>
                 
                 <div className="overflow-x-auto px-4 pb-6">
                   <table className="w-full text-left border-collapse min-w-[650px] bg-white rounded-xl overflow-hidden shadow-2xs">
                     <thead>
-                      <tr className="border-b border-gray-100 bg-[#f4f3fb] text-[14px] text-[#1b2559] font-bold">
-                        <th className="py-4 px-6 font-bold w-24">Sr. No.</th>
-                        <th className="py-4 px-6 font-bold">Product Name</th>
-                        <th className="py-4 px-6 font-bold">Type</th>
-                        <th className="py-4 px-6 font-bold text-right">Daily</th>
-                        <th className="py-4 px-6 font-bold text-right">Weekly</th>
-                        <th className="py-4 px-6 font-bold text-right">Monthly</th>
-                        <th className="py-4 px-6 font-bold text-right">Yearly Target</th>
+                      <tr className="border-b border-gray-100 bg-[#f4f3fb] text-[13px] text-[#1b2559] font-bold">
+                        <th className="py-3.5 px-6 font-bold w-20">Sr. No.</th>
+                        <th className="py-3.5 px-6 font-bold">Product / KPI Area</th>
+                        <th className="py-3.5 px-6 font-bold">Target Type</th>
+                        <th className="py-3.5 px-6 font-bold text-right">Daily (W/5)</th>
+                        <th className="py-3.5 px-6 font-bold text-right">Weekly (M/4)</th>
+                        <th className="py-3.5 px-6 font-bold text-right">Monthly (Y/12)</th>
+                        <th className="py-3.5 px-6 font-bold text-right">Annual Target</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -455,10 +473,8 @@ const ViewEmployee = () => {
                       ) : (
                         kra.targets.map((target, index) => {
                           const yearly = Number(target.targetValue) || 0;
-                          const monthly = yearly / 12;
-                          const weekly = yearly / 52;
-                          const daily = yearly / 300;
-                          const isAmount = target.targetType === 'AMOUNT' || yearly >= 10000;
+                          const derived = deriveKpaGoals(yearly);
+                          const isAmount = target.targetType === 'AMOUNT' || (!target.targetType && target.product !== 'Lead Generation' && target.product !== 'Staff Onboarding' && target.product !== 'Savings Account');
 
                           const formatVal = (val) => {
                             const formatted = Math.round(val).toLocaleString('en-IN');
@@ -466,18 +482,18 @@ const ViewEmployee = () => {
                           };
 
                           return (
-                            <tr key={index} className="border-b border-gray-50 text-[14px] text-gray-700 hover:bg-gray-50 transition-colors">
-                              <td className="py-4 px-6 font-medium text-gray-500">{index + 1}</td>
-                              <td className="py-4 px-6 text-[#1b2559] font-bold">{target.product}</td>
-                              <td className="py-4 px-6">
+                            <tr key={index} className="border-b border-gray-50 text-[13px] text-gray-700 hover:bg-gray-50 transition-colors">
+                              <td className="py-3.5 px-6 font-medium text-gray-500">{index + 1}</td>
+                              <td className="py-3.5 px-6 text-[#1b2559] font-bold">{target.product}</td>
+                              <td className="py-3.5 px-6">
                                 <span className="inline-block px-2.5 py-0.5 bg-gray-100 text-gray-700 text-xs font-semibold rounded-md">
-                                  {target.targetType || 'AMOUNT'}
+                                  {target.targetType || (isAmount ? 'AMOUNT' : 'COUNT')}
                                 </span>
                               </td>
-                              <td className="py-4 px-6 text-right font-medium">{formatVal(daily)}</td>
-                              <td className="py-4 px-6 text-right font-medium">{formatVal(weekly)}</td>
-                              <td className="py-4 px-6 text-right font-medium">{formatVal(monthly)}</td>
-                              <td className="py-4 px-6 text-right font-bold text-emerald-700">{formatVal(yearly)}</td>
+                              <td className="py-3.5 px-6 text-right font-medium">{formatVal(derived.daily)}</td>
+                              <td className="py-3.5 px-6 text-right font-medium">{formatVal(derived.weekly)}</td>
+                              <td className="py-3.5 px-6 text-right font-medium">{formatVal(derived.monthly)}</td>
+                              <td className="py-3.5 px-6 text-right font-bold text-emerald-700">{formatVal(derived.yearly)}</td>
                             </tr>
                           );
                         })

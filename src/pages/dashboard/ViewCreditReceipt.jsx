@@ -5,6 +5,7 @@ import { toast } from 'react-toastify';
 import { creditReceiptService } from '../../api/creditReceiptService';
 import useAuthStore from '../../store/authStore';
 import PageHeader from '../../components/common/PageHeader';
+import { isBankOwner } from '../../utils/roleUtils';
 
 const ViewCreditReceipt = () => {
   const { id } = useParams();
@@ -20,22 +21,7 @@ const ViewCreditReceipt = () => {
 
   const authRole = useAuthStore((state) => state.role);
   const authUser = useAuthStore((state) => state.user);
-  const rawRole =
-    authRole?.code ||
-    authRole?.name ||
-    authRole ||
-    authUser?.role?.code ||
-    authUser?.role?.name ||
-    authUser?.role ||
-    "";
-  const roleString = (typeof rawRole === "string" ? rawRole : "").toUpperCase();
-  const canApprove =
-    !roleString ||
-    roleString.includes("OWNER") ||
-    roleString.includes("MANAGER") ||
-    roleString.includes("ACCOUNTANT") ||
-    roleString.includes("CA") ||
-    roleString.includes("ADMIN");
+  const canApprove = isBankOwner(authRole, authUser);
 
   useEffect(() => {
     const fetchDetails = async () => {

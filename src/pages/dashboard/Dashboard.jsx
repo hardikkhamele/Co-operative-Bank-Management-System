@@ -7,6 +7,7 @@ import {
 import { Users, Banknote, Landmark, CreditCard, Wallet, Loader2, MapPin, ChevronDown } from 'lucide-react';
 import { dashboardService } from '../../api/dashboardService';
 import useBranchStore from '../../store/branchStore';
+import { Skeleton, SkeletonDashboardKpi, SkeletonChart } from '../../components/common/Skeleton';
 
 const CustomTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
@@ -267,49 +268,61 @@ const Dashboard = () => {
             <div className="text-[13px] text-gray-500 font-medium mb-1">
               {stats.emiCard?.title || 'EMI Card'}
             </div>
-            <div className="text-xl font-bold text-brand-primary-dark">
-              {stats.emiCard?.formattedAvailable || (stats.emiCard?.available != null ? stats.emiCard.available.toLocaleString('en-IN') : '0')}
+            <div className="text-xl font-bold text-brand-primary-dark flex items-center justify-center min-h-[28px]">
+              {loadingStats ? (
+                <Skeleton className="h-6 w-14 rounded-md" />
+              ) : (
+                stats.emiCard?.formattedAvailable || (stats.emiCard?.available != null ? stats.emiCard.available.toLocaleString('en-IN') : '0')
+              )}
             </div>
           </div>
           <div className="px-6 py-4 text-center min-w-[150px]">
             <div className="text-[13px] text-gray-500 font-medium mb-1">
               {stats.verificationCredit?.title || 'Verification Credit'}
             </div>
-            <div className="text-xl font-bold text-brand-primary-dark">
-              {stats.verificationCredit?.formattedAvailable || (stats.verificationCredit?.available != null ? stats.verificationCredit.available.toLocaleString('en-IN') : '0')}
+            <div className="text-xl font-bold text-brand-primary-dark flex items-center justify-center min-h-[28px]">
+              {loadingStats ? (
+                <Skeleton className="h-6 w-14 rounded-md" />
+              ) : (
+                stats.verificationCredit?.formattedAvailable || (stats.verificationCredit?.available != null ? stats.verificationCredit.available.toLocaleString('en-IN') : '0')
+              )}
             </div>
           </div>
         </div>
       </div>
 
       {/* Stats Grid (API 1) */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {kpiCards.map((stat, idx) => (
-          <Link 
-            key={idx} 
-            to={stat.path} 
-            className="bg-brand-bg-card border border-border-default rounded-xl p-5 shadow-[0_1px_3px_rgba(16,24,40,0.06)] flex flex-col justify-between h-[130px] hover:shadow-[0_4px_12px_rgba(16,24,40,0.08)] transition-all duration-300 block cursor-pointer"
-          >
-            <div className="flex justify-between items-start">
-              <span className="text-[14px] font-medium text-text-muted">{stat.title}</span>
-              <div className="p-2 rounded-lg bg-brand-light text-brand-primary shadow-sm">
-                {stat.icon}
+      {loadingStats && Object.keys(stats).length === 0 ? (
+        <SkeletonDashboardKpi count={6} />
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {kpiCards.map((stat, idx) => (
+            <Link 
+              key={idx} 
+              to={stat.path} 
+              className="bg-brand-bg-card border border-border-default rounded-xl p-5 shadow-[0_1px_3px_rgba(16,24,40,0.06)] flex flex-col justify-between h-[130px] hover:shadow-[0_4px_12px_rgba(16,24,40,0.08)] transition-all duration-300 block cursor-pointer"
+            >
+              <div className="flex justify-between items-start">
+                <span className="text-[14px] font-medium text-text-muted">{stat.title}</span>
+                <div className="p-2 rounded-lg bg-brand-light text-brand-primary shadow-sm">
+                  {stat.icon}
+                </div>
               </div>
-            </div>
-            <div>
-              <div className="text-3xl font-bold mb-1 tracking-tight text-text-heading">{stat.value}</div>
-              <div className="text-[13px] font-medium flex items-center gap-1.5 mt-1 text-text-muted">
-                <span className={`px-2 py-0.5 rounded-md font-semibold ${
-                  stat.change.startsWith('+') ? 'bg-semantic-success-light text-semantic-success' :
-                  stat.change.startsWith('-') ? 'bg-semantic-danger-light text-semantic-danger' :
-                  'bg-brand-surface text-text-muted'
-                }`}>{stat.change}</span>
-                <span>{stat.change.includes('This Month') ? '' : ' This Month'}</span>
+              <div>
+                <div className="text-3xl font-bold mb-1 tracking-tight text-text-heading">{stat.value}</div>
+                <div className="text-[13px] font-medium flex items-center gap-1.5 mt-1 text-text-muted">
+                  <span className={`px-2 py-0.5 rounded-md font-semibold ${
+                    stat.change.startsWith('+') ? 'bg-semantic-success-light text-semantic-success' :
+                    stat.change.startsWith('-') ? 'bg-semantic-danger-light text-semantic-danger' :
+                    'bg-brand-surface text-text-muted'
+                  }`}>{stat.change}</span>
+                  <span>{stat.change.includes('This Month') ? '' : ' This Month'}</span>
+                </div>
               </div>
-            </div>
-          </Link>
-        ))}
-      </div>
+            </Link>
+          ))}
+        </div>
+      )}
 
       {/* Charts Row */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
@@ -331,51 +344,55 @@ const Dashboard = () => {
             </div>
             {loadingRevenue && <Loader2 size={16} className="animate-spin text-brand-primary" />}
           </div>
-          
-          <div className="h-[280px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={revenueData.length ? revenueData : []} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
-                <XAxis 
-                  dataKey="month" 
-                  axisLine={false} 
-                  tickLine={false} 
-                  tick={{fill: '#64748b', fontSize: 13}} 
-                  dy={10} 
-                />
-                <YAxis 
-                  axisLine={false} 
-                  tickLine={false} 
-                  tick={{fill: '#64748b', fontSize: 13}} 
-                  tickFormatter={(val) => val === 0 ? '₹0' : `₹${Math.round(val/1000)}K`} 
-                />
-                <Tooltip content={<CustomTooltip />} />
-                {revenueData.length > 0 ? (
-                  <>
-                    <Line 
-                      type="monotone" 
-                      name={revenueLegends.thisYear || 'This year'} 
-                      dataKey="thisYear" 
-                      stroke="#225091" 
-                      strokeWidth={2.5} 
-                      dot={false} 
-                      activeDot={{ r: 6 }} 
-                    />
-                    <Line 
-                      type="monotone" 
-                      name={revenueLegends.lastYear || 'Last year'} 
-                      dataKey="lastYear" 
-                      stroke="#A9BDD3" 
-                      strokeWidth={1.5} 
-                      strokeDasharray="4 4" 
-                      dot={false} 
-                    />
-                  </>
-                ) : (
-                  <div className="flex items-center justify-center h-full text-gray-400">No revenue data available</div>
-                )}
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
+
+          {loadingRevenue && revenueData.length === 0 ? (
+            <SkeletonChart type="line" height="h-[280px]" />
+          ) : (
+            <div className="h-[280px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={revenueData.length ? revenueData : []} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
+                  <XAxis 
+                    dataKey="month" 
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{fill: '#64748b', fontSize: 13}} 
+                    dy={10} 
+                  />
+                  <YAxis 
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{fill: '#64748b', fontSize: 13}} 
+                    tickFormatter={(val) => val === 0 ? '₹0' : `₹${Math.round(val/1000)}K`} 
+                  />
+                  <Tooltip content={<CustomTooltip />} />
+                  {revenueData.length > 0 ? (
+                    <>
+                      <Line 
+                        type="monotone" 
+                        name={revenueLegends.thisYear || 'This year'} 
+                        dataKey="thisYear" 
+                        stroke="#225091" 
+                        strokeWidth={2.5} 
+                        dot={false} 
+                        activeDot={{ r: 6 }} 
+                      />
+                      <Line 
+                        type="monotone" 
+                        name={revenueLegends.lastYear || 'Last year'} 
+                        dataKey="lastYear" 
+                        stroke="#A9BDD3" 
+                        strokeWidth={1.5} 
+                        strokeDasharray="4 4" 
+                        dot={false} 
+                      />
+                    </>
+                  ) : (
+                    <div className="flex items-center justify-center h-full text-gray-400">No revenue data available</div>
+                  )}
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          )}
         </div>
 
         {/* Loan Distributed Chart (API 3) */}
@@ -397,75 +414,79 @@ const Dashboard = () => {
             </select>
           </div>
           
-          <div className="h-[280px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              {formattedLoanData.length > 0 ? (
-                <BarChart data={formattedLoanData} margin={{ top: 20, right: 10, left: -20, bottom: 20 }}>
-                  <XAxis 
-                    dataKey="name" 
-                    axisLine={false} 
-                    tickLine={false} 
-                    tick={(props) => {
-                      const { x, y, payload } = props;
-                      const lines = payload.value.split('\n');
-                      return (
-                        <g transform={`translate(${x},${y})`}>
-                          {lines.map((line, index) => (
-                            <text key={index} x={0} y={index * 12 + 10} textAnchor="middle" fill="#64748b" fontSize={10}>
-                              {line}
-                            </text>
-                          ))}
-                        </g>
-                      );
-                    }}
-                    dy={10} 
-                    width={60} 
-                    interval={0}
-                  />
-                  <YAxis 
-                    axisLine={false} 
-                    tickLine={false} 
-                    tick={{fill: '#64748b', fontSize: 12}} 
-                    tickFormatter={(val) => val === 0 ? '0' : `₹${Math.round(val/1000)}k`} 
-                  />
-                  <Tooltip cursor={{fill: 'transparent'}} content={<CustomTooltip />} />
-                  <Bar 
-                    dataKey="value" 
-                    name="Loan Amount"
-                    radius={[10, 10, 10, 10]} 
-                    barSize={16}
-                    fill="#225091" 
-                  >
-                    <LabelList 
-                      dataKey="value" 
-                      position="top" 
-                      content={(props) => {
-                        const { x, y, width, value, index } = props;
-                        if (index === 1) {
-                          return (
-                            <g>
-                              <rect x={x + width/2 - 16} y={y - 24} width={32} height={18} fill="#225091" rx={9} ry={9} />
-                              <text x={x + width / 2} y={y - 11} fill="white" textAnchor="middle" fontSize={10} fontWeight="bold">
-                                {Math.round(value/1000)}k
+          {loadingLoanChart && formattedLoanData.length === 0 ? (
+            <SkeletonChart type="bar" height="h-[280px]" />
+          ) : (
+            <div className="h-[280px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                {formattedLoanData.length > 0 ? (
+                  <BarChart data={formattedLoanData} margin={{ top: 20, right: 10, left: -20, bottom: 20 }}>
+                    <XAxis 
+                      dataKey="name" 
+                      axisLine={false} 
+                      tickLine={false} 
+                      tick={(props) => {
+                        const { x, y, payload } = props;
+                        const lines = payload.value.split('\n');
+                        return (
+                          <g transform={`translate(${x},${y})`}>
+                            {lines.map((line, index) => (
+                              <text key={index} x={0} y={index * 12 + 10} textAnchor="middle" fill="#64748b" fontSize={10}>
+                                {line}
                               </text>
-                            </g>
-                          );
-                        }
-                        return null;
+                            ))}
+                          </g>
+                        );
                       }} 
+                      dy={10} 
+                      width={60} 
+                      interval={0}
                     />
-                    {formattedLoanData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.fill} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              ) : (
-                <div className="flex items-center justify-center h-full w-full">
-                  <span className="text-gray-400 font-medium">No loan distribution data available</span>
-                </div>
-              )}
-            </ResponsiveContainer>
-          </div>
+                    <YAxis 
+                      axisLine={false} 
+                      tickLine={false} 
+                      tick={{fill: '#64748b', fontSize: 12}} 
+                      tickFormatter={(val) => val === 0 ? '0' : `₹${Math.round(val/1000)}k`} 
+                    />
+                    <Tooltip cursor={{fill: 'transparent'}} content={<CustomTooltip />} />
+                    <Bar 
+                      dataKey="value" 
+                      name="Loan Amount"
+                      radius={[10, 10, 10, 10]} 
+                      barSize={16}
+                      fill="#225091" 
+                    >
+                      <LabelList 
+                        dataKey="value" 
+                        position="top" 
+                        content={(props) => {
+                          const { x, y, width, value, index } = props;
+                          if (index === 1) {
+                            return (
+                              <g>
+                                <rect x={x + width/2 - 16} y={y - 24} width={32} height={18} fill="#225091" rx={9} ry={9} />
+                                <text x={x + width / 2} y={y - 11} fill="white" textAnchor="middle" fontSize={10} fontWeight="bold">
+                                  {Math.round(value/1000)}k
+                                </text>
+                              </g>
+                            );
+                          }
+                          return null;
+                        }} 
+                      />
+                      {formattedLoanData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.fill} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                ) : (
+                  <div className="flex items-center justify-center h-full w-full">
+                    <span className="text-gray-400 font-medium">No loan distribution data available</span>
+                  </div>
+                )}
+              </ResponsiveContainer>
+            </div>
+          )}
         </div>
       </div>
 
@@ -479,7 +500,7 @@ const Dashboard = () => {
               {loadingServices && <Loader2 size={14} className="animate-spin text-brand-primary" />}
             </div>
             <select 
-              value={servicesTimeFilter}
+              value={servicesTimeFilter} 
               onChange={(e) => setServicesTimeFilter(e.target.value)}
               className="bg-[#f3f4f6] border border-gray-200 text-gray-700 text-xs font-semibold rounded-lg focus:ring-brand-primary focus:border-brand-primary block px-3 py-1.5 outline-none cursor-pointer"
             >
@@ -490,56 +511,60 @@ const Dashboard = () => {
             </select>
           </div>
           
-          <div className="flex-1 flex items-center justify-center pt-2">
-            <div className="h-[250px] w-full flex items-center">
-              {formattedPieData.length > 0 ? (
-                <>
-                  <ResponsiveContainer width="60%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={formattedPieData}
-                        cx="50%"
-                        cy="50%"
-                        outerRadius={105}
-                        innerRadius={0}
-                        dataKey="value"
-                        nameKey="name"
-                        stroke="none"
-                        labelLine={false}
-                        label={({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
-                          const radius = innerRadius + (outerRadius - innerRadius) * 0.65;
-                          const x = cx + radius * Math.cos(-midAngle * Math.PI / 180);
-                          const y = cy + radius * Math.sin(-midAngle * Math.PI / 180);
-                          return percent > 0.05 ? (
-                            <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central" fontSize={12} fontWeight={600}>
-                              {`${(percent * 100).toFixed(0)}%`}
-                            </text>
-                          ) : null;
-                        }}
-                      >
-                        {formattedPieData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
-                      </Pie>
-                      <Tooltip content={<CustomTooltip />} />
-                    </PieChart>
-                  </ResponsiveContainer>
-                  <div className="w-[40%] flex flex-col justify-center gap-2.5 pl-4">
-                    {formattedPieData.map((entry, idx) => (
-                      <div key={idx} className="flex items-center gap-3 text-[13px] font-medium text-gray-700">
-                        <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: entry.color }}></span>
-                        <span className="truncate">{entry.name} ({entry.value}%)</span>
-                      </div>
-                    ))}
+          {loadingServices && formattedPieData.length === 0 ? (
+            <SkeletonChart type="pie" height="h-[250px]" />
+          ) : (
+            <div className="flex-1 flex items-center justify-center pt-2">
+              <div className="h-[250px] w-full flex items-center">
+                {formattedPieData.length > 0 ? (
+                  <>
+                    <ResponsiveContainer width="60%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={formattedPieData}
+                          cx="50%"
+                          cy="50%"
+                          outerRadius={105}
+                          innerRadius={0}
+                          dataKey="value"
+                          nameKey="name"
+                          stroke="none"
+                          labelLine={false}
+                          label={({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
+                            const radius = innerRadius + (outerRadius - innerRadius) * 0.65;
+                            const x = cx + radius * Math.cos(-midAngle * Math.PI / 180);
+                            const y = cy + radius * Math.sin(-midAngle * Math.PI / 180);
+                            return percent > 0.05 ? (
+                              <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central" fontSize={12} fontWeight={600}>
+                                {`${(percent * 100).toFixed(0)}%`}
+                              </text>
+                            ) : null;
+                          }}
+                        >
+                          {formattedPieData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
+                          ))}
+                        </Pie>
+                        <Tooltip content={<CustomTooltip />} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                    <div className="w-[40%] flex flex-col justify-center gap-2.5 pl-4">
+                      {formattedPieData.map((entry, idx) => (
+                        <div key={idx} className="flex items-center gap-3 text-[13px] font-medium text-gray-700">
+                          <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: entry.color }}></span>
+                          <span className="truncate">{entry.name} ({entry.value}%)</span>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex items-center justify-center w-full h-full text-gray-400 font-medium">
+                    No services data available
                   </div>
-                </>
-              ) : (
-                <div className="flex items-center justify-center w-full h-full text-gray-400 font-medium">
-                  No services data available
-                </div>
-              )}
+                )}
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Last 5 Actions Table */}
@@ -557,7 +582,14 @@ const Dashboard = () => {
                 </tr>
               </thead>
               <tbody>
-                {actionsData.length > 0 ? (
+                {loadingOverview && actionsData.length === 0 ? (
+                  Array.from({ length: 5 }).map((_, rIdx) => (
+                    <tr key={rIdx} className="border-b last:border-b-0 border-gray-100 animate-pulse">
+                      <td className="py-4 px-3"><Skeleton className="h-4 w-20 rounded" /></td>
+                      <td className="py-4 px-3"><Skeleton className="h-4 w-52 rounded" /></td>
+                    </tr>
+                  ))
+                ) : actionsData.length > 0 ? (
                   actionsData.map((item, idx) => (
                     <tr key={idx} className="hover:bg-gray-50 transition-colors border-b last:border-b-0 border-gray-100">
                       <td className="py-4 px-3 text-sm text-gray-700 whitespace-nowrap font-medium">{item.time}</td>

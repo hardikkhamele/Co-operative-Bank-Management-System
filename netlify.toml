@@ -2,10 +2,10 @@
   publish = "dist"
   command = "npm run build"
 
-# Proxy all /api requests to Production backend
+# Proxy all /api requests to backend
 [[redirects]]
   from = "/api/*"
-  to = "https://api.advitacredit.com/api/:splat"
+  to = "https://devapi.advitacredit.com/api/:splat"
   status = 200
   force = true
 

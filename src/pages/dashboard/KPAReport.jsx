@@ -25,6 +25,7 @@ import { branchService } from '../../api/branchService';
 import { roleService } from '../../api/roleService';
 import PageHeader from '../../components/common/PageHeader';
 import useBranchStore from '../../store/branchStore';
+import { Skeleton, SkeletonAvatar } from '../../components/common/Skeleton';
 
 const INDIAN_STATES = [
   'Andhra Pradesh',
@@ -568,14 +569,34 @@ const KPAReport = () => {
             </thead>
             <tbody className="divide-y divide-gray-100">
               {loading ? (
-                <tr>
-                  <td colSpan="7" className="py-16 text-center text-gray-500">
-                    <div className="flex flex-col items-center justify-center gap-2">
-                      <Loader2 className="animate-spin text-[#225091]" size={24} />
-                      <span className="text-sm font-medium">Loading KPA employee reports...</span>
-                    </div>
-                  </td>
-                </tr>
+                Array.from({ length: 6 }).map((_, rIdx) => (
+                  <tr key={rIdx} className="animate-pulse">
+                    <td className="py-4 px-5">
+                      <Skeleton className="h-4 w-6 rounded" />
+                    </td>
+                    <td className="py-4 px-5">
+                      <div className="flex items-center gap-3">
+                        <SkeletonAvatar size="w-8 h-8" rounded="rounded-full" />
+                        <Skeleton className="h-4 w-32 rounded" />
+                      </div>
+                    </td>
+                    <td className="py-4 px-5">
+                      <Skeleton className="h-4 w-28 rounded" />
+                    </td>
+                    <td className="py-4 px-5">
+                      <Skeleton className="h-4 w-24 rounded" />
+                    </td>
+                    <td className="py-4 px-5">
+                      <Skeleton className="h-4 w-24 rounded" />
+                    </td>
+                    <td className="py-4 px-5">
+                      <Skeleton className="h-4 w-36 rounded" />
+                    </td>
+                    <td className="py-4 px-5 text-center">
+                      <Skeleton className="h-7 w-16 mx-auto rounded-lg" />
+                    </td>
+                  </tr>
+                ))
               ) : reports.length === 0 ? (
                 <tr>
                   <td colSpan="7" className="py-16 text-center text-gray-500">

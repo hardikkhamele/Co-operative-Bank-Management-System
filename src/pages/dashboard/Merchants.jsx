@@ -8,6 +8,7 @@ import { toast } from 'react-toastify';
 import { merchantService } from '../../api/merchantService';
 import useBranchStore from '../../store/branchStore';
 import PageHeader from '../../components/common/PageHeader';
+import { Skeleton } from '../../components/common/Skeleton';
 
 const Merchants = () => {
   const navigate = useNavigate();
@@ -350,12 +351,28 @@ const Merchants = () => {
             </thead>
             <tbody className="divide-y divide-gray-100">
               {loading ? (
-                <tr>
-                  <td colSpan="7" className="py-16 text-center text-gray-500">
-                    <Loader2 size={24} className="animate-spin text-[#225091] mx-auto mb-2" />
-                    <p className="text-sm font-medium text-gray-600">Loading merchants...</p>
-                  </td>
-                </tr>
+                Array.from({ length: 8 }).map((_, rIdx) => (
+                  <tr key={rIdx} className="animate-pulse">
+                    <td className="py-4 px-5"><Skeleton className="h-4 w-6 rounded" /></td>
+                    <td className="py-4 px-5">
+                      <div className="flex items-center gap-2.5">
+                        <Skeleton className="w-7 h-7 rounded-lg shrink-0" />
+                        <Skeleton className="h-4 w-32 rounded" />
+                      </div>
+                    </td>
+                    <td className="py-4 px-5"><Skeleton className="h-4 w-28 rounded" /></td>
+                    <td className="py-4 px-5"><Skeleton className="h-3.5 w-36 rounded" /></td>
+                    <td className="py-4 px-5"><Skeleton className="h-3.5 w-24 rounded" /></td>
+                    <td className="py-4 px-5"><Skeleton className="h-6 w-16 rounded-full" /></td>
+                    <td className="py-4 px-5">
+                      <div className="flex items-center justify-center gap-1.5">
+                        <Skeleton className="h-6 w-14 rounded-lg" />
+                        <Skeleton className="h-6 w-14 rounded-lg" />
+                        <Skeleton className="h-6 w-16 rounded-lg" />
+                      </div>
+                    </td>
+                  </tr>
+                ))
               ) : merchants && merchants.length > 0 ? (
                 merchants.map((row, idx) => {
                   const srNo = (meta.page - 1) * (meta.limit || 10) + idx + 1;

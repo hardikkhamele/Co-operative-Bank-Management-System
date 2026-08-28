@@ -15,6 +15,11 @@ import {
   sanitizeDigits, 
   preventInvalidNumberKeys 
 } from '../../utils/validation';
+import { 
+  ALL_KPA_PRODUCTS, 
+  deriveKpaGoals, 
+  getRecommendedProductsForRole 
+} from '../../utils/kpaConstants';
 
 const INDIAN_STATES_FALLBACK = [
   'Andaman and Nicobar Islands', 'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 
@@ -268,6 +273,36 @@ const EditEmployee = () => {
     };
     fetchData();
   }, [id]);
+
+  // Active Role and Recommended KPA Products
+  const activeRoleName = useMemo(() => {
+    const selectedRole = roles.find(r => (r.id || r._id) === jobDetails.roleId);
+    return selectedRole?.name || selectedRole?.roleName || jobDetails.designation || '';
+  }, [roles, jobDetails.roleId, jobDetails.designation]);
+
+  const roleRecommendedProducts = useMemo(() => {
+    return getRecommendedProductsForRole(activeRoleName);
+  }, [activeRoleName]);
+
+  // Automatically sync KPA targets to the role's assigned products
+  useEffect(() => {
+    if (roleRecommendedProducts && roleRecommendedProducts.length > 0) {
+      setKraSettings(prev => {
+        const updatedTargets = roleRecommendedProducts.map(rec => {
+          const existing = prev.targets?.find(t => t.product === rec.product);
+          return {
+            product: rec.product,
+            targetType: rec.targetType || 'AMOUNT',
+            targetValue: existing?.targetValue !== undefined && existing?.targetValue !== '' ? existing.targetValue : (rec.defaultTarget ?? 0)
+          };
+        });
+        return {
+          ...prev,
+          targets: updatedTargets
+        };
+      });
+    }
+  }, [roleRecommendedProducts]);
 
   // Form Validation Errors
   const [errors, setErrors] = useState({});
@@ -800,7 +835,31 @@ const EditEmployee = () => {
                 </label>
                 <select 
                   value={jobDetails.roleId} 
-                  onChange={e => setJobDetails({...jobDetails, roleId: e.target.value})}
+                  onChange={e => {
+                    const val = e.target.value;
+                    const selectedRole = roles.find(r => (r.id || r._id) === val);
+                    setJobDetails(prev => ({
+                      ...prev, 
+                      roleId: val,
+                      designation: prev.designation || selectedRole?.name || ''
+                    }));
+
+                    // If existing targets are empty or blank, seed recommended products
+                    const hasValidTargets = kraSettings.targets.some(t => t.product && t.product.trim());
+                    if (!hasValidTargets && selectedRole?.name) {
+                      const recommended = getRecommendedProductsForRole(selectedRole.name);
+                      if (recommended && recommended.length > 0) {
+                        setKraSettings(prev => ({
+                          ...prev,
+                          targets: recommended.map(rec => ({
+                            product: rec.product,
+                            targetType: rec.targetType || 'AMOUNT',
+                            targetValue: rec.defaultTarget ?? 0
+                          }))
+                        }));
+                      }
+                    }
+                  }}
                   className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-sm"
                 >
                   <option value="">Select Role</option>
@@ -1060,14 +1119,25 @@ const EditEmployee = () => {
         {activeTab === 'KRA Settings' && (
           <div className="space-y-6">
             <div className="border border-gray-200 rounded-xl p-6 shadow-xs bg-white">
-              <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center justify-between pb-4 border-b border-gray-100 flex-wrap gap-3">
                 <div className="flex items-center gap-2">
                   <Award className="text-[#225091]" size={20} />
-                  <h3 className="text-lg font-bold text-gray-800">Performance Targets (Yearly) (Optional)</h3>
+                  <div>
+                    <h3 className="text-lg font-bold text-gray-800">Role KPA Performance Targets (Yearly)</h3>
+                    {activeRoleName ? (
+                      <p className="text-xs text-[#225091] font-medium mt-0.5">
+                        Assigned products for: <span className="font-bold underline">{activeRoleName}</span>
+                      </p>
+                    ) : (
+                      <p className="text-xs text-amber-600 font-medium mt-0.5">
+                        Please select a role in Job Details to load assigned KPA products.
+                      </p>
+                    )}
+                  </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-2">
-                    <label className="text-xs font-semibold text-gray-600">Year:</label>
+                <div className="flex items-center gap-2.5">
+                  <div className="flex items-center gap-1.5">
+                    <label className="text-xs font-semibold text-gray-600">Fiscal Year:</label>
                     <input 
                       type="number" 
                       value={kraSettings.year} 
@@ -1086,72 +1156,74 @@ const EditEmployee = () => {
                 </div>
               </div>
               
-              <div className="flex flex-col gap-5">
-                {kraSettings.targets.map((target, index) => (
-                  <div key={index} className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end bg-gray-50/60 p-4 rounded-xl border border-gray-100">
-                    <div className={kraSettings.targets.length > 1 ? "md:col-span-6" : "md:col-span-6"}>
-                      <label className="block text-xs font-semibold text-gray-700 mb-1.5">Product (Optional)</label>
-                      <select 
-                        value={target.product} 
-                        onChange={e => {
-                          const newTargets = [...kraSettings.targets];
-                          newTargets[index].product = e.target.value;
-                          setKraSettings({...kraSettings, targets: newTargets});
-                        }} 
-                        className="w-full px-3.5 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-sm"
-                      >
-                        <option value="">Select Product</option>
-                        <option value="Fixed Deposit">Fixed Deposit</option>
-                        <option value="Loan Disbursement">Loan Disbursement</option>
-                        <option value="Recurring Deposit">Recurring Deposit</option>
-                        <option value="Savings Account">Savings Account</option>
-                        <option value="Current Account">Current Account</option>
-                        <option value="Insurance Policy">Insurance Policy</option>
-                      </select>
-                    </div>
-                    <div className={kraSettings.targets.length > 1 ? "md:col-span-5" : "md:col-span-6"}>
-                      <label className="block text-xs font-semibold text-gray-700 mb-1.5">Target Value (Optional)</label>
-                      <input 
-                        type="number" 
-                        min="0" 
-                        value={target.targetValue} 
-                        onChange={e => {
-                          const newTargets = [...kraSettings.targets];
-                          newTargets[index].targetValue = e.target.value;
-                          setKraSettings({...kraSettings, targets: newTargets});
-                        }} 
-                        placeholder="Target amount or count"
-                        className="w-full px-3.5 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-sm" 
-                      />
-                    </div>
-                    {kraSettings.targets.length > 1 && (
-                      <div className="md:col-span-1 flex items-end justify-center">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const newTargets = kraSettings.targets.filter((_, i) => i !== index);
-                            setKraSettings({...kraSettings, targets: newTargets});
-                          }}
-                          className="p-2.5 rounded-lg text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
-                          title="Remove target"
-                        >
-                          <Trash2 size={18} />
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                ))}
-                
-                <div className="flex justify-start pt-1">
-                  <button 
-                    type="button" 
-                    onClick={() => setKraSettings({...kraSettings, targets: [...kraSettings.targets, { product: '', targetValue: '' }]})} 
-                    className="text-[#225091] font-semibold text-xs hover:underline flex items-center gap-1.5 cursor-pointer bg-blue-50 px-3.5 py-2 rounded-lg border border-blue-100 hover:bg-blue-100 transition-colors"
-                  >
-                    <Plus size={15} /> Add Target
-                  </button>
+              {!activeRoleName ? (
+                <div className="p-8 text-center bg-gray-50/70 rounded-xl border border-dashed border-gray-200 mt-4">
+                  <Award className="mx-auto text-gray-400 mb-2" size={32} />
+                  <p className="text-sm font-semibold text-gray-700">No Role Selected</p>
+                  <p className="text-xs text-gray-500 mt-1">Please select a Role in the Job Details tab to automatically display the assigned KPA products.</p>
                 </div>
-              </div>
+              ) : (
+                <div className="flex flex-col gap-4 mt-4">
+                  {kraSettings.targets.map((target, index) => {
+                    const derived = deriveKpaGoals(target.targetValue);
+                    const isAmount = target.targetType === 'AMOUNT';
+
+                    const formatVal = (v) => {
+                      const formatted = Number(v).toLocaleString('en-IN');
+                      return isAmount ? `₹${formatted}` : formatted;
+                    };
+
+                    return (
+                      <div key={index} className="bg-gray-50/70 p-5 rounded-xl border border-gray-100 flex flex-col gap-3">
+                        <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+                          <div className="md:col-span-6 flex items-center gap-3">
+                            <div className="w-9 h-9 rounded-xl bg-blue-50 text-[#225091] border border-blue-100 flex items-center justify-center font-bold text-sm shrink-0">
+                              {index + 1}
+                            </div>
+                            <div>
+                              <h4 className="text-sm font-bold text-gray-900">{target.product}</h4>
+                              <div className="flex items-center gap-2 mt-0.5">
+                                <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold ${
+                                  isAmount ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/60' : 'bg-blue-50 text-blue-700 border border-blue-200/60'
+                                }`}>
+                                  {isAmount ? '₹ AMOUNT TARGET' : '🔢 COUNT TARGET'}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="md:col-span-6">
+                            <label className="block text-xs font-semibold text-gray-700 mb-1">
+                              Annual Target ({isAmount ? '₹ Value' : 'Total Count'})
+                            </label>
+                            <input 
+                              type="number" 
+                              min="0" 
+                              value={target.targetValue} 
+                              onChange={e => {
+                                const newTargets = [...kraSettings.targets];
+                                newTargets[index].targetValue = e.target.value;
+                                setKraSettings({...kraSettings, targets: newTargets});
+                              }} 
+                              placeholder={isAmount ? "e.g. 1200000" : "e.g. 50"}
+                              className="w-full px-3.5 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-sm font-semibold text-gray-800" 
+                            />
+                          </div>
+                        </div>
+
+                        {/* Derived Milestones Preview */}
+                        <div className="bg-white border border-slate-200/70 rounded-lg p-3 flex items-center justify-between gap-2 text-xs text-gray-600 flex-wrap">
+                          <span className="font-semibold text-gray-500">Derived Milestones:</span>
+                          <span className="text-gray-500">Daily: <b className="text-gray-900">{formatVal(derived.daily)}</b></span>
+                          <span className="text-gray-500">Weekly: <b className="text-gray-900">{formatVal(derived.weekly)}</b></span>
+                          <span className="text-gray-500">Monthly: <b className="text-gray-900">{formatVal(derived.monthly)}</b></span>
+                          <span className="text-emerald-700">Yearly: <b className="text-emerald-800">{formatVal(derived.yearly)}</b></span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
         )}

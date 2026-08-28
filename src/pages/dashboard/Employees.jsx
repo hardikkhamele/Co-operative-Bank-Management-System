@@ -26,6 +26,7 @@ import { roleService } from "../../api/roleService";
 import { branchService } from "../../api/branchService";
 import useBranchStore from "../../store/branchStore";
 import PageHeader from "../../components/common/PageHeader";
+import { Skeleton, SkeletonAvatar } from "../../components/common/Skeleton";
 
 // Comprehensive Indian States and Prominent Cities Map
 const INDIAN_STATES_WITH_CITIES = {
@@ -124,6 +125,11 @@ const Employees = () => {
     fetchBranches();
   }, [fetchBranches]);
 
+  // Sync selected branch with global branch selector
+  useEffect(() => {
+    setSelectedBranchId(globalBranchId || "");
+  }, [globalBranchId]);
+
   // Fetch Available Cities & States from Backend API
   useEffect(() => {
     const fetchLocations = async () => {
@@ -220,10 +226,8 @@ const Employees = () => {
       };
 
       if (debouncedSearch.trim()) params.search = debouncedSearch.trim();
-      if (selectedBranchId) {
+      if (selectedBranchId && selectedBranchId !== "ALL") {
         params.branchId = selectedBranchId;
-      } else if (globalBranchId) {
-        params.branchId = globalBranchId;
       }
 
       if (selectedRoleId) params.roleId = selectedRoleId;
@@ -705,7 +709,7 @@ const Employees = () => {
             >
               <option value="">All Branches</option>
               {(branchOptions || []).map((b) => (
-                <option key={b.id} value={b.id}>
+                <option key={b.id || b._id} value={b.id || b._id}>
                   {b.name}
                 </option>
               ))}
@@ -802,19 +806,47 @@ const Employees = () => {
             </thead>
             <tbody className="divide-y divide-gray-100 text-sm">
               {loading && employees.length === 0 ? (
-                <tr>
-                  <td colSpan="7" className="py-16 text-center text-gray-500">
-                    <div className="flex items-center justify-center gap-2">
-                      <Loader2
-                        size={22}
-                        className="animate-spin text-[#225091]"
-                      />
-                      <span className="text-sm font-medium">
-                        Loading society employees...
-                      </span>
-                    </div>
-                  </td>
-                </tr>
+                Array.from({ length: 6 }).map((_, rIdx) => (
+                  <tr key={rIdx} className="animate-pulse">
+                    <td className="py-4 px-5">
+                      <Skeleton className="h-4 w-8 rounded" />
+                    </td>
+                    <td className="py-4 px-5">
+                      <div className="flex items-center gap-3">
+                        <SkeletonAvatar size="w-9 h-9" rounded="rounded-xl" />
+                        <div className="space-y-1.5 flex-1">
+                          <Skeleton className="h-4 w-32 rounded" />
+                          <Skeleton className="h-3 w-40 rounded" />
+                        </div>
+                      </div>
+                    </td>
+                    <td className="py-4 px-5">
+                      <Skeleton className="h-4 w-24 rounded" />
+                    </td>
+                    <td className="py-4 px-5">
+                      <div className="space-y-1">
+                        <Skeleton className="h-4 w-28 rounded" />
+                        <Skeleton className="h-3 w-16 rounded" />
+                      </div>
+                    </td>
+                    <td className="py-4 px-5">
+                      <div className="space-y-1">
+                        <Skeleton className="h-4 w-24 rounded" />
+                        <Skeleton className="h-2.5 w-20 rounded" />
+                      </div>
+                    </td>
+                    <td className="py-4 px-5">
+                      <Skeleton className="h-6 w-20 rounded-full" />
+                    </td>
+                    <td className="py-4 px-5 text-center">
+                      <div className="flex items-center justify-center gap-2">
+                        <Skeleton className="h-7 w-7 rounded-lg" />
+                        <Skeleton className="h-7 w-7 rounded-lg" />
+                        <Skeleton className="h-7 w-7 rounded-lg" />
+                      </div>
+                    </td>
+                  </tr>
+                ))
               ) : error ? (
                 <tr>
                   <td

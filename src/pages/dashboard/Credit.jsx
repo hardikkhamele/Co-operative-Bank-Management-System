@@ -23,6 +23,8 @@ import { toast } from "react-toastify";
 import { creditReceiptService } from "../../api/creditReceiptService";
 import useBranchStore from "../../store/branchStore";
 import PageHeader from "../../components/common/PageHeader";
+import { isBankOwner } from "../../utils/roleUtils";
+import ReceiptImageUpload from "../../components/common/ReceiptImageUpload";
 
 const GL_HEAD_OPTIONS = [
   { code: "410105", name: "Loan" },
@@ -130,6 +132,12 @@ const Credit = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [rejectModal, setRejectModal] = useState({
+    isOpen: false,
+    receipt: null,
+    reason: "",
+  });
+  const [actionLoadingId, setActionLoadingId] = useState(null);
   const [selectedReceipt, setSelectedReceipt] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [stats, setStats] = useState(null);
@@ -137,22 +145,7 @@ const Credit = () => {
 
   const authRole = useAuthStore((state) => state.role);
   const authUser = useAuthStore((state) => state.user);
-  const rawRole =
-    authRole?.code ||
-    authRole?.name ||
-    authRole ||
-    authUser?.role?.code ||
-    authUser?.role?.name ||
-    authUser?.role ||
-    "";
-  const roleString = (typeof rawRole === "string" ? rawRole : "").toUpperCase();
-  const canApprove =
-    !roleString ||
-    roleString.includes("OWNER") ||
-    roleString.includes("MANAGER") ||
-    roleString.includes("ACCOUNTANT") ||
-    roleString.includes("CA") ||
-    roleString.includes("ADMIN");
+  const canApprove = isBankOwner(authRole, authUser);
 
   // Form State for Create
   const todayISO = new Date().toISOString().split("T")[0];
@@ -355,7 +348,7 @@ const Credit = () => {
       formData.append("glHeadName", createForm.glHeadName);
       formData.append("accountNumber", createForm.accountNumber.trim());
       formData.append("date", createForm.date);
-      formData.append("status", createForm.status.toUpperCase());
+      formData.append("status", "PENDING");
       if (globalBranchId) {
         formData.append("branchId", globalBranchId);
       }
@@ -530,31 +523,90 @@ const Credit = () => {
     }
   };
 
+  const handleApproveReceipt = async (receipt) => {
+    const receiptId = receipt._id || receipt.id;
+    if (!receiptId) return;
+    setActionLoadingId(receiptId);
+    try {
+      const res = await creditReceiptService.approve(receiptId);
+      toast.success(res?.message || "Credit receipt approved successfully.");
+      setReceipts((prev) =>
+        prev.map((r) =>
+          (r._id || r.id) === receiptId
+            ? { ...r, status: "APPROVED", rejectionReason: null }
+            : r
+        )
+      );
+    } catch (err) {
+      toast.error(err.response?.data?.message || err.message || "Failed to approve credit receipt");
+    } finally {
+      setActionLoadingId(null);
+    }
+  };
+
+  const handleOpenRejectModal = (receipt) => {
+    setRejectModal({
+      isOpen: true,
+      receipt,
+      reason: "",
+    });
+  };
+
+  const handleConfirmReject = async (e) => {
+    if (e) e.preventDefault();
+    const receiptId = rejectModal.receipt?._id || rejectModal.receipt?.id;
+    if (!receiptId) return;
+
+    if (!rejectModal.reason.trim()) {
+      toast.error("Please provide a rejection reason.");
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const res = await creditReceiptService.reject(receiptId, rejectModal.reason.trim());
+      toast.success(res?.message || "Credit receipt rejected successfully.");
+      setReceipts((prev) =>
+        prev.map((r) =>
+          (r._id || r.id) === receiptId
+            ? { ...r, status: "REJECTED", rejectionReason: rejectModal.reason.trim() }
+            : r
+        )
+      );
+      setRejectModal({ isOpen: false, receipt: null, reason: "" });
+    } catch (err) {
+      toast.error(err.response?.data?.message || err.message || "Failed to reject credit receipt");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const getStatusBadge = (status) => {
     const s = (status || "").toUpperCase();
     switch (s) {
+      case "PENDING":
       case "NEW":
         return (
-          <span className="inline-flex items-center justify-center px-3 py-1 text-[13px] font-semibold text-yellow-700 bg-yellow-100/80 rounded-full border border-yellow-200">
-            New
+          <span className="inline-flex items-center justify-center px-2.5 py-0.5 text-xs font-bold text-amber-700 bg-amber-50 rounded-full border border-amber-200">
+            PENDING
           </span>
         );
       case "APPROVED":
         return (
-          <span className="inline-flex items-center justify-center px-3 py-1 text-[13px] font-semibold text-[#225091] bg-teal-50 rounded-full border border-teal-100">
-            Approved
+          <span className="inline-flex items-center justify-center px-2.5 py-0.5 text-xs font-bold text-emerald-700 bg-emerald-50 rounded-full border border-emerald-200">
+            APPROVED
           </span>
         );
       case "REJECTED":
         return (
-          <span className="inline-flex items-center justify-center px-3 py-1 text-[13px] font-semibold text-red-500 bg-red-50 rounded-full border border-red-100">
-            Rejected
+          <span className="inline-flex items-center justify-center px-2.5 py-0.5 text-xs font-bold text-rose-700 bg-rose-50 rounded-full border border-rose-200">
+            REJECTED
           </span>
         );
       default:
         return (
-          <span className="inline-flex items-center justify-center px-3 py-1 text-[13px] font-semibold text-gray-600 bg-gray-100 rounded-full border border-gray-200">
-            {status || "NEW"}
+          <span className="inline-flex items-center justify-center px-2.5 py-0.5 text-xs font-bold text-amber-700 bg-amber-50 rounded-full border border-amber-200">
+            PENDING
           </span>
         );
     }
@@ -788,7 +840,7 @@ const Credit = () => {
                   glHeadName: "Loan",
                   accountNumber: "",
                   date: todayISO,
-                  status: "NEW",
+                  status: "PENDING",
                 });
                 setIsCreateModalOpen(true);
               }}
@@ -919,9 +971,11 @@ const Credit = () => {
                 <th className="py-3.5 px-5 font-semibold">City</th>
                 <th className="py-3.5 px-5 font-semibold">GL Head</th>
                 <th className="py-3.5 px-5 font-semibold">GL Head Name</th>
-                <th className="py-3.5 px-5 font-semibold">A/C No.</th>
                 <th className="py-3.5 px-5 font-semibold">Date</th>
                 <th className="py-3.5 px-5 font-semibold">Status</th>
+                {canApprove && (
+                  <th className="py-3.5 px-5 font-semibold text-center">Approve / Reject</th>
+                )}
                 <th className="py-3.5 px-5 font-semibold">Image</th>
                 <th className="py-3.5 px-5 font-semibold text-center">Action</th>
               </tr>
@@ -929,7 +983,7 @@ const Credit = () => {
             <tbody className="divide-y divide-gray-100">
               {loading ? (
                 <tr>
-                  <td colSpan="12" className="text-center py-12">
+                  <td colSpan={canApprove ? 13 : 12} className="text-center py-12">
                     <div className="flex items-center justify-center gap-2 text-gray-500">
                       <Loader2
                         size={20}
@@ -942,7 +996,7 @@ const Credit = () => {
               ) : receipts.length === 0 ? (
                 <tr>
                   <td
-                    colSpan="12"
+                    colSpan={canApprove ? 13 : 12}
                     className="text-center py-10 font-medium text-gray-500 text-sm"
                   >
                     No credit receipts found.
@@ -957,14 +1011,7 @@ const Credit = () => {
                       : receipt.date
                     : "—";
                   const status = (receipt.status || "PENDING").toUpperCase();
-                  let badgeClass = "bg-gray-100 text-gray-700 border-gray-200";
-                  if (status === "APPROVED" || status === "COMPLETED" || status === "ACTIVE") {
-                    badgeClass = "bg-emerald-50 text-emerald-700 border-emerald-200/60";
-                  } else if (status === "PENDING" || status === "NEW") {
-                    badgeClass = "bg-amber-50 text-amber-700 border-amber-200/60";
-                  } else if (status === "REJECTED" || status === "FAILED") {
-                    badgeClass = "bg-rose-50 text-rose-700 border-rose-200/60";
-                  }
+                  const isPending = status === "PENDING" || status === "NEW";
 
                   return (
                     <tr
@@ -999,20 +1046,91 @@ const Credit = () => {
                       <td className="py-3.5 px-5 text-xs text-gray-600">
                         {formattedDate}
                       </td>
+
+                      {/* Status Column */}
                       <td className="py-3.5 px-5">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[12px] font-semibold border ${badgeClass}`}>
-                          {status}
-                        </span>
-                        {receipt.status === "REJECTED" &&
-                          receipt.rejectionReason && (
-                            <div
-                              className="text-[11px] text-rose-600 mt-1 truncate max-w-[150px]"
-                              title={receipt.rejectionReason}
-                            >
-                              Reason: {receipt.rejectionReason}
-                            </div>
-                          )}
+                        {status === "APPROVED" && (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            APPROVED
+                          </span>
+                        )}
+                        {status === "REJECTED" && (
+                          <div className="flex flex-col">
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200 w-fit">
+                              REJECTED
+                            </span>
+                            {receipt.rejectionReason && (
+                              <span className="text-[11px] text-rose-600 mt-1 truncate max-w-[150px]" title={receipt.rejectionReason}>
+                                Reason: {receipt.rejectionReason}
+                              </span>
+                            )}
+                          </div>
+                        )}
+                        {isPending && (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                            PENDING
+                          </span>
+                        )}
                       </td>
+
+                      {/* Approve / Reject Toggle Column (Visible exclusively to Bank Owner) */}
+                      {canApprove && (
+                        <td className="py-3.5 px-5 text-center">
+                          <div className="inline-flex items-center p-0.5 bg-gray-100/90 rounded-lg border border-gray-200/80 shadow-2xs">
+                            {/* Approve Toggle Option */}
+                            <button
+                              type="button"
+                              disabled={!isPending || actionLoadingId === receiptId}
+                              onClick={() => isPending && handleApproveReceipt(receipt)}
+                              className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-bold transition-all ${
+                                status === "APPROVED"
+                                  ? "bg-emerald-600 text-white shadow-xs cursor-not-allowed opacity-90"
+                                  : isPending
+                                  ? "text-gray-600 hover:text-emerald-700 hover:bg-emerald-50 cursor-pointer"
+                                  : "text-gray-400 cursor-not-allowed opacity-40"
+                              }`}
+                              title={
+                                status === "APPROVED"
+                                  ? "Approved (Locked)"
+                                  : isPending
+                                  ? "Click to Approve Receipt"
+                                  : "Disabled"
+                              }
+                            >
+                              {actionLoadingId === receiptId ? (
+                                <Loader2 size={12} className="animate-spin text-emerald-600" />
+                              ) : (
+                                <CheckCircle size={12} className={status === "APPROVED" ? "text-white" : "text-emerald-600"} />
+                              )}
+                              <span>Approve</span>
+                            </button>
+
+                            {/* Reject Toggle Option */}
+                            <button
+                              type="button"
+                              disabled={!isPending || actionLoadingId === receiptId}
+                              onClick={() => isPending && handleOpenRejectModal(receipt)}
+                              className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-bold transition-all ${
+                                status === "REJECTED"
+                                  ? "bg-rose-600 text-white shadow-xs cursor-not-allowed opacity-90"
+                                  : isPending
+                                  ? "text-gray-600 hover:text-rose-700 hover:bg-rose-50 cursor-pointer"
+                                  : "text-gray-400 cursor-not-allowed opacity-40"
+                              }`}
+                              title={
+                                status === "REJECTED"
+                                  ? "Rejected (Locked)"
+                                  : isPending
+                                  ? "Click to Reject & Enter Reason"
+                                  : "Disabled"
+                              }
+                            >
+                              <XCircle size={12} className={status === "REJECTED" ? "text-white" : "text-rose-600"} />
+                              <span>Reject</span>
+                            </button>
+                          </div>
+                        </td>
+                      )}
                       <td className="py-3.5 px-5">
                         {receipt.image ? (
                           <button
@@ -1243,16 +1361,11 @@ const Credit = () => {
               </div>
 
               <div>
-                <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">
-                  Upload Document
-                </label>
-                <input
-                  type="file"
-                  accept=".pdf,.jpg,.jpeg,.png"
-                  onChange={(e) =>
-                    setCreateForm({ ...createForm, file: e.target.files[0] })
+                <ReceiptImageUpload
+                  file={createForm.file}
+                  onChange={(newFile) =>
+                    setCreateForm({ ...createForm, file: newFile })
                   }
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all bg-white text-[15px] text-gray-800 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[#225091]/10 file:text-[#225091] hover:file:bg-[#225091]/20"
                 />
               </div>
 
@@ -1301,10 +1414,7 @@ const Credit = () => {
                 <X size={22} />
               </button>
             </div>
-            <form
-              onSubmit={handleUpdateReceipt}
-              className="p-6 space-y-4 max-h-[80vh] overflow-y-auto"
-            >
+            <form onSubmit={handleUpdateReceipt} className="p-6 space-y-4">
               <div>
                 <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">
                   Customer Name
@@ -1323,50 +1433,40 @@ const Credit = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">
-                    GL Head Code
+                    GL Head
                   </label>
-                  <input
-                    type="text"
-                    required
+                  <select
                     value={editForm.glHead}
-                    onChange={(e) =>
-                      setEditForm({ ...editForm, glHead: e.target.value })
-                    }
+                    onChange={(e) => {
+                      const selected = GL_HEAD_OPTIONS.find(
+                        (g) => g.code === e.target.value,
+                      );
+                      setEditForm({
+                        ...editForm,
+                        glHead: e.target.value,
+                        glHeadName: selected ? selected.name : editForm.glHeadName,
+                      });
+                    }}
                     className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all bg-white text-[15px] text-gray-800"
-                  />
+                  >
+                    {GL_HEAD_OPTIONS.map((item) => (
+                      <option key={item.code} value={item.code}>
+                        {item.code} - {item.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
+
                 <div>
                   <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">
                     GL Head Name
                   </label>
-                  <div className="relative">
-                    <select
-                      value={editForm.glHeadName}
-                      onChange={(e) => {
-                        const selectedOption = GL_HEAD_OPTIONS.find(
-                          (o) => o.name === e.target.value,
-                        );
-                        setEditForm({
-                          ...editForm,
-                          glHeadName: e.target.value,
-                          glHead: selectedOption
-                            ? selectedOption.code
-                            : editForm.glHead,
-                        });
-                      }}
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all bg-white appearance-none text-[15px] text-gray-800"
-                    >
-                      {GL_HEAD_OPTIONS.map((opt) => (
-                        <option key={opt.code} value={opt.name}>
-                          {opt.name}
-                        </option>
-                      ))}
-                    </select>
-                    <ChevronDown
-                      size={18}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
-                    />
-                  </div>
+                  <input
+                    type="text"
+                    readOnly
+                    value={editForm.glHeadName}
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-100/70 text-[15px] text-gray-600 font-medium cursor-not-allowed"
+                  />
                 </div>
               </div>
 
@@ -1412,31 +1512,12 @@ const Credit = () => {
               </div>
 
               <div>
-                <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">
-                  Upload Document
-                </label>
-                {selectedReceipt.image && (
-                  <div className="mb-3 p-3 bg-gray-50 rounded-xl border border-gray-100 flex items-center justify-between">
-                    <span className="text-xs text-gray-500 font-medium">
-                      Current Attachment
-                    </span>
-                    <a
-                      href={selectedReceipt.image}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs font-bold text-[#225091] hover:text-[#159a9f] flex items-center gap-1 transition-colors"
-                    >
-                      <Eye size={14} /> View File
-                    </a>
-                  </div>
-                )}
-                <input
-                  type="file"
-                  accept=".pdf,.jpg,.jpeg,.png"
-                  onChange={(e) =>
-                    setEditForm({ ...editForm, file: e.target.files[0] })
+                <ReceiptImageUpload
+                  file={editForm.file}
+                  existingImageUrl={selectedReceipt?.image}
+                  onChange={(newFile) =>
+                    setEditForm({ ...editForm, file: newFile })
                   }
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all bg-white text-[15px] text-gray-800 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[#225091]/10 file:text-[#225091] hover:file:bg-[#225091]/20"
                 />
               </div>
 
@@ -1516,7 +1597,7 @@ const Credit = () => {
               <h3 className="text-base font-bold text-gray-900">Receipt Document Preview</h3>
               <button
                 onClick={() => setPreviewImageUrl(null)}
-                className="p-1 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+                className="p-1 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer"
               >
                 <X size={20} />
               </button>
@@ -1532,11 +1613,96 @@ const Credit = () => {
               <button
                 type="button"
                 onClick={() => setPreviewImageUrl(null)}
-                className="px-5 py-2 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-100 transition-colors"
+                className="px-5 py-2 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer"
               >
                 Close Preview
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reject Receipt Modal */}
+      {rejectModal.isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between pb-3 border-b border-gray-100 mb-4">
+              <div className="flex items-center gap-2 text-rose-600">
+                <XCircle size={22} />
+                <h3 className="text-lg font-bold text-gray-900">Reject Credit Receipt</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setRejectModal({ isOpen: false, receipt: null, reason: "" })}
+                className="text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <form onSubmit={handleConfirmReject} className="space-y-4">
+              <div className="p-3 bg-gray-50 rounded-xl border border-gray-100 text-xs text-gray-700">
+                <div className="flex justify-between mb-1">
+                  <span className="font-semibold text-gray-500">Receipt No:</span>
+                  <span className="font-bold text-[#1b2559]">{rejectModal.receipt?.receiptNo || "—"}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-semibold text-gray-500">Customer:</span>
+                  <span className="font-semibold text-gray-800">{rejectModal.receipt?.name || "—"}</span>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1.5">
+                  Reason for Rejection <span className="text-rose-500">*</span>
+                </label>
+                <textarea
+                  required
+                  rows={3}
+                  value={rejectModal.reason}
+                  onChange={(e) => setRejectModal({ ...rejectModal, reason: e.target.value })}
+                  placeholder="e.g. Duplicate receipt, incorrect account number, invalid attachment..."
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 text-sm text-gray-800 resize-none"
+                />
+              </div>
+
+              {/* Quick reason suggestions */}
+              <div className="flex flex-wrap gap-1.5">
+                {[
+                  "Duplicate entry",
+                  "Incorrect account number",
+                  "Amount mismatch",
+                  "Invalid document",
+                ].map((tag) => (
+                  <button
+                    key={tag}
+                    type="button"
+                    onClick={() => setRejectModal({ ...rejectModal, reason: tag })}
+                    className="px-2.5 py-1 rounded-md text-[11px] font-medium bg-gray-100 text-gray-700 hover:bg-rose-50 hover:text-rose-700 border border-gray-200 transition-colors cursor-pointer"
+                  >
+                    {tag}
+                  </button>
+                ))}
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-gray-100">
+                <button
+                  type="button"
+                  onClick={() => setRejectModal({ isOpen: false, receipt: null, reason: "" })}
+                  className="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 shadow-sm transition-all flex items-center gap-1.5 disabled:opacity-60 cursor-pointer"
+                >
+                  {submitting ? <Loader2 size={14} className="animate-spin" /> : <XCircle size={14} />}
+                  <span>{submitting ? "Rejecting..." : "Confirm Rejection"}</span>
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

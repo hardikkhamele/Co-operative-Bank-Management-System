@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft,  ChevronRight, UploadCloud, CheckCircle2, Eye, EyeOff, Store, MapPin, Building, CreditCard, X } from 'lucide-react';
 import { toast } from 'react-toastify';
 import PageHeader from '../../components/common/PageHeader';
+import { SkeletonForm } from '../../components/common/Skeleton';
 import { merchantService } from '../../api/merchantService';
 import { branchService } from '../../api/branchService';
 
@@ -152,7 +153,22 @@ const EditMerchant = () => {
   };
 
   if (isLoading) {
-    return <div className="p-10 text-center text-gray-500">Loading merchant details...</div>;
+    return (
+      <div className="flex flex-col gap-6 w-full pb-10">
+        <PageHeader
+          title="Edit Merchant"
+          breadcrumbs={[
+            { label: 'Dashboard', to: '/dashboard' },
+            { label: 'Partner Management' },
+            { label: 'Merchant', to: '/merchant' },
+            { label: 'Edit' }
+          ]}
+          showBack={true}
+          backUrl="/merchant"
+        />
+        <SkeletonForm sections={2} />
+      </div>
+    );
   }
 
   if (!merchant) return null;

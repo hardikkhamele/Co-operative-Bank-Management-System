@@ -6,6 +6,7 @@ import CardCreditSettingsModal from '../../components/modals/CardCreditSettingsM
 import { branchService } from '../../api/branchService';
 import PageHeader from '../../components/common/PageHeader';
 import SearchableSelect from '../../components/common/SearchableSelect';
+import { Skeleton, SkeletonTable } from '../../components/common/Skeleton';
 import { validateEmail, validatePhone, validatePassword, validatePincode, sanitizeDigits, preventInvalidNumberKeys } from '../../utils/validation';
 
 const INDIAN_STATES_WITH_CITIES = {
@@ -621,7 +622,34 @@ const Branch = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {loading && branches.length === 0 ? null : branches.length === 0 ? (
+              {loading ? (
+                Array.from({ length: 8 }).map((_, rIdx) => (
+                  <tr key={rIdx} className="animate-pulse">
+                    <td className="py-4 px-5"><Skeleton className="h-4 w-6 rounded" /></td>
+                    <td className="py-4 px-5"><Skeleton className="h-4 w-32 rounded" /></td>
+                    <td className="py-4 px-5"><Skeleton className="h-4 w-20 rounded" /></td>
+                    <td className="py-4 px-5"><Skeleton className="h-4 w-24 rounded" /></td>
+                    <td className="py-4 px-5">
+                      <div className="flex items-center gap-2.5">
+                        <Skeleton className="w-7 h-7 rounded-full shrink-0" />
+                        <div className="space-y-1">
+                          <Skeleton className="h-3 w-24 rounded" />
+                          <Skeleton className="h-2.5 w-32 rounded" />
+                        </div>
+                      </div>
+                    </td>
+                    <td className="py-4 px-5"><Skeleton className="h-4 w-12 rounded" /></td>
+                    <td className="py-4 px-5"><Skeleton className="h-4 w-12 rounded" /></td>
+                    <td className="py-4 px-5"><Skeleton className="h-6 w-16 rounded-full" /></td>
+                    <td className="py-4 px-5">
+                      <div className="flex items-center justify-center gap-2">
+                        <Skeleton className="h-7 w-7 rounded-lg" />
+                        <Skeleton className="h-7 w-7 rounded-lg" />
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              ) : branches.length === 0 ? (
                 <tr><td colSpan="9" className="py-10 px-5 text-center text-gray-500 text-sm font-medium">No branches found.</td></tr>
               ) : (
                 branches.map((branch, idx) => (

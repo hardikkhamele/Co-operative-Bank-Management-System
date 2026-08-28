@@ -142,7 +142,7 @@ export const productService = {
     }
 
     // Backend relative path
-    const backendBase = (axiosInstance.defaults.baseURL || import.meta.env.VITE_API_URL || 'https://api.advitacredit.com')
+    const backendBase = (axiosInstance.defaults.baseURL || import.meta.env.VITE_API_URL || 'https://devapi.advitacredit.com')
       .replace(/\/api\/v1\/?$/, '')
       .replace(/\/api\/?$/, '')
       .replace(/\/+$/, '');
