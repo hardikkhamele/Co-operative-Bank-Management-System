@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import PageHeader from '../../components/common/PageHeader';
 import { toast } from 'react-toastify';
+import { Skeleton, SkeletonText, SkeletonAvatar } from '../../components/common/Skeleton';
 import { 
   validatePhone, 
   validateEmail, 
@@ -459,9 +460,22 @@ const MyProfile = () => {
       {/* Content Area */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 md:p-8">
         {loading ? (
-          <div className="py-16 flex flex-col items-center justify-center gap-3">
-            <Loader2 size={36} className="animate-spin text-[#225091]" />
-            <p className="text-sm text-gray-500 font-medium">Loading profile information...</p>
+          <div className="space-y-8" role="status" aria-busy="true">
+            <div className="flex items-center justify-between pb-4 border-b border-gray-100">
+              <div className="space-y-2">
+                <Skeleton className="h-5 w-48 rounded-md" />
+                <Skeleton className="h-3.5 w-64 rounded-md" />
+              </div>
+              <Skeleton className="h-8 w-24 rounded-lg" />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {Array.from({ length: 6 }).map((_, idx) => (
+                <div key={idx} className="p-4 rounded-xl border border-gray-100 bg-slate-50/50 space-y-2">
+                  <Skeleton className="h-3 w-24 rounded" />
+                  <Skeleton className="h-4.5 w-40 rounded" />
+                </div>
+              ))}
+            </div>
           </div>
         ) : activeTab === 'general' ? (
           <div className="space-y-8">

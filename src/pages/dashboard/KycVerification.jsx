@@ -253,8 +253,54 @@ const KycVerification = () => {
           fetchHistory();
         } else if (response.data.status === 'INITIATED') {
           sessionStorage.setItem('kyc_refid', response.data.refid);
+          sessionStorage.setItem('kyc_requested_id', idNumber.toUpperCase());
+          sessionStorage.setItem('kyc_requested_doc_type', activeTab.toUpperCase());
           fetchHistory();
-          window.location.href = response.data.authorizationUrl;
+          
+          // 1. Ensure OAuth URL forces fresh login prompt and pre-fills the entered ID
+          let authUrl = response.data.authorizationUrl;
+          if (authUrl) {
+            try {
+              const urlObj = new URL(authUrl);
+              urlObj.searchParams.set('prompt', 'login');
+              urlObj.searchParams.set('login_hint', idNumber.toUpperCase());
+              authUrl = urlObj.toString();
+            } catch (e) {
+              authUrl += (authUrl.includes('?') ? '&' : '?') + 'prompt=login&login_hint=' + encodeURIComponent(idNumber.toUpperCase());
+            }
+          }
+
+          // 2. Clear any active DigiLocker citizen session via invisible iframes and image pings
+          const logoutEndpoints = [
+            'https://accounts.digilocker.gov.in/logout',
+            'https://digilocker.meripehchaan.gov.in/logout',
+            'https://api.digitallocker.gov.in/public/oauth2/1/logout'
+          ];
+
+          try {
+            logoutEndpoints.forEach((url) => {
+              // Iframe ping
+              const iframe = document.createElement('iframe');
+              iframe.src = url;
+              iframe.style.position = 'absolute';
+              iframe.style.width = '0px';
+              iframe.style.height = '0px';
+              iframe.style.border = 'none';
+              iframe.style.display = 'none';
+              document.body.appendChild(iframe);
+
+              // Image ping (fires cross-origin cookie destruction)
+              const img = new Image();
+              img.src = `${url}?t=${Date.now()}`;
+            });
+          } catch (logoutErr) {
+            console.warn('Could not pre-clear DigiLocker session:', logoutErr);
+          }
+
+          // 3. Allow 700ms for DigiLocker session to clear, then redirect to fresh login
+          setTimeout(() => {
+            window.location.href = authUrl;
+          }, 700);
         }
       }
     } catch (error) {
@@ -281,6 +327,15 @@ const KycVerification = () => {
       pan: false,
     });
     setIsConsentChecked(false);
+    setReportData(null);
+    setFullReportRecord(null);
+    setCurrentRefId(null);
+    setLookupRefId('');
+    setStep('form');
+    // Clear router state to prevent old refid from reloading
+    if (location.state) {
+      window.history.replaceState({}, document.title);
+    }
   };
 
   const [copiedRef, setCopiedRef] = useState(false);

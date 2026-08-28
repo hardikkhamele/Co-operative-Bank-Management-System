@@ -20,8 +20,15 @@ const flattenChildren = (children) => {
   return result;
 };
 
-const SidebarGroup = ({ title, children, defaultOpen = false }) => {
+const SidebarAccordionContext = React.createContext({
+  openGroup: null,
+  toggleGroup: () => {},
+  setOpenGroup: () => {},
+});
+
+const SidebarGroup = ({ title, children }) => {
   const location = useLocation();
+  const { openGroup, toggleGroup, setOpenGroup } = React.useContext(SidebarAccordionContext);
   // Filter out any false/null/undefined children and unpack any React.Fragment
   const validChildren = flattenChildren(children).filter(Boolean);
 
@@ -38,19 +45,19 @@ const SidebarGroup = ({ title, children, defaultOpen = false }) => {
     return location.pathname === to || location.pathname.startsWith(to + '/');
   });
 
-  const [isOpen, setIsOpen] = useState(() => defaultOpen || hasActiveChild);
-
   // Automatically open when route changes to a child within this group
   useEffect(() => {
     if (hasActiveChild) {
-      setIsOpen(true);
+      setOpenGroup(title);
     }
-  }, [location.pathname, hasActiveChild]);
+  }, [location.pathname, hasActiveChild, title, setOpenGroup]);
+
+  const isOpen = openGroup === title;
 
   return (
     <div className="mb-1">
       <div 
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => toggleGroup(title)}
         className={`px-4.5 py-3 flex items-center justify-between cursor-pointer transition-all duration-200 border-l-4 ${
           hasActiveChild
             ? isOpen 
@@ -183,6 +190,12 @@ const DashboardLayout = () => {
     hasAnyPermission(['role.view', 'roles_permissions.view', 'role.create']) ||
     hasAnyPermission(['help_support.view', 'settings.view']);
 
+  const [openGroup, setOpenGroup] = useState(null);
+
+  const toggleGroup = React.useCallback((title) => {
+    setOpenGroup((prev) => (prev === title ? null : title));
+  }, []);
+
   return (
     <div className="flex h-screen bg-bg-page overflow-hidden">
       {/* Sidebar */}
@@ -207,18 +220,19 @@ const DashboardLayout = () => {
         </div>
 
         {/* Navigation */}
-        <div className="flex-1 overflow-y-auto py-4 px-0 space-y-1">
-          {hasPermission('dashboard.view') && (
-            <div className="mb-2">
-              <NavLink
-                to="/dashboard"
-                className={navLinkClass}
-              >
-                <LayoutDashboard size={18} />
-                Dashboard
-              </NavLink>
-            </div>
-          )}
+        <SidebarAccordionContext.Provider value={{ openGroup, toggleGroup, setOpenGroup }}>
+          <div className="flex-1 overflow-y-auto py-4 px-0 space-y-1">
+            {hasPermission('dashboard.view') && (
+              <div className="mb-2">
+                <NavLink
+                  to="/dashboard"
+                  className={navLinkClass}
+                >
+                  <LayoutDashboard size={18} />
+                  Dashboard
+                </NavLink>
+              </div>
+            )}
 
           {/* Branch Management */}
           <SidebarGroup title="Branch Management">
@@ -414,6 +428,7 @@ const DashboardLayout = () => {
             </div>
           )}
         </div>
+      </SidebarAccordionContext.Provider>
       </div>
 
       {/* Main Content */}

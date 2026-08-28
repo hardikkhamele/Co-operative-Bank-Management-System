@@ -6,6 +6,7 @@ import { contraReceiptService } from '../../api/contraReceiptService';
 import useAuthStore from '../../store/authStore';
 import PageHeader from '../../components/common/PageHeader';
 import { isBankOwner } from '../../utils/roleUtils';
+import { SkeletonReceiptView } from '../../components/common/Skeleton';
 
 const ViewContraReceipt = () => {
   const { id } = useParams();
@@ -106,12 +107,7 @@ const ViewContraReceipt = () => {
   };
 
   if (loading) {
-    return (
-      <div className="w-full p-16 flex flex-col items-center justify-center gap-3 text-gray-500">
-        <Loader2 size={32} className="animate-spin text-[#225091]" />
-        <span className="font-medium">Loading contra receipt details...</span>
-      </div>
-    );
+    return <SkeletonReceiptView />;
   }
 
   if (!receipt) {

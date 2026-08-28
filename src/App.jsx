@@ -97,20 +97,29 @@ const ViewCashPayment = lazy(() => import('./pages/dashboard/ViewCashPayment'));
 const CardsAndCredit = lazy(() => import('./pages/dashboard/CardsAndCredit'));
 const ChoosePaymentMethod = lazy(() => import('./pages/dashboard/ChoosePaymentMethod'));
 const PaymentSuccessful = lazy(() => import('./pages/dashboard/PaymentSuccessful'));
-
 // General
 const ComingSoon = lazy(() => import('./pages/dashboard/ComingSoon'));
 
-// Fallback spinner component for page-level transitions
+import TopProgressBar from './components/common/TopProgressBar';
+import { Landmark } from 'lucide-react';
+
+// Fallback skeleton/loader component for page-level transitions
 const PageSuspenseFallback = () => (
-  <div className="w-full min-h-[60vh] flex items-center justify-center">
-    <div className="w-8 h-8 border-3 border-gray-200 border-t-[#1D4ED8] rounded-full animate-spin"></div>
+  <div className="w-full min-h-[60vh] flex flex-col items-center justify-center gap-4 animate-in fade-in duration-200">
+    <div className="relative w-12 h-12 flex items-center justify-center">
+      <div className="absolute inset-0 rounded-full border-2 border-blue-100 animate-ping opacity-30"></div>
+      <div className="absolute inset-0 rounded-full border-[2.5px] border-slate-100"></div>
+      <div className="absolute inset-0 rounded-full border-[2.5px] border-transparent border-t-[#225091] border-r-teal-500 animate-spin"></div>
+      <Landmark size={18} className="text-[#225091]" />
+    </div>
+    <span className="text-xs font-semibold text-gray-400 tracking-wider uppercase">Loading module...</span>
   </div>
 );
 
 function App() {
   return (
     <BrowserRouter>
+      <TopProgressBar />
       <ToastContainer 
         position="top-right" 
         autoClose={3000} 

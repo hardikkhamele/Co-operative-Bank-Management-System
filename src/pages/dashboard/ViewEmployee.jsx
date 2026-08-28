@@ -9,6 +9,7 @@ import {
 import { employeeService } from '../../api/employeeService';
 import PageHeader from '../../components/common/PageHeader';
 import { deriveKpaGoals } from '../../utils/kpaConstants';
+import { SkeletonDetailView } from '../../components/common/Skeleton';
 
 const InfoCard = ({ icon: Icon, title, value }) => (
   <div className="bg-[#fafafa] rounded-xl p-4 flex items-center gap-4 border border-gray-100/60">
@@ -89,12 +90,7 @@ const ViewEmployee = () => {
   };
 
   if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] gap-3">
-        <Loader2 size={32} className="animate-spin text-[#225091]" />
-        <span className="text-gray-500 font-medium text-sm">Loading employee details...</span>
-      </div>
-    );
+    return <SkeletonDetailView />;
   }
 
   if (!employee) {

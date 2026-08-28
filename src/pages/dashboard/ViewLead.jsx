@@ -8,6 +8,7 @@ import { toast } from 'react-toastify';
 import { leadService } from '../../api/leadService';
 import { productService } from '../../api/productService';
 import PageHeader from '../../components/common/PageHeader';
+import { SkeletonDetailView } from '../../components/common/Skeleton';
 
 const ViewLead = () => {
   const location = useLocation();
@@ -125,12 +126,7 @@ const ViewLead = () => {
   };
 
   if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[400px]">
-        <Loader2 size={36} className="animate-spin text-[#225091] mb-3" />
-        <p className="text-gray-500 font-medium">Loading lead details...</p>
-      </div>
-    );
+    return <SkeletonDetailView />;
   }
 
   const targetLoanId = id || lead?.id || '';

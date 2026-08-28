@@ -22,6 +22,7 @@ import { toast } from "react-toastify";
 import { transferReceiptService } from "../../api/transferReceiptService";
 import useBranchStore from "../../store/branchStore";
 import PageHeader from "../../components/common/PageHeader";
+import { Skeleton, SkeletonTableRow } from "../../components/common/Skeleton";
 import { isBankOwner } from "../../utils/roleUtils";
 import ReceiptImageUpload from "../../components/common/ReceiptImageUpload";
 
@@ -978,17 +979,9 @@ const Transfer = () => {
             </thead>
             <tbody className="divide-y divide-gray-100">
               {loading ? (
-                <tr>
-                  <td colSpan={canApprove ? 13 : 12} className="text-center py-12">
-                    <div className="flex items-center justify-center gap-2 text-gray-500">
-                      <Loader2
-                        size={20}
-                        className="animate-spin text-[#225091]"
-                      />
-                      <span className="text-sm font-medium">Loading transfer receipts...</span>
-                    </div>
-                  </td>
-                </tr>
+                Array.from({ length: 8 }).map((_, idx) => (
+                  <SkeletonTableRow key={idx} cols={canApprove ? 13 : 12} />
+                ))
               ) : receipts.length === 0 ? (
                 <tr>
                   <td

@@ -5,6 +5,7 @@ import { toast } from 'react-toastify';
 import { cashPaymentService } from '../../api/cashPaymentService';
 import useBranchStore from '../../store/branchStore';
 import PageHeader from '../../components/common/PageHeader';
+import { Skeleton, SkeletonTableRow } from '../../components/common/Skeleton';
 
 const CashPayment = () => {
 
@@ -536,14 +537,9 @@ const CashPayment = () => {
             </thead>
             <tbody className="divide-y divide-gray-100">
               {loading ? (
-                <tr>
-                  <td colSpan="7" className="text-center py-12">
-                    <div className="flex items-center justify-center gap-2 text-gray-500">
-                      <Loader2 size={20} className="animate-spin text-[#225091]" />
-                      <span className="text-sm font-medium">Loading cash payment records...</span>
-                    </div>
-                  </td>
-                </tr>
+                Array.from({ length: 8 }).map((_, idx) => (
+                  <SkeletonTableRow key={idx} cols={7} />
+                ))
               ) : displayedItems.length === 0 ? (
                 <tr>
                   <td colSpan="7" className="text-center py-12 text-gray-500 font-medium text-sm">
