@@ -180,8 +180,14 @@ const EditEmployee = () => {
           roleService.list({ limit: 100 })
         ]);
 
-        if (bRes.success) setBranches(bRes.data);
-        if (rRes.success) setRoles(rRes.data);
+        if (bRes && bRes.success) {
+          const bList = Array.isArray(bRes.data) ? bRes.data : (bRes.data?.branches || bRes.data?.items || bRes.data?.data || []);
+          setBranches(bList);
+        }
+        if (rRes && rRes.success) {
+          const rList = Array.isArray(rRes.data) ? rRes.data : (rRes.data?.roles || rRes.data?.items || rRes.data?.data || []);
+          setRoles(rList);
+        }
 
         // Fetch Indian states
         try {

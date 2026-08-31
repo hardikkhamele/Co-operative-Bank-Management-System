@@ -71,8 +71,9 @@ const EditMerchant = () => {
     const fetchBranches = async () => {
       try {
         const response = await branchService.list({ limit: 100 });
-        if (response.success && response.data) {
-          setBranches(response.data);
+        if (response && response.success) {
+          const bList = Array.isArray(response.data) ? response.data : (response.data?.branches || response.data?.items || response.data?.data || []);
+          setBranches(bList);
         }
       } catch (error) {
         console.error("Failed to fetch branches", error);

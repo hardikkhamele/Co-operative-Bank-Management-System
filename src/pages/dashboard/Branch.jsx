@@ -131,13 +131,39 @@ const Branch = () => {
       if (activeFilters.length > 0) params.state = activeFilters.join(',');
       
       const response = await branchService.list(params);
-      if (response.success) {
-        setBranches(response.data);
-        setTotalPages(response.meta?.totalPages || response.pagination?.totalPages || response.data?.meta?.totalPages || response.data?.pagination?.totalPages || 1);
+      let branchList = [];
+      if (response) {
+        if (Array.isArray(response)) {
+          branchList = response;
+        } else if (Array.isArray(response.data)) {
+          branchList = response.data;
+        } else if (Array.isArray(response.data?.branches)) {
+          branchList = response.data.branches;
+        } else if (Array.isArray(response.data?.items)) {
+          branchList = response.data.items;
+        } else if (Array.isArray(response.data?.data)) {
+          branchList = response.data.data;
+        } else if (Array.isArray(response.branches)) {
+          branchList = response.branches;
+        } else if (Array.isArray(response.items)) {
+          branchList = response.items;
+        }
+        
+        const total = 
+          response.meta?.totalPages || 
+          response.pagination?.totalPages || 
+          response.data?.meta?.totalPages || 
+          response.data?.pagination?.totalPages || 
+          response.data?.totalPages || 
+          response.totalPages || 
+          1;
+        setTotalPages(total);
       }
+      setBranches(branchList);
     } catch (err) {
       console.error("Failed to fetch branches", err);
       setError("Failed to load branches.");
+      setBranches([]);
     } finally {
       setLoading(false);
     }
@@ -477,8 +503,8 @@ const Branch = () => {
   };
 
   const getInitials = (name) => {
-    if (!name) return 'U';
-    return name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+    if (!name || typeof name !== 'string') return 'U';
+    return name.trim().split(/\s+/).filter(Boolean).map(n => n[0]).join('').toUpperCase().substring(0, 2) || 'U';
   };
 
   return (
@@ -544,7 +570,7 @@ const Branch = () => {
                     </div>
                     {openFilterDropdown === 'state' && (
                       <div className="mt-2 w-full bg-white border border-gray-200 rounded-xl shadow-sm py-2 flex flex-col gap-1 max-h-52 overflow-y-auto">
-                        {(locationsData?.states || ALL_INDIAN_STATES).map(opt => (
+                        {(Array.isArray(locationsData?.states) && locationsData.states.length > 0 ? locationsData.states : ALL_INDIAN_STATES).map(opt => (
                           <label 
                             key={opt} 
                             className="flex items-center gap-3 px-3 py-1.5 hover:bg-gray-50 cursor-pointer"
@@ -649,11 +675,11 @@ const Branch = () => {
                     </td>
                   </tr>
                 ))
-              ) : branches.length === 0 ? (
+              ) : !Array.isArray(branches) || branches.length === 0 ? (
                 <tr><td colSpan="9" className="py-10 px-5 text-center text-gray-500 text-sm font-medium">No branches found.</td></tr>
               ) : (
                 branches.map((branch, idx) => (
-                  <tr key={branch.id} className="hover:bg-slate-50/70 transition-colors">
+                  <tr key={branch.id || branch._id || idx} className="hover:bg-slate-50/70 transition-colors">
                     <td className="py-3.5 px-5 text-[13px] text-gray-500 font-medium">{branch.srNo || ((page - 1) * 10 + idx + 1)}</td>
                     <td className="py-3.5 px-5 text-sm text-gray-900 font-semibold">{branch.name}</td>
                     <td className="py-3.5 px-5 text-xs text-gray-600 font-mono font-medium">{branch.code}</td>
@@ -711,7 +737,7 @@ const Branch = () => {
         </div>
         
         {/* Pagination */}
-        {!loading && branches.length > 0 && (
+        {!loading && Array.isArray(branches) && branches.length > 0 && (
           <div className="px-4 sm:px-6 py-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="text-sm text-gray-800 font-medium">
               Page {page} of {totalPages}
