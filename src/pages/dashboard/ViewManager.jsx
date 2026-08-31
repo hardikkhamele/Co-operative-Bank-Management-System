@@ -1,38 +1,137 @@
-import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { ChevronRight, Calendar, Phone, Mail, Lock, Map, MapPin, Clock, Banknote, Users, Check, ArrowUpToLine, AlertCircle, ArrowLeftRight, ArrowLeft } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Link, useLocation, useParams, useNavigate } from 'react-router-dom';
+import { 
+  ChevronRight, 
+  Calendar, 
+  Phone, 
+  Mail, 
+  Lock, 
+  Map, 
+  MapPin, 
+  Clock, 
+  Banknote, 
+  Users, 
+  Check, 
+  ArrowUpToLine, 
+  AlertCircle, 
+  ArrowLeftRight, 
+  ArrowLeft,
+  Edit,
+  RefreshCw,
+  Target,
+  TrendingUp,
+  Award
+} from 'lucide-react';
 import PageHeader from '../../components/common/PageHeader';
+import { branchService } from '../../api/branchService';
+import { Skeleton } from '../../components/common/Skeleton';
 
-const DetailCard = ({ icon: Icon, label, value }) => (
-  <div className="bg-[#f8f9fa] rounded-xl p-4 flex items-center gap-4">
-    <div className="text-[#225091] flex-shrink-0">
-      <Icon size={20} strokeWidth={2} />
+const formatWeeklyOff = (weeklyOff) => {
+  if (!weeklyOff) return 'Sunday';
+  if (typeof weeklyOff === 'string') return weeklyOff;
+  if (Array.isArray(weeklyOff)) {
+    return weeklyOff.map(item => (typeof item === 'object' && item !== null ? item.day || item.name || 'Sunday' : item)).join(', ');
+  }
+  if (typeof weeklyOff === 'object' && weeklyOff !== null) {
+    const mainDay = weeklyOff.day || weeklyOff.weeklyOffDay || 'Sunday';
+    if (weeklyOff.secondWeeklyOff && weeklyOff.secondWeeklyOffDay) {
+      return `${mainDay} & ${weeklyOff.secondWeeklyOffDay}`;
+    }
+    return mainDay;
+  }
+  return String(weeklyOff);
+};
+
+const DetailCard = ({ icon: Icon, label, value }) => {
+  let displayVal = value;
+  if (typeof value === 'object' && value !== null) {
+    if (value.addressLine1 || value.city) {
+      displayVal = [value.addressLine1, value.city, value.state, value.pincode].filter(Boolean).join(', ');
+    } else if (value.day !== undefined) {
+      displayVal = formatWeeklyOff(value);
+    } else {
+      displayVal = value.name || value.title || '—';
+    }
+  }
+
+  return (
+    <div className="bg-[#f8f9fa] rounded-xl p-4 flex items-center gap-4 border border-gray-100/60 shadow-2xs">
+      <div className="text-[#225091] flex-shrink-0">
+        <Icon size={20} strokeWidth={2} />
+      </div>
+      <div>
+        <p className="text-[12px] text-gray-500 font-semibold uppercase tracking-wider mb-0.5">{label}</p>
+        <p className="text-[#1b2559] font-bold text-sm">{displayVal || '—'}</p>
+      </div>
     </div>
-    <div>
-      <p className="text-[13px] text-gray-500 font-medium mb-0.5">{label}</p>
-      <p className="text-[#1b2559] font-bold text-[14px]">{value}</p>
+  );
+};
+
+const BooleanRuleCard = ({ label, active }) => (
+  <div className={`rounded-xl p-4 flex items-center gap-3 border transition-colors ${
+    active 
+      ? 'bg-emerald-50/60 border-emerald-200 text-emerald-900' 
+      : 'bg-gray-50 border-gray-100 text-gray-500'
+  }`}>
+    <div className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
+      active ? 'bg-emerald-600 text-white' : 'bg-gray-200 text-gray-400'
+    }`}>
+      {active ? '✓' : '—'}
     </div>
+    <span className="text-xs font-semibold">{label}</span>
   </div>
 );
 
 const ViewManager = () => {
+  const { id } = useParams();
   const location = useLocation();
-  const managerData = location.state || {
-    name: '—',
-    type: '—',
-    initials: '—',
-    hasImage: false,
-    avatar: '',
-    phone: '—',
-    email: '—',
-    password: '—',
-    address: '—',
-    region: '—',
-    branch: '—',
-    salary: '—',
-    gender: '—',
-    dob: '—'
-  };
+  const navigate = useNavigate();
+
+  const [loading, setLoading] = useState(false);
+  const [profileData, setProfileData] = useState(null);
+
+  useEffect(() => {
+    const loadProfile = async () => {
+      const targetId = id || location.state?.branchId || location.state?.id;
+      if (!targetId) return;
+
+      setLoading(true);
+      try {
+        const res = await branchService.getManagerProfile(targetId);
+        if (res && (res.success || res.data)) {
+          setProfileData(res.data || res);
+        } else if (location.state) {
+          setProfileData(location.state);
+        }
+      } catch (err) {
+        console.error("Failed to load manager profile:", err);
+        if (location.state) {
+          setProfileData(location.state);
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadProfile();
+  }, [id, location.state]);
+
+  const targetId = id || location.state?.branchId || location.state?.id || '';
+
+  const manager = profileData?.manager || profileData?.rawManager || profileData || {};
+  const branch = profileData?.branch || profileData?.rawBranch || {};
+  const personal = manager.personalDetails || manager || {};
+  const job = manager.jobDetails || {};
+  const shift = manager.shiftSettings || {};
+  const attendance = manager.attendanceSettings || {};
+  const woffHoff = manager.woffHoffSettings || {};
+  const kra = manager.kraSettings || {};
+
+  const fullName = manager.fullName || manager.name || personal.fullName || 'Branch Manager';
+  const designation = job.designation || manager.type || 'Branch Manager';
+  const branchName = branch.name || profileData?.branchName || 'Main Branch';
+  const email = manager.email || personal.email || '—';
+  const phone = manager.phoneNumber || personal.phoneNumber || '—';
 
   return (
     <div className="flex flex-col gap-6 w-full font-sans antialiased pb-16">
@@ -41,299 +140,169 @@ const ViewManager = () => {
         title="Manager Details"
         breadcrumbs={[
           { label: 'Dashboard', to: '/dashboard' },
-          { label: 'User Management' },
-          { label: 'Managers', to: '/managers' },
+          { label: 'Branch Management', to: '/branch' },
           { label: 'Manager Details' }
         ]}
         showBack={true}
-        backUrl="/managers"
+        backUrl={location.state?.from || "/branch"}
       />
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 md:p-8">
-        {/* Profile Banner */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="flex items-center gap-5">
-            <div className="w-[72px] h-[72px] rounded-full border-[3px] border-[#225091] overflow-hidden bg-gray-100 flex items-center justify-center shadow-sm shrink-0">
-              {managerData.hasImage ? (
-                <img src={managerData.avatar} alt="Profile" className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full bg-[#f4f2ff] text-[#225091] flex items-center justify-center text-2xl font-bold">
-                  {managerData.initials || 'CK'}
-                </div>
-              )}
-            </div>
-            <div>
-              <h2 className="text-[22px] font-bold text-[#1b2559] mb-1.5">{managerData.name}</h2>
-              <span className="inline-block px-3.5 py-1 bg-[#225091] text-white text-[12px] font-semibold rounded-full">
-                {managerData.type}
-              </span>
-            </div>
-          </div>
-
-          <div className="flex bg-[#f4f2ff] rounded-xl p-4 gap-8">
-            <div>
-              <p className="text-[13px] text-gray-500 font-medium mb-1">Shift</p>
-              <p className="text-[14px] text-[#1b2559] font-bold">10:00-21:00</p>
-            </div>
-            <div>
-              <p className="text-[13px] text-gray-500 font-medium mb-1">Weekly Off</p>
-              <p className="text-[14px] text-[#1b2559] font-bold">Sat & Sun</p>
-            </div>
-            <div>
-              <p className="text-[13px] text-gray-500 font-medium mb-1">Joined</p>
-              <p className="text-[14px] text-[#1b2559] font-bold">01-01-2025</p>
-            </div>
-          </div>
-        </div>
-
-        <hr className="border-gray-100 my-8" />
-
-        {/* Personal Details */}
-        <div className="mb-10">
-          <h2 className="text-[22px] font-bold text-[#333] mb-6">Personal Details</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <DetailCard icon={Users} label="Gender" value={managerData.gender} />
-            <DetailCard icon={Calendar} label="Date Of Birth" value={managerData.dob} />
-            <DetailCard icon={Phone} label="Phone" value={managerData.phone} />
-            <DetailCard icon={Mail} label="Email" value={managerData.email} />
-            <DetailCard icon={Lock} label="Password" value={managerData.password} />
-            <DetailCard icon={MapPin} label="Address" value={managerData.address} />
-          </div>
-        </div>
-
-        <hr className="border-gray-100 my-8" />
-
-        {/* Job Details */}
-        <div className="mb-10">
-          <h2 className="text-[22px] font-bold text-[#333] mb-6">Job Details</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <DetailCard icon={Map} label="Region" value={managerData.region} />
-            <DetailCard icon={MapPin} label="Branch" value={managerData.branch} />
-            <DetailCard icon={Banknote} label="Salary" value={managerData.salary} />
-          </div>
-        </div>
-
-        <hr className="border-gray-100 my-8" />
-
-        {/* Shift & Woff */}
-        <div className="mb-10">
-          <h2 className="text-[22px] font-bold text-[#333] mb-6">Shift & Woff</h2>
-          
-          <div className="mb-8">
-            <h3 className="text-[16px] font-bold text-[#333] mb-4">Shift</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <DetailCard icon={Clock} label="In Time" value="10:00" />
-              <DetailCard icon={Clock} label="Out Time" value="21:00" />
-            </div>
-          </div>
-
-          <div className="mb-8">
-            <h3 className="text-[16px] font-bold text-[#333] mb-4">Weekly Off</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <DetailCard icon={Calendar} label="Weekly Off Days" value="Saturday, Sunday" />
-              <div className="bg-[#f8f9fa] rounded-xl p-4 flex items-center gap-4">
-                <div className="text-[#225091] flex-shrink-0"><Check size={20} strokeWidth={2.5} /></div>
-                <p className="text-[#1b2559] font-bold text-[14px]">Weekly Of Payable</p>
-              </div>
-              <div className="bg-[#f8f9fa] rounded-xl p-4 flex items-center gap-4">
-                <div className="text-[#225091] flex-shrink-0"><Check size={20} strokeWidth={2.5} /></div>
-                <p className="text-[#1b2559] font-bold text-[14px]">Variable Weekly Off</p>
-              </div>
-              <div className="bg-[#f8f9fa] rounded-xl p-4 flex items-center gap-4">
-                <div className="text-[#225091] flex-shrink-0"><Check size={20} strokeWidth={2.5} /></div>
-                <p className="text-[#1b2559] font-bold text-[14px]">Second weekly off</p>
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <h3 className="text-[16px] font-bold text-[#333] mb-4">Other Details</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <DetailCard icon={Clock} label="Late Allowed (Mins)" value="15 (As Per Shift)" />
-              <DetailCard icon={Clock} label="Early Allowed (Min)" value="15" />
-              <DetailCard icon={Clock} label="Half Day (Min)" value="240" />
-              <DetailCard icon={Clock} label="Full Day (Min)" value="480 (As Per Shift)" />
-            </div>
-          </div>
-        </div>
-
-        <hr className="border-gray-100 my-8" />
-
-        {/* Attendance */}
-        <div>
-          <h2 className="text-[22px] font-bold text-[#333] mb-6">Attendance</h2>
-          
-          <div>
-            <h3 className="text-[16px] font-bold text-[#333] mb-4">Punch</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <DetailCard icon={ArrowUpToLine} label="Shift Type" value="Double" />
-              <DetailCard icon={AlertCircle} label="No Out- Punch Found - Action" value="Mark Half Day" />
-              <DetailCard icon={Clock} label="Present On Wo / Holiday - Action" value="Mark as COFF" />
-            </div>
-          </div>
-
-          <div className="mt-8">
-            <h3 className="text-[16px] font-bold text-[#333] mb-4">Late Cut</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <DetailCard icon={Calendar} label="Allowed Day" value="3" />
-              <DetailCard icon={ArrowLeftRight} label="Action" value="Half Day" />
-              <div className="bg-[#f8f9fa] rounded-xl p-4 flex items-center gap-4">
-                <div className="text-[#225091] flex-shrink-0"><Check size={20} strokeWidth={2.5} /></div>
-                <p className="text-[#1b2559] font-bold text-[14px]">Late Cut Allowed</p>
-              </div>
-              <div className="bg-[#f8f9fa] rounded-xl p-4 flex items-center gap-4">
-                <div className="text-[#225091] flex-shrink-0"><Check size={20} strokeWidth={2.5} /></div>
-                <p className="text-[#1b2559] font-bold text-[14px]">Extra Late Cut Deduction</p>
-              </div>
-              <div className="bg-[#f8f9fa] rounded-xl p-4 flex items-center gap-4">
-                <div className="text-[#225091] flex-shrink-0"><Check size={20} strokeWidth={2.5} /></div>
-                <p className="text-[#1b2559] font-bold text-[14px]">Additional Late Cut In Leave Balance</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-8">
-            <h3 className="text-[16px] font-bold text-[#333] mb-4">Lunch & Early Going</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <DetailCard icon={Clock} label="Lunch Allowed (Mins)" value="15 (As Per Shift)" />
-              <div className="bg-[#f8f9fa] rounded-xl p-4 flex items-center gap-4">
-                <div className="text-[#225091] flex-shrink-0"><Check size={20} strokeWidth={2.5} /></div>
-                <p className="text-[#1b2559] font-bold text-[14px]">Lunch Allowed</p>
-              </div>
-              <div className="bg-[#f8f9fa] rounded-xl p-4 flex items-center gap-4">
-                <div className="text-[#225091] flex-shrink-0"><Check size={20} strokeWidth={2.5} /></div>
-                <p className="text-[#1b2559] font-bold text-[14px]">Early Going Allowed</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-8">
-            <h3 className="text-[16px] font-bold text-[#333] mb-4">Overtime</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="bg-[#f8f9fa] rounded-xl p-4 flex items-center gap-4">
-                <div className="text-[#225091] flex-shrink-0"><Check size={20} strokeWidth={2.5} /></div>
-                <p className="text-[#1b2559] font-bold text-[14px]">Overtime Allowed</p>
-              </div>
-              <div className="hidden md:block"></div>
-              
-              <div className="bg-[#f8f9fa] rounded-xl p-4 flex items-center gap-4">
-                <div className="text-[#225091] flex-shrink-0"><Check size={20} strokeWidth={2.5} /></div>
-                <p className="text-[#1b2559] font-bold text-[14px]">Custom OT</p>
-              </div>
-              <div className="bg-[#f8f9fa] rounded-xl p-4 flex items-center gap-4">
-                <div className="text-[#225091] flex-shrink-0"><Check size={20} strokeWidth={2.5} /></div>
-                <p className="text-[#1b2559] font-bold text-[14px]">Before OT</p>
-              </div>
-              
-              <DetailCard icon={Clock} label="OT Grace Period (Mins)" value="5" />
-              <DetailCard icon={Clock} label="1 day OT Hrs" value="4" />
-              
-              <div className="bg-[#f8f9fa] rounded-xl p-4 flex items-center gap-4">
-                <div className="text-[#225091] flex-shrink-0"><Check size={20} strokeWidth={2.5} /></div>
-                <p className="text-[#1b2559] font-bold text-[14px]">OT As Per Shift</p>
-              </div>
-              <div className="bg-[#f8f9fa] rounded-xl p-4 flex items-center gap-4">
-                <div className="text-[#225091] flex-shrink-0"><Check size={20} strokeWidth={2.5} /></div>
-                <p className="text-[#1b2559] font-bold text-[14px]">Consider OT As COFF</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <hr className="border-gray-100 my-8" />
-
-        {/* WOFF & HOFF */}
-        <div>
-          <h2 className="text-[22px] font-bold text-[#333] mb-6">WOFF & HOFF</h2>
-          
-          <div className="mb-8">
-            <h3 className="text-[16px] font-bold text-[#333] mb-4">Sandwich Absence Rules - Weekly Off</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="bg-[#f8f9fa] rounded-xl p-4 flex items-center gap-4">
-                <div className="text-[#225091] flex-shrink-0"><Check size={20} strokeWidth={2.5} /></div>
-                <p className="text-[#1b2559] font-bold text-[14px]">Absent Before Weekly Off</p>
-              </div>
-              <div className="bg-[#f8f9fa] rounded-xl p-4 flex items-center gap-4">
-                <div className="text-[#225091] flex-shrink-0"><Check size={20} strokeWidth={2.5} /></div>
-                <p className="text-[#1b2559] font-bold text-[14px]">Absent After Weekly Off</p>
-              </div>
-              <div className="bg-[#f8f9fa] rounded-xl p-4 flex items-center gap-4">
-                <div className="text-[#225091] flex-shrink-0"><Check size={20} strokeWidth={2.5} /></div>
-                <p className="text-[#1b2559] font-bold text-[14px]">Absent Before Or After Weekly Off</p>
-              </div>
-              <div className="bg-[#f8f9fa] rounded-xl p-4 flex items-center gap-4">
-                <div className="text-[#225091] flex-shrink-0"><Check size={20} strokeWidth={2.5} /></div>
-                <p className="text-[#1b2559] font-bold text-[14px]">Add Working Hrs On Weekly Off Day</p>
-              </div>
-              <div className="bg-[#f8f9fa] rounded-xl p-4 flex items-center gap-4">
-                <div className="text-[#225091] flex-shrink-0"><Check size={20} strokeWidth={2.5} /></div>
-                <p className="text-[#1b2559] font-bold text-[14px]">Late Deduction Not Applied On WO If Present</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="mb-8">
-            <h3 className="text-[16px] font-bold text-[#333] mb-4">Sandwich Absence Rules - Holidays</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="bg-[#f8f9fa] rounded-xl p-4 flex items-center gap-4">
-                <div className="text-[#225091] flex-shrink-0"><Check size={20} strokeWidth={2.5} /></div>
-                <p className="text-[#1b2559] font-bold text-[14px]">Absent Before Holiday</p>
-              </div>
-              <div className="bg-[#f8f9fa] rounded-xl p-4 flex items-center gap-4">
-                <div className="text-[#225091] flex-shrink-0"><Check size={20} strokeWidth={2.5} /></div>
-                <p className="text-[#1b2559] font-bold text-[14px]">Absent After Holiday</p>
-              </div>
-              <div className="bg-[#f8f9fa] rounded-xl p-4 flex items-center gap-4">
-                <div className="text-[#225091] flex-shrink-0"><Check size={20} strokeWidth={2.5} /></div>
-                <p className="text-[#1b2559] font-bold text-[14px]">Absent Before & After Holiday</p>
-              </div>
-              <div className="bg-[#f8f9fa] rounded-xl p-4 flex items-center gap-4">
-                <div className="text-[#225091] flex-shrink-0"><Check size={20} strokeWidth={2.5} /></div>
-                <p className="text-[#1b2559] font-bold text-[14px]">Add Working Hours On Holiday Day</p>
-              </div>
-              <div className="bg-[#f8f9fa] rounded-xl p-4 flex items-center gap-4">
-                <div className="text-[#225091] flex-shrink-0"><Check size={20} strokeWidth={2.5} /></div>
-                <p className="text-[#1b2559] font-bold text-[14px]">Late Deduction Not Applied On Holiday If Present</p>
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <h3 className="text-[16px] font-bold text-[#333] mb-4">Leave Between Holiday Or Weekly Off</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="bg-[#f8f9fa] rounded-xl p-4 flex items-center gap-4">
-                <div className="text-[#225091] flex-shrink-0"><Check size={20} strokeWidth={2.5} /></div>
-                <p className="text-[#1b2559] font-bold text-[14px]">Consider "Weekly Off" In Leave Application</p>
-              </div>
-              <div className="bg-[#f8f9fa] rounded-xl p-4 flex items-center gap-4">
-                <div className="text-[#225091] flex-shrink-0"><Check size={20} strokeWidth={2.5} /></div>
-                <p className="text-[#1b2559] font-bold text-[14px]">Consider "Holiday" In Leave Application</p>
-              </div>
-              <div className="bg-[#f8f9fa] rounded-xl p-4 flex items-center gap-4">
-                <div className="text-[#225091] flex-shrink-0"><Check size={20} strokeWidth={2.5} /></div>
-                <p className="text-[#1b2559] font-bold text-[14px]">Absent - WO - Leave = WO Absent</p>
-              </div>
-              <div className="bg-[#f8f9fa] rounded-xl p-4 flex items-center gap-4">
-                <div className="text-[#225091] flex-shrink-0"><Check size={20} strokeWidth={2.5} /></div>
-                <p className="text-[#1b2559] font-bold text-[14px]">Leave - WO - Absent = WO Absent</p>
-              </div>
-              <div className="bg-[#f8f9fa] rounded-xl p-4 flex items-center gap-4">
-                <div className="text-[#225091] flex-shrink-0"><Check size={20} strokeWidth={2.5} /></div>
-                <p className="text-[#1b2559] font-bold text-[14px]">Absent - Holiday - Leave = Holiday Absent</p>
-              </div>
-              <div className="bg-[#f8f9fa] rounded-xl p-4 flex items-center gap-4">
-                <div className="text-[#225091] flex-shrink-0"><Check size={20} strokeWidth={2.5} /></div>
-                <p className="text-[#1b2559] font-bold text-[14px]">Leave - Holiday - Absent = Holiday Absent</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <hr className="border-gray-100 my-8" />
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8 space-y-8">
         
-        {/* Registration */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <DetailCard icon={Calendar} label="Registered On" value="January 1, 2026" />
+        {/* Profile Banner */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-gray-100">
+          <div className="flex items-center gap-5">
+            <div className="w-16 h-16 rounded-2xl bg-blue-50 text-[#225091] border border-blue-100 flex items-center justify-center font-bold text-2xl shadow-sm shrink-0">
+              {fullName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() || 'BM'}
+            </div>
+            <div>
+              <div className="flex items-center gap-3">
+                <h2 className="text-xl font-bold text-gray-900">{fullName}</h2>
+                <span className="px-3 py-0.5 bg-[#225091] text-white text-xs font-bold rounded-full">
+                  {designation}
+                </span>
+              </div>
+              <p className="text-xs font-medium text-gray-500 mt-1">
+                {branchName} {branch.code ? `(${branch.code})` : ''}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <div className="flex bg-slate-50 border border-gray-100 rounded-xl p-3 gap-6 text-xs">
+              <div>
+                <p className="text-gray-400 font-semibold uppercase tracking-wider text-[10px]">Shift</p>
+                <p className="text-gray-900 font-bold mt-0.5">{shift.punchInTime || '09:30'} - {shift.punchOutTime || '18:30'}</p>
+              </div>
+              <div>
+                <p className="text-gray-400 font-semibold uppercase tracking-wider text-[10px]">Weekly Off</p>
+                <p className="text-gray-900 font-bold mt-0.5">{formatWeeklyOff(shift.weeklyOff)}</p>
+              </div>
+              <div>
+                <p className="text-gray-400 font-semibold uppercase tracking-wider text-[10px]">Joined</p>
+                <p className="text-gray-900 font-bold mt-0.5">{job.joiningDate || '2026-01-01'}</p>
+              </div>
+            </div>
+
+            {targetId && (
+              <Link 
+                to={`/managers/edit/${targetId}`}
+                state={profileData}
+                className="bg-[#225091] hover:bg-[#183d6e] text-white px-4 py-2.5 rounded-xl font-bold text-xs transition-all shadow-sm flex items-center gap-2 cursor-pointer shrink-0"
+              >
+                <Edit size={14} /> Edit HR Settings
+              </Link>
+            )}
+          </div>
+        </div>
+
+        {/* 1. Personal Details */}
+        <div>
+          <h3 className="text-base font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <Users size={18} className="text-[#225091]" />
+            Personal Details
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <DetailCard icon={Users} label="Gender" value={personal.gender || '—'} />
+            <DetailCard icon={Calendar} label="Date Of Birth" value={personal.dateOfBirth || '—'} />
+            <DetailCard icon={Phone} label="Phone Number" value={phone} />
+            <DetailCard icon={Mail} label="Email Address" value={email} />
+            <DetailCard icon={Lock} label="Employee Code" value={manager.employeeCode || '—'} />
+            <DetailCard icon={MapPin} label="Address" value={personal.address?.addressLine1 || personal.address || '—'} />
+          </div>
+        </div>
+
+        {/* 2. Job Details */}
+        <div className="pt-4 border-t border-gray-100">
+          <h3 className="text-base font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <Map size={18} className="text-[#225091]" />
+            Job Details
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <DetailCard icon={Map} label="Department" value={job.department || 'Branch Operations'} />
+            <DetailCard icon={MapPin} label="Designation" value={job.designation || 'Branch Manager'} />
+            <DetailCard icon={Banknote} label="Salary" value={job.salary ? `₹${Number(job.salary).toLocaleString('en-IN')}` : '—'} />
+            <DetailCard icon={Calendar} label="Joining Date" value={job.joiningDate || '—'} />
+            <DetailCard icon={Clock} label="Probation (Months)" value={job.probationPeriodMonths || '6'} />
+            <DetailCard icon={MapPin} label="Assigned Branch" value={branchName} />
+          </div>
+        </div>
+
+        {/* 3. Shift Settings */}
+        <div className="pt-4 border-t border-gray-100">
+          <h3 className="text-base font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <Clock size={18} className="text-[#225091]" />
+            Shift & Timing Rules
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <DetailCard icon={Clock} label="Punch In Time" value={shift.punchInTime || '09:30 AM'} />
+            <DetailCard icon={Clock} label="Punch Out Time" value={shift.punchOutTime || '06:30 PM'} />
+            <DetailCard icon={Clock} label="Late Grace (Mins)" value={`${shift.lateAllowedMinutes || 15} mins`} />
+            <DetailCard icon={Clock} label="Half Day Threshold" value={`${shift.halfDayMinutes || 240} mins`} />
+            <DetailCard icon={Clock} label="Full Day Threshold" value={`${shift.fullDayMinutes || 480} mins`} />
+            <DetailCard icon={Calendar} label="Weekly Off Schedule" value={formatWeeklyOff(shift.weeklyOff)} />
+          </div>
+        </div>
+
+        {/* 4. Attendance Settings */}
+        <div className="pt-4 border-t border-gray-100">
+          <h3 className="text-base font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <ArrowUpToLine size={18} className="text-[#225091]" />
+            Attendance Rules
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <DetailCard icon={ArrowUpToLine} label="Punch Mode" value={attendance.punchMode || 'DOUBLE'} />
+            <DetailCard icon={AlertCircle} label="No Out-Punch Action" value={attendance.noOutPunchAction || 'MARK_HALF_DAY'} />
+            <DetailCard icon={Clock} label="WO / Holiday Action" value={attendance.presentOnHolidayAction || 'MARK_COFF'} />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
+            <BooleanRuleCard label="Overtime Policy Enabled" active={attendance.overtimeAllowed !== false} />
+            <BooleanRuleCard label="Late Deduction Policy Active" active={attendance.lateCutAllowed !== false} />
+            <BooleanRuleCard label="Early Leaving Tracking" active={attendance.earlyGoingAllowed !== false} />
+          </div>
+        </div>
+
+        {/* 5. WOFF & HOFF Policy */}
+        <div className="pt-4 border-t border-gray-100">
+          <h3 className="text-base font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <Calendar size={18} className="text-[#225091]" />
+            Weekly Off & Holiday (WOFF/HOFF) Rules
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <BooleanRuleCard label="Sandwich Leave Rules on Weekly Off" active={woffHoff.sandwichWeeklyOff !== false} />
+            <BooleanRuleCard label="Sandwich Leave Rules on Holidays" active={woffHoff.sandwichHoliday !== false} />
+            <BooleanRuleCard label="Holiday Encashment Allowed" active={woffHoff.holidayEncashment === true} />
+            <BooleanRuleCard label="Include WO in Leave Application" active={woffHoff.includeWoInLeave !== false} />
+            <BooleanRuleCard label="Include Holiday in Leave Application" active={woffHoff.includeHolidayInLeave !== false} />
+            <BooleanRuleCard label="Compensatory Off Entitlement" active={woffHoff.compOffAllowed !== false} />
+          </div>
+        </div>
+
+        {/* 6. KRA Targets */}
+        <div className="pt-4 border-t border-gray-100">
+          <h3 className="text-base font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <Target size={18} className="text-[#225091]" />
+            KRA Performance Targets ({kra.year || 2026})
+          </h3>
+          {Array.isArray(kra.targets) && kra.targets.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {kra.targets.map((tgt, idx) => (
+                <div key={idx} className="bg-slate-50/80 rounded-xl p-4 border border-gray-100">
+                  <p className="text-xs font-bold text-gray-900">{tgt.product || `Target ${idx + 1}`}</p>
+                  <div className="flex items-center justify-between mt-2">
+                    <span className="text-[11px] font-semibold text-gray-500 uppercase">{tgt.targetType || 'AMOUNT'}</span>
+                    <span className="text-sm font-bold text-[#225091]">
+                      {tgt.targetType === 'AMOUNT' ? `₹${Number(tgt.targetValue || 0).toLocaleString('en-IN')}` : tgt.targetValue}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="bg-gray-50 rounded-xl p-4 text-xs font-medium text-gray-500">
+              No specific KRA targets configured for the current year.
+            </div>
+          )}
         </div>
 
       </div>

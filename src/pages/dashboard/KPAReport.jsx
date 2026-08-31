@@ -18,7 +18,12 @@ import {
   Building2,
   Table,
   FileText,
-  ChevronDown
+  ChevronDown,
+  Users,
+  Target,
+  CheckCircle2,
+  TrendingUp,
+  Percent
 } from 'lucide-react';
 import { kpaReportService } from '../../api/kpaReportService';
 import { branchService } from '../../api/branchService';
@@ -75,6 +80,7 @@ const KPAReport = () => {
 
   // Data States
   const [reports, setReports] = useState([]);
+  const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(false);
   const [exporting, setExporting] = useState(false);
 
@@ -177,11 +183,21 @@ const KPAReport = () => {
 
       const response = await kpaReportService.list(params);
 
-      if (response && (response.success || Array.isArray(response.data))) {
-        const dataList = Array.isArray(response.data) ? response.data : (response.data?.reports || response.data?.employees || []);
+      if (response && (response.success || response.data)) {
+        const payload = response.data || {};
+        const dataList = Array.isArray(payload) 
+          ? payload 
+          : (payload.items || payload.reports || payload.employees || payload.data || []);
+        
         setReports(dataList);
 
-        const paginationMeta = response.meta || response.pagination || {
+        if (payload.stats) {
+          setStats(payload.stats);
+        } else if (response.stats) {
+          setStats(response.stats);
+        }
+
+        const paginationMeta = payload.meta || response.meta || response.pagination || {
           totalRecords: dataList.length,
           limit,
           page,
@@ -200,10 +216,12 @@ const KPAReport = () => {
         });
       } else {
         setReports([]);
+        setStats(null);
       }
     } catch (err) {
       console.error('Error fetching KPA reports:', err);
       setReports([]);
+      setStats(null);
     } finally {
       setLoading(false);
     }
@@ -422,6 +440,78 @@ const KPAReport = () => {
           { label: "KPA Report" }
         ]}
       />
+
+      {/* Top Stats Overview Cards */}
+      {(stats || loading) && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Total Employees */}
+          <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-xs flex items-center justify-between">
+            <div>
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Total Employees</p>
+              {loading ? (
+                <Skeleton className="h-7 w-16 mt-1 rounded" />
+              ) : (
+                <h3 className="text-2xl font-bold text-gray-900 mt-1">{stats?.totalEmployees ?? meta.totalRecords ?? 0}</h3>
+              )}
+            </div>
+            <div className="w-12 h-12 rounded-xl bg-blue-50 text-[#225091] flex items-center justify-center">
+              <Users size={24} />
+            </div>
+          </div>
+
+          {/* Total Target Amount */}
+          <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-xs flex items-center justify-between">
+            <div>
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Total Target</p>
+              {loading ? (
+                <Skeleton className="h-7 w-28 mt-1 rounded" />
+              ) : (
+                <h3 className="text-2xl font-bold text-gray-900 mt-1">
+                  {stats?.formattedTotalTargetAmount || (stats?.totalTargetAmount ? `₹${Number(stats.totalTargetAmount).toLocaleString('en-IN')}` : '₹0')}
+                </h3>
+              )}
+            </div>
+            <div className="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+              <Target size={24} />
+            </div>
+          </div>
+
+          {/* Total Achieved Amount */}
+          <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-xs flex items-center justify-between">
+            <div>
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Total Achieved</p>
+              {loading ? (
+                <Skeleton className="h-7 w-28 mt-1 rounded" />
+              ) : (
+                <h3 className="text-2xl font-bold text-emerald-600 mt-1">
+                  {stats?.formattedTotalAchievedAmount || (stats?.totalAchievedAmount ? `₹${Number(stats.totalAchievedAmount).toLocaleString('en-IN')}` : '₹0')}
+                </h3>
+              )}
+            </div>
+            <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+              <CheckCircle2 size={24} />
+            </div>
+          </div>
+
+          {/* Overall Percentage */}
+          <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-xs flex items-center justify-between">
+            <div>
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Achievement Rate</p>
+              {loading ? (
+                <Skeleton className="h-7 w-16 mt-1 rounded" />
+              ) : (
+                <div className="flex items-center gap-2 mt-1">
+                  <h3 className="text-2xl font-bold text-[#225091]">{stats?.overallPercentage ?? 0}%</h3>
+                  <span className="text-[11px] font-semibold text-gray-400">of target</span>
+                </div>
+              )}
+            </div>
+            <div className="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+              <TrendingUp size={24} />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Main Content Area */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col overflow-hidden">

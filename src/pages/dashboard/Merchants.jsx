@@ -1,14 +1,57 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { 
   ChevronRight, Search, Eye, Edit, Trash2, X, SlidersHorizontal, 
-  ChevronDown, Download, Table, FileSpreadsheet, FileText, Loader2, Store
+  ChevronDown, Download, Table, FileSpreadsheet, FileText, Loader2, 
+  Store, Users, UserCheck, UserX, ShieldAlert, Archive, RotateCcw,
+  CheckCircle2, AlertTriangle, Building2, MapPin
 } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { merchantService } from '../../api/merchantService';
+import { branchService } from '../../api/branchService';
 import useBranchStore from '../../store/branchStore';
 import PageHeader from '../../components/common/PageHeader';
 import { Skeleton } from '../../components/common/Skeleton';
+
+// Comprehensive Indian States and Prominent Cities Map for fallback
+const INDIAN_STATES_WITH_CITIES = {
+  "Andhra Pradesh": ["Visakhapatnam", "Vijayawada", "Guntur", "Nellore", "Kurnool", "Rajahmundry", "Tirupati", "Kadapa", "Kakinada", "Anantapur"],
+  "Arunachal Pradesh": ["Itanagar", "Naharlagun", "Pasighat", "Tawang", "Ziro"],
+  "Assam": ["Guwahati", "Silchar", "Dibrugarh", "Jorhat", "Nagaon", "Tinsukia", "Tezpur"],
+  "Bihar": ["Patna", "Gaya", "Bhagalpur", "Muzaffarpur", "Purnia", "Darbhanga", "Bihar Sharif", "Arrah", "Begusarai", "Katihar"],
+  "Chandigarh": ["Chandigarh"],
+  "Chhattisgarh": ["Raipur", "Bhilai", "Bilaspur", "Korba", "Rajnandgaon", "Durg", "Jagdalpur", "Ambikapur"],
+  "Dadra and Nagar Haveli and Daman and Diu": ["Daman", "Diu", "Silvassa"],
+  "Delhi": ["New Delhi", "North Delhi", "South Delhi", "East Delhi", "West Delhi", "Central Delhi", "Dwarka", "Rohini"],
+  "Goa": ["Panaji", "Margao", "Vasco da Gama", "Mapusa", "Ponda"],
+  "Gujarat": ["Ahmedabad", "Surat", "Vadodara", "Rajkot", "Bhavnagar", "Jamnagar", "Junagadh", "Gandhinagar", "Anand", "Navsari", "Morbi", "Bharuch"],
+  "Haryana": ["Gurugram", "Faridabad", "Panipat", "Ambala", "Yamunanagar", "Rohtak", "Hisar", "Karnal", "Sonipat", "Panchkula"],
+  "Himachal Pradesh": ["Shimla", "Dharamshala", "Mandi", "Solan", "Kullu", "Manali", "Baddi"],
+  "Jammu and Kashmir": ["Srinagar", "Jammu", "Anantnag", "Baramulla", "Udhampur", "Kathua"],
+  "Jharkhand": ["Ranchi", "Jamshedpur", "Dhanbad", "Bokaro Steel City", "Deoghar", "Hazaribagh", "Giridih"],
+  "Karnataka": ["Bengaluru", "Mysuru", "Hubballi", "Dharwad", "Mangaluru", "Belagavi", "Davangere", "Ballari", "Kalaburagi", "Shivamogga", "Tumakuru", "Udupi"],
+  "Kerala": ["Thiruvananthapuram", "Kochi", "Kozhikode", "Kollam", "Thrissur", "Kannur", "Alappuzha", "Palakkad", "Kottayam", "Malappuram"],
+  "Ladakh": ["Leh", "Kargil"],
+  "Madhya Pradesh": ["Indore", "Bhopal", "Jabalpur", "Gwalior", "Ujjain", "Sagar", "Dewas", "Satna", "Ratlam", "Rewa"],
+  "Maharashtra": ["Mumbai", "Pune", "Nagpur", "Thane", "Nashik", "Aurangabad", "Solapur", "Amravati", "Kolhapur", "Navi Mumbai", "Akola", "Latur", "Dhule", "Ahmednagar", "Chandrapur", "Parbhani", "Jalgaon", "Nanded", "Satara", "Sangli"],
+  "Manipur": ["Imphal", "Churachandpur", "Thoubal"],
+  "Meghalaya": ["Shillong", "Tura", "Jowai"],
+  "Mizoram": ["Aizawl", "Lunglei", "Champhai"],
+  "Nagaland": ["Kohima", "Dimapur", "Mokokchung"],
+  "Odisha": ["Bhubaneswar", "Cuttack", "Rourkela", "Berhampur", "Sambalpur", "Puri", "Balasore", "Bhadrak", "Baripada"],
+  "Puducherry": ["Puducherry", "Karaikal", "Mahe", "Yanam"],
+  "Punjab": ["Ludhiana", "Amritsar", "Jalandhar", "Patiala", "Bathinda", "Mohali", "Pathankot", "Hoshiarpur", "Batala"],
+  "Rajasthan": ["Jaipur", "Jodhpur", "Kota", "Bikaner", "Ajmer", "Udaipur", "Bhilwara", "Alwar", "Bharatpur", "Sikar", "Pali", "Sri Ganganagar"],
+  "Sikkim": ["Gangtok", "Namchi", "Gyalshing"],
+  "Tamil Nadu": ["Chennai", "Coimbatore", "Madurai", "Tiruchirappalli", "Salem", "Tirunelveli", "Tiruppur", "Vellore", "Erode", "Thoothukudi", "Dindigul", "Thanjavur"],
+  "Telangana": ["Hyderabad", "Warangal", "Nizamabad", "Karimnagar", "Ramagundam", "Khammam", "Mahbubnagar", "Nalgonda", "Adilabad"],
+  "Tripura": ["Agartala", "Udaipur", "Dharmanagar"],
+  "Uttar Pradesh": ["Lucknow", "Kanpur", "Varanasi", "Agra", "Noida", "Greater Noida", "Ghaziabad", "Prayagraj", "Meerut", "Bareilly", "Aligarh", "Moradabad", "Saharanpur", "Gorakhpur", "Jhansi", "Mathura", "Ayodhya"],
+  "Uttarakhand": ["Dehradun", "Haridwar", "Roorkee", "Haldwani", "Rishikesh", "Nainital", "Rudrapur"],
+  "West Bengal": ["Kolkata", "Howrah", "Siliguri", "Durgapur", "Asansol", "Bardhaman", "Kharagpur", "Malda", "Baharampur", "Habra"]
+};
+
+const ALL_INDIAN_STATES = Object.keys(INDIAN_STATES_WITH_CITIES).sort((a, b) => a.localeCompare(b));
 
 const Merchants = () => {
   const navigate = useNavigate();
@@ -19,13 +62,36 @@ const Merchants = () => {
   const [loading, setLoading] = useState(false);
   const [isExportOpen, setIsExportOpen] = useState(false);
   
+  // Overview Stats
+  const [stats, setStats] = useState({
+    totalMerchants: 0,
+    activeMerchants: 0,
+    inactiveMerchants: 0,
+    blockedMerchants: 0,
+    deletedMerchants: 0
+  });
+
+  // Active Stat Card Filter ('ALL' | 'ACTIVE' | 'INACTIVE' | 'BLOCKED' | 'DELETED')
+  const [activeStatCard, setActiveStatCard] = useState('ALL');
+  
   // Search & Filter State
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState('');
-  const globalBranchId = useBranchStore(state => state.globalBranchId);
+  const [selectedBranchId, setSelectedBranchId] = useState('');
+  const [selectedState, setSelectedState] = useState('');
+  const [selectedCity, setSelectedCity] = useState('');
+  const [includeDeleted, setIncludeDeleted] = useState(false);
+
+  const { globalBranchId, branchOptions, fetchBranches } = useBranchStore();
   
+  // Locations Data (State and City mapping)
+  const [locationsData, setLocationsData] = useState({
+    states: ALL_INDIAN_STATES,
+    cities: [],
+    stateCitiesMap: {}
+  });
+
   // Pagination State
   const [page, setPage] = useState(1);
   const limit = 10;
@@ -38,10 +104,68 @@ const Merchants = () => {
     hasPrevPage: false
   });
 
-  // Modal State
+  // Modals State
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [merchantToDelete, setMerchantToDelete] = useState(null);
-  const [deleteSubmitting, setDeleteSubmitting] = useState(false);
+  const [isRestoreModalOpen, setIsRestoreModalOpen] = useState(false);
+  const [merchantToRestore, setMerchantToRestore] = useState(null);
+  const [isPermanentModalOpen, setIsPermanentModalOpen] = useState(false);
+  const [merchantToPermanent, setMerchantToPermanent] = useState(null);
+  const [actionLoading, setActionLoading] = useState(false);
+
+  // Load branches & locations
+  useEffect(() => {
+    fetchBranches();
+  }, [fetchBranches]);
+
+  useEffect(() => {
+    if (globalBranchId) {
+      setSelectedBranchId(globalBranchId);
+    }
+  }, [globalBranchId]);
+
+  useEffect(() => {
+    const fetchLocations = async () => {
+      try {
+        const res = await branchService.getAvailableLocations();
+        const data = res?.data || res || {};
+        const apiStates = Array.isArray(data?.states) ? data.states : (Array.isArray(data?.availableStates) ? data.availableStates : []);
+        const apiCities = Array.isArray(data?.cities) ? data.cities : [];
+        const rawMap = data?.stateCitiesMap || data?.stateCityMap || {};
+        const stateCityMap = (typeof rawMap === 'object' && rawMap !== null) ? rawMap : {};
+        const combinedStates = Array.from(new Set([...apiStates, ...ALL_INDIAN_STATES])).sort((a, b) => a.localeCompare(b));
+        setLocationsData({ 
+          states: combinedStates.length > 0 ? combinedStates : ALL_INDIAN_STATES, 
+          cities: apiCities,
+          stateCitiesMap: stateCityMap 
+        });
+      } catch (err) {
+        console.warn("Failed to fetch locations:", err);
+      }
+    };
+    fetchLocations();
+  }, []);
+
+  // States List
+  const statesList = useMemo(() => {
+    if (locationsData.states && locationsData.states.length > 0) {
+      return locationsData.states;
+    }
+    return ALL_INDIAN_STATES;
+  }, [locationsData.states]);
+
+  // Cascading Available Cities for the Selected State
+  const availableCities = useMemo(() => {
+    if (!selectedState) {
+      return locationsData.cities && locationsData.cities.length > 0
+        ? locationsData.cities
+        : [];
+    }
+    const fromDictionary = INDIAN_STATES_WITH_CITIES[selectedState] || [];
+    const fromApi = (locationsData.stateCitiesMap && locationsData.stateCitiesMap[selectedState]) || [];
+    const combined = Array.from(new Set([...fromDictionary, ...fromApi])).sort((a, b) => a.localeCompare(b));
+    return combined.length > 0 ? combined : (locationsData.cities || []);
+  }, [selectedState, locationsData]);
 
   // Debounce search
   useEffect(() => {
@@ -58,14 +182,34 @@ const Merchants = () => {
     try {
       const params = { page: pageNo, limit };
       if (debouncedSearch.trim()) params.search = debouncedSearch.trim();
-      if (selectedStatus) params.status = selectedStatus;
-      if (globalBranchId) params.branchId = globalBranchId;
+      
+      // Status and Deleted filter handling
+      if (selectedStatus && selectedStatus !== 'ALL') {
+        params.status = selectedStatus;
+      }
+      if (includeDeleted || selectedStatus === 'DELETED') {
+        params.isDeleted = true;
+      } else if (includeDeleted === false && selectedStatus !== 'DELETED') {
+        params.isDeleted = false;
+      }
+      
+      if (selectedBranchId) params.branchId = selectedBranchId;
+      if (selectedState) params.state = selectedState;
+      if (selectedCity) params.city = selectedCity;
 
-      const response = await merchantService.getMerchants(params);
-      if (response && (response.success || Array.isArray(response.data) || response.merchants)) {
-        const rawList = response.data?.merchants || response.data?.data || response.merchants || (Array.isArray(response.data) ? response.data : []);
+      const response = await merchantService.list(params);
+      if (response && (response.success || response.data)) {
+        const payload = response.data || response;
+        const rawList = payload.items || payload.merchants || payload.data || (Array.isArray(payload) ? payload : []);
         setMerchants(Array.isArray(rawList) ? rawList : []);
-        const metaObj = response.meta || response.pagination || response.data?.meta || response.data?.pagination || { 
+
+        if (payload.stats) {
+          setStats(payload.stats);
+        } else if (response.stats) {
+          setStats(response.stats);
+        }
+
+        const metaObj = payload.meta || payload.pagination || response.meta || { 
           page: pageNo, 
           limit, 
           totalRecords: Array.isArray(rawList) ? rawList.length : 0, 
@@ -88,42 +232,81 @@ const Merchants = () => {
   };
 
   useEffect(() => {
-    fetchMerchants(1);
-  }, [debouncedSearch, selectedStatus, globalBranchId]);
+    fetchMerchants(page);
+  }, [page, debouncedSearch, selectedStatus, selectedBranchId, selectedState, selectedCity, includeDeleted]);
 
   const handlePageChange = (newPage) => {
     if (newPage >= 1 && newPage <= (meta.totalPages || 1)) {
       setPage(newPage);
-      fetchMerchants(newPage);
     }
   };
 
-  const handleDeleteClick = (merchant) => {
-    setMerchantToDelete(merchant);
-    setIsDeleteModalOpen(true);
+  const handleResetFilters = () => {
+    setSearchTerm('');
+    setDebouncedSearch('');
+    setSelectedStatus('');
+    setSelectedBranchId(globalBranchId || '');
+    setSelectedState('');
+    setSelectedCity('');
+    setIncludeDeleted(false);
+    setActiveStatCard('ALL');
+    setPage(1);
   };
 
-  const confirmDelete = async () => {
+  const hasActiveFilters = Boolean(debouncedSearch.trim()) || Boolean(selectedStatus) || Boolean(selectedBranchId && selectedBranchId !== globalBranchId) || Boolean(selectedState) || Boolean(selectedCity) || includeDeleted || activeStatCard !== 'ALL';
+
+  // Lifecycle Action Handlers
+  const handleSoftDelete = async () => {
     if (!merchantToDelete) return;
-    setDeleteSubmitting(true);
+    setActionLoading(true);
     try {
-      const merchantId = merchantToDelete._id || merchantToDelete.merchantId || merchantToDelete.id;
-      const response = await merchantService.deleteMerchant(merchantId);
-      if (response && response.success) {
-        toast.success("Merchant deleted successfully.");
-        fetchMerchants(meta.page);
-      } else {
-        toast.success("Merchant deleted (Simulated).");
-        setMerchants(prev => prev.filter(m => (m._id || m.id) !== merchantId));
-      }
-    } catch (error) {
-      console.error("Delete failed", error);
-      toast.success("Merchant deleted (Simulated).");
-      setMerchants(prev => prev.filter(m => (m._id || m.id) !== (merchantToDelete._id || merchantToDelete.id)));
-    } finally {
-      setDeleteSubmitting(false);
+      const id = merchantToDelete.id || merchantToDelete._id || merchantToDelete.merchantId;
+      const res = await merchantService.softDelete(id);
+      toast.success(res?.message || "Merchant account soft-deleted successfully.");
       setIsDeleteModalOpen(false);
       setMerchantToDelete(null);
+      fetchMerchants(page);
+    } catch (error) {
+      console.error("Soft delete failed:", error);
+      toast.error(error.response?.data?.message || "Failed to soft-delete merchant.");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleRestore = async () => {
+    if (!merchantToRestore) return;
+    setActionLoading(true);
+    try {
+      const id = merchantToRestore.id || merchantToRestore._id || merchantToRestore.merchantId;
+      const res = await merchantService.restore(id);
+      toast.success(res?.message || "Merchant account restored successfully.");
+      setIsRestoreModalOpen(false);
+      setMerchantToRestore(null);
+      fetchMerchants(page);
+    } catch (error) {
+      console.error("Restore failed:", error);
+      toast.error(error.response?.data?.message || "Failed to restore merchant.");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handlePermanentDelete = async () => {
+    if (!merchantToPermanent) return;
+    setActionLoading(true);
+    try {
+      const id = merchantToPermanent.id || merchantToPermanent._id || merchantToPermanent.merchantId;
+      const res = await merchantService.permanentDelete(id);
+      toast.success(res?.message || "Merchant permanently deleted.");
+      setIsPermanentModalOpen(false);
+      setMerchantToPermanent(null);
+      fetchMerchants(page);
+    } catch (error) {
+      console.error("Permanent delete failed:", error);
+      toast.error(error.response?.data?.message || "Failed to permanently delete merchant.");
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -202,140 +385,382 @@ const Merchants = () => {
         ]}
       />
 
-      {/* Toolbar */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        {/* Search & Filter */}
-        <div className="flex items-center gap-4 w-full sm:w-auto">
-          {/* Search Box */}
-          <div className="relative w-full sm:w-80">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Search size={18} className="text-gray-400" />
-            </div>
+      {/* 5 Top Stat Overview Cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
+        {/* Card 1: Total Merchants */}
+        <div
+          onClick={() => {
+            setActiveStatCard('ALL');
+            setSelectedStatus('');
+            setIncludeDeleted(false);
+            setPage(1);
+          }}
+          className={`bg-white rounded-2xl p-4 border shadow-2xs flex items-center justify-between cursor-pointer transition-all hover:shadow-md ${
+            activeStatCard === 'ALL' && !selectedStatus && !includeDeleted
+              ? 'border-[#225091] ring-2 ring-[#225091]/10 bg-blue-50/20'
+              : 'border-gray-100 hover:border-gray-200'
+          }`}
+        >
+          <div>
+            <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Total Merchants</p>
+            <h3 className="text-xl font-black text-[#1b2559] tabular-nums">
+              {stats.totalMerchants}
+            </h3>
+          </div>
+          <div className="w-11 h-11 rounded-xl bg-blue-50 text-[#225091] border border-blue-100 flex items-center justify-center shrink-0 shadow-2xs">
+            <Store size={20} />
+          </div>
+        </div>
+
+        {/* Card 2: Active Merchants */}
+        <div
+          onClick={() => {
+            setActiveStatCard('ACTIVE');
+            setSelectedStatus('ACTIVE');
+            setIncludeDeleted(false);
+            setPage(1);
+          }}
+          className={`bg-white rounded-2xl p-4 border shadow-2xs flex items-center justify-between cursor-pointer transition-all hover:shadow-md ${
+            activeStatCard === 'ACTIVE' || selectedStatus === 'ACTIVE'
+              ? 'border-emerald-500 ring-2 ring-emerald-500/10 bg-emerald-50/20'
+              : 'border-gray-100 hover:border-gray-200'
+          }`}
+        >
+          <div>
+            <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Active</p>
+            <h3 className="text-xl font-black text-emerald-600 tabular-nums">
+              {stats.activeMerchants}
+            </h3>
+          </div>
+          <div className="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center justify-center shrink-0 shadow-2xs">
+            <UserCheck size={20} />
+          </div>
+        </div>
+
+        {/* Card 3: Inactive Merchants */}
+        <div
+          onClick={() => {
+            setActiveStatCard('INACTIVE');
+            setSelectedStatus('INACTIVE');
+            setIncludeDeleted(false);
+            setPage(1);
+          }}
+          className={`bg-white rounded-2xl p-4 border shadow-2xs flex items-center justify-between cursor-pointer transition-all hover:shadow-md ${
+            activeStatCard === 'INACTIVE' || selectedStatus === 'INACTIVE'
+              ? 'border-amber-500 ring-2 ring-amber-500/10 bg-amber-50/20'
+              : 'border-gray-100 hover:border-gray-200'
+          }`}
+        >
+          <div>
+            <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Inactive</p>
+            <h3 className="text-xl font-black text-amber-600 tabular-nums">
+              {stats.inactiveMerchants}
+            </h3>
+          </div>
+          <div className="w-11 h-11 rounded-xl bg-amber-50 text-amber-600 border border-amber-100 flex items-center justify-center shrink-0 shadow-2xs">
+            <UserX size={20} />
+          </div>
+        </div>
+
+        {/* Card 4: Blocked Merchants */}
+        <div
+          onClick={() => {
+            setActiveStatCard('BLOCKED');
+            setSelectedStatus('BLOCKED');
+            setIncludeDeleted(false);
+            setPage(1);
+          }}
+          className={`bg-white rounded-2xl p-4 border shadow-2xs flex items-center justify-between cursor-pointer transition-all hover:shadow-md ${
+            activeStatCard === 'BLOCKED' || selectedStatus === 'BLOCKED'
+              ? 'border-orange-500 ring-2 ring-orange-500/10 bg-orange-50/20'
+              : 'border-gray-100 hover:border-gray-200'
+          }`}
+        >
+          <div>
+            <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Blocked</p>
+            <h3 className="text-xl font-black text-orange-600 tabular-nums">
+              {stats.blockedMerchants}
+            </h3>
+          </div>
+          <div className="w-11 h-11 rounded-xl bg-orange-50 text-orange-600 border border-orange-100 flex items-center justify-center shrink-0 shadow-2xs">
+            <ShieldAlert size={20} />
+          </div>
+        </div>
+
+        {/* Card 5: Soft-Deleted Merchants */}
+        <div
+          onClick={() => {
+            setActiveStatCard('DELETED');
+            setSelectedStatus('DELETED');
+            setIncludeDeleted(true);
+            setPage(1);
+          }}
+          className={`bg-white rounded-2xl p-4 border shadow-2xs flex items-center justify-between cursor-pointer transition-all hover:shadow-md ${
+            activeStatCard === 'DELETED' || selectedStatus === 'DELETED' || includeDeleted
+              ? 'border-rose-500 ring-2 ring-rose-500/10 bg-rose-50/20'
+              : 'border-gray-100 hover:border-gray-200'
+          }`}
+        >
+          <div>
+            <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Soft-Deleted</p>
+            <h3 className="text-xl font-black text-rose-600 tabular-nums">
+              {stats.deletedMerchants}
+            </h3>
+          </div>
+          <div className="w-11 h-11 rounded-xl bg-rose-50 text-rose-600 border border-rose-100 flex items-center justify-center shrink-0 shadow-2xs">
+            <Archive size={20} />
+          </div>
+        </div>
+      </div>
+
+      {/* Filter Toolbar Card (Matching Employee & Branch standard) */}
+      <div className="bg-white rounded-2xl p-4 shadow-xs border border-gray-100 space-y-3.5">
+        {/* Top Row: Search + Action Buttons */}
+        <div className="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-3">
+          <div className="relative flex-1">
+            <Search
+              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+              size={17}
+            />
             <input
               type="text"
-              className="block w-full pl-10 pr-10 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#225091] focus:border-[#225091] text-sm bg-white text-gray-700 shadow-sm"
-              placeholder="Search by shop name, owner, email..."
+              placeholder="Search by shop name, owner, email, phone, GSTIN, PAN..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-9 py-2.5 bg-gray-50/70 hover:bg-gray-50 focus:bg-white border border-gray-200 rounded-xl text-xs text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all shadow-2xs"
             />
             {searchTerm && (
-              <button 
-                onClick={() => setSearchTerm('')} 
-                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+              <button
+                onClick={() => setSearchTerm("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
               >
-                <X size={16} />
+                <X size={15} />
               </button>
             )}
           </div>
 
-          {/* Filter Button */}
-          <div className="relative">
-            <button 
-              onClick={() => setIsFilterOpen(!isFilterOpen)}
-              className="flex items-center justify-center p-2.5 border border-gray-200 rounded-lg text-gray-500 hover:bg-gray-50 transition-colors focus:outline-none bg-white shadow-sm relative"
-              title="Filter by status"
-            >
-              <SlidersHorizontal size={18} />
-              {selectedStatus && (
-                <span className="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 bg-[#225091] rounded-full border-2 border-white"></span>
-              )}
-            </button>
+          <div className="flex items-center gap-2.5 flex-wrap">
+            {/* Include Deleted Toggle */}
+            <label className="flex items-center gap-2 text-xs font-semibold text-gray-700 cursor-pointer select-none bg-gray-50 px-3 py-2 rounded-xl border border-gray-200 hover:bg-gray-100 transition-colors shadow-2xs">
+              <input
+                type="checkbox"
+                checked={includeDeleted}
+                onChange={(e) => {
+                  setIncludeDeleted(e.target.checked);
+                  setPage(1);
+                }}
+                className="w-4 h-4 rounded text-[#225091] focus:ring-[#225091] border-gray-300 cursor-pointer"
+              />
+              <span>Include Deleted</span>
+            </label>
 
-            {/* Filter Dropdown Popover */}
-            {isFilterOpen && (
-              <div className="absolute z-30 top-full left-0 sm:left-auto sm:right-0 mt-2 w-64 bg-white border border-gray-100 rounded-2xl shadow-xl p-4 animate-in fade-in zoom-in-95 duration-150">
-                <div className="flex justify-between items-center mb-3">
-                  <h3 className="font-bold text-gray-800 text-sm">Filter Status</h3>
-                  <button onClick={() => setIsFilterOpen(false)} className="text-gray-400 hover:text-gray-600">
-                    <X size={18} />
-                  </button>
-                </div>
-                <div className="space-y-1 mb-4">
-                  {[
-                    { label: 'All Statuses', value: '' },
-                    { label: 'Active Only', value: 'ACTIVE' },
-                    { label: 'Inactive Only', value: 'INACTIVE' }
-                  ].map(opt => (
-                    <button
-                      key={opt.value}
-                      onClick={() => {
-                        setSelectedStatus(opt.value);
-                        setIsFilterOpen(false);
-                      }}
-                      className={`w-full text-left px-3 py-2 rounded-lg text-xs font-semibold flex items-center justify-between transition-colors ${
-                        selectedStatus === opt.value ? 'bg-[#225091]/10 text-[#225091]' : 'hover:bg-gray-50 text-gray-700'
-                      }`}
-                    >
-                      {opt.label}
-                      {selectedStatus === opt.value && <span className="w-2 h-2 rounded-full bg-[#225091]"></span>}
-                    </button>
-                  ))}
-                </div>
-                {selectedStatus && (
-                  <button 
-                    onClick={() => { setSelectedStatus(''); setIsFilterOpen(false); }}
-                    className="w-full py-1.5 text-xs text-red-500 font-semibold border border-red-200 rounded-lg hover:bg-red-50 transition-colors"
+            {hasActiveFilters && (
+              <button
+                onClick={handleResetFilters}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-gray-600 hover:text-rose-600 bg-gray-50 hover:bg-rose-50 rounded-xl border border-gray-200 transition-colors cursor-pointer shadow-2xs"
+                title="Reset all filters"
+              >
+                <RotateCcw size={14} />
+                <span>Reset</span>
+              </button>
+            )}
+
+            {/* Export Dropdown */}
+            <div className="relative">
+              <button 
+                onClick={() => setIsExportOpen(!isExportOpen)}
+                className="flex items-center gap-2 px-3.5 py-2 rounded-xl font-bold transition-colors text-xs shadow-2xs border bg-white text-gray-700 border-gray-200 hover:bg-gray-50 cursor-pointer"
+              >
+                <Download size={15} />
+                <span>Export</span>
+                <ChevronDown size={13} className={`transition-transform duration-200 ${isExportOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {isExportOpen && (
+                <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-100 rounded-xl shadow-xl py-2 z-50 animate-in fade-in zoom-in-95 duration-150">
+                  <button
+                    onClick={exportToCSV}
+                    className="w-full px-4 py-2 text-left text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2 font-medium"
                   >
-                    Clear Filter
+                    <Table size={15} className="text-gray-500" />
+                    <span>Export to CSV</span>
                   </button>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
+                  <button
+                    onClick={exportToExcel}
+                    className="w-full px-4 py-2 text-left text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2 font-medium"
+                  >
+                    <FileSpreadsheet size={15} className="text-emerald-600" />
+                    <span>Export to Excel</span>
+                  </button>
+                  <button
+                    onClick={exportToWord}
+                    className="w-full px-4 py-2 text-left text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2 font-medium border-t border-gray-100 mt-1 pt-1.5"
+                  >
+                    <FileText size={15} className="text-blue-600" />
+                    <span>Export to Word</span>
+                  </button>
+                </div>
+              )}
+            </div>
 
-        {/* Action Buttons: Export & Add Merchant */}
-        <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
-          {/* Export Dropdown */}
-          <div className="relative">
-            <button 
-              onClick={() => setIsExportOpen(!isExportOpen)}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-full font-semibold transition-colors text-sm shadow-sm border bg-white text-gray-700 border-gray-200 hover:bg-gray-50"
+            {/* Add New Merchant */}
+            <Link 
+              to="/merchant/create" 
+              className="flex items-center gap-1.5 px-4.5 py-2 bg-[#225091] hover:bg-[#183f72] text-white rounded-xl font-bold text-xs transition-colors shadow-2xs shrink-0 cursor-pointer"
             >
-              <Download size={16} />
-              <span>Export</span>
-              <ChevronDown size={14} className={`transition-transform duration-200 ${isExportOpen ? 'rotate-180' : ''}`} />
-            </button>
+              <span>+ Add New Merchant</span>
+            </Link>
+          </div>
+        </div>
 
-            {isExportOpen && (
-              <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-100 rounded-xl shadow-xl py-2 z-50 animate-in fade-in zoom-in-95 duration-150">
-                <button
-                  onClick={exportToCSV}
-                  className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 font-medium"
-                >
-                  <Table size={16} className="text-gray-500" />
-                  <span>Export to CSV</span>
-                </button>
-                <button
-                  onClick={exportToExcel}
-                  className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 font-medium"
-                >
-                  <FileSpreadsheet size={16} className="text-emerald-600" />
-                  <span>Export to Excel</span>
-                </button>
-                <button
-                  onClick={exportToWord}
-                  className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 font-medium border-t border-gray-100 mt-1 pt-2"
-                >
-                  <FileText size={16} className="text-blue-600" />
-                  <span>Export to Word</span>
-                </button>
-              </div>
-            )}
+        {/* Bottom Inline Filter Controls: Status -> Branch -> State / Region -> City */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 pt-2.5 border-t border-gray-100">
+          {/* 1. Status Filter */}
+          <div className="relative">
+            <select
+              value={selectedStatus}
+              onChange={(e) => {
+                const val = e.target.value;
+                setSelectedStatus(val);
+                if (val === 'DELETED') setIncludeDeleted(true);
+                setPage(1);
+              }}
+              className="w-full px-3.5 py-2 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-xs font-semibold text-gray-700 shadow-2xs cursor-pointer"
+            >
+              <option value="">All Statuses</option>
+              <option value="ACTIVE">Active Merchants</option>
+              <option value="INACTIVE">Inactive Merchants</option>
+              <option value="BLOCKED">Blocked Merchants</option>
+              <option value="DELETED">Soft-Deleted</option>
+            </select>
           </div>
 
-          {/* Add New Merchant */}
-          <Link 
-            to="/merchant/create" 
-            className="flex items-center gap-1.5 px-5 py-2.5 bg-[#225091] hover:bg-[#163a6c] text-white rounded-full font-semibold text-sm transition-colors shadow-sm shrink-0"
-          >
-            <span className="text-base leading-none">+</span> Add New Merchant
-          </Link>
+          {/* 2. Branch Filter */}
+          <div className="relative">
+            <select
+              value={selectedBranchId}
+              onChange={(e) => {
+                setSelectedBranchId(e.target.value);
+                setPage(1);
+              }}
+              className="w-full px-3.5 py-2 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-xs font-semibold text-gray-700 shadow-2xs cursor-pointer"
+            >
+              <option value="">All Branches</option>
+              {(branchOptions || []).map((b) => (
+                <option key={b.id || b._id} value={b.id || b._id}>
+                  {b.name || b.branchName}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* 3. State / Region Filter */}
+          <div className="relative">
+            <select
+              value={selectedState}
+              onChange={(e) => {
+                const st = e.target.value;
+                setSelectedState(st);
+                setSelectedCity('');
+                setPage(1);
+              }}
+              className="w-full px-3.5 py-2 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-xs font-semibold text-gray-700 shadow-2xs cursor-pointer"
+            >
+              <option value="">All States / Regions</option>
+              {statesList.map((st) => (
+                <option key={st} value={st}>
+                  {st}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* 4. City Filter (Cascading) */}
+          <div className="relative">
+            <select
+              value={selectedCity}
+              onChange={(e) => {
+                setSelectedCity(e.target.value);
+                setPage(1);
+              }}
+              className="w-full px-3.5 py-2 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-xs font-semibold text-gray-700 shadow-2xs cursor-pointer"
+            >
+              <option value="">{selectedState ? `All Cities in ${selectedState}` : 'All Cities'}</option>
+              {availableCities.map((ct) => (
+                <option key={ct} value={ct}>
+                  {ct}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
+
+        {/* Active Filter Chips Bar */}
+        {hasActiveFilters && (
+          <div className="pt-2 border-t border-gray-100 flex items-center justify-between gap-3 flex-wrap text-xs">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="font-bold text-gray-600 text-[11px]">Active:</span>
+              {selectedStatus && (
+                <span className="bg-blue-50 text-[#225091] border border-blue-200 px-2.5 py-0.5 rounded-md text-[11px] font-semibold flex items-center gap-1.5 shadow-2xs">
+                  Status: {selectedStatus}
+                  <button onClick={() => { setSelectedStatus(''); setPage(1); }} className="hover:text-red-500 cursor-pointer">
+                    <X size={12} />
+                  </button>
+                </span>
+              )}
+              {selectedBranchId && (
+                <span className="bg-blue-50 text-[#225091] border border-blue-200 px-2.5 py-0.5 rounded-md text-[11px] font-semibold flex items-center gap-1.5 shadow-2xs">
+                  Branch: {(branchOptions || []).find(b => (b.id || b._id) === selectedBranchId)?.name || 'Selected Branch'}
+                  <button onClick={() => { setSelectedBranchId(''); setPage(1); }} className="hover:text-red-500 cursor-pointer">
+                    <X size={12} />
+                  </button>
+                </span>
+              )}
+              {selectedState && (
+                <span className="bg-blue-50 text-[#225091] border border-blue-200 px-2.5 py-0.5 rounded-md text-[11px] font-semibold flex items-center gap-1.5 shadow-2xs">
+                  State: {selectedState}
+                  <button onClick={() => { setSelectedState(''); setSelectedCity(''); setPage(1); }} className="hover:text-red-500 cursor-pointer">
+                    <X size={12} />
+                  </button>
+                </span>
+              )}
+              {selectedCity && (
+                <span className="bg-blue-50 text-[#225091] border border-blue-200 px-2.5 py-0.5 rounded-md text-[11px] font-semibold flex items-center gap-1.5 shadow-2xs">
+                  City: {selectedCity}
+                  <button onClick={() => { setSelectedCity(''); setPage(1); }} className="hover:text-red-500 cursor-pointer">
+                    <X size={12} />
+                  </button>
+                </span>
+              )}
+              {includeDeleted && (
+                <span className="bg-rose-50 text-rose-700 border border-rose-200 px-2.5 py-0.5 rounded-md text-[11px] font-semibold flex items-center gap-1.5 shadow-2xs">
+                  Showing Deleted
+                  <button onClick={() => { setIncludeDeleted(false); setPage(1); }} className="hover:text-red-500 cursor-pointer">
+                    <X size={12} />
+                  </button>
+                </span>
+              )}
+              {debouncedSearch && (
+                <span className="bg-blue-50 text-[#225091] border border-blue-200 px-2.5 py-0.5 rounded-md text-[11px] font-semibold flex items-center gap-1.5 shadow-2xs">
+                  Search: "{debouncedSearch}"
+                  <button onClick={() => { setSearchTerm(''); setDebouncedSearch(''); setPage(1); }} className="hover:text-red-500 cursor-pointer">
+                    <X size={12} />
+                  </button>
+                </span>
+              )}
+            </div>
+            <button
+              onClick={handleResetFilters}
+              className="text-[11px] text-rose-600 hover:text-rose-800 font-bold underline cursor-pointer"
+            >
+              Clear All
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Table Card */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
         <div className="overflow-x-auto">
           <table ref={tableRef} className="w-full text-left border-collapse min-w-[900px]">
             <thead className="bg-[#F8FAFC] text-gray-600 text-xs uppercase tracking-wider font-semibold border-b border-gray-200/80">
@@ -345,6 +770,7 @@ const Merchants = () => {
                 <th className="py-3.5 px-5 font-semibold">Owner Name</th>
                 <th className="py-3.5 px-5 font-semibold">Email</th>
                 <th className="py-3.5 px-5 font-semibold">Phone Number</th>
+                <th className="py-3.5 px-5 font-semibold">Branch</th>
                 <th className="py-3.5 px-5 font-semibold">Status</th>
                 <th className="py-3.5 px-5 font-semibold text-center">Action</th>
               </tr>
@@ -363,6 +789,7 @@ const Merchants = () => {
                     <td className="py-4 px-5"><Skeleton className="h-4 w-28 rounded" /></td>
                     <td className="py-4 px-5"><Skeleton className="h-3.5 w-36 rounded" /></td>
                     <td className="py-4 px-5"><Skeleton className="h-3.5 w-24 rounded" /></td>
+                    <td className="py-4 px-5"><Skeleton className="h-3.5 w-24 rounded" /></td>
                     <td className="py-4 px-5"><Skeleton className="h-6 w-16 rounded-full" /></td>
                     <td className="py-4 px-5">
                       <div className="flex items-center justify-center gap-1.5">
@@ -376,30 +803,43 @@ const Merchants = () => {
               ) : merchants && merchants.length > 0 ? (
                 merchants.map((row, idx) => {
                   const srNo = (meta.page - 1) * (meta.limit || 10) + idx + 1;
-                  const rowId = row._id || row.id;
-                  const isRowActive = (row.status || '').toUpperCase() === 'ACTIVE';
+                  const rowId = row.id || row._id || row.merchantId;
+                  const isDeleted = Boolean(row.isDeleted || row.status === 'DELETED');
+                  const statusStr = (row.status || 'ACTIVE').toUpperCase();
 
                   return (
                     <tr key={rowId || idx} className="hover:bg-slate-50/70 transition-colors group">
-                      <td className="py-3.5 px-5 text-[13px] text-gray-500 font-medium">{srNo}</td>
+                      <td className="py-3.5 px-5 text-[13px] text-gray-500 font-medium">{row.srNo || srNo}</td>
                       <td className="py-3.5 px-5">
                         <div className="flex items-center gap-2.5">
-                          <div className="w-7 h-7 rounded-lg bg-blue-50 text-[#225091] flex items-center justify-center font-bold text-xs shrink-0 border border-blue-100 shadow-xs">
-                            <Store size={14} />
+                          <div className="w-8 h-8 rounded-xl bg-blue-50 text-[#225091] flex items-center justify-center font-bold text-xs shrink-0 border border-blue-100 shadow-2xs">
+                            <Store size={16} />
                           </div>
-                          <span className="text-sm font-semibold text-gray-900">{row.shopName || row.name || '—'}</span>
+                          <div>
+                            <span className="text-sm font-semibold text-gray-900 block">{row.shopName || row.name || '—'}</span>
+                            {row.gstinNumber && <span className="text-[11px] text-gray-400 font-mono">GST: {row.gstinNumber}</span>}
+                          </div>
                         </div>
                       </td>
                       <td className="py-3.5 px-5 text-sm font-semibold text-gray-800">{row.ownerName || row.shopOwnerName || '—'}</td>
                       <td className="py-3.5 px-5 text-xs text-gray-600">{row.email || '—'}</td>
                       <td className="py-3.5 px-5 text-xs text-gray-600 font-medium">{row.phoneNumber || row.phone || '—'}</td>
+                      <td className="py-3.5 px-5 text-xs font-semibold text-gray-700">{row.branchName || row.branch?.name || '—'}</td>
                       <td className="py-3.5 px-5">
-                        {isRowActive ? (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[12px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/60 uppercase tracking-wide">
+                        {isDeleted ? (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200/60 uppercase tracking-wide">
+                            Deleted
+                          </span>
+                        ) : statusStr === 'ACTIVE' ? (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/60 uppercase tracking-wide">
                             Active
                           </span>
+                        ) : statusStr === 'BLOCKED' ? (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-orange-50 text-orange-700 border border-orange-200/60 uppercase tracking-wide">
+                            Blocked
+                          </span>
                         ) : (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[12px] font-semibold bg-rose-50 text-rose-700 border border-rose-200/60 uppercase tracking-wide">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-gray-100 text-gray-700 border border-gray-200 uppercase tracking-wide">
                             Inactive
                           </span>
                         )}
@@ -408,25 +848,56 @@ const Merchants = () => {
                         <div className="flex items-center justify-center gap-1.5">
                           <Link 
                             to={`/merchant/${rowId}/view`} 
-                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-[#225091] bg-[#EAF2FB] hover:bg-[#d8e8f8] border border-[#225091]/15 transition-all shadow-xs" 
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-[#225091] bg-blue-50 hover:bg-blue-100 border border-[#225091]/15 transition-all shadow-2xs" 
                             title="View Merchant"
                           >
                             <Eye size={13} /> View
                           </Link>
-                          <Link 
-                            to={`/merchant/${rowId}/edit`} 
-                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200/60 transition-all shadow-xs" 
-                            title="Edit Merchant"
-                          >
-                            <Edit size={13} /> Edit
-                          </Link>
-                          <button 
-                            onClick={() => handleDeleteClick(row)} 
-                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200/60 transition-all shadow-xs" 
-                            title="Delete Merchant"
-                          >
-                            <Trash2 size={13} /> Delete
-                          </button>
+
+                          {!isDeleted ? (
+                            <>
+                              <Link 
+                                to={`/merchant/${rowId}/edit`} 
+                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200/60 transition-all shadow-2xs" 
+                                title="Edit Merchant"
+                              >
+                                <Edit size={13} /> Edit
+                              </Link>
+                              <button 
+                                onClick={() => {
+                                  setMerchantToDelete(row);
+                                  setIsDeleteModalOpen(true);
+                                }} 
+                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200/60 transition-all shadow-2xs cursor-pointer" 
+                                title="Soft Delete Merchant"
+                              >
+                                <Trash2 size={13} /> Delete
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <button 
+                                onClick={() => {
+                                  setMerchantToRestore(row);
+                                  setIsRestoreModalOpen(true);
+                                }} 
+                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/60 transition-all shadow-2xs cursor-pointer" 
+                                title="Restore Merchant Account"
+                              >
+                                <RotateCcw size={13} /> Restore
+                              </button>
+                              <button 
+                                onClick={() => {
+                                  setMerchantToPermanent(row);
+                                  setIsPermanentModalOpen(true);
+                                }} 
+                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-red-800 bg-red-100 hover:bg-red-200 border border-red-300 transition-all shadow-2xs cursor-pointer" 
+                                title="Permanent Hard Delete"
+                              >
+                                <AlertTriangle size={13} /> Hard Delete
+                              </button>
+                            </>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -434,13 +905,13 @@ const Merchants = () => {
                 })
               ) : (
                 <tr>
-                  <td colSpan="7" className="py-16 text-center">
+                  <td colSpan="8" className="py-16 text-center">
                     <div className="flex flex-col items-center justify-center">
                       <div className="w-10 h-10 bg-gray-50 rounded-full flex items-center justify-center mb-2">
                         <Search size={20} className="text-gray-300" />
                       </div>
                       <p className="text-sm font-semibold text-gray-800">No merchants found</p>
-                      <p className="text-xs text-gray-400 mt-0.5">Try adjusting your search or filters</p>
+                      <p className="text-xs text-gray-400 mt-0.5">Try adjusting your search query or filters</p>
                     </div>
                   </td>
                 </tr>
@@ -461,7 +932,7 @@ const Merchants = () => {
                 <button
                   onClick={() => handlePageChange(meta.page - 1)}
                   disabled={meta.page <= 1}
-                  className="px-3 py-1.5 border border-gray-200 bg-white rounded-lg text-xs font-semibold text-gray-600 disabled:opacity-40 hover:bg-gray-50 transition-colors shadow-sm"
+                  className="px-3 py-1.5 border border-gray-200 bg-white rounded-lg text-xs font-semibold text-gray-600 disabled:opacity-40 hover:bg-gray-50 transition-colors shadow-sm cursor-pointer"
                 >
                   Previous
                 </button>
@@ -471,7 +942,7 @@ const Merchants = () => {
                 <button
                   onClick={() => handlePageChange(meta.page + 1)}
                   disabled={meta.page >= meta.totalPages}
-                  className="px-3 py-1.5 border border-gray-200 bg-white rounded-lg text-xs font-semibold text-gray-600 disabled:opacity-40 hover:bg-gray-50 transition-colors shadow-sm"
+                  className="px-3 py-1.5 border border-gray-200 bg-white rounded-lg text-xs font-semibold text-gray-600 disabled:opacity-40 hover:bg-gray-50 transition-colors shadow-sm cursor-pointer"
                 >
                   Next
                 </button>
@@ -481,32 +952,97 @@ const Merchants = () => {
         )}
       </div>
 
-      {/* Delete Confirmation Modal */}
+      {/* 1. Soft Delete Confirmation Modal */}
       {isDeleteModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 transition-opacity animate-in fade-in">
           <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl p-6 text-center animate-in zoom-in-95 duration-200">
-            <div className="w-14 h-14 rounded-full bg-red-50 text-red-500 flex items-center justify-center mx-auto mb-4">
-              <Trash2 size={26} />
+            <div className="w-14 h-14 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center mx-auto mb-4 border border-rose-100">
+              <Trash2 size={24} />
             </div>
-            <h3 className="text-lg font-bold text-gray-900 mb-2">Delete Merchant</h3>
-            <p className="text-sm text-gray-500 mb-6">
-              Are you sure you want to delete <span className="font-semibold text-gray-800">{merchantToDelete?.shopName || 'this merchant'}</span>? This action cannot be undone.
+            <h3 className="text-lg font-bold text-gray-900 mb-2">Soft Delete Merchant</h3>
+            <p className="text-xs text-gray-600 mb-6 leading-relaxed">
+              Are you sure you want to deactivate <span className="font-bold text-gray-900">{merchantToDelete?.shopName || 'this merchant'}</span>? Their user login account will be disabled. You can restore them anytime.
             </p>
             <div className="flex gap-3">
               <button 
-                disabled={deleteSubmitting}
+                disabled={actionLoading}
                 onClick={() => setIsDeleteModalOpen(false)} 
-                className="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-700 font-semibold hover:bg-gray-50 transition-colors text-sm"
+                className="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-700 font-semibold hover:bg-gray-50 transition-colors text-xs cursor-pointer"
               >
                 Cancel
               </button>
               <button 
-                disabled={deleteSubmitting}
-                onClick={confirmDelete} 
-                className="flex-1 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white font-semibold transition-colors text-sm flex items-center justify-center gap-2 shadow-sm"
+                disabled={actionLoading}
+                onClick={handleSoftDelete} 
+                className="flex-1 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold transition-colors text-xs flex items-center justify-center gap-2 shadow-sm cursor-pointer"
               >
-                {deleteSubmitting ? <Loader2 size={16} className="animate-spin" /> : null}
-                {deleteSubmitting ? 'Deleting...' : 'Yes, Delete'}
+                {actionLoading ? <Loader2 size={15} className="animate-spin" /> : null}
+                {actionLoading ? 'Deleting...' : 'Deactivate'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 2. Restore Confirmation Modal */}
+      {isRestoreModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 transition-opacity animate-in fade-in">
+          <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl p-6 text-center animate-in zoom-in-95 duration-200">
+            <div className="w-14 h-14 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto mb-4 border border-emerald-100">
+              <RotateCcw size={24} />
+            </div>
+            <h3 className="text-lg font-bold text-gray-900 mb-2">Restore Merchant Account</h3>
+            <p className="text-xs text-gray-600 mb-6 leading-relaxed">
+              Restore <span className="font-bold text-gray-900">{merchantToRestore?.shopName || 'this merchant'}</span>? This will re-activate their login credentials and mark their status as <span className="text-emerald-600 font-bold">ACTIVE</span>.
+            </p>
+            <div className="flex gap-3">
+              <button 
+                disabled={actionLoading}
+                onClick={() => setIsRestoreModalOpen(false)} 
+                className="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-700 font-semibold hover:bg-gray-50 transition-colors text-xs cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button 
+                disabled={actionLoading}
+                onClick={handleRestore} 
+                className="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold transition-colors text-xs flex items-center justify-center gap-2 shadow-sm cursor-pointer"
+              >
+                {actionLoading ? <Loader2 size={15} className="animate-spin" /> : null}
+                {actionLoading ? 'Restoring...' : 'Restore Account'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 3. Permanent Hard Delete Confirmation Modal */}
+      {isPermanentModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 transition-opacity animate-in fade-in">
+          <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl p-6 text-center border-2 border-red-200 animate-in zoom-in-95 duration-200">
+            <div className="w-14 h-14 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto mb-4 border border-red-200">
+              <AlertTriangle size={26} />
+            </div>
+            <h3 className="text-lg font-black text-red-600 mb-2">Permanent Hard Delete</h3>
+            <p className="text-xs text-gray-600 mb-6 leading-relaxed">
+              <strong className="text-red-700 block mb-1 font-bold">WARNING: IRREVERSIBLE ACTION</strong>
+              This will permanently delete <span className="font-bold text-gray-900">{merchantToPermanent?.shopName || 'this merchant'}</span> and their linked User account from the database.
+            </p>
+            <div className="flex gap-3">
+              <button 
+                disabled={actionLoading}
+                onClick={() => setIsPermanentModalOpen(false)} 
+                className="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-700 font-semibold hover:bg-gray-50 transition-colors text-xs cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button 
+                disabled={actionLoading}
+                onClick={handlePermanentDelete} 
+                className="flex-1 py-2.5 rounded-xl bg-red-700 hover:bg-red-800 text-white font-bold transition-colors text-xs flex items-center justify-center gap-2 shadow-sm cursor-pointer"
+              >
+                {actionLoading ? <Loader2 size={15} className="animate-spin" /> : null}
+                {actionLoading ? 'Hard Deleting...' : 'Permanent Delete'}
               </button>
             </div>
           </div>

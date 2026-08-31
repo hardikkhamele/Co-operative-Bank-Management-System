@@ -53,7 +53,7 @@ export const PageHeader = ({
                   {crumb.to && !isLast ? (
                     <Link
                       to={crumb.to}
-                      className="hover:text-gray-800 transition-colors"
+                      className="hover:text-gray-800 transition-colors cursor-pointer"
                     >
                       {crumb.label}
                     </Link>

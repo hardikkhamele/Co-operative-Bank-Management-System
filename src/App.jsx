@@ -37,7 +37,7 @@ const Employees = lazy(() => import('./pages/dashboard/Employees'));
 const CreateEmployee = lazy(() => import('./pages/dashboard/CreateEmployee'));
 const EditEmployee = lazy(() => import('./pages/dashboard/EditEmployee'));
 const ViewEmployee = lazy(() => import('./pages/dashboard/ViewEmployee'));
-// const AttendanceReport = lazy(() => import('./pages/dashboard/AttendanceReport'));
+const AttendanceReport = lazy(() => import('./pages/dashboard/AttendanceReport'));
 const LettersAndPayroll = lazy(() => import('./pages/dashboard/LettersAndPayroll'));
 const DailyWorkReport = lazy(() => import('./pages/dashboard/DailyWorkReport'));
 const KPAReport = lazy(() => import('./pages/dashboard/KPAReport'));
@@ -169,11 +169,13 @@ function App() {
               </Route>
 
               {/* Managers */}
-              <Route element={<PermissionRoute anyOf={['manager.view', 'employee.view']} />}>
-                <Route path="managers" element={<Managers />} />
+              <Route element={<PermissionRoute anyOf={['manager.view', 'employee.view', 'branch.view']} />}>
+                <Route path="managers" element={<Navigate to="/branch" replace />} />
                 <Route path="managers/create" element={<CreateManager />} />
                 <Route path="managers/edit" element={<EditManager />} />
+                <Route path="managers/edit/:id" element={<EditManager />} />
                 <Route path="managers/view" element={<ViewManager />} />
+                <Route path="managers/view/:id" element={<ViewManager />} />
               </Route>
 
               {/* Employees & HR */}
@@ -182,6 +184,11 @@ function App() {
                 <Route path="employees/create" element={<CreateEmployee />} />
                 <Route path="employees/edit/:id" element={<EditEmployee />} />
                 <Route path="employees/view/:id" element={<ViewEmployee />} />
+              </Route>
+
+              <Route element={<PermissionRoute anyOf={['attendance.view', 'attendance_report.view', 'employee.view']} />}>
+                <Route path="attendance-report" element={<AttendanceReport />} />
+                <Route path="attendance" element={<Navigate to="/attendance-report" replace />} />
               </Route>
 
               <Route element={<PermissionRoute anyOf={['letters_payroll.view', 'payroll.view', 'employee.view']} />}>

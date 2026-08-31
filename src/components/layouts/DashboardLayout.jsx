@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, createContext, useContext, Children, isValidElement, Fragment, useCallback } from 'react';
 import { NavLink, Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, MapPin, IdCard, UserPlus, List, ClipboardList, Store, Box, ArrowDownRight, ArrowUpRight, ArrowRightLeft, RefreshCcw, UserCheck, UserCog, Tag, ChevronDown, Bell, User, LogOut, CreditCard, MoreHorizontal, Headphones, FileText, BarChart2, TrendingUp, CalendarDays, Banknote, Smartphone, MessageCircle, Fingerprint , ArrowLeft, ArrowRight } from 'lucide-react';
+import { LayoutDashboard, MapPin, IdCard, UserPlus, List, ClipboardList, Store, Box, ArrowDownRight, ArrowUpRight, ArrowRightLeft, RefreshCcw, UserCheck, UserCog, Tag, ChevronDown, Bell, User, LogOut, CreditCard, MoreHorizontal, Headphones, FileText, BarChart2, TrendingUp, CalendarDays, CalendarCheck, Banknote, Smartphone, MessageCircle, Fingerprint, ArrowLeft, ArrowRight } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
 import useLoadingStore from '../../store/loadingStore';
 import useBranchStore from '../../store/branchStore';
@@ -9,9 +9,9 @@ import GlobalLoader from '../GlobalLoader';
 
 const flattenChildren = (children) => {
   const result = [];
-  React.Children.forEach(children, (child) => {
+  Children.forEach(children, (child) => {
     if (!child) return;
-    if (React.isValidElement(child) && child.type === React.Fragment) {
+    if (isValidElement(child) && child.type === Fragment) {
       result.push(...flattenChildren(child.props.children));
     } else {
       result.push(child);
@@ -20,7 +20,7 @@ const flattenChildren = (children) => {
   return result;
 };
 
-const SidebarAccordionContext = React.createContext({
+const SidebarAccordionContext = createContext({
   openGroup: null,
   toggleGroup: () => {},
   setOpenGroup: () => {},
@@ -28,8 +28,8 @@ const SidebarAccordionContext = React.createContext({
 
 const SidebarGroup = ({ title, children }) => {
   const location = useLocation();
-  const { openGroup, toggleGroup, setOpenGroup } = React.useContext(SidebarAccordionContext);
-  // Filter out any false/null/undefined children and unpack any React.Fragment
+  const { openGroup, toggleGroup, setOpenGroup } = useContext(SidebarAccordionContext);
+  // Filter out any false/null/undefined children and unpack any Fragment
   const validChildren = flattenChildren(children).filter(Boolean);
 
   // If no children permitted/visible, do not render this sidebar group at all
@@ -39,7 +39,7 @@ const SidebarGroup = ({ title, children }) => {
 
   // Check if current route matches any child NavLink
   const hasActiveChild = validChildren.some(child => {
-    if (!React.isValidElement(child)) return false;
+    if (!isValidElement(child)) return false;
     const to = child.props?.to;
     if (!to) return false;
     return location.pathname === to || location.pathname.startsWith(to + '/');
@@ -192,7 +192,7 @@ const DashboardLayout = () => {
 
   const [openGroup, setOpenGroup] = useState(null);
 
-  const toggleGroup = React.useCallback((title) => {
+  const toggleGroup = useCallback((title) => {
     setOpenGroup((prev) => (prev === title ? null : title));
   }, []);
 
@@ -257,6 +257,11 @@ const DashboardLayout = () => {
             {hasPermission('employee.view') && (
               <NavLink to="/employees" className={subNavLinkClass}>
                 <UserCheck size={18} /> Employee
+              </NavLink>
+            )}
+            {hasAnyPermission(['attendance.view', 'attendance_report.view', 'employee.view']) && (
+              <NavLink to="/attendance-report" className={subNavLinkClass}>
+                <CalendarCheck size={18} /> Attendance Report
               </NavLink>
             )}
             {hasAnyPermission(['letters_payroll.view', 'payroll.view', 'employee.view']) && (

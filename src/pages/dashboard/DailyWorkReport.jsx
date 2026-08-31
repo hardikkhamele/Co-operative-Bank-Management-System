@@ -21,7 +21,9 @@ import {
   Table,
   ChevronDown,
   Sparkles,
-  Zap
+  Zap,
+  CheckCircle2,
+  Layers
 } from 'lucide-react';
 import { workReportService } from '../../api/workReportService';
 import { branchService } from '../../api/branchService';
@@ -45,23 +47,51 @@ const INDIAN_STATES = [
 const DEFAULT_DESIGNATIONS = [
   'Branch Manager', 'Assistant Branch Manager', 'Loan Executive',
   'Collection Executive', 'Senior Clerk', 'Clerk', 'Cashier',
-  'Accountant', 'Field Officer'
+  'Accountant', 'Field Officer', 'Receipt Management Executive'
 ];
 
 const AVAILABLE_PRODUCTS = [
   'Loan Disbursement', 'Deposit Collection', 'Lead Generation',
   'Share Capital', 'Staff Onboarding', 'Cash Collection',
   'Fixed Deposit', 'Recurring Deposit', 'Savings Account',
-  'Current Account', 'Insurance Policy', 'Gold Loan', 'Other'
+  'Current Account', 'Insurance Policy', 'Gold Loan', 'Member Cash Deposit',
+  'Cash Collection Account', 'Other'
 ];
+
+const formatDate = (dateStr) => {
+  if (!dateStr) return '—';
+  try {
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return String(dateStr);
+    return d.toLocaleDateString('en-IN', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric'
+    });
+  } catch {
+    return String(dateStr);
+  }
+};
+
+const formatAmount = (row) => {
+  if (!row) return '₹0';
+  if (row.formattedAmount) return row.formattedAmount;
+  if (row.amount !== undefined && row.amount !== null && row.amount !== '') {
+    const num = Number(row.amount);
+    if (!isNaN(num)) return `₹${num.toLocaleString('en-IN')}`;
+  }
+  return '₹0';
+};
 
 const DailyWorkReport = () => {
   const { user } = useAuthStore();
+  const tableRef = useRef(null);
 
   // Data States
   const [reports, setReports] = useState([]);
+  const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [exporting, setExporting] = useState(false);
+  const [isExportOpen, setIsExportOpen] = useState(false);
   
   // Pagination States
   const [page, setPage] = useState(1);
@@ -143,15 +173,16 @@ const DailyWorkReport = () => {
         ]);
 
         if (branchRes.status === 'fulfilled' && branchRes.value?.success) {
-          setBranchOptions(branchRes.value.data || []);
+          const list = branchRes.value.data || [];
+          setBranchOptions(Array.isArray(list) ? list : (list.branches || []));
         }
         if (roleRes.status === 'fulfilled' && roleRes.value?.success) {
-          setRoleOptions(roleRes.value.data || []);
+          const list = roleRes.value.data || [];
+          setRoleOptions(Array.isArray(list) ? list : (list.roles || []));
         }
         if (empRes.status === 'fulfilled' && (empRes.value?.success || Array.isArray(empRes.value?.data))) {
           const list = Array.isArray(empRes.value.data) ? empRes.value.data : (empRes.value.data?.employees || []);
           setEmployeeOptions(list);
-          // Pre-select first employee if not set
           if (list.length > 0) {
             setLogFormData(prev => ({
               ...prev,
@@ -215,11 +246,21 @@ const DailyWorkReport = () => {
 
       const response = await workReportService.list(params);
       
-      if (response && (response.success || Array.isArray(response.data))) {
-        const dataList = Array.isArray(response.data) ? response.data : (response.data?.reports || []);
+      if (response && (response.success || response.data)) {
+        const payload = response.data || {};
+        const dataList = Array.isArray(payload) 
+          ? payload 
+          : (payload.items || payload.reports || payload.workReports || payload.data || []);
+        
         setReports(dataList);
 
-        const paginationMeta = response.meta || response.pagination || {
+        if (payload.stats) {
+          setStats(payload.stats);
+        } else if (response.stats) {
+          setStats(response.stats);
+        }
+
+        const paginationMeta = payload.meta || response.meta || response.pagination || {
           totalRecords: dataList.length,
           limit,
           page,
@@ -238,10 +279,12 @@ const DailyWorkReport = () => {
         });
       } else {
         setReports([]);
+        setStats(null);
       }
     } catch (err) {
       console.error('Error fetching daily work reports:', err);
       setReports([]);
+      setStats(null);
     } finally {
       setLoading(false);
     }
@@ -342,211 +385,57 @@ const DailyWorkReport = () => {
         toast.error(res?.message || 'Failed to log work report.');
       }
     } catch (err) {
-      console.error('Log work report error:', err);
-      const msg = err.response?.data?.details?.[0]?.message || err.response?.data?.message || 'Error submitting work report.';
-      toast.error(msg);
+      console.error('Error logging work report:', err);
+      toast.error(err.response?.data?.message || 'Failed to log work report.');
     } finally {
       setSubmittingLog(false);
     }
   };
 
-  // Export Daily Work Reports as CSV
-  const handleExport = async () => {
-    setExporting(true);
-    try {
-      const params = {};
-      if (debouncedSearch.trim()) params.search = debouncedSearch.trim();
-      if (appliedFilters.startDate) params.startDate = appliedFilters.startDate;
-      if (appliedFilters.endDate) params.endDate = appliedFilters.endDate;
-      if (appliedFilters.branchId || appliedFilters.branchIds) params.branchId = appliedFilters.branchId || appliedFilters.branchIds;
-      else if (globalBranchId) params.branchId = globalBranchId;
-      if (appliedFilters.employeeId) params.employeeId = appliedFilters.employeeId;
-      if (appliedFilters.designations) params.designations = appliedFilters.designations;
-      if (appliedFilters.states) params.states = appliedFilters.states;
-      if (appliedFilters.date) params.date = appliedFilters.date;
-
-      const blobData = await workReportService.export(params);
-      
-      const blob = new Blob([blobData], { type: 'text/csv;charset=utf-8;' });
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `daily_work_report_${new Date().toISOString().slice(0, 10)}.csv`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-
-      toast.success('Daily work reports exported successfully!');
-    } catch (err) {
-      console.error('Export daily work reports error:', err);
-      toast.error('Failed to export daily work reports CSV.');
-    } finally {
-      setExporting(false);
-    }
-  };
-
-  // Format Date Helper
-  const formatDate = (dateStr) => {
-    if (!dateStr) return '—';
-    try {
-      const d = new Date(dateStr);
-      if (isNaN(d.getTime())) return dateStr;
-      return d.toLocaleDateString('en-IN', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric'
-      });
-    } catch {
-      return dateStr;
-    }
-  };
-
-  // Format Amount or Metric Helper
-  const formatAmount = (report) => {
-    if (report.formattedAmount) return report.formattedAmount;
-    if (report.amount !== undefined && report.amount !== null && report.amount !== '') {
-      const num = Number(report.amount);
-      if (!isNaN(num)) {
-        return `₹${num.toLocaleString('en-IN')}`;
-      }
-      return report.amount;
-    }
-    if (report.hoursSpent !== undefined && report.hoursSpent !== null) {
-      return `${report.hoursSpent} hrs`;
-    }
-    return '—';
-  };
-
-  // Pagination bounds calculation
-  const startRecord = meta.totalRecords > 0 ? (meta.page - 1) * meta.limit + 1 : 0;
-  const endRecord = Math.min(meta.page * meta.limit, meta.totalRecords);
-
-  // Generate pagination items
-  const renderPaginationButtons = () => {
-    const total = meta.totalPages || 1;
-    const current = meta.page || 1;
-    const pages = [];
-
-    if (total <= 5) {
-      for (let i = 1; i <= total; i++) {
-        pages.push(i);
-      }
-    } else {
-      if (current <= 3) {
-        pages.push(1, 2, 3, 4, '...', total);
-      } else if (current >= total - 2) {
-        pages.push(1, '...', total - 3, total - 2, total - 1, total);
-      } else {
-        pages.push(1, '...', current - 1, current, current + 1, '...', total);
-      }
-    }
-
-    return pages.map((p, idx) => {
-      if (p === '...') {
-        return (
-          <span key={`ellipsis-${idx}`} className="text-gray-400 px-1 font-bold">
-            ...
-          </span>
-        );
-      }
-      return (
-        <button
-          key={`page-${p}`}
-          onClick={() => setPage(p)}
-          className={`w-8 h-8 flex items-center justify-center rounded-full text-[13px] font-bold transition-colors ${
-            p === current
-              ? 'bg-[#225091] text-white shadow-sm'
-              : 'border border-gray-200 text-gray-600 hover:bg-gray-50'
-          }`}
-        >
-          {p}
-        </button>
-      );
-    });
-  };
-  const tableRef = useRef(null);
-  const [isExportOpen, setIsExportOpen] = useState(false);
-
+  // Export handlers
   const getSelectedDataFromTable = () => {
-    if (!tableRef.current) return { headers: [], rows: [] };
-    const table = tableRef.current;
-    
-    // Headers (skip last action column)
-    const ths = Array.from(table.querySelectorAll('thead th'));
-    const headers = ths.slice(0, -1).map(th => th.innerText.trim().replace(/\n/g, ' '));
-
-    // Rows (all rows)
-    const trs = Array.from(table.querySelectorAll('tbody tr'));
-    const rows = trs.map(tr => {
-      const tds = Array.from(tr.querySelectorAll('td'));
-      return tds.slice(0, -1).map(td => td.innerText.trim().replace(/\n/g, ' '));
+    const headers = ['Sr.No.', 'Employee Name', 'Designation', 'Branch', 'Product / KPI Area', 'Amount', 'Source', 'Remarks', 'Date'];
+    const rows = reports.map((row, idx) => {
+      const sr = row.srNo || ((meta.page - 1) * meta.limit + idx + 1);
+      const isAuto = Boolean(row.isAutoGenerated || (row.sourceModule && row.sourceModule !== 'MANUAL'));
+      const src = row.sourceModule || (isAuto ? 'AUTO' : 'MANUAL');
+      return [
+        sr,
+        row.employeeName || row.name || '—',
+        row.designation || '—',
+        row.branch || row.branchName || '—',
+        row.product || row.tasksCompleted || '—',
+        formatAmount(row),
+        src,
+        row.remarks || '—',
+        formatDate(row.date)
+      ];
     });
-
     return { headers, rows };
   };
 
   const exportToCSV = () => {
     const { headers, rows } = getSelectedDataFromTable();
-    const csvContent = [
-      headers.join(','),
-      ...rows.map(row => row.map(v => '"' + v.replace(/"/g, '""') + '"').join(','))
-    ].join('\n');
-    
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.map(i => `"${i}"`).join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = 'Export.csv';
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', 'Daily_Work_Report.csv');
+    document.body.appendChild(link);
     link.click();
+    document.body.removeChild(link);
     setIsExportOpen(false);
   };
 
-  const exportToExcel = () => {
-    const { headers, rows } = getSelectedDataFromTable();
-    const tableHtml = `
-      <table ref={tableRef}  border="1">
-        <thead>
-          <tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr>
-        </thead>
-        <tbody>
-          ${rows.map(row => `<tr>${row.map(c => `<td>${c}</td>`).join('')}</tr>`).join('')}
-        </tbody>
-      </table>
-    `;
-    const blob = new Blob([tableHtml], { type: 'application/vnd.ms-excel' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = 'Export.xls';
-    link.click();
-    setIsExportOpen(false);
-  };
-
-  const exportToWord = () => {
-    const { headers, rows } = getSelectedDataFromTable();
-    const tableHtml = `
-      <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
-      <head><meta charset='utf-8'><title>Export</title></head><body>
-      <table ref={tableRef} border="1">
-        <thead>
-          <tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr>
-        </thead>
-        <tbody>
-          ${rows.map(row => `<tr>${row.map(c => `<td>${c}</td>`).join('')}</tr>`).join('')}
-        </tbody>
-      </table>
-      </body></html>
-    `;
-    const blob = new Blob([tableHtml], { type: 'application/msword' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = 'Export.doc';
-    link.click();
-    setIsExportOpen(false);
-  };
+  // Calculate Stat Display Values
+  const totalReportsCount = stats?.totalWorkReports ?? meta.totalRecords ?? reports.length;
+  const totalAmountDisplay = stats?.formattedTotalAmount || (stats?.totalAmount !== undefined ? `₹${Number(stats.totalAmount).toLocaleString('en-IN')}` : '₹0');
+  const autoGenCount = stats?.autoGeneratedCount ?? reports.filter(r => r.isAutoGenerated || (r.sourceModule && r.sourceModule !== 'MANUAL')).length;
+  const manualCount = stats?.manualCount ?? (totalReportsCount - autoGenCount);
 
   return (
     <div className="flex flex-col gap-6 w-full max-w-7xl mx-auto pb-10">
-      {/* Breadcrumb & Header Card */}
+      {/* Header Card */}
       <PageHeader
         title="Daily Work Report"
         breadcrumbs={[
@@ -557,32 +446,79 @@ const DailyWorkReport = () => {
       >
         <button 
           onClick={() => setIsLogModalOpen(true)}
-          className="flex items-center gap-2 bg-[#225091] hover:bg-[#159a9f] text-white px-5 py-2.5 rounded-full text-[14px] font-semibold transition-colors shadow-sm cursor-pointer"
+          className="flex items-center gap-2 bg-[#225091] hover:bg-[#183c6d] text-white px-5 py-2.5 rounded-full text-[13px] font-semibold transition-all shadow-sm cursor-pointer"
         >
-          <Plus size={18} />
+          <Plus size={16} />
           <span>Log Work Report</span>
         </button>
       </PageHeader>
 
-      {/* Main Content Area */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col overflow-hidden">
+      {/* 4 Stats Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Card 1: Total Reports */}
+        <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-2xs flex items-center justify-between">
+          <div>
+            <p className="text-[12px] font-bold text-gray-500 uppercase tracking-wider mb-1">Total Work Reports</p>
+            <h3 className="text-2xl font-black text-[#1b2559] tabular-nums">{totalReportsCount}</h3>
+          </div>
+          <div className="w-12 h-12 rounded-xl bg-blue-50 text-[#225091] border border-blue-100 flex items-center justify-center">
+            <FileText size={22} />
+          </div>
+        </div>
+
+        {/* Card 2: Total Achievement Amount */}
+        <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-2xs flex items-center justify-between">
+          <div>
+            <p className="text-[12px] font-bold text-gray-500 uppercase tracking-wider mb-1">Total Achieved Amount</p>
+            <h3 className="text-2xl font-black text-emerald-600 tabular-nums">{totalAmountDisplay}</h3>
+          </div>
+          <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center justify-center">
+            <IndianRupee size={22} />
+          </div>
+        </div>
+
+        {/* Card 3: Auto-Generated */}
+        <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-2xs flex items-center justify-between">
+          <div>
+            <p className="text-[12px] font-bold text-gray-500 uppercase tracking-wider mb-1">Auto-Generated</p>
+            <h3 className="text-2xl font-black text-amber-600 tabular-nums">{autoGenCount}</h3>
+          </div>
+          <div className="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 border border-amber-100 flex items-center justify-center">
+            <Zap size={22} />
+          </div>
+        </div>
+
+        {/* Card 4: Manual Count */}
+        <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-2xs flex items-center justify-between">
+          <div>
+            <p className="text-[12px] font-bold text-gray-500 uppercase tracking-wider mb-1">Manual Entries</p>
+            <h3 className="text-2xl font-black text-indigo-600 tabular-nums">{manualCount}</h3>
+          </div>
+          <div className="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 border border-indigo-100 flex items-center justify-center">
+            <Layers size={22} />
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content Card */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col overflow-hidden">
         {/* Toolbar */}
-        <div className="p-6 flex flex-col sm:flex-row items-center justify-between gap-4 border-b border-gray-100">
-          <div className="flex items-center gap-4 w-full sm:w-auto">
+        <div className="p-5 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 border-b border-gray-100">
+          <div className="flex items-center gap-3 flex-1 flex-wrap">
             {/* Search Input */}
-            <div className="relative w-full sm:w-[320px]">
+            <div className="relative flex-1 sm:w-80 min-w-[220px]">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={17} />
               <input 
                 type="text" 
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search employee, branch, product..." 
-                className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 text-[14px] focus:outline-none focus:border-[#225091] bg-gray-50/50"
+                className="w-full pl-10 pr-8 py-2.5 rounded-xl border border-gray-200 text-xs focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-gray-800"
               />
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
               {search && (
                 <button 
                   onClick={() => setSearch('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
                 >
                   <X size={14} />
                 </button>
@@ -592,12 +528,13 @@ const DailyWorkReport = () => {
             {/* Filter Trigger Button */}
             <button 
               onClick={handleOpenFilterModal}
-              className="relative w-11 h-11 flex items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors shadow-sm shrink-0 bg-white"
+              className="px-3 py-2.5 flex items-center gap-1.5 rounded-xl border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors text-xs font-bold shrink-0 bg-white cursor-pointer"
               title="Filter Reports"
             >
-              <SlidersHorizontal size={20} />
+              <SlidersHorizontal size={16} />
+              <span>Filter</span>
               {activeFilterCount > 0 && (
-                <span className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-[#225091] text-white text-[11px] font-bold flex items-center justify-center shadow-sm">
+                <span className="w-5 h-5 rounded-full bg-[#225091] text-white text-[10px] font-bold flex items-center justify-center">
                   {activeFilterCount}
                 </span>
               )}
@@ -607,10 +544,10 @@ const DailyWorkReport = () => {
             <button
               onClick={fetchWorkReports}
               disabled={loading}
-              className="w-11 h-11 flex items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors shadow-sm shrink-0 bg-white"
+              className="p-2.5 flex items-center justify-center rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors shadow-2xs shrink-0 bg-white cursor-pointer"
               title="Refresh Data"
             >
-              <RefreshCw size={18} className={loading ? 'animate-spin text-[#225091]' : ''} />
+              <RefreshCw size={16} className={loading ? 'animate-spin text-[#225091]' : ''} />
             </button>
           </div>
           
@@ -618,29 +555,22 @@ const DailyWorkReport = () => {
           <div className="relative flex-shrink-0">
             <button 
               onClick={() => setIsExportOpen(!isExportOpen)}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-full font-semibold transition-colors text-sm shadow-sm border bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold transition-colors text-xs shadow-2xs border bg-white text-gray-700 border-gray-200 hover:bg-gray-50 cursor-pointer"
             >
-              <Download size={18} />
-              Export
-              <ChevronDown size={16} />
+              <Download size={15} />
+              <span>Export</span>
+              <ChevronDown size={14} />
             </button>
             
             {isExportOpen && (
-              <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-100 rounded-xl shadow-lg z-50 overflow-hidden">
-                <div className="p-1">
-                  <button onClick={exportToCSV} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors text-left">
-                    <Table size={16} className="text-green-600" />
-                    Export to CSV
-                  </button>
-                  <button onClick={exportToExcel} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors text-left">
-                    <FileSpreadsheet size={16} className="text-green-600" />
-                    Export to Excel
-                  </button>
-                  <button onClick={exportToWord} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors text-left">
-                    <FileText size={16} className="text-blue-600" />
-                    Export to Word
-                  </button>
-                </div>
+              <div className="absolute right-0 mt-2 w-44 bg-white border border-gray-100 rounded-xl shadow-xl z-50 overflow-hidden p-1.5">
+                <button 
+                  onClick={exportToCSV} 
+                  className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50 rounded-lg transition-colors text-left cursor-pointer"
+                >
+                  <Table size={14} className="text-emerald-600" />
+                  Export to CSV
+                </button>
               </div>
             )}
           </div>
@@ -648,61 +578,45 @@ const DailyWorkReport = () => {
 
         {/* Active Filters Display Bar */}
         {activeFilterCount > 0 && (
-          <div className="px-6 py-3 bg-teal-50/50 border-b border-gray-100 flex items-center justify-between gap-4 flex-wrap text-[13px]">
+          <div className="px-5 py-2.5 bg-blue-50/50 border-b border-blue-100/60 flex items-center justify-between gap-3 flex-wrap text-xs">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-semibold text-gray-700">Active Filters:</span>
+              <span className="font-bold text-gray-700">Active Filters:</span>
               {appliedFilters.startDate && (
-                <span className="bg-white text-teal-800 border border-teal-200 px-2.5 py-1 rounded-full text-xs font-medium flex items-center gap-1.5 shadow-2xs">
+                <span className="bg-white text-[#225091] border border-blue-200 px-2.5 py-0.5 rounded-md text-[11px] font-semibold flex items-center gap-1.5 shadow-2xs">
                   From: {formatDate(appliedFilters.startDate)}
-                  <button onClick={() => setAppliedFilters(prev => ({ ...prev, startDate: '' }))} className="hover:text-red-500">
+                  <button onClick={() => setAppliedFilters(prev => ({ ...prev, startDate: '' }))} className="hover:text-red-500 cursor-pointer">
                     <X size={12} />
                   </button>
                 </span>
               )}
               {appliedFilters.endDate && (
-                <span className="bg-white text-teal-800 border border-teal-200 px-2.5 py-1 rounded-full text-xs font-medium flex items-center gap-1.5 shadow-2xs">
+                <span className="bg-white text-[#225091] border border-blue-200 px-2.5 py-0.5 rounded-md text-[11px] font-semibold flex items-center gap-1.5 shadow-2xs">
                   To: {formatDate(appliedFilters.endDate)}
-                  <button onClick={() => setAppliedFilters(prev => ({ ...prev, endDate: '' }))} className="hover:text-red-500">
+                  <button onClick={() => setAppliedFilters(prev => ({ ...prev, endDate: '' }))} className="hover:text-red-500 cursor-pointer">
                     <X size={12} />
                   </button>
                 </span>
               )}
               {(appliedFilters.branchId || appliedFilters.branchIds) && (
-                <span className="bg-white text-teal-800 border border-teal-200 px-2.5 py-1 rounded-full text-xs font-medium flex items-center gap-1.5 shadow-2xs">
-                  Branch: {branchOptions.find(b => (b.id === (appliedFilters.branchId || appliedFilters.branchIds) || b._id === (appliedFilters.branchId || appliedFilters.branchIds)))?.branchName || branchOptions.find(b => (b.id === (appliedFilters.branchId || appliedFilters.branchIds) || b._id === (appliedFilters.branchId || appliedFilters.branchIds)))?.name || (appliedFilters.branchId || appliedFilters.branchIds)}
-                  <button onClick={() => setAppliedFilters(prev => ({ ...prev, branchId: '', branchIds: '' }))} className="hover:text-red-500">
+                <span className="bg-white text-[#225091] border border-blue-200 px-2.5 py-0.5 rounded-md text-[11px] font-semibold flex items-center gap-1.5 shadow-2xs">
+                  Branch: {branchOptions.find(b => (b.id === (appliedFilters.branchId || appliedFilters.branchIds) || b._id === (appliedFilters.branchId || appliedFilters.branchIds)))?.name || (appliedFilters.branchId || appliedFilters.branchIds)}
+                  <button onClick={() => setAppliedFilters(prev => ({ ...prev, branchId: '', branchIds: '' }))} className="hover:text-red-500 cursor-pointer">
                     <X size={12} />
                   </button>
                 </span>
               )}
               {appliedFilters.employeeId && (
-                <span className="bg-white text-teal-800 border border-teal-200 px-2.5 py-1 rounded-full text-xs font-medium flex items-center gap-1.5 shadow-2xs">
-                  Employee: {employeeOptions.find(e => (e.id === appliedFilters.employeeId || e._id === appliedFilters.employeeId))?.fullName || employeeOptions.find(e => (e.id === appliedFilters.employeeId || e._id === appliedFilters.employeeId))?.name || appliedFilters.employeeId}
-                  <button onClick={() => setAppliedFilters(prev => ({ ...prev, employeeId: '' }))} className="hover:text-red-500">
+                <span className="bg-white text-[#225091] border border-blue-200 px-2.5 py-0.5 rounded-md text-[11px] font-semibold flex items-center gap-1.5 shadow-2xs">
+                  Employee: {employeeOptions.find(e => (e.id === appliedFilters.employeeId || e._id === appliedFilters.employeeId))?.fullName || appliedFilters.employeeId}
+                  <button onClick={() => setAppliedFilters(prev => ({ ...prev, employeeId: '' }))} className="hover:text-red-500 cursor-pointer">
                     <X size={12} />
                   </button>
                 </span>
               )}
               {appliedFilters.designations && (
-                <span className="bg-white text-teal-800 border border-teal-200 px-2.5 py-1 rounded-full text-xs font-medium flex items-center gap-1.5 shadow-2xs">
+                <span className="bg-white text-[#225091] border border-blue-200 px-2.5 py-0.5 rounded-md text-[11px] font-semibold flex items-center gap-1.5 shadow-2xs">
                   Designation: {appliedFilters.designations}
-                  <button onClick={() => setAppliedFilters(prev => ({ ...prev, designations: '' }))} className="hover:text-red-500">
-                    <X size={12} />
-                  </button>
-                </span>
-              )}
-              {appliedFilters.states && (
-                <span className="bg-white text-teal-800 border border-teal-200 px-2.5 py-1 rounded-full text-xs font-medium flex items-center gap-1.5 shadow-2xs">
-                  State: {appliedFilters.states}
-                  <button onClick={() => setAppliedFilters(prev => ({ ...prev, states: '' }))} className="hover:text-red-500">
-                    <X size={12} />
-                  </button>
-                </span>
-              )}
-              {appliedFilters.date && (
-                <span className="bg-white text-teal-800 border border-teal-200 px-2.5 py-1 rounded-full text-xs font-medium flex items-center gap-1.5 shadow-2xs">
-                  Date: {formatDate(appliedFilters.date)}
-                  <button onClick={() => setAppliedFilters(prev => ({ ...prev, date: '' }))} className="hover:text-red-500">
+                  <button onClick={() => setAppliedFilters(prev => ({ ...prev, designations: '' }))} className="hover:text-red-500 cursor-pointer">
                     <X size={12} />
                   </button>
                 </span>
@@ -710,7 +624,7 @@ const DailyWorkReport = () => {
             </div>
             <button
               onClick={handleResetFilter}
-              className="text-xs text-red-600 hover:text-red-800 font-semibold underline"
+              className="text-[11px] text-rose-600 hover:text-rose-800 font-bold underline cursor-pointer"
             >
               Clear All
             </button>
@@ -718,29 +632,29 @@ const DailyWorkReport = () => {
         )}
 
         {/* Table View */}
-        <div className="overflow-x-auto min-h-[320px] relative">
-          <table ref={tableRef} className="w-full min-w-[900px]">
+        <div className="overflow-x-auto min-h-[300px] relative">
+          <table ref={tableRef} className="w-full min-w-[900px] text-left border-collapse">
             <thead className="bg-[#F8FAFC] text-gray-600 text-xs uppercase tracking-wider font-semibold border-b border-gray-200/80">
               <tr>
-                <th className="py-3.5 px-5 font-semibold">Sr.No.</th>
-                <th className="py-3.5 px-5 font-semibold text-left whitespace-nowrap">Employee Name</th>
-                <th className="py-3.5 px-5 font-semibold text-left whitespace-nowrap">Designation</th>
-                <th className="py-3.5 px-5 font-semibold text-left whitespace-nowrap">Branch</th>
-                <th className="py-3.5 px-5 font-semibold text-left whitespace-nowrap">Product / KPI Area</th>
-                <th className="py-3.5 px-5 font-semibold text-left whitespace-nowrap">Amount / Achievement</th>
-                <th className="py-3.5 px-5 font-semibold text-left whitespace-nowrap">Source</th>
-                <th className="py-3.5 px-5 font-semibold text-left whitespace-nowrap">Remarks / Details</th>
-                <th className="py-3.5 px-5 font-semibold text-left whitespace-nowrap">Date</th>
+                <th className="py-3.5 px-5 font-semibold text-center w-16">Sr.No.</th>
+                <th className="py-3.5 px-5 font-semibold">Employee Name</th>
+                <th className="py-3.5 px-5 font-semibold">Designation</th>
+                <th className="py-3.5 px-5 font-semibold">Branch</th>
+                <th className="py-3.5 px-5 font-semibold">Product / KPI Area</th>
+                <th className="py-3.5 px-5 font-semibold">Amount / Target</th>
+                <th className="py-3.5 px-5 font-semibold">Source</th>
+                <th className="py-3.5 px-5 font-semibold">Remarks</th>
+                <th className="py-3.5 px-5 font-semibold">Date</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {loading ? (
                 Array.from({ length: 6 }).map((_, rIdx) => (
                   <tr key={rIdx} className="animate-pulse">
-                    <td className="py-4 px-5"><Skeleton className="h-4 w-6 rounded" /></td>
+                    <td className="py-4 px-5 text-center"><Skeleton className="h-4 w-6 mx-auto rounded" /></td>
                     <td className="py-4 px-5">
                       <div className="flex items-center gap-3">
-                        <SkeletonAvatar size="w-8 h-8" rounded="rounded-full" />
+                        <Skeleton className="w-8 h-8 rounded-full" />
                         <Skeleton className="h-4 w-32 rounded" />
                       </div>
                     </td>
@@ -772,7 +686,7 @@ const DailyWorkReport = () => {
                   const srNo = row.srNo || ((meta.page - 1) * meta.limit + index + 1);
                   const taskText = row.product || row.tasksCompleted || row.productName || '—';
                   const remarkText = row.remarks || (row.tasksCompleted && row.product ? row.tasksCompleted : '') || '—';
-                  const isAuto = Boolean(row.isAutoGenerated || row.sourceModule && row.sourceModule !== 'MANUAL');
+                  const isAuto = Boolean(row.isAutoGenerated || (row.sourceModule && row.sourceModule !== 'MANUAL'));
                   const sourceModule = (row.sourceModule || (isAuto ? 'AUTO' : 'MANUAL')).toUpperCase();
 
                   return (
@@ -780,10 +694,10 @@ const DailyWorkReport = () => {
                       key={row.id || row._id || index} 
                       className="hover:bg-slate-50/70 transition-colors"
                     >
-                      <td className="py-3.5 px-5 text-[13px] text-gray-500 font-medium">{srNo}</td>
+                      <td className="py-3.5 px-5 text-center text-[13px] text-gray-500 font-medium">{srNo}</td>
                       <td className="py-3.5 px-5">
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-blue-50 text-[#225091] border border-blue-100 flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
+                          <div className="w-8 h-8 rounded-full bg-blue-50 text-[#225091] border border-blue-100 flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
                             {initials}
                           </div>
                           <div>
@@ -834,341 +748,227 @@ const DailyWorkReport = () => {
         </div>
 
         {/* Pagination Footer */}
-        <div className="p-6 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="text-[13px] font-medium text-gray-500">
-            Showing {startRecord} to {endRecord} of {meta.totalRecords} entries
+        <div className="p-5 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-gray-500 font-medium">
+          <div>
+            Showing {reports.length > 0 ? (page - 1) * limit + 1 : 0} to {Math.min(page * limit, meta.totalRecords)} of {meta.totalRecords} Entries
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             <button 
               onClick={() => setPage(prev => Math.max(1, prev - 1))}
               disabled={meta.page <= 1 || loading}
-              className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
             >
               <ChevronLeft size={16} />
             </button>
             
-            {renderPaginationButtons()}
+            <span className="px-3 py-1 bg-[#225091] text-white rounded-lg font-bold text-xs shadow-2xs">
+              {page} / {meta.totalPages || 1}
+            </span>
 
             <button 
               onClick={() => setPage(prev => Math.min(meta.totalPages, prev + 1))}
               disabled={meta.page >= meta.totalPages || loading}
-              className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
             >
               <ChevronRight size={16} />
             </button>
           </div>
         </div>
-
       </div>
 
-      {/* Log Work Report Modal */}
-      {isLogModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl w-full max-w-lg shadow-xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
-            
-            {/* Modal Header */}
-            <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
-              <div className="flex items-center gap-2">
-                <FileText size={20} className="text-[#225091]" />
-                <h3 className="text-[18px] font-bold text-gray-800">Log Daily Work Report</h3>
-              </div>
-              <button 
-                onClick={() => setIsLogModalOpen(false)}
-                className="text-gray-400 hover:text-gray-700 transition-colors"
-
-              >
-                <X size={20} />
+      {/* Filter Modal */}
+      {isFilterOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-gray-100 space-y-4 animate-in zoom-in-95">
+            <div className="flex items-center justify-between pb-3 border-b border-gray-100">
+              <h3 className="text-sm font-bold text-gray-900">Filter Work Reports</h3>
+              <button onClick={() => setIsFilterOpen(false)} className="text-gray-400 hover:text-gray-600 cursor-pointer">
+                <X size={18} />
               </button>
             </div>
 
-            {/* Modal Form */}
-            <form onSubmit={handleLogWorkReport}>
-              <div className="p-6 flex flex-col gap-4 max-h-[70vh] overflow-y-auto">
-                
-                {/* Employee Selection */}
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[13px] font-semibold text-gray-700 flex items-center gap-1.5">
-                    <User size={14} className="text-[#225091]" /> Employee *
-                  </label>
-                  <select 
-                    required
-                    value={logFormData.employeeId}
-                    onChange={(e) => setLogFormData(prev => ({ ...prev, employeeId: e.target.value }))}
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#225091] bg-white"
-                  >
-                    <option value="">Select Employee</option>
-                    {employeeOptions.map((emp) => {
-                      const empId = emp.id || emp._id;
-                      const empName = emp.fullName || emp.name || `Employee #${empId}`;
-                      const empBranch = emp.branchName || emp.branch?.name ? ` (${emp.branchName || emp.branch?.name})` : '';
-                      return (
-                        <option key={empId} value={empId}>
-                          {empName}{empBranch}
-                        </option>
-                      );
-                    })}
-                  </select>
-                </div>
-
-                {/* Product / Service */}
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[13px] font-semibold text-gray-700 flex items-center gap-1.5">
-                    <Package size={14} className="text-[#225091]" /> Product / Category *
-                  </label>
-                  <select 
-                    required
-                    value={logFormData.product}
-                    onChange={(e) => setLogFormData(prev => ({ ...prev, product: e.target.value }))}
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#225091] bg-white"
-                  >
-                    {AVAILABLE_PRODUCTS.map((prod) => (
-                      <option key={prod} value={prod}>{prod}</option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Amount */}
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[13px] font-semibold text-gray-700 flex items-center gap-1.5">
-                    <IndianRupee size={14} className="text-[#225091]" /> Achievement Amount (₹) *
-                  </label>
-                  <input 
-                    type="number"
-                    min="0"
-                    step="any"
-                    required
-                    value={logFormData.amount}
-                    onChange={(e) => setLogFormData(prev => ({ ...prev, amount: e.target.value }))}
-                    placeholder="e.g. 200000"
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#225091] bg-white"
-                  />
-                </div>
-
-                {/* Date and Hours row */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {/* Date */}
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-[13px] font-semibold text-gray-700">Date *</label>
-                    <div className="relative">
-                      <input 
-                        type="date"
-                        required
-                        value={logFormData.date}
-                        onChange={(e) => setLogFormData(prev => ({ ...prev, date: e.target.value }))}
-                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#225091] bg-white"
-                      />
-                      <Calendar className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={16} />
-                    </div>
-                  </div>
-
-                  {/* Hours Spent */}
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-[13px] font-semibold text-gray-700">Hours Spent</label>
-                    <input 
-                      type="number"
-                      min="1"
-                      max="24"
-                      step="0.5"
-                      value={logFormData.hoursSpent}
-                      onChange={(e) => setLogFormData(prev => ({ ...prev, hoursSpent: e.target.value }))}
-                      placeholder="e.g. 8"
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#225091] bg-white"
-                    />
-                  </div>
-                </div>
-
-                {/* Tasks Completed & Remarks */}
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[13px] font-semibold text-gray-700">Tasks Completed & Remarks</label>
-                  <textarea 
-                    rows={3}
-                    value={logFormData.tasksCompleted}
-                    onChange={(e) => setLogFormData(prev => ({ 
-                      ...prev, 
-                      tasksCompleted: e.target.value,
-                      remarks: e.target.value 
-                    }))}
-                    placeholder="e.g. Completed target documentation and verified loan files."
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#225091] bg-white resize-none"
-                  ></textarea>
-                </div>
-
+            <div className="space-y-3.5 text-xs">
+              <div>
+                <label className="block font-bold text-gray-700 uppercase tracking-wider mb-1.5">Branch</label>
+                <select 
+                  value={tempFilters.branchId || tempFilters.branchIds}
+                  onChange={(e) => setTempFilters(prev => ({ ...prev, branchId: e.target.value, branchIds: e.target.value }))}
+                  className="w-full px-3.5 py-2 rounded-lg border border-gray-200 text-gray-800 bg-white"
+                >
+                  <option value="">All Branches</option>
+                  {branchOptions.map(b => (
+                    <option key={b.id || b._id} value={b.id || b._id}>{b.name || b.branchName}</option>
+                  ))}
+                </select>
               </div>
 
-              {/* Modal Footer */}
-              <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex gap-3">
+              <div>
+                <label className="block font-bold text-gray-700 uppercase tracking-wider mb-1.5">Employee</label>
+                <select 
+                  value={tempFilters.employeeId}
+                  onChange={(e) => setTempFilters(prev => ({ ...prev, employeeId: e.target.value }))}
+                  className="w-full px-3.5 py-2 rounded-lg border border-gray-200 text-gray-800 bg-white"
+                >
+                  <option value="">All Employees</option>
+                  {employeeOptions.map(e => (
+                    <option key={e.id || e._id} value={e.id || e._id}>{e.fullName || e.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block font-bold text-gray-700 uppercase tracking-wider mb-1.5">Designation</label>
+                <select 
+                  value={tempFilters.designations}
+                  onChange={(e) => setTempFilters(prev => ({ ...prev, designations: e.target.value }))}
+                  className="w-full px-3.5 py-2 rounded-lg border border-gray-200 text-gray-800 bg-white"
+                >
+                  <option value="">All Designations</option>
+                  {DEFAULT_DESIGNATIONS.map((d, i) => (
+                    <option key={i} value={d}>{d}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-bold text-gray-700 uppercase tracking-wider mb-1.5">Start Date</label>
+                  <input 
+                    type="date"
+                    value={tempFilters.startDate}
+                    onChange={(e) => setTempFilters(prev => ({ ...prev, startDate: e.target.value }))}
+                    className="w-full px-3 py-2 rounded-lg border border-gray-200 text-gray-800 bg-white"
+                  />
+                </div>
+                <div>
+                  <label className="block font-bold text-gray-700 uppercase tracking-wider mb-1.5">End Date</label>
+                  <input 
+                    type="date"
+                    value={tempFilters.endDate}
+                    onChange={(e) => setTempFilters(prev => ({ ...prev, endDate: e.target.value }))}
+                    className="w-full px-3 py-2 rounded-lg border border-gray-200 text-gray-800 bg-white"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-3 flex gap-2">
+              <button 
+                onClick={handleResetFilter}
+                className="flex-1 py-2 px-3 rounded-xl border border-gray-200 text-gray-600 font-bold hover:bg-gray-50 text-xs transition-colors cursor-pointer"
+              >
+                Reset
+              </button>
+              <button 
+                onClick={handleApplyFilter}
+                className="flex-1 py-2 px-3 rounded-xl bg-[#225091] text-white font-bold hover:bg-[#193d6e] text-xs transition-colors shadow-2xs cursor-pointer"
+              >
+                Apply Filters
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Log Work Report Modal */}
+      {isLogModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-gray-100 space-y-5 animate-in zoom-in-95">
+            <div className="flex items-center justify-between pb-3 border-b border-gray-100">
+              <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
+                <Plus size={18} className="text-[#225091]" />
+                Log Daily Work Report
+              </h3>
+              <button onClick={() => setIsLogModalOpen(false)} className="text-gray-400 hover:text-gray-600 cursor-pointer">
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handleLogWorkReport} className="space-y-4 text-xs">
+              <div>
+                <label className="block font-bold text-gray-700 uppercase tracking-wider mb-1.5">Employee *</label>
+                <select 
+                  value={logFormData.employeeId}
+                  onChange={(e) => setLogFormData(prev => ({ ...prev, employeeId: e.target.value }))}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-gray-800 bg-white"
+                  required
+                >
+                  <option value="">Select Employee</option>
+                  {employeeOptions.map(e => (
+                    <option key={e.id || e._id} value={e.id || e._id}>
+                      {e.fullName || e.name} ({e.branch?.name || e.branchName || 'Branch'})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block font-bold text-gray-700 uppercase tracking-wider mb-1.5">Product / Task *</label>
+                <select 
+                  value={logFormData.product}
+                  onChange={(e) => setLogFormData(prev => ({ ...prev, product: e.target.value }))}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-gray-800 bg-white"
+                  required
+                >
+                  {AVAILABLE_PRODUCTS.map((p, idx) => (
+                    <option key={idx} value={p}>{p}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-bold text-gray-700 uppercase tracking-wider mb-1.5">Amount (₹) *</label>
+                  <input 
+                    type="number"
+                    value={logFormData.amount}
+                    onChange={(e) => setLogFormData(prev => ({ ...prev, amount: e.target.value }))}
+                    placeholder="e.g. 50000"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-gray-800 bg-white"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block font-bold text-gray-700 uppercase tracking-wider mb-1.5">Date *</label>
+                  <input 
+                    type="date"
+                    value={logFormData.date}
+                    onChange={(e) => setLogFormData(prev => ({ ...prev, date: e.target.value }))}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-gray-800 bg-white"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-bold text-gray-700 uppercase tracking-wider mb-1.5">Remarks / Details</label>
+                <textarea 
+                  value={logFormData.remarks}
+                  onChange={(e) => setLogFormData(prev => ({ ...prev, remarks: e.target.value, tasksCompleted: e.target.value }))}
+                  placeholder="Enter remarks or details about the work done..."
+                  rows={3}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-gray-800 bg-white"
+                />
+              </div>
+
+              <div className="pt-3 flex gap-3">
                 <button 
                   type="button"
                   onClick={() => setIsLogModalOpen(false)}
-                  className="flex-1 px-4 py-2.5 rounded-full border-2 border-gray-300 text-gray-700 hover:bg-gray-100 text-[14px] font-bold transition-colors"
+                  disabled={submittingLog}
+                  className="flex-1 py-2.5 px-4 border border-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-50 text-xs transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button 
                   type="submit"
                   disabled={submittingLog}
-                  className="flex-1 px-4 py-2.5 rounded-full bg-[#225091] hover:bg-[#159a9f] text-white text-[14px] font-bold transition-colors shadow-sm flex items-center justify-center gap-2 disabled:opacity-60"
+                  className="flex-1 py-2.5 px-4 bg-[#225091] hover:bg-[#193e6f] text-white font-bold rounded-xl text-xs transition-colors shadow-2xs cursor-pointer disabled:opacity-50"
                 >
-                  {submittingLog ? (
-                    <>
-                      <Loader2 size={16} className="animate-spin" />
-                      <span>Submitting...</span>
-                    </>
-                  ) : (
-                    <span>Submit Report</span>
-                  )}
+                  {submittingLog ? "Submitting..." : "Log Report"}
                 </button>
               </div>
             </form>
-
-          </div>
-        </div>
-      )}
-
-      {/* Filter Modal */}
-      {isFilterOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl w-full max-w-md shadow-xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
-            
-            {/* Modal Header */}
-            <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
-              <div className="flex items-center gap-2">
-                <SlidersHorizontal size={18} className="text-[#225091]" />
-                <h3 className="text-[18px] font-bold text-gray-800">Filter Reports</h3>
-              </div>
-              <button 
-                onClick={() => setIsFilterOpen(false)}
-                className="text-gray-400 hover:text-gray-700 transition-colors"
-              >
-                <X size={20} />
-              </button>
-            </div>
-
-            {/* Modal Body */}
-            <div className="p-6 flex flex-col gap-4 max-h-[70vh] overflow-y-auto">
-              
-              {/* Start Date & End Date */}
-              <div className="grid grid-cols-2 gap-3">
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[13px] font-semibold text-gray-700">Start Date</label>
-                  <input 
-                    type="date" 
-                    value={tempFilters.startDate}
-                    onChange={(e) => setTempFilters(prev => ({ ...prev, startDate: e.target.value }))}
-                    className="w-full px-3 py-2 rounded-xl border border-gray-200 text-[13px] text-gray-700 focus:outline-none focus:border-[#225091] bg-white" 
-                  />
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[13px] font-semibold text-gray-700">End Date</label>
-                  <input 
-                    type="date" 
-                    value={tempFilters.endDate}
-                    onChange={(e) => setTempFilters(prev => ({ ...prev, endDate: e.target.value }))}
-                    className="w-full px-3 py-2 rounded-xl border border-gray-200 text-[13px] text-gray-700 focus:outline-none focus:border-[#225091] bg-white" 
-                  />
-                </div>
-              </div>
-
-              {/* Branch Filter */}
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[13px] font-semibold text-gray-700">Branch</label>
-                <select 
-                  value={tempFilters.branchId || tempFilters.branchIds}
-                  onChange={(e) => setTempFilters(prev => ({ ...prev, branchId: e.target.value, branchIds: e.target.value }))}
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#225091] bg-white appearance-none"
-                >
-                  <option value="">All Branches</option>
-                  {branchOptions.map((branch) => {
-                    const bId = branch.id || branch._id;
-                    const bName = branch.branchName || branch.name || `Branch #${bId}`;
-                    return (
-                      <option key={bId} value={bId}>
-                        {bName}
-                      </option>
-                    );
-                  })}
-                </select>
-              </div>
-
-              {/* Employee Filter */}
-              {employeeOptions.length > 0 && (
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[13px] font-semibold text-gray-700">Employee</label>
-                  <select 
-                    value={tempFilters.employeeId}
-                    onChange={(e) => setTempFilters(prev => ({ ...prev, employeeId: e.target.value }))}
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#225091] bg-white appearance-none"
-                  >
-                    <option value="">All Employees</option>
-                    {employeeOptions.map((emp) => {
-                      const empId = emp.id || emp._id;
-                      const empName = emp.fullName || emp.name || `Employee #${empId}`;
-                      return (
-                        <option key={empId} value={empId}>
-                          {empName}
-                        </option>
-                      );
-                    })}
-                  </select>
-                </div>
-              )}
-
-              {/* Designation Filter */}
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[13px] font-semibold text-gray-700">Designation</label>
-                <select 
-                  value={tempFilters.designations}
-                  onChange={(e) => setTempFilters(prev => ({ ...prev, designations: e.target.value }))}
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#225091] bg-white appearance-none"
-                >
-                  <option value="">All Designations</option>
-                  {roleOptions.length > 0 ? (
-                    roleOptions.map((role) => (
-                      <option key={role.id || role._id || role.name} value={role.name || role.roleName}>
-                        {role.name || role.roleName}
-                      </option>
-                    ))
-                  ) : (
-                    DEFAULT_DESIGNATIONS.map((desig) => (
-                      <option key={desig} value={desig}>{desig}</option>
-                    ))
-                  )}
-                </select>
-              </div>
-
-              {/* State / UT Filter */}
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[13px] font-semibold text-gray-700">State / UT</label>
-                <select 
-                  value={tempFilters.states}
-                  onChange={(e) => setTempFilters(prev => ({ ...prev, states: e.target.value }))}
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#225091] bg-white appearance-none"
-                >
-                  <option value="">All States / UT</option>
-                  {INDIAN_STATES.map((state) => (
-                    <option key={state} value={state}>{state}</option>
-                  ))}
-                </select>
-              </div>
-
-            </div>
-
-            {/* Modal Footer */}
-            <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex gap-3">
-              <button 
-                onClick={handleResetFilter}
-                className="flex-1 px-4 py-2.5 rounded-full border-2 border-gray-300 text-gray-700 hover:bg-gray-100 text-[14px] font-bold transition-colors"
-              >
-                Reset Filter
-              </button>
-              <button 
-                onClick={handleApplyFilter}
-                className="flex-1 px-4 py-2.5 rounded-full bg-[#225091] hover:bg-[#159a9f] text-white text-[14px] font-bold transition-colors shadow-sm"
-              >
-                Set Filter
-              </button>
-            </div>
-
           </div>
         </div>
       )}

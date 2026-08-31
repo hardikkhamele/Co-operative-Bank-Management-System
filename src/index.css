@@ -47,6 +47,36 @@
     font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     letter-spacing: -0.02em;
   }
+
+  /* Restore cursor pointer for interactive elements (Tailwind v4 default change) */
+  button,
+  [role="button"],
+  input[type="button"],
+  input[type="submit"],
+  input[type="reset"],
+  input[type="checkbox"],
+  input[type="radio"],
+  input[type="file"],
+  select,
+  summary,
+  a[href],
+  area[href],
+  label[for],
+  label:has(input:not([disabled])),
+  .clickable {
+    cursor: pointer;
+  }
+
+  /* Disabled state cursor override */
+  button:disabled,
+  input:disabled,
+  select:disabled,
+  textarea:disabled,
+  [aria-disabled="true"],
+  [disabled],
+  .disabled {
+    cursor: not-allowed !important;
+  }
 }
 
 /* Hide scrollbar for Chrome, Safari and Opera */

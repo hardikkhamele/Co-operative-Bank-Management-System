@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Camera, ChevronDown, Clock, Eye, EyeOff } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation, useParams } from 'react-router-dom';
+import { Camera, ChevronDown, Clock, Eye, EyeOff, Save, RefreshCw, Plus, Trash2, CheckCircle2 } from 'lucide-react';
 import { toast } from 'react-toastify';
 import PageHeader from '../../components/common/PageHeader';
+import { branchService } from '../../api/branchService';
 import { 
   validateEmail, 
   validatePhone, 
@@ -10,99 +11,284 @@ import {
   sanitizeDigits, 
   preventInvalidNumberKeys 
 } from '../../utils/validation';
+import { ALL_KPA_PRODUCTS } from '../../utils/kpaConstants';
 
 const EditManager = () => {
+  const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const managerData = location.state || {};
+
+  const branchId = id || location.state?.branchId || location.state?.id || '';
+
   const [activeTab, setActiveTab] = useState('personal');
-  const initialType = managerData.type === 'Regional Manager' ? 'regional' : 
-                      managerData.type === 'Branch Manager' ? 'branch' : 
-                      managerData.type === 'Collection Manager' ? 'collection' : '';
-  const [managerType, setManagerType] = useState(initialType);
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [formData, setFormData] = useState({
-    fullName: managerData.name || '',
-    gender: managerData.gender?.toLowerCase() || '',
-    dob: managerData.dob || '',
-    phone: managerData.phone || '',
-    email: managerData.email || '',
+
+  // Form States for all 6 HR Sections
+  const [personal, setPersonal] = useState({
+    fullName: '',
+    gender: 'MALE',
+    dateOfBirth: '',
+    phoneNumber: '',
+    email: '',
     password: '',
-    address: managerData.address || '',
-    salary: managerData.salary ? managerData.salary.replace(/[^0-9]/g, '') : '',
-    region: managerData.region?.toLowerCase().includes('north') ? 'north' : managerData.region?.toLowerCase().includes('south') ? 'south' : managerData.region?.toLowerCase().includes('east') ? 'east' : managerData.region?.toLowerCase().includes('west') ? 'west' : '',
-    branch: managerData.branch || ''
+    address: '',
+    employeeCode: ''
   });
 
-  const handleChange = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+  const [job, setJob] = useState({
+    designation: 'Branch Manager',
+    department: 'Branch Operations',
+    salary: '',
+    joiningDate: '',
+    probationPeriodMonths: 6
+  });
+
+  const [shift, setShift] = useState({
+    punchInTime: '09:30',
+    punchOutTime: '18:30',
+    lateAllowedMinutes: 15,
+    halfDayMinutes: 240,
+    fullDayMinutes: 480,
+    weeklyOff: 'Sunday'
+  });
+
+  const [attendance, setAttendance] = useState({
+    punchMode: 'DOUBLE',
+    noOutPunchAction: 'MARK_HALF_DAY',
+    presentOnHolidayAction: 'MARK_COFF',
+    overtimeAllowed: true,
+    lateCutAllowed: true,
+    earlyGoingAllowed: true
+  });
+
+  const [woffHoff, setWoffHoff] = useState({
+    sandwichWeeklyOff: true,
+    sandwichHoliday: true,
+    holidayEncashment: false,
+    includeWoInLeave: true,
+    includeHolidayInLeave: true,
+    compOffAllowed: true
+  });
+
+  const [kra, setKra] = useState({
+    year: 2026,
+    targets: [
+      { product: 'Loan Disbursement', targetType: 'AMOUNT', targetValue: 1000000 },
+      { product: 'Deposit Collection', targetType: 'AMOUNT', targetValue: 500000 }
+    ]
+  });
+
+  // Load Manager Profile
+  useEffect(() => {
+    const fetchManager = async () => {
+      if (!branchId) return;
+      setLoading(true);
+      try {
+        const res = await branchService.getManagerProfile(branchId);
+        if (res && (res.success || res.data)) {
+          const data = res.data || res;
+          const mgr = data.manager || data.rawManager || data;
+          const p = mgr.personalDetails || mgr;
+          const j = mgr.jobDetails || {};
+          const s = mgr.shiftSettings || {};
+          const a = mgr.attendanceSettings || {};
+          const w = mgr.woffHoffSettings || {};
+          const k = mgr.kraSettings || {};
+
+          setPersonal({
+            fullName: p.fullName || mgr.fullName || mgr.name || '',
+            gender: (p.gender || 'MALE').toUpperCase(),
+            dateOfBirth: p.dateOfBirth ? p.dateOfBirth.split('T')[0] : '',
+            phoneNumber: p.phoneNumber || mgr.phoneNumber || mgr.phone || '',
+            email: p.email || mgr.email || '',
+            password: '',
+            address: p.address?.addressLine1 || p.address || '',
+            employeeCode: mgr.employeeCode || ''
+          });
+
+          setJob({
+            designation: j.designation || 'Branch Manager',
+            department: j.department || 'Branch Operations',
+            salary: j.salary || '',
+            joiningDate: j.joiningDate ? j.joiningDate.split('T')[0] : '',
+            probationPeriodMonths: j.probationPeriodMonths || 6
+          });
+
+          if (Object.keys(s).length > 0) {
+            const rawWo = s.weeklyOff;
+            const woString = typeof rawWo === 'object' && rawWo !== null ? rawWo.day || 'Sunday' : (Array.isArray(rawWo) ? rawWo[0] : (rawWo || 'Sunday'));
+            setShift(prev => ({ ...prev, ...s, weeklyOff: woString }));
+          }
+          if (Object.keys(a).length > 0) {
+            setAttendance(prev => ({ ...prev, ...a }));
+          }
+          if (Object.keys(w).length > 0) {
+            setWoffHoff(prev => ({ ...prev, ...w }));
+          }
+          if (Object.keys(k).length > 0 && Array.isArray(k.targets)) {
+            setKra({ year: k.year || 2026, targets: k.targets });
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load manager profile for editing:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchManager();
+  }, [branchId]);
+
+  // Section-by-section save handlers
+  const handleSaveSection = async (sectionKey) => {
+    if (!branchId) {
+      toast.error("Invalid Branch ID.");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      if (sectionKey === 'personal') {
+        if (!personal.fullName.trim()) {
+          toast.error("Manager full name is required.");
+          setSaving(false);
+          return;
+        }
+        const emailErr = validateEmail(personal.email).error;
+        if (emailErr) {
+          toast.error(emailErr);
+          setSaving(false);
+          return;
+        }
+        const phoneErr = validatePhone(personal.phoneNumber).error;
+        if (phoneErr) {
+          toast.error(phoneErr);
+          setSaving(false);
+          return;
+        }
+        if (personal.password) {
+          const passErr = validatePassword(personal.password, { minLength: 6 }).error;
+          if (passErr) {
+            toast.error(passErr);
+            setSaving(false);
+            return;
+          }
+        }
+
+        await branchService.updateManagerPersonalDetails(branchId, personal);
+        toast.success("Personal details updated successfully!");
+      } 
+      else if (sectionKey === 'job') {
+        await branchService.updateManagerJobDetails(branchId, {
+          ...job,
+          salary: Number(job.salary) || 0
+        });
+        toast.success("Job details updated successfully!");
+      } 
+      else if (sectionKey === 'shift') {
+        await branchService.updateManagerShiftSettings(branchId, shift);
+        toast.success("Shift & Timing settings updated successfully!");
+      } 
+      else if (sectionKey === 'attendance') {
+        await branchService.updateManagerAttendanceSettings(branchId, attendance);
+        toast.success("Attendance settings updated successfully!");
+      } 
+      else if (sectionKey === 'woff') {
+        await branchService.updateManagerWoffHoffSettings(branchId, woffHoff);
+        toast.success("WOFF & HOFF rules updated successfully!");
+      } 
+      else if (sectionKey === 'kra') {
+        await branchService.updateManagerKraSettings(branchId, kra);
+        toast.success("KRA Target settings updated successfully!");
+      }
+    } catch (err) {
+      console.error(`Failed to update manager ${sectionKey}:`, err);
+      toast.error(err.response?.data?.message || `Failed to update ${sectionKey} details.`);
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const handleSave = () => {
-    if (!formData.fullName.trim()) {
-      setActiveTab('personal');
-      toast.error("Please enter manager's full name");
+  // Full Profile Save
+  const handleSaveAll = async () => {
+    if (!branchId) {
+      toast.error("Invalid Branch ID.");
       return;
-    }
-    const emailErr = validateEmail(formData.email).error;
-    if (emailErr) {
-      setActiveTab('personal');
-      toast.error(emailErr);
-      return;
-    }
-    const phoneErr = validatePhone(formData.phone).error;
-    if (phoneErr) {
-      setActiveTab('personal');
-      toast.error(phoneErr);
-      return;
-    }
-    if (formData.password) {
-      const passErr = validatePassword(formData.password, { minLength: 6 }).error;
-      if (passErr) {
-        setActiveTab('personal');
-        toast.error(passErr);
-        return;
-      }
     }
 
-    toast.success("Manager updated successfully!");
-    navigate('/managers');
+    if (!personal.fullName.trim()) {
+      setActiveTab('personal');
+      toast.error("Manager full name is required.");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const fullPayload = {
+        fullName: personal.fullName,
+        email: personal.email,
+        phoneNumber: personal.phoneNumber,
+        password: personal.password || undefined,
+        employeeCode: personal.employeeCode,
+        personalDetails: personal,
+        jobDetails: {
+          ...job,
+          salary: Number(job.salary) || 0
+        },
+        shiftSettings: shift,
+        attendanceSettings: attendance,
+        woffHoffSettings: woffHoff,
+        kraSettings: kra
+      };
+
+      await branchService.updateManagerProfile(branchId, fullPayload);
+      toast.success("Branch Manager profile updated completely!");
+      navigate('/branch');
+    } catch (err) {
+      console.error("Failed to update full manager profile:", err);
+      toast.error(err.response?.data?.message || "Failed to update manager profile.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const tabs = [
     { id: 'personal', label: 'Personal Details' },
     { id: 'job', label: 'Job Details' },
-    { id: 'shift', label: 'Shift & WOFF' },
-    { id: 'attendance', label: 'Attendance' },
+    { id: 'shift', label: 'Shift & Timings' },
+    { id: 'attendance', label: 'Attendance Rules' },
     { id: 'woff', label: 'WOFF & HOFF' },
+    { id: 'kra', label: 'KRA Targets' },
   ];
 
   return (
     <div className="flex flex-col gap-6 w-full font-sans antialiased pb-16">
       {/* Header Card */}
       <PageHeader
-        title="Edit Manager"
+        title="Edit Branch Manager"
         breadcrumbs={[
           { label: 'Dashboard', to: '/dashboard' },
-          { label: 'User Management' },
-          { label: 'Managers', to: '/managers' },
+          { label: 'Branch Management', to: '/branch' },
           { label: 'Edit Manager' }
         ]}
         showBack={true}
-        backUrl="/managers"
+        backUrl={location.state?.from || "/branch"}
       />
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
-        {/* Tabs */}
-        <div className="flex flex-wrap items-center gap-2 mb-10 bg-gray-50/50 p-1.5 rounded-xl w-fit">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8 space-y-8">
+        
+        {/* Navigation Tabs */}
+        <div className="flex flex-wrap items-center gap-1.5 bg-slate-100/80 p-1.5 rounded-xl w-fit">
           {tabs.map(tab => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`px-5 py-2.5 rounded-lg text-[15px] font-medium transition-colors cursor-pointer ${
+              className={`px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                 activeTab === tab.id 
-                  ? 'bg-[#eef0ff] text-[#1b2559]' 
-                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100/50'
+                  ? 'bg-white text-[#225091] shadow-2xs' 
+                  : 'text-gray-600 hover:text-gray-900'
               }`}
             >
               {tab.label}
@@ -110,719 +296,537 @@ const EditManager = () => {
           ))}
         </div>
 
+        {/* 1. Personal Details Tab */}
         {activeTab === 'personal' && (
-          <div>
-            {/* General Info */}
-            <div className="mb-10">
-              <h2 className="text-[22px] font-bold text-[#1b2559] mb-8">General Info</h2>
-              
-              <div className="mb-8">
-                <div className="relative inline-block group cursor-pointer">
-                  <div className="w-24 h-24 rounded-full border-[3px] border-[#225091] overflow-hidden flex items-center justify-center p-0.5">
-                    <img 
-                      src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop" 
-                      alt="Profile" 
-                      className="w-full h-full object-cover rounded-full"
-                    />
-                  </div>
-                  <div className="absolute bottom-0 right-1 left-0 flex justify-center translate-y-1/4">
-                    <div className="bg-[#225091] text-white p-1.5 rounded-full border-[2.5px] border-white shadow-sm">
-                      <Camera size={14} />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-8">
-                <div>
-                  <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">Full Name *</label>
-                  <input 
-                    type="text" 
-                    value={formData.fullName}
-                    onChange={e => handleChange('fullName', e.target.value)}
-                    placeholder="Enter full name" 
-                    className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all bg-white shadow-sm text-[15px]" 
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">Gender</label>
-                  <div className="relative">
-                    <select 
-                      value={formData.gender}
-                      onChange={e => handleChange('gender', e.target.value)}
-                      className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all bg-white appearance-none text-gray-500 shadow-sm text-[15px]"
-                    >
-                      <option value="" disabled>Select</option>
-                      <option value="male">Male</option>
-                      <option value="female">Female</option>
-                      <option value="other">Other</option>
-                    </select>
-                    <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">Date Of Birth</label>
-                  <div className="relative">
-                    <input 
-                      type="date" 
-                      value={formData.dob}
-                      onChange={e => handleChange('dob', e.target.value)}
-                      className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all bg-white shadow-sm text-[15px]" 
-                    />
-                  </div>
-                </div>
-                
-                <div>
-                  <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">Phone *</label>
-                  <input 
-                    type="tel" 
-                    value={formData.phone}
-                    onChange={e => handleChange('phone', sanitizeDigits(e.target.value, 10))}
-                    placeholder="10-digit Phone Number" 
-                    maxLength={10}
-                    className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all bg-white shadow-sm text-[15px]" 
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">Email *</label>
-                  <input 
-                    type="email" 
-                    value={formData.email}
-                    onChange={e => handleChange('email', e.target.value)}
-                    placeholder="Enter email" 
-                    className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all bg-white shadow-sm text-[15px]" 
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">Password</label>
-                  <div className="relative">
-                    <input 
-                      type={showPassword ? "text" : "password"} 
-                      value={formData.password}
-                      onChange={e => handleChange('password', e.target.value)}
-                      placeholder="Leave empty to keep existing password" 
-                      className="w-full pl-4 pr-11 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all bg-white shadow-sm text-[15px]" 
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-gray-400 hover:text-gray-600 focus:outline-none cursor-pointer"
-                    >
-                      {showPassword ? <Eye size={18} /> : <EyeOff size={18} />}
-                    </button>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">Address</label>
-                  <input 
-                    type="text" 
-                    value={formData.address}
-                    onChange={e => handleChange('address', e.target.value)}
-                    placeholder="Enter address" 
-                    className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all bg-white shadow-sm text-[15px]" 
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'job' && (
-          <div>
-            <h2 className="text-[22px] font-bold text-[#1b2559] mb-8">Employment Info</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-8">
+          <div className="space-y-6">
+            <h3 className="text-base font-bold text-gray-900">Personal Details</h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div>
-                <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">Manager Type</label>
-                <div className="relative">
-                  <select 
-                    value={managerType}
-                    onChange={e => setManagerType(e.target.value)}
-                    className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all bg-white appearance-none text-gray-500 shadow-sm text-[15px]"
-                  >
-                    <option value="" disabled>Select</option>
-                    <option value="regional">Regional Manager</option>
-                    <option value="branch">Branch Manager</option>
-                    <option value="collection">Collection Manager</option>
-                  </select>
-                  <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">Region</label>
-                <div className="relative">
-                  <select 
-                    value={formData.region}
-                    onChange={e => handleChange('region', e.target.value)}
-                    className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all bg-white appearance-none text-gray-500 shadow-sm text-[15px]"
-                  >
-                    <option value="" disabled>Select</option>
-                    <option value="north">North</option>
-                    <option value="south">South</option>
-                  </select>
-                  <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">Branch</label>
-                <div className="relative">
-                  <select 
-                    value={formData.branch}
-                    onChange={e => handleChange('branch', e.target.value)}
-                    className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all bg-white appearance-none text-gray-500 shadow-sm text-[15px]"
-                  >
-                    <option value="" disabled>Select</option>
-                    <option value="b1">Branch 1</option>
-                    <option value="b2">Branch 2</option>
-                  </select>
-                  <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">Salary</label>
+                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Full Name *</label>
                 <input 
-                  type="number" 
-                  min="0"
+                  type="text" 
+                  value={personal.fullName}
+                  onChange={e => setPersonal(prev => ({ ...prev, fullName: e.target.value }))}
+                  placeholder="Enter manager full name" 
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] text-sm text-gray-800 bg-white" 
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Gender</label>
+                <select 
+                  value={personal.gender}
+                  onChange={e => setPersonal(prev => ({ ...prev, gender: e.target.value }))}
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] text-sm text-gray-800 bg-white cursor-pointer"
+                >
+                  <option value="MALE">MALE</option>
+                  <option value="FEMALE">FEMALE</option>
+                  <option value="OTHER">OTHER</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Date of Birth</label>
+                <input 
+                  type="date" 
+                  value={personal.dateOfBirth}
+                  onChange={e => setPersonal(prev => ({ ...prev, dateOfBirth: e.target.value }))}
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] text-sm text-gray-800 bg-white cursor-pointer" 
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Employee Code</label>
+                <input 
+                  type="text" 
+                  value={personal.employeeCode}
+                  onChange={e => setPersonal(prev => ({ ...prev, employeeCode: e.target.value }))}
+                  placeholder="e.g. BM-MUM-101" 
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] text-sm text-gray-800 bg-white" 
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Phone Number *</label>
+                <input 
+                  type="tel" 
+                  value={personal.phoneNumber}
+                  maxLength={10}
                   onKeyDown={preventInvalidNumberKeys}
-                  value={formData.salary}
-                  onChange={e => handleChange('salary', e.target.value)}
-                  placeholder="Rs." 
-                  className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all bg-white shadow-sm text-[15px]" 
+                  onChange={e => setPersonal(prev => ({ ...prev, phoneNumber: sanitizeDigits(e.target.value) }))}
+                  placeholder="10-digit phone number" 
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] text-sm text-gray-800 bg-white" 
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Email Address *</label>
+                <input 
+                  type="email" 
+                  value={personal.email}
+                  onChange={e => setPersonal(prev => ({ ...prev, email: e.target.value }))}
+                  placeholder="manager@societybank.com" 
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] text-sm text-gray-800 bg-white" 
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Reset Password (Optional)</label>
+                <div className="relative">
+                  <input 
+                    type={showPassword ? "text" : "password"} 
+                    value={personal.password}
+                    onChange={e => setPersonal(prev => ({ ...prev, password: e.target.value }))}
+                    placeholder="Leave blank to keep unchanged" 
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] text-sm text-gray-800 bg-white pr-10" 
+                  />
+                  <button 
+                    type="button" 
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
+                  >
+                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Residential Address</label>
+                <input 
+                  type="text" 
+                  value={personal.address}
+                  onChange={e => setPersonal(prev => ({ ...prev, address: e.target.value }))}
+                  placeholder="Enter full address" 
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] text-sm text-gray-800 bg-white" 
                 />
               </div>
             </div>
+
+            <div className="flex justify-end pt-4">
+              <button 
+                onClick={() => handleSaveSection('personal')}
+                disabled={saving}
+                className="bg-[#225091] hover:bg-[#193e6f] text-white px-5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer shadow-xs"
+              >
+                <Save size={14} /> Save Personal Details
+              </button>
+            </div>
           </div>
         )}
 
+        {/* 2. Job Details Tab */}
+        {activeTab === 'job' && (
+          <div className="space-y-6">
+            <h3 className="text-base font-bold text-gray-900">Job Details</h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div>
+                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Designation</label>
+                <input 
+                  type="text" 
+                  value={job.designation}
+                  onChange={e => setJob(prev => ({ ...prev, designation: e.target.value }))}
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] text-sm text-gray-800 bg-white" 
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Department</label>
+                <input 
+                  type="text" 
+                  value={job.department}
+                  onChange={e => setJob(prev => ({ ...prev, department: e.target.value }))}
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] text-sm text-gray-800 bg-white" 
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Salary (₹ Monthly)</label>
+                <input 
+                  type="number" 
+                  value={job.salary}
+                  onKeyDown={preventInvalidNumberKeys}
+                  onChange={e => setJob(prev => ({ ...prev, salary: e.target.value }))}
+                  placeholder="e.g. 75000" 
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] text-sm text-gray-800 bg-white" 
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Joining Date</label>
+                <input 
+                  type="date" 
+                  value={job.joiningDate}
+                  onChange={e => setJob(prev => ({ ...prev, joiningDate: e.target.value }))}
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] text-sm text-gray-800 bg-white cursor-pointer" 
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Probation Period (Months)</label>
+                <input 
+                  type="number" 
+                  value={job.probationPeriodMonths}
+                  onChange={e => setJob(prev => ({ ...prev, probationPeriodMonths: Number(e.target.value) || 0 }))}
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] text-sm text-gray-800 bg-white" 
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end pt-4">
+              <button 
+                onClick={() => handleSaveSection('job')}
+                disabled={saving}
+                className="bg-[#225091] hover:bg-[#193e6f] text-white px-5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer shadow-xs"
+              >
+                <Save size={14} /> Save Job Details
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* 3. Shift Settings Tab */}
         {activeTab === 'shift' && (
           <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Shift Card */}
-              <div className="border border-gray-200 rounded-xl p-6">
-                <h2 className="text-[20px] font-bold text-[#1b2559] mb-6">Shift</h2>
-                <div className="grid grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">Punch In Time</label>
-                    <div className="relative">
-                      <input type="text" placeholder="HH:MM" className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all bg-white shadow-sm text-[15px]" />
-                      <Clock size={20} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">Punch Out Time</label>
-                    <div className="relative">
-                      <input type="text" placeholder="HH:MM" className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all bg-white shadow-sm text-[15px]" />
-                      <Clock size={20} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
-                    </div>
-                  </div>
-                </div>
+            <h3 className="text-base font-bold text-gray-900">Shift & Timings Configuration</h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div>
+                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Punch In Time</label>
+                <input 
+                  type="time" 
+                  value={shift.punchInTime}
+                  onChange={e => setShift(prev => ({ ...prev, punchInTime: e.target.value }))}
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] text-sm text-gray-800 bg-white cursor-pointer" 
+                />
               </div>
 
-              {/* Weekly Off Card */}
-              <div className="border border-gray-200 rounded-xl p-6">
-                <h2 className="text-[20px] font-bold text-[#1b2559] mb-6">Weekly Off</h2>
-                <div className="space-y-5">
-                  <div>
-                    <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">Weekly Off Day</label>
-                    <div className="relative">
-                      <select className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all bg-white appearance-none text-gray-500 shadow-sm text-[15px]">
-                        <option value="" disabled selected>Select</option>
-                        <option value="sunday">Sunday</option>
-                        <option value="saturday">Saturday</option>
-                      </select>
-                      <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-                    </div>
-                  </div>
+              <div>
+                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Punch Out Time</label>
+                <input 
+                  type="time" 
+                  value={shift.punchOutTime}
+                  onChange={e => setShift(prev => ({ ...prev, punchOutTime: e.target.value }))}
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] text-sm text-gray-800 bg-white cursor-pointer" 
+                />
+              </div>
 
-                  <label className="flex items-center gap-3 px-4 py-3.5 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors">
-                    <div className="relative flex items-center justify-center">
-                      <input type="checkbox" defaultChecked className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#225091] checked:border-[#225091] transition-colors cursor-pointer" />
-                      <svg className="absolute w-3.5 h-3.5 text-white pointer-events-none hidden peer-checked:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                        <polyline points="20 6 9 17 4 12"></polyline>
-                      </svg>
-                    </div>
-                    <span className="text-[15px] text-gray-700 font-medium">Weekly Off Payable</span>
-                  </label>
+              <div>
+                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Late Allowed Grace (Minutes)</label>
+                <input 
+                  type="number" 
+                  value={shift.lateAllowedMinutes}
+                  onChange={e => setShift(prev => ({ ...prev, lateAllowedMinutes: Number(e.target.value) || 0 }))}
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] text-sm text-gray-800 bg-white" 
+                />
+              </div>
 
-                  <label className="flex items-center gap-3 px-4 py-3.5 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors">
-                    <div className="relative flex items-center justify-center">
-                      <input type="checkbox" className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#225091] checked:border-[#225091] transition-colors cursor-pointer" />
-                      <svg className="absolute w-3.5 h-3.5 text-white pointer-events-none hidden peer-checked:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                        <polyline points="20 6 9 17 4 12"></polyline>
-                      </svg>
-                    </div>
-                    <span className="text-[15px] text-gray-700 font-medium">Variable Weekly Off</span>
-                  </label>
+              <div>
+                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Half Day Threshold (Minutes)</label>
+                <input 
+                  type="number" 
+                  value={shift.halfDayMinutes}
+                  onChange={e => setShift(prev => ({ ...prev, halfDayMinutes: Number(e.target.value) || 0 }))}
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] text-sm text-gray-800 bg-white" 
+                />
+              </div>
 
-                  <label className="flex items-center gap-3 px-4 py-3.5 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors">
-                    <div className="relative flex items-center justify-center">
-                      <input type="checkbox" className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#225091] checked:border-[#225091] transition-colors cursor-pointer" />
-                      <svg className="absolute w-3.5 h-3.5 text-white pointer-events-none hidden peer-checked:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                        <polyline points="20 6 9 17 4 12"></polyline>
-                      </svg>
-                    </div>
-                    <span className="text-[15px] text-gray-700 font-medium">Second Weekly Off</span>
-                  </label>
-                </div>
+              <div>
+                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Weekly Off Day</label>
+                <select 
+                  value={Array.isArray(shift.weeklyOff) ? shift.weeklyOff[0] : (shift.weeklyOff || 'Sunday')}
+                  onChange={e => setShift(prev => ({ ...prev, weeklyOff: e.target.value }))}
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] text-sm text-gray-800 bg-white cursor-pointer"
+                >
+                  <option value="Sunday">Sunday</option>
+                  <option value="Saturday">Saturday</option>
+                  <option value="Friday">Friday</option>
+                  <option value="Monday">Monday</option>
+                </select>
               </div>
             </div>
 
-            {/* Other Details Card */}
-            <div className="border border-gray-200 rounded-xl p-6">
-              <h2 className="text-[20px] font-bold text-[#1b2559] mb-6">Other Details</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-8">
-                {/* Late Allowed */}
-                <div>
-                  <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">Late Allowed (Mins)</label>
-                  <input type="text" defaultValue="15" className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all bg-white shadow-sm text-[15px] mb-4" />
-                  <label className="flex items-center gap-2.5 cursor-pointer w-fit">
-                    <div className="relative flex items-center justify-center">
-                      <input type="checkbox" defaultChecked className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#225091] checked:border-[#225091] transition-colors cursor-pointer" />
-                      <svg className="absolute w-3.5 h-3.5 text-white pointer-events-none hidden peer-checked:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                        <polyline points="20 6 9 17 4 12"></polyline>
-                      </svg>
-                    </div>
-                    <span className="text-[14px] text-gray-600 font-medium">As Per Shift</span>
-                  </label>
-                </div>
-
-                {/* Early Allowed */}
-                <div>
-                  <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">Early Allowed (Mins)</label>
-                  <input type="text" defaultValue="15" className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all bg-white shadow-sm text-[15px] mb-4" />
-                  <label className="flex items-center gap-2.5 cursor-pointer w-fit">
-                    <div className="relative flex items-center justify-center">
-                      <input type="checkbox" className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#225091] checked:border-[#225091] transition-colors cursor-pointer" />
-                      <svg className="absolute w-3.5 h-3.5 text-white pointer-events-none hidden peer-checked:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                        <polyline points="20 6 9 17 4 12"></polyline>
-                      </svg>
-                    </div>
-                    <span className="text-[14px] text-gray-600 font-medium">As Per Shift</span>
-                  </label>
-                </div>
-
-                {/* Half Day */}
-                <div>
-                  <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">Half Day (Mins)</label>
-                  <input type="text" defaultValue="240" className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all bg-white shadow-sm text-[15px] mb-4" />
-                  <label className="flex items-center gap-2.5 cursor-pointer w-fit">
-                    <div className="relative flex items-center justify-center">
-                      <input type="checkbox" className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#225091] checked:border-[#225091] transition-colors cursor-pointer" />
-                      <svg className="absolute w-3.5 h-3.5 text-white pointer-events-none hidden peer-checked:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                        <polyline points="20 6 9 17 4 12"></polyline>
-                      </svg>
-                    </div>
-                    <span className="text-[14px] text-gray-600 font-medium">As Per Shift</span>
-                  </label>
-                </div>
-
-                {/* Full Day */}
-                <div>
-                  <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">Full Day (Mins)</label>
-                  <input type="text" defaultValue="480" className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all bg-white shadow-sm text-[15px] mb-4" />
-                  <label className="flex items-center gap-2.5 cursor-pointer w-fit">
-                    <div className="relative flex items-center justify-center">
-                      <input type="checkbox" defaultChecked className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#225091] checked:border-[#225091] transition-colors cursor-pointer" />
-                      <svg className="absolute w-3.5 h-3.5 text-white pointer-events-none hidden peer-checked:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                        <polyline points="20 6 9 17 4 12"></polyline>
-                      </svg>
-                    </div>
-                    <span className="text-[14px] text-gray-600 font-medium">As Per Shift</span>
-                  </label>
-                </div>
-              </div>
+            <div className="flex justify-end pt-4">
+              <button 
+                onClick={() => handleSaveSection('shift')}
+                disabled={saving}
+                className="bg-[#225091] hover:bg-[#193e6f] text-white px-5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer shadow-xs"
+              >
+                <Save size={14} /> Save Shift Settings
+              </button>
             </div>
           </div>
         )}
 
+        {/* 4. Attendance Settings Tab */}
         {activeTab === 'attendance' && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="space-y-6">
-              {/* Punch Card */}
-              <div className="border border-gray-200 rounded-xl p-6">
-                <h2 className="text-[20px] font-bold text-[#1b2559] mb-6">Punch</h2>
-                <div className="space-y-5">
-                  <div>
-                    <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">Punch Type</label>
-                    <div className="flex items-center gap-5">
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <div className="relative flex items-center justify-center">
-                          <input type="radio" name="punchType" value="single" className="peer w-5 h-5 rounded-full border-2 border-gray-400 appearance-none checked:border-[#225091] transition-colors cursor-pointer" />
-                          <div className="absolute w-2.5 h-2.5 bg-[#225091] rounded-full opacity-0 peer-checked:opacity-100 transition-opacity"></div>
-                        </div>
-                        <span className="text-[15px] text-gray-600">Single</span>
-                      </label>
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <div className="relative flex items-center justify-center">
-                          <input type="radio" name="punchType" value="double" defaultChecked className="peer w-5 h-5 rounded-full border-2 border-gray-400 appearance-none checked:border-[#225091] transition-colors cursor-pointer" />
-                          <div className="absolute w-2.5 h-2.5 bg-[#225091] rounded-full opacity-0 peer-checked:opacity-100 transition-opacity"></div>
-                        </div>
-                        <span className="text-[15px] text-gray-600">Double</span>
-                      </label>
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <div className="relative flex items-center justify-center">
-                          <input type="radio" name="punchType" value="multiple" className="peer w-5 h-5 rounded-full border-2 border-gray-400 appearance-none checked:border-[#225091] transition-colors cursor-pointer" />
-                          <div className="absolute w-2.5 h-2.5 bg-[#225091] rounded-full opacity-0 peer-checked:opacity-100 transition-opacity"></div>
-                        </div>
-                        <span className="text-[15px] text-gray-600">Multiple</span>
-                      </label>
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">No Out-Punch Found — Action</label>
-                    <div className="relative">
-                      <select className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all bg-white appearance-none text-gray-500 shadow-sm text-[15px]">
-                        <option value="" disabled selected>Select</option>
-                        <option value="mark_half_day">Mark Half Day</option>
-                      </select>
-                      <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">Present On WO / Holiday — Action</label>
-                    <div className="relative">
-                      <select className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all bg-white appearance-none text-gray-500 shadow-sm text-[15px]">
-                        <option value="" disabled selected>Select</option>
-                        <option value="pay_extra">Pay Extra</option>
-                      </select>
-                      <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-                    </div>
-                  </div>
-                </div>
+          <div className="space-y-6">
+            <h3 className="text-base font-bold text-gray-900">Attendance & Penalty Rules</h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div>
+                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Punch Mode</label>
+                <select 
+                  value={attendance.punchMode}
+                  onChange={e => setAttendance(prev => ({ ...prev, punchMode: e.target.value }))}
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] text-sm text-gray-800 bg-white cursor-pointer"
+                >
+                  <option value="SINGLE">SINGLE</option>
+                  <option value="DOUBLE">DOUBLE (In & Out)</option>
+                  <option value="MULTIPLE">MULTIPLE</option>
+                </select>
               </div>
 
-              {/* Lunch & Early Going Card */}
-              <div className="border border-gray-200 rounded-xl p-6">
-                <h2 className="text-[20px] font-bold text-[#1b2559] mb-6">Lunch & Early Going</h2>
-                <div className="space-y-5">
-                  <div className="grid grid-cols-2 gap-4 items-end">
-                    <div>
-                      <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">Lunch Allowed Mins</label>
-                      <input type="text" defaultValue="0" className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all bg-white shadow-sm text-[15px]" />
-                    </div>
-                    <div className="pb-3.5">
-                      <label className="flex items-center gap-2.5 cursor-pointer w-fit">
-                        <div className="relative flex items-center justify-center">
-                          <input type="checkbox" defaultChecked className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#225091] checked:border-[#225091] transition-colors cursor-pointer" />
-                          <svg className="absolute w-3.5 h-3.5 text-white pointer-events-none hidden peer-checked:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                        </div>
-                        <span className="text-[14px] text-gray-600 font-medium">As Per Shift</span>
-                      </label>
-                    </div>
-                  </div>
+              <div>
+                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">No Out-Punch Action</label>
+                <select 
+                  value={attendance.noOutPunchAction}
+                  onChange={e => setAttendance(prev => ({ ...prev, noOutPunchAction: e.target.value }))}
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] text-sm text-gray-800 bg-white cursor-pointer"
+                >
+                  <option value="MARK_HALF_DAY">Mark Half Day</option>
+                  <option value="MARK_ABSENT">Mark Absent</option>
+                  <option value="NO_ACTION">No Action</option>
+                </select>
+              </div>
 
-                  <label className="flex items-center gap-3 px-4 py-3.5 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors">
-                    <div className="relative flex items-center justify-center">
-                      <input type="checkbox" className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#225091] checked:border-[#225091] transition-colors cursor-pointer" />
-                      <svg className="absolute w-3.5 h-3.5 text-white pointer-events-none hidden peer-checked:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                    </div>
-                    <span className="text-[15px] text-gray-700 font-medium">Lunch Allowed</span>
-                  </label>
-                  
-                  <label className="flex items-center gap-3 px-4 py-3.5 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors">
-                    <div className="relative flex items-center justify-center">
-                      <input type="checkbox" className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#225091] checked:border-[#225091] transition-colors cursor-pointer" />
-                      <svg className="absolute w-3.5 h-3.5 text-white pointer-events-none hidden peer-checked:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                    </div>
-                    <span className="text-[15px] text-gray-700 font-medium">Early Going Allowed</span>
-                  </label>
-                </div>
+              <div className="flex items-center gap-3 pt-2">
+                <input 
+                  type="checkbox" 
+                  id="overtimeAllowed"
+                  checked={attendance.overtimeAllowed}
+                  onChange={e => setAttendance(prev => ({ ...prev, overtimeAllowed: e.target.checked }))}
+                  className="w-4 h-4 rounded border-gray-300 text-[#225091] focus:ring-[#225091] cursor-pointer"
+                />
+                <label htmlFor="overtimeAllowed" className="text-xs font-bold text-gray-800 cursor-pointer">
+                  Enable Overtime Compensation
+                </label>
+              </div>
+
+              <div className="flex items-center gap-3 pt-2">
+                <input 
+                  type="checkbox" 
+                  id="lateCutAllowed"
+                  checked={attendance.lateCutAllowed}
+                  onChange={e => setAttendance(prev => ({ ...prev, lateCutAllowed: e.target.checked }))}
+                  className="w-4 h-4 rounded border-gray-300 text-[#225091] focus:ring-[#225091] cursor-pointer"
+                />
+                <label htmlFor="lateCutAllowed" className="text-xs font-bold text-gray-800 cursor-pointer">
+                  Apply Late Cut Deduction Policy
+                </label>
               </div>
             </div>
 
-            <div className="space-y-6">
-              {/* Late Cut Card */}
-              <div className="border border-gray-200 rounded-xl p-6">
-                <h2 className="text-[20px] font-bold text-[#1b2559] mb-6">Late Cut</h2>
-                <div className="space-y-5">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">Allowed Days</label>
-                      <input type="text" defaultValue="3" className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all bg-white shadow-sm text-[15px]" />
-                    </div>
-                    <div>
-                      <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">Action</label>
-                      <div className="relative">
-                        <select className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all bg-white appearance-none text-gray-500 shadow-sm text-[15px]">
-                          <option value="" disabled selected>Select</option>
-                          <option value="deduct">Deduct</option>
-                        </select>
-                        <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <label className="flex items-center gap-3 px-4 py-3.5 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors">
-                    <div className="relative flex items-center justify-center">
-                      <input type="checkbox" className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#225091] checked:border-[#225091] transition-colors cursor-pointer" />
-                      <svg className="absolute w-3.5 h-3.5 text-white pointer-events-none hidden peer-checked:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                    </div>
-                    <span className="text-[15px] text-gray-700 font-medium">Late Cut Allowed</span>
-                  </label>
-                  
-                  <label className="flex items-center gap-3 px-4 py-3.5 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors">
-                    <div className="relative flex items-center justify-center">
-                      <input type="checkbox" className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#225091] checked:border-[#225091] transition-colors cursor-pointer" />
-                      <svg className="absolute w-3.5 h-3.5 text-white pointer-events-none hidden peer-checked:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                    </div>
-                    <span className="text-[15px] text-gray-700 font-medium">Extra Late Cut Deduction</span>
-                  </label>
-                  
-                  <label className="flex items-center gap-3 px-4 py-3.5 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors">
-                    <div className="relative flex items-center justify-center">
-                      <input type="checkbox" className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#225091] checked:border-[#225091] transition-colors cursor-pointer" />
-                      <svg className="absolute w-3.5 h-3.5 text-white pointer-events-none hidden peer-checked:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                    </div>
-                    <span className="text-[15px] text-gray-700 font-medium">Additional Late Cut In Leave Balance</span>
-                  </label>
-                </div>
-              </div>
-
-              {/* Overtime Card */}
-              <div className="border border-gray-200 rounded-xl p-6">
-                <h2 className="text-[20px] font-bold text-[#1b2559] mb-6">Overtime</h2>
-                <div className="space-y-5">
-                  <label className="flex items-center gap-3 px-4 py-3.5 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors">
-                    <div className="relative flex items-center justify-center">
-                      <input type="checkbox" className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#225091] checked:border-[#225091] transition-colors cursor-pointer" />
-                      <svg className="absolute w-3.5 h-3.5 text-white pointer-events-none hidden peer-checked:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                    </div>
-                    <span className="text-[15px] text-gray-700 font-medium">Overtime Allowed</span>
-                  </label>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <label className="flex items-center gap-3 px-4 py-3.5 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors">
-                      <div className="relative flex items-center justify-center">
-                        <input type="checkbox" className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#225091] checked:border-[#225091] transition-colors cursor-pointer" />
-                        <svg className="absolute w-3.5 h-3.5 text-white pointer-events-none hidden peer-checked:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                      </div>
-                      <span className="text-[15px] text-gray-700 font-medium">Custom OT</span>
-                    </label>
-                    <label className="flex items-center gap-3 px-4 py-3.5 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors">
-                      <div className="relative flex items-center justify-center">
-                        <input type="checkbox" className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#225091] checked:border-[#225091] transition-colors cursor-pointer" />
-                        <svg className="absolute w-3.5 h-3.5 text-white pointer-events-none hidden peer-checked:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                      </div>
-                      <span className="text-[15px] text-gray-700 font-medium">Before OT</span>
-                    </label>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">OT Grace Period (Mins)</label>
-                      <input type="text" defaultValue="5" className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all bg-white shadow-sm text-[15px]" />
-                    </div>
-                    <div>
-                      <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">1 Day OT Hrs</label>
-                      <input type="text" defaultValue="4" className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all bg-white shadow-sm text-[15px]" />
-                    </div>
-                  </div>
-
-                  <label className="flex items-center gap-3 px-4 py-3.5 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors">
-                    <div className="relative flex items-center justify-center">
-                      <input type="checkbox" className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#225091] checked:border-[#225091] transition-colors cursor-pointer" />
-                      <svg className="absolute w-3.5 h-3.5 text-white pointer-events-none hidden peer-checked:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                    </div>
-                    <span className="text-[15px] text-gray-700 font-medium">OT As Per Shift</span>
-                  </label>
-                  
-                  <label className="flex items-center gap-3 px-4 py-3.5 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors">
-                    <div className="relative flex items-center justify-center">
-                      <input type="checkbox" className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#225091] checked:border-[#225091] transition-colors cursor-pointer" />
-                      <svg className="absolute w-3.5 h-3.5 text-white pointer-events-none hidden peer-checked:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                    </div>
-                    <span className="text-[15px] text-gray-700 font-medium">Consider OT As COFF</span>
-                  </label>
-                </div>
-              </div>
+            <div className="flex justify-end pt-4">
+              <button 
+                onClick={() => handleSaveSection('attendance')}
+                disabled={saving}
+                className="bg-[#225091] hover:bg-[#193e6f] text-white px-5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer shadow-xs"
+              >
+                <Save size={14} /> Save Attendance Settings
+              </button>
             </div>
           </div>
         )}
 
+        {/* 5. WOFF & HOFF Tab */}
         {activeTab === 'woff' && (
           <div className="space-y-6">
-            {/* Sandwich Absence Rules — Weekly Off */}
-            <div className="border border-gray-200 rounded-xl p-6">
-              <h2 className="text-[20px] font-bold text-[#1b2559] mb-6">Sandwich Absence Rules — Weekly Off</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <label className="flex items-start gap-3 px-4 py-3.5 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors">
-                  <div className="relative flex items-center justify-center mt-0.5 shrink-0">
-                    <input type="checkbox" defaultChecked className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#225091] checked:border-[#225091] transition-colors cursor-pointer" />
-                    <svg className="absolute w-3.5 h-3.5 text-white pointer-events-none hidden peer-checked:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="text-[15px] text-gray-700 font-medium leading-tight">Absent Before Weekly Off</span>
-                    <span className="text-[12px] text-gray-500 mt-1.5">Mark Absent If Employee Absent The Day Before WO.</span>
-                  </div>
-                </label>
+            <h3 className="text-base font-bold text-gray-900">Weekly Off & Holiday Rules</h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <label className="flex items-center gap-3 p-3.5 bg-gray-50/70 border border-gray-100 rounded-xl cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  checked={woffHoff.sandwichWeeklyOff}
+                  onChange={e => setWoffHoff(prev => ({ ...prev, sandwichWeeklyOff: e.target.checked }))}
+                  className="w-4 h-4 rounded border-gray-300 text-[#225091] focus:ring-[#225091]"
+                />
+                <span className="text-xs font-bold text-gray-800">Sandwich Absence on Weekly Off</span>
+              </label>
 
-                <label className="flex items-start gap-3 px-4 py-3.5 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors">
-                  <div className="relative flex items-center justify-center mt-0.5 shrink-0">
-                    <input type="checkbox" defaultChecked className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#225091] checked:border-[#225091] transition-colors cursor-pointer" />
-                    <svg className="absolute w-3.5 h-3.5 text-white pointer-events-none hidden peer-checked:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="text-[15px] text-gray-700 font-medium leading-tight">Absent After Weekly Off</span>
-                    <span className="text-[12px] text-gray-500 mt-1.5">Mark Absent If Employee Absent The Day After WO.</span>
-                  </div>
-                </label>
+              <label className="flex items-center gap-3 p-3.5 bg-gray-50/70 border border-gray-100 rounded-xl cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  checked={woffHoff.sandwichHoliday}
+                  onChange={e => setWoffHoff(prev => ({ ...prev, sandwichHoliday: e.target.checked }))}
+                  className="w-4 h-4 rounded border-gray-300 text-[#225091] focus:ring-[#225091]"
+                />
+                <span className="text-xs font-bold text-gray-800">Sandwich Absence on Holidays</span>
+              </label>
 
-                <label className="flex items-start gap-3 px-4 py-3.5 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors">
-                  <div className="relative flex items-center justify-center mt-0.5 shrink-0">
-                    <input type="checkbox" className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#225091] checked:border-[#225091] transition-colors cursor-pointer" />
-                    <svg className="absolute w-3.5 h-3.5 text-white pointer-events-none hidden peer-checked:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="text-[15px] text-gray-700 font-medium leading-tight">Absent Before Or After Weekly Off</span>
-                    <span className="text-[12px] text-gray-500 mt-1.5">Either Side Triggers WO Absent.</span>
-                  </div>
-                </label>
+              <label className="flex items-center gap-3 p-3.5 bg-gray-50/70 border border-gray-100 rounded-xl cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  checked={woffHoff.holidayEncashment}
+                  onChange={e => setWoffHoff(prev => ({ ...prev, holidayEncashment: e.target.checked }))}
+                  className="w-4 h-4 rounded border-gray-300 text-[#225091] focus:ring-[#225091]"
+                />
+                <span className="text-xs font-bold text-gray-800">Allow Holiday Encashment</span>
+              </label>
 
-                <label className="flex items-center gap-3 px-4 py-3.5 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors h-fit">
-                  <div className="relative flex items-center justify-center shrink-0">
-                    <input type="checkbox" className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#225091] checked:border-[#225091] transition-colors cursor-pointer" />
-                    <svg className="absolute w-3.5 h-3.5 text-white pointer-events-none hidden peer-checked:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                  </div>
-                  <span className="text-[15px] text-gray-700 font-medium">Add Working Hrs On Weekly Off Day</span>
-                </label>
-
-                <label className="flex items-center gap-3 px-4 py-3.5 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors h-fit">
-                  <div className="relative flex items-center justify-center shrink-0">
-                    <input type="checkbox" className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#225091] checked:border-[#225091] transition-colors cursor-pointer" />
-                    <svg className="absolute w-3.5 h-3.5 text-white pointer-events-none hidden peer-checked:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                  </div>
-                  <span className="text-[15px] text-gray-700 font-medium">Late Deduction Not Applied On WO If Present</span>
-                </label>
-              </div>
+              <label className="flex items-center gap-3 p-3.5 bg-gray-50/70 border border-gray-100 rounded-xl cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  checked={woffHoff.compOffAllowed}
+                  onChange={e => setWoffHoff(prev => ({ ...prev, compOffAllowed: e.target.checked }))}
+                  className="w-4 h-4 rounded border-gray-300 text-[#225091] focus:ring-[#225091]"
+                />
+                <span className="text-xs font-bold text-gray-800">Enable Compensatory Off Entitlement</span>
+              </label>
             </div>
 
-            {/* Sandwich Absence Rules — Holiday */}
-            <div className="border border-gray-200 rounded-xl p-6">
-              <h2 className="text-[20px] font-bold text-[#1b2559] mb-6">Sandwich Absence Rules — Holiday</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <label className="flex items-center gap-3 px-4 py-3.5 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors h-fit">
-                  <div className="relative flex items-center justify-center shrink-0">
-                    <input type="checkbox" className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#225091] checked:border-[#225091] transition-colors cursor-pointer" />
-                    <svg className="absolute w-3.5 h-3.5 text-white pointer-events-none hidden peer-checked:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                  </div>
-                  <span className="text-[15px] text-gray-700 font-medium">Absent Before Holiday</span>
-                </label>
-
-                <label className="flex items-center gap-3 px-4 py-3.5 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors h-fit">
-                  <div className="relative flex items-center justify-center shrink-0">
-                    <input type="checkbox" className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#225091] checked:border-[#225091] transition-colors cursor-pointer" />
-                    <svg className="absolute w-3.5 h-3.5 text-white pointer-events-none hidden peer-checked:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                  </div>
-                  <span className="text-[15px] text-gray-700 font-medium">Absent After Holiday</span>
-                </label>
-
-                <label className="flex items-center gap-3 px-4 py-3.5 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors h-fit">
-                  <div className="relative flex items-center justify-center shrink-0">
-                    <input type="checkbox" className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#225091] checked:border-[#225091] transition-colors cursor-pointer" />
-                    <svg className="absolute w-3.5 h-3.5 text-white pointer-events-none hidden peer-checked:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                  </div>
-                  <span className="text-[15px] text-gray-700 font-medium">Absent Before & After Holiday</span>
-                </label>
-
-                <label className="flex items-center gap-3 px-4 py-3.5 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors h-fit">
-                  <div className="relative flex items-center justify-center shrink-0">
-                    <input type="checkbox" className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#225091] checked:border-[#225091] transition-colors cursor-pointer" />
-                    <svg className="absolute w-3.5 h-3.5 text-white pointer-events-none hidden peer-checked:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                  </div>
-                  <span className="text-[15px] text-gray-700 font-medium">Add Working Hours On Holiday Day</span>
-                </label>
-
-                <label className="flex items-center gap-3 px-4 py-3.5 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors h-fit">
-                  <div className="relative flex items-center justify-center shrink-0">
-                    <input type="checkbox" className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#225091] checked:border-[#225091] transition-colors cursor-pointer" />
-                    <svg className="absolute w-3.5 h-3.5 text-white pointer-events-none hidden peer-checked:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                  </div>
-                  <span className="text-[15px] text-gray-700 font-medium">Late Deduction Not Applied On Holiday If Present</span>
-                </label>
-              </div>
-            </div>
-
-            {/* Leave Between Holiday Or Weekly Off */}
-            <div className="border border-gray-200 rounded-xl p-6">
-              <h2 className="text-[20px] font-bold text-[#1b2559] mb-6">Leave Between Holiday Or Weekly Off</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <label className="flex items-center gap-3 px-4 py-3.5 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors h-fit">
-                  <div className="relative flex items-center justify-center shrink-0">
-                    <input type="checkbox" defaultChecked className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#225091] checked:border-[#225091] transition-colors cursor-pointer" />
-                    <svg className="absolute w-3.5 h-3.5 text-white pointer-events-none hidden peer-checked:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                  </div>
-                  <span className="text-[15px] text-gray-700 font-medium">Consider "Weekly Off" In Leave Application</span>
-                </label>
-
-                <label className="flex items-center gap-3 px-4 py-3.5 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors h-fit">
-                  <div className="relative flex items-center justify-center shrink-0">
-                    <input type="checkbox" defaultChecked className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#225091] checked:border-[#225091] transition-colors cursor-pointer" />
-                    <svg className="absolute w-3.5 h-3.5 text-white pointer-events-none hidden peer-checked:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                  </div>
-                  <span className="text-[15px] text-gray-700 font-medium">Consider "Holiday" In Leave Application</span>
-                </label>
-
-                <label className="flex items-center gap-3 px-4 py-3.5 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors h-fit">
-                  <div className="relative flex items-center justify-center shrink-0">
-                    <input type="checkbox" defaultChecked className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#225091] checked:border-[#225091] transition-colors cursor-pointer" />
-                    <svg className="absolute w-3.5 h-3.5 text-white pointer-events-none hidden peer-checked:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                  </div>
-                  <span className="text-[15px] text-gray-700 font-medium">Absent — WO — Leave = WO Absent</span>
-                </label>
-
-                <label className="flex items-center gap-3 px-4 py-3.5 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors h-fit">
-                  <div className="relative flex items-center justify-center shrink-0">
-                    <input type="checkbox" className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#225091] checked:border-[#225091] transition-colors cursor-pointer" />
-                    <svg className="absolute w-3.5 h-3.5 text-white pointer-events-none hidden peer-checked:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                  </div>
-                  <span className="text-[15px] text-gray-700 font-medium">Leave — WO — Absent = WO Absent</span>
-                </label>
-
-                <label className="flex items-center gap-3 px-4 py-3.5 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors h-fit">
-                  <div className="relative flex items-center justify-center shrink-0">
-                    <input type="checkbox" className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#225091] checked:border-[#225091] transition-colors cursor-pointer" />
-                    <svg className="absolute w-3.5 h-3.5 text-white pointer-events-none hidden peer-checked:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                  </div>
-                  <span className="text-[15px] text-gray-700 font-medium">Absent — Holiday — Leave = Holiday Absent</span>
-                </label>
-
-                <label className="flex items-center gap-3 px-4 py-3.5 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors h-fit">
-                  <div className="relative flex items-center justify-center shrink-0">
-                    <input type="checkbox" className="peer w-5 h-5 rounded-[4px] border-2 border-gray-300 appearance-none checked:bg-[#225091] checked:border-[#225091] transition-colors cursor-pointer" />
-                    <svg className="absolute w-3.5 h-3.5 text-white pointer-events-none hidden peer-checked:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                  </div>
-                  <span className="text-[15px] text-gray-700 font-medium">Leave — Holiday — Absent = Holiday Absent</span>
-                </label>
-              </div>
+            <div className="flex justify-end pt-4">
+              <button 
+                onClick={() => handleSaveSection('woff')}
+                disabled={saving}
+                className="bg-[#225091] hover:bg-[#193e6f] text-white px-5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer shadow-xs"
+              >
+                <Save size={14} /> Save WOFF / HOFF Rules
+              </button>
             </div>
           </div>
         )}
-      </div>
 
-      {/* Actions */}
-      <div className="flex justify-end items-center gap-4 pt-2">
-        <Link
-          to="/managers"
-          className="px-10 py-3 rounded-full border-[1.5px] border-[#225091] text-[#225091] bg-white hover:bg-teal-50 font-semibold transition-colors text-[15px]"
-        >
-          Cancel
-        </Link>
-        <button
-          type="button"
-          onClick={handleSave}
-          className="px-10 py-3 rounded-full bg-[#225091] hover:bg-[#168f94] text-white font-semibold transition-colors shadow-sm text-[15px] cursor-pointer"
-        >
-          Save Changes
-        </button>
+        {/* 6. KRA Settings Tab */}
+        {activeTab === 'kra' && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h3 className="text-base font-bold text-gray-900">KRA Target Targets</h3>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-gray-500 uppercase">Year:</span>
+                <select 
+                  value={kra.year}
+                  onChange={e => setKra(prev => ({ ...prev, year: Number(e.target.value) }))}
+                  className="px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-bold text-gray-800 bg-white"
+                >
+                  <option value={2026}>2026</option>
+                  <option value={2025}>2025</option>
+                  <option value={2027}>2027</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              {kra.targets.map((tgt, idx) => (
+                <div key={idx} className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 p-3.5 bg-slate-50 border border-gray-100 rounded-xl">
+                  <div className="flex-1">
+                    <label className="block text-[11px] font-bold text-gray-600 mb-1">Product</label>
+                    <select 
+                      value={tgt.product}
+                      onChange={e => {
+                        const val = e.target.value;
+                        setKra(prev => {
+                          const updated = [...prev.targets];
+                          updated[idx].product = val;
+                          return { ...prev, targets: updated };
+                        });
+                      }}
+                      className="w-full px-3 py-2 rounded-lg border border-gray-200 text-xs text-gray-800 bg-white"
+                    >
+                      {ALL_KPA_PRODUCTS.map(p => (
+                        <option key={p} value={p}>{p}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="w-32">
+                    <label className="block text-[11px] font-bold text-gray-600 mb-1">Target Type</label>
+                    <select 
+                      value={tgt.targetType}
+                      onChange={e => {
+                        const val = e.target.value;
+                        setKra(prev => {
+                          const updated = [...prev.targets];
+                          updated[idx].targetType = val;
+                          return { ...prev, targets: updated };
+                        });
+                      }}
+                      className="w-full px-3 py-2 rounded-lg border border-gray-200 text-xs text-gray-800 bg-white"
+                    >
+                      <option value="AMOUNT">AMOUNT (₹)</option>
+                      <option value="COUNT">COUNT</option>
+                    </select>
+                  </div>
+
+                  <div className="flex-1">
+                    <label className="block text-[11px] font-bold text-gray-600 mb-1">Target Value</label>
+                    <input 
+                      type="number" 
+                      value={tgt.targetValue}
+                      onChange={e => {
+                        const val = Number(e.target.value) || 0;
+                        setKra(prev => {
+                          const updated = [...prev.targets];
+                          updated[idx].targetValue = val;
+                          return { ...prev, targets: updated };
+                        });
+                      }}
+                      placeholder="e.g. 500000"
+                      className="w-full px-3 py-2 rounded-lg border border-gray-200 text-xs text-gray-800 bg-white"
+                    />
+                  </div>
+
+                  <button 
+                    type="button"
+                    onClick={() => {
+                      setKra(prev => ({
+                        ...prev,
+                        targets: prev.targets.filter((_, i) => i !== idx)
+                      }));
+                    }}
+                    className="p-2 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer self-end sm:self-center mt-2 sm:mt-5"
+                    title="Remove Target"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              ))}
+
+              <button 
+                type="button"
+                onClick={() => {
+                  setKra(prev => ({
+                    ...prev,
+                    targets: [...prev.targets, { product: 'Loan Disbursement', targetType: 'AMOUNT', targetValue: 500000 }]
+                  }));
+                }}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-[#225091] bg-blue-50 border border-blue-100 hover:bg-blue-100 transition-colors cursor-pointer"
+              >
+                <Plus size={14} /> Add Product Target
+              </button>
+            </div>
+
+            <div className="flex justify-end pt-4">
+              <button 
+                onClick={() => handleSaveSection('kra')}
+                disabled={saving}
+                className="bg-[#225091] hover:bg-[#193e6f] text-white px-5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer shadow-xs"
+              >
+                <Save size={14} /> Save KRA Targets
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Global Save All Bar */}
+        <div className="pt-6 border-t border-gray-100 flex items-center justify-between gap-4">
+          <Link 
+            to="/branch"
+            className="px-5 py-2.5 border border-gray-200 text-gray-600 hover:bg-gray-50 rounded-xl text-xs font-bold transition-all cursor-pointer"
+          >
+            Cancel
+          </Link>
+          <button 
+            onClick={handleSaveAll}
+            disabled={saving}
+            className="bg-[#225091] hover:bg-[#173b6a] text-white px-6 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shadow-xs cursor-pointer disabled:opacity-50"
+          >
+            <CheckCircle2 size={16} /> {saving ? "Saving Changes..." : "Save All Changes"}
+          </button>
+        </div>
+
       </div>
     </div>
   );

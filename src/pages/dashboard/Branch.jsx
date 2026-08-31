@@ -1,6 +1,24 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { toast } from 'react-toastify';
-import { Search, Edit, Trash2, ChevronRight, SlidersHorizontal, ChevronDown, X, ArrowRight, ArrowLeft, Eye, EyeOff } from 'lucide-react';
+import { 
+  Search, 
+  Edit, 
+  Trash2, 
+  ChevronRight, 
+  SlidersHorizontal, 
+  ChevronDown, 
+  X, 
+  ArrowRight, 
+  ArrowLeft, 
+  Eye, 
+  EyeOff,
+  Building2,
+  CreditCard,
+  ShieldCheck,
+  Users,
+  Store,
+  RotateCcw
+} from 'lucide-react';
 import { Link } from 'react-router-dom';
 import CardCreditSettingsModal from '../../components/modals/CardCreditSettingsModal';
 import { branchService } from '../../api/branchService';
@@ -50,6 +68,7 @@ const ALL_INDIAN_STATES = Object.keys(INDIAN_STATES_WITH_CITIES).sort((a, b) => 
 
 const Branch = () => {
   const [branches, setBranches] = useState([]);
+  const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
@@ -59,10 +78,10 @@ const Branch = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [openFilterDropdown, setOpenFilterDropdown] = useState(null);
-  const [filterState, setFilterState] = useState([]); // Array of selected states
-  const [activeFilters, setActiveFilters] = useState([]); // Applied filters
+  // Search & Filter State
+  const [selectedStatus, setSelectedStatus] = useState('');
+  const [selectedState, setSelectedState] = useState('');
+  const [selectedCity, setSelectedCity] = useState('');
   
   // Modals state
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -74,6 +93,7 @@ const Branch = () => {
   // Locations Data (State and City mapping)
   const [locationsData, setLocationsData] = useState({
     states: ALL_INDIAN_STATES,
+    cities: [],
     stateCitiesMap: {}
   });
 
@@ -83,28 +103,43 @@ const Branch = () => {
         const res = await branchService.getAvailableLocations();
         const data = res?.data || res || {};
         const apiStates = Array.isArray(data?.states) ? data.states : (Array.isArray(data?.availableStates) ? data.availableStates : []);
+        const apiCities = Array.isArray(data?.cities) ? data.cities : [];
         const rawMap = data?.stateCitiesMap || data?.stateCityMap || {};
         const stateCityMap = (typeof rawMap === 'object' && rawMap !== null) ? rawMap : {};
         const combinedStates = Array.from(new Set([...apiStates, ...ALL_INDIAN_STATES])).sort((a, b) => a.localeCompare(b));
         setLocationsData({ 
           states: combinedStates.length > 0 ? combinedStates : ALL_INDIAN_STATES, 
+          cities: apiCities,
           stateCitiesMap: stateCityMap 
         });
       } catch (err) {
         console.warn("Failed to fetch available locations for branches:", err);
-        setLocationsData({ states: ALL_INDIAN_STATES, stateCitiesMap: {} });
+        setLocationsData({ states: ALL_INDIAN_STATES, cities: [], stateCitiesMap: {} });
       }
     };
     fetchLocations();
   }, []);
 
-  // Helper to get all cities for selected state (combining dictionary and API)
-  const getCitiesForState = (stateName) => {
-    if (!stateName) return [];
-    const fromDictionary = INDIAN_STATES_WITH_CITIES[stateName] || [];
-    const fromApi = (locationsData?.stateCitiesMap && locationsData.stateCitiesMap[stateName]) || [];
-    return Array.from(new Set([...fromDictionary, ...fromApi])).sort((a, b) => a.localeCompare(b));
-  };
+  // Available States List
+  const statesList = useMemo(() => {
+    if (locationsData.states && locationsData.states.length > 0) {
+      return locationsData.states;
+    }
+    return ALL_INDIAN_STATES;
+  }, [locationsData.states]);
+
+  // Cascading Available Cities for the Selected State
+  const availableCities = useMemo(() => {
+    if (!selectedState) {
+      return locationsData.cities && locationsData.cities.length > 0
+        ? locationsData.cities
+        : [];
+    }
+    const fromDictionary = INDIAN_STATES_WITH_CITIES[selectedState] || [];
+    const fromApi = (locationsData.stateCitiesMap && locationsData.stateCitiesMap[selectedState]) || [];
+    const combined = Array.from(new Set([...fromDictionary, ...fromApi])).sort((a, b) => a.localeCompare(b));
+    return combined.length > 0 ? combined : (locationsData.cities || []);
+  }, [selectedState, locationsData]);
   
   // Create Modal State
   const [createStep, setCreateStep] = useState(1);
@@ -127,8 +162,10 @@ const Branch = () => {
     setLoading(true);
     try {
       const params = { page, limit: 10 };
-      if (debouncedSearch) params.search = debouncedSearch;
-      if (activeFilters.length > 0) params.state = activeFilters.join(',');
+      if (debouncedSearch.trim()) params.search = debouncedSearch.trim();
+      if (selectedStatus) params.status = selectedStatus;
+      if (selectedState) params.state = selectedState;
+      if (selectedCity) params.city = selectedCity;
       
       const response = await branchService.list(params);
       let branchList = [];
@@ -149,6 +186,12 @@ const Branch = () => {
           branchList = response.items;
         }
         
+        if (response.data?.stats) {
+          setStats(response.data.stats);
+        } else if (response.stats) {
+          setStats(response.stats);
+        }
+
         const total = 
           response.meta?.totalPages || 
           response.pagination?.totalPages || 
@@ -164,6 +207,7 @@ const Branch = () => {
       console.error("Failed to fetch branches", err);
       setError("Failed to load branches.");
       setBranches([]);
+      setStats(null);
     } finally {
       setLoading(false);
     }
@@ -171,24 +215,18 @@ const Branch = () => {
 
   useEffect(() => {
     fetchBranches();
-  }, [page, debouncedSearch, activeFilters]);
+  }, [page, debouncedSearch, selectedStatus, selectedState, selectedCity]);
 
-  const toggleFilter = (setter, value) => {
-    setter(prev => prev.includes(value) ? prev.filter(v => v !== value) : [...prev, value]);
+  const handleResetFilters = () => {
+    setSearchTerm('');
+    setDebouncedSearch('');
+    setSelectedStatus('');
+    setSelectedState('');
+    setSelectedCity('');
+    setPage(1);
   };
 
-  const applyFilters = () => {
-    setActiveFilters(filterState);
-    setPage(1);
-    setIsFilterOpen(false);
-  };
-  
-  const resetFilters = () => {
-    setFilterState([]);
-    setActiveFilters([]);
-    setPage(1);
-    setIsFilterOpen(false);
-  };
+  const hasActiveFilters = Boolean(debouncedSearch.trim()) || Boolean(selectedStatus) || Boolean(selectedState) || Boolean(selectedCity);
 
   const handleCreateChange = (section, field, value) => {
     setCreateForm(prev => ({
@@ -519,119 +557,236 @@ const Branch = () => {
         ]}
       />
 
-      {/* Action Bar */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 w-full sm:w-auto">
-          <div className="relative w-full sm:w-80">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Search size={18} className="text-gray-400" />
-            </div>
-            <input
-              type="text"
-              className="block w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#225091] focus:border-[#225091] text-sm"
-              placeholder="Search branches..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+      {/* 5 Stats Overview Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        {/* Card 1: Total Branches */}
+        <div className="bg-white rounded-2xl p-4.5 border border-gray-100 shadow-2xs flex items-center justify-between">
+          <div>
+            <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Total Branches</p>
+            <h3 className="text-xl font-black text-[#1b2559] tabular-nums">
+              {stats?.totalBranches ?? branches.length}
+            </h3>
           </div>
-          <div className="relative w-full sm:w-auto">
-            <button 
-              onClick={() => setIsFilterOpen(!isFilterOpen)}
-              className="flex items-center justify-center p-2.5 border border-gray-200 rounded-lg text-gray-500 hover:bg-gray-50 transition-colors focus:outline-none bg-white w-full sm:w-auto"
-            >
-              <SlidersHorizontal size={18} />
-              {activeFilters.length > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-[#225091] rounded-full border border-white flex items-center justify-center text-[9px] text-white font-bold">
-                  {activeFilters.length}
-                </span>
-              )}
-            </button>
-            
-            {isFilterOpen && (
-              <div className="absolute z-20 top-full left-0 sm:left-auto sm:right-0 mt-2 w-72 bg-[#f8f9fb] border border-gray-100 rounded-2xl shadow-xl p-5">
-                <div className="flex justify-between items-center mb-5">
-                  <h3 className="font-bold text-gray-800 text-[16px]">Filter</h3>
-                  <button onClick={() => setIsFilterOpen(false)} className="text-gray-500 hover:text-gray-800 transition-colors">
-                    <X size={22} />
-                  </button>
-                </div>
-
-                <div className="space-y-4 mb-6">
-                  {/* State/UT Dropdown */}
-                  <div className="relative">
-                    <div 
-                      className="w-full px-4 py-3 rounded-xl border border-gray-200 flex justify-between items-center cursor-pointer bg-white"
-                      onClick={() => setOpenFilterDropdown(openFilterDropdown === 'state' ? null : 'state')}
-                    >
-                      <span className="text-gray-600 text-[14px] font-medium">
-                        {filterState.length > 0 ? `${filterState.length} State${filterState.length > 1 ? 's' : ''} Selected` : "State/UT"}
-                      </span>
-                      <ChevronDown size={18} className={`text-gray-400 transition-transform ${openFilterDropdown === 'state' ? 'rotate-180' : ''}`} />
-                    </div>
-                    {openFilterDropdown === 'state' && (
-                      <div className="mt-2 w-full bg-white border border-gray-200 rounded-xl shadow-sm py-2 flex flex-col gap-1 max-h-52 overflow-y-auto">
-                        {(Array.isArray(locationsData?.states) && locationsData.states.length > 0 ? locationsData.states : ALL_INDIAN_STATES).map(opt => (
-                          <label 
-                            key={opt} 
-                            className="flex items-center gap-3 px-3 py-1.5 hover:bg-gray-50 cursor-pointer"
-                          >
-                            <div className="relative flex items-center justify-center">
-                              <input 
-                                type="checkbox" 
-                                className="w-4 h-4 rounded-[4px] border-2 border-gray-400 appearance-none checked:bg-[#225091] checked:border-[#225091] transition-colors cursor-pointer"
-                                checked={filterState.includes(opt)}
-                                onChange={() => toggleFilter(setFilterState, opt)}
-                              />
-                              {filterState.includes(opt) && (
-                                <svg className="absolute w-3 h-3 text-white pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                                  <polyline points="20 6 9 17 4 12"></polyline>
-                                </svg>
-                              )}
-                            </div>
-                            <span className="text-[13px] font-medium text-gray-700">{opt}</span>
-                          </label>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="flex gap-3">
-                  <button 
-                    className="flex-1 py-2.5 rounded-full border-[1.5px] border-[#225091] text-[#225091] font-semibold hover:bg-teal-50 transition-colors focus:outline-none text-sm bg-white"
-                    onClick={resetFilters}
-                  >
-                    Reset Filter
-                  </button>
-                  <button 
-                    className="flex-1 py-2.5 rounded-full bg-[#225091] text-white font-semibold hover:bg-[#168f94] transition-colors focus:outline-none text-sm shadow-sm"
-                    onClick={applyFilters}
-                  >
-                    Set Filter
-                  </button>
-                </div>
-              </div>
-            )}
+          <div className="w-11 h-11 rounded-xl bg-blue-50 text-[#225091] border border-blue-100 flex items-center justify-center shrink-0 shadow-2xs">
+            <Building2 size={20} />
           </div>
         </div>
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center w-full sm:w-auto gap-3">
-          <button 
-            onClick={() => setIsCardCreditModalOpen(true)}
-            className="border-[1.5px] border-[#225091] text-[#225091] hover:bg-teal-50 bg-white px-5 py-2.5 rounded-full font-semibold transition-colors text-sm shadow-sm flex-shrink-0"
-          >
-            Card & Credit Settings
-          </button>
-          <button 
-            onClick={() => { setCreateStep(1); setIsCreateModalOpen(true); }}
-            className="bg-[#225091] hover:bg-[#159a9f] text-white px-5 py-2.5 rounded-full font-semibold transition-colors text-sm shadow-sm flex-shrink-0"
-          >
-            + Create Branch
-          </button>
+
+        {/* Card 2: Available Card Stock */}
+        <div className="bg-white rounded-2xl p-4.5 border border-gray-100 shadow-2xs flex items-center justify-between">
+          <div>
+            <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Available Card Stock</p>
+            <h3 className="text-xl font-black text-emerald-600 tabular-nums">
+              {stats?.availableCardStock !== undefined ? stats.availableCardStock.toLocaleString('en-IN') : 0}
+            </h3>
+          </div>
+          <div className="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center justify-center shrink-0 shadow-2xs">
+            <CreditCard size={20} />
+          </div>
+        </div>
+
+        {/* Card 3: Verification Credits */}
+        <div className="bg-white rounded-2xl p-4.5 border border-gray-100 shadow-2xs flex items-center justify-between">
+          <div>
+            <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Verification Credits</p>
+            <h3 className="text-xl font-black text-amber-600 tabular-nums">
+              {stats?.availableVerificationCredits !== undefined ? stats.availableVerificationCredits.toLocaleString('en-IN') : 0}
+            </h3>
+          </div>
+          <div className="w-11 h-11 rounded-xl bg-amber-50 text-amber-600 border border-amber-100 flex items-center justify-center shrink-0 shadow-2xs">
+            <ShieldCheck size={20} />
+          </div>
+        </div>
+
+        {/* Card 4: Total Employees */}
+        <div className="bg-white rounded-2xl p-4.5 border border-gray-100 shadow-2xs flex items-center justify-between">
+          <div>
+            <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Total Employees</p>
+            <h3 className="text-xl font-black text-indigo-600 tabular-nums">
+              {stats?.totalEmployees !== undefined ? stats.totalEmployees.toLocaleString('en-IN') : 0}
+            </h3>
+          </div>
+          <div className="w-11 h-11 rounded-xl bg-indigo-50 text-indigo-600 border border-indigo-100 flex items-center justify-center shrink-0 shadow-2xs">
+            <Users size={20} />
+          </div>
+        </div>
+
+        {/* Card 5: Total Merchants */}
+        <div className="bg-white rounded-2xl p-4.5 border border-gray-100 shadow-2xs flex items-center justify-between">
+          <div>
+            <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Total Merchants</p>
+            <h3 className="text-xl font-black text-purple-600 tabular-nums">
+              {stats?.totalMerchants !== undefined ? stats.totalMerchants.toLocaleString('en-IN') : 0}
+            </h3>
+          </div>
+          <div className="w-11 h-11 rounded-xl bg-purple-50 text-purple-600 border border-purple-100 flex items-center justify-center shrink-0 shadow-2xs">
+            <Store size={20} />
+          </div>
         </div>
       </div>
 
-      {/* Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      {/* Filter Toolbar Card (Matching Employee module standard) */}
+      <div className="bg-white rounded-2xl p-4 shadow-xs border border-gray-100 space-y-3.5">
+        {/* Top Search & Action Row */}
+        <div className="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-3">
+          <div className="relative flex-1">
+            <Search
+              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+              size={17}
+            />
+            <input
+              type="text"
+              placeholder="Search by branch name, code, email, phone, city..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-9 py-2.5 bg-gray-50/70 hover:bg-gray-50 focus:bg-white border border-gray-200 rounded-xl text-xs text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all shadow-2xs"
+            />
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
+              >
+                <X size={15} />
+              </button>
+            )}
+          </div>
+
+          <div className="flex items-center gap-2.5 flex-wrap">
+            {hasActiveFilters && (
+              <button
+                onClick={handleResetFilters}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2.5 text-xs font-bold text-gray-600 hover:text-rose-600 bg-gray-50 hover:bg-rose-50 rounded-xl border border-gray-200 transition-colors cursor-pointer shadow-2xs"
+                title="Reset all filters"
+              >
+                <RotateCcw size={14} />
+                <span>Reset</span>
+              </button>
+            )}
+
+            <button
+              onClick={() => setIsCardCreditModalOpen(true)}
+              className="border border-[#225091] text-[#225091] hover:bg-blue-50 bg-white px-4 py-2.5 rounded-xl font-bold transition-all text-xs shadow-2xs flex-shrink-0 cursor-pointer"
+            >
+              Card & Credit Settings
+            </button>
+            <button
+              onClick={() => { setCreateStep(1); setIsCreateModalOpen(true); }}
+              className="bg-[#225091] hover:bg-[#183f72] text-white px-4.5 py-2.5 rounded-xl font-bold transition-all text-xs shadow-2xs flex-shrink-0 cursor-pointer"
+            >
+              + Create Branch
+            </button>
+          </div>
+        </div>
+
+        {/* Bottom Inline Filter Controls: Status -> State / Region -> City */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2.5 border-t border-gray-100">
+          {/* 1. Status Filter */}
+          <div className="relative">
+            <select
+              value={selectedStatus}
+              onChange={(e) => {
+                setSelectedStatus(e.target.value);
+                setPage(1);
+              }}
+              className="w-full px-3.5 py-2 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-xs font-semibold text-gray-700 shadow-2xs cursor-pointer"
+            >
+              <option value="">All Statuses (Active & Inactive)</option>
+              <option value="ACTIVE">Active Branches</option>
+              <option value="INACTIVE">Inactive / Deactivated</option>
+            </select>
+          </div>
+
+          {/* 2. State / Region Filter */}
+          <div className="relative">
+            <select
+              value={selectedState}
+              onChange={(e) => {
+                const st = e.target.value;
+                setSelectedState(st);
+                setSelectedCity('');
+                setPage(1);
+              }}
+              className="w-full px-3.5 py-2 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-xs font-semibold text-gray-700 shadow-2xs cursor-pointer"
+            >
+              <option value="">All States / Regions</option>
+              {statesList.map((st) => (
+                <option key={st} value={st}>
+                  {st}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* 3. City Filter (Cascading) */}
+          <div className="relative">
+            <select
+              value={selectedCity}
+              onChange={(e) => {
+                setSelectedCity(e.target.value);
+                setPage(1);
+              }}
+              className="w-full px-3.5 py-2 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-xs font-semibold text-gray-700 shadow-2xs cursor-pointer"
+            >
+              <option value="">{selectedState ? `All Cities in ${selectedState}` : 'All Cities'}</option>
+              {availableCities.map((ct) => (
+                <option key={ct} value={ct}>
+                  {ct}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {/* Active Filter Chips Bar */}
+        {hasActiveFilters && (
+          <div className="pt-2 border-t border-gray-100 flex items-center justify-between gap-3 flex-wrap text-xs">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="font-bold text-gray-600 text-[11px]">Active:</span>
+              {selectedStatus && (
+                <span className="bg-blue-50 text-[#225091] border border-blue-200 px-2.5 py-0.5 rounded-md text-[11px] font-semibold flex items-center gap-1.5 shadow-2xs">
+                  Status: {selectedStatus}
+                  <button onClick={() => { setSelectedStatus(''); setPage(1); }} className="hover:text-red-500 cursor-pointer">
+                    <X size={12} />
+                  </button>
+                </span>
+              )}
+              {selectedState && (
+                <span className="bg-blue-50 text-[#225091] border border-blue-200 px-2.5 py-0.5 rounded-md text-[11px] font-semibold flex items-center gap-1.5 shadow-2xs">
+                  State: {selectedState}
+                  <button onClick={() => { setSelectedState(''); setSelectedCity(''); setPage(1); }} className="hover:text-red-500 cursor-pointer">
+                    <X size={12} />
+                  </button>
+                </span>
+              )}
+              {selectedCity && (
+                <span className="bg-blue-50 text-[#225091] border border-blue-200 px-2.5 py-0.5 rounded-md text-[11px] font-semibold flex items-center gap-1.5 shadow-2xs">
+                  City: {selectedCity}
+                  <button onClick={() => { setSelectedCity(''); setPage(1); }} className="hover:text-red-500 cursor-pointer">
+                    <X size={12} />
+                  </button>
+                </span>
+              )}
+              {debouncedSearch && (
+                <span className="bg-blue-50 text-[#225091] border border-blue-200 px-2.5 py-0.5 rounded-md text-[11px] font-semibold flex items-center gap-1.5 shadow-2xs">
+                  Search: "{debouncedSearch}"
+                  <button onClick={() => { setSearchTerm(''); setDebouncedSearch(''); setPage(1); }} className="hover:text-red-500 cursor-pointer">
+                    <X size={12} />
+                  </button>
+                </span>
+              )}
+            </div>
+            <button
+              onClick={handleResetFilters}
+              className="text-[11px] text-rose-600 hover:text-rose-800 font-bold underline cursor-pointer"
+            >
+              Clear All
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Table Card */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm whitespace-nowrap">
             <thead className="bg-[#F8FAFC] text-gray-600 text-xs uppercase tracking-wider font-semibold border-b border-gray-200/80">
@@ -689,18 +844,30 @@ const Branch = () => {
                         const managerData = branch.branchManager || branch.manager;
                         const mName = managerData?.fullName || managerData?.name || branch.managerName || managerData?.user?.name || managerData?.user?.fullName;
                         const mEmail = managerData?.email || branch.managerEmail || managerData?.user?.email;
+                        const bId = branch.id || branch._id;
                         return mName || mEmail ? (
-                          <div className="flex items-center gap-2.5">
-                            <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs shrink-0 bg-blue-50 text-[#225091] font-bold border border-blue-100 shadow-xs">
+                          <Link 
+                            to={`/managers/view/${bId}`}
+                            state={{ branch, manager: managerData }}
+                            className="flex items-center gap-2.5 hover:opacity-80 transition-opacity group cursor-pointer"
+                            title="View Branch Manager Profile"
+                          >
+                            <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs shrink-0 bg-blue-50 text-[#225091] font-bold border border-blue-100 shadow-2xs group-hover:scale-105 transition-transform">
                               {getInitials(mName || mEmail)}
                             </div>
                             <div className="flex flex-col">
-                              <span className="text-gray-900 font-semibold text-xs">{mName || 'Unnamed Manager'}</span>
+                              <span className="text-gray-900 font-semibold text-xs group-hover:text-[#225091] transition-colors">{mName || 'Unnamed Manager'}</span>
                               <span className="text-[11px] text-gray-500">{mEmail || ''}</span>
                             </div>
-                          </div>
+                          </Link>
                         ) : (
-                          <span className="text-gray-400 text-xs italic">No Manager</span>
+                          <Link
+                            to={`/managers/edit/${bId}`}
+                            state={{ branch }}
+                            className="text-xs text-blue-600 hover:underline font-semibold cursor-pointer"
+                          >
+                            + Assign Manager
+                          </Link>
                         );
                       })()}
                     </td>
@@ -713,16 +880,24 @@ const Branch = () => {
                     </td>
                     <td className="py-3.5 px-5">
                       <div className="flex items-center justify-center gap-1.5">
+                        <Link 
+                          to={`/managers/view/${branch.id || branch._id}`}
+                          state={{ branch }}
+                          className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold text-[#225091] bg-blue-50 hover:bg-blue-100 border border-blue-200/60 transition-all shadow-2xs cursor-pointer"
+                          title="View Manager HR Profile"
+                        >
+                          <Eye size={12} /> HR
+                        </Link>
                         <button 
                           onClick={() => handleOpenEdit(branch)}
-                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200/60 transition-all shadow-xs" 
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200/60 transition-all shadow-2xs cursor-pointer" 
                           title="Edit Branch"
                         >
                           <Edit size={13} /> Edit
                         </button>
                         <button 
                           onClick={() => { setSelectedBranch(branch); setIsDeleteModalOpen(true); }}
-                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200/60 transition-all shadow-xs" 
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200/60 transition-all shadow-2xs cursor-pointer" 
                           title="Delete Branch"
                         >
                           <Trash2 size={13} /> Delete
