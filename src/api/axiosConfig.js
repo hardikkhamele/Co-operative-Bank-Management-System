@@ -2,15 +2,17 @@ import axios from 'axios';
 import useAuthStore from '../store/authStore';
 import useLoadingStore from '../store/loadingStore';
 
-// Always prefer the relative '/api' proxy for both local Vite dev and Netlify production.
-// This routes all requests through Netlify / Vite proxy and completely eliminates CORS issues.
+// Always prefer the relative '/api' proxy for local Vite dev and proxy-enabled deployments.
+// This routes all requests through Vite / Netlify proxy and completely eliminates CORS issues.
 let apiBaseUrl = '/api';
-const envUrl = import.meta.env.VITE_API_URL;
 
-if (envUrl && !envUrl.includes('onrender.com') && envUrl !== '/api') {
-  const trimmed = envUrl.trim();
-  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
-    apiBaseUrl = trimmed.endsWith('/api') ? trimmed : `${trimmed.replace(/\/+$/, '')}/api`;
+if (!import.meta.env.DEV) {
+  const envUrl = import.meta.env.VITE_API_URL;
+  if (envUrl && !envUrl.includes('onrender.com') && envUrl !== '/api') {
+    const trimmed = envUrl.trim();
+    if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+      apiBaseUrl = trimmed.endsWith('/api') ? trimmed : `${trimmed.replace(/\/+$/, '')}/api`;
+    }
   }
 }
 

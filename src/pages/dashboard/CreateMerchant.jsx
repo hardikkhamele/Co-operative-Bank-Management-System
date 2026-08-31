@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft,  Eye, EyeOff, ChevronRight, UploadCloud, CheckCircle2, Store, MapPin, Building, CreditCard, X } from 'lucide-react';
+import { ArrowLeft,  Eye, EyeOff, ChevronRight, ChevronDown, UploadCloud, CheckCircle2, Store, MapPin, Building, CreditCard, X } from 'lucide-react';
 import { toast } from 'react-toastify';
 import PageHeader from '../../components/common/PageHeader';
 import { merchantService } from '../../api/merchantService';
@@ -93,12 +93,12 @@ const CreateMerchant = () => {
     });
 
     try {
-      const response = await merchantService.createMerchant(formData);
-      if (response.success) {
-        toast.success("Merchant created successfully.");
+      const response = await merchantService.create(formData);
+      if (response && (response.success || response.data)) {
+        toast.success(response.message || "Merchant created successfully.");
         navigate('/merchant');
       } else {
-        toast.error(response.message || response.error || "Failed to create merchant.");
+        toast.error(response?.message || "Failed to create merchant.");
       }
     } catch (error) {
       console.error("Create failed", error);
@@ -171,13 +171,13 @@ const CreateMerchant = () => {
               <div>
                 <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">Branch</label>
                 <div className="relative">
-                  <select name="branchId" defaultValue="" className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all bg-white appearance-none text-gray-500 shadow-sm text-[15px]">
-                    <option value="" disabled>Select Branch (Optional)</option>
+                  <select name="branchId" defaultValue="" className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all bg-white appearance-none text-gray-800 font-medium shadow-sm text-[15px] cursor-pointer">
+                    <option value="">Select Branch (Optional)</option>
                     {branches.map(branch => (
                       <option key={branch.id || branch._id} value={branch.id || branch._id}>{branch.name}</option>
                     ))}
                   </select>
-                  <ChevronRight size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none rotate-90" />
+                  <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
                 </div>
               </div>
 

@@ -51,28 +51,46 @@ const ViewMerchant = () => {
   const { id } = useParams();
   const [isLoading, setIsLoading] = useState(true);
   const [merchant, setMerchant] = useState(null);
+  const [isRestoreModalOpen, setIsRestoreModalOpen] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
+
+  const fetchMerchant = async () => {
+    try {
+      const response = await merchantService.getById(id);
+      if (response && (response.success || response.data)) {
+        setMerchant(response.data || response);
+      } else {
+        toast.error("Failed to load merchant details.");
+      }
+    } catch (error) {
+      console.error("Fetch merchant details failed", error);
+      toast.error("Error loading merchant details.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchMerchant = async () => {
-      try {
-        const response = await merchantService.getById(id);
-        if (response && (response.success || response.data)) {
-          setMerchant(response.data || response);
-        } else {
-          toast.error("Failed to load merchant details.");
-        }
-      } catch (error) {
-        console.error("Fetch merchant details failed", error);
-        toast.error("Error loading merchant details.");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
     if (id) {
       fetchMerchant();
     }
   }, [id]);
+
+  const handleRestoreMerchant = async () => {
+    const merchantId = merchant?.id || merchant?._id || merchant?.merchantId || id;
+    setActionLoading(true);
+    try {
+      const res = await merchantService.restore(merchantId);
+      toast.success(res?.message || "Merchant account restored successfully.");
+      setIsRestoreModalOpen(false);
+      fetchMerchant();
+    } catch (error) {
+      console.error("Restore failed:", error);
+      toast.error(error.response?.data?.message || "Failed to restore merchant.");
+    } finally {
+      setActionLoading(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -105,8 +123,13 @@ const ViewMerchant = () => {
   }
 
   const merchantId = merchant.id || merchant._id || merchant.merchantId;
-  const isDeleted = Boolean(merchant.isDeleted || merchant.status === 'DELETED');
-  const statusStr = (merchant.status || 'ACTIVE').toUpperCase();
+  const isDeleted = Boolean(
+    merchant.isDeleted === true ||
+    merchant.deleted === true ||
+    merchant.deletedAt ||
+    (typeof merchant.status === 'string' && (merchant.status.toUpperCase() === 'DELETED' || merchant.status.toUpperCase() === 'DEACTIVATED'))
+  );
+  const statusStr = (merchant.status || (isDeleted ? 'DELETED' : 'ACTIVE')).toUpperCase();
 
   return (
     <div className="flex flex-col gap-6 w-full pb-10">
@@ -162,13 +185,20 @@ const ViewMerchant = () => {
             >
               Back to List
             </Link>
-            {!isDeleted && (
+            {!isDeleted ? (
               <Link 
                 to={`/merchant/${merchantId}/edit`} 
                 className="px-4 py-2 rounded-xl bg-[#225091] text-white font-bold hover:bg-[#183f72] transition-colors shadow-2xs text-xs"
               >
                 Edit Merchant
               </Link>
+            ) : (
+              <button 
+                onClick={() => setIsRestoreModalOpen(true)}
+                className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold transition-colors shadow-2xs text-xs cursor-pointer"
+              >
+                Restore Account
+              </button>
             )}
           </div>
         </div>
@@ -199,6 +229,37 @@ const ViewMerchant = () => {
           </div>
         </div>
       </div>
+
+      {/* Restore Confirmation Modal in ViewMerchant */}
+      {isRestoreModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 transition-opacity animate-in fade-in">
+          <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl p-6 text-center animate-in zoom-in-95 duration-200">
+            <div className="w-14 h-14 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto mb-4 border border-emerald-100">
+              <FileCheck size={24} />
+            </div>
+            <h3 className="text-lg font-bold text-gray-900 mb-2">Restore Merchant Account</h3>
+            <p className="text-xs text-gray-600 mb-6 leading-relaxed">
+              Restore <span className="font-bold text-gray-900">{merchant.shopName || 'this merchant'}</span>? This will re-activate their login credentials and mark their status as <span className="text-emerald-600 font-bold">ACTIVE</span>.
+            </p>
+            <div className="flex gap-3">
+              <button 
+                disabled={actionLoading}
+                onClick={() => setIsRestoreModalOpen(false)} 
+                className="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-700 font-semibold hover:bg-gray-50 transition-colors text-xs cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button 
+                disabled={actionLoading}
+                onClick={handleRestoreMerchant} 
+                className="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold transition-colors text-xs flex items-center justify-center gap-2 shadow-sm cursor-pointer"
+              >
+                {actionLoading ? 'Restoring...' : 'Confirm Restore'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -725,9 +725,12 @@ const EditManager = () => {
                       }}
                       className="w-full px-3 py-2 rounded-lg border border-gray-200 text-xs text-gray-800 bg-white"
                     >
-                      {ALL_KPA_PRODUCTS.map(p => (
-                        <option key={p} value={p}>{p}</option>
-                      ))}
+                      {ALL_KPA_PRODUCTS.map(p => {
+                        const pName = typeof p === 'object' && p !== null ? p.name : p;
+                        return (
+                          <option key={pName} value={pName}>{pName}</option>
+                        );
+                      })}
                     </select>
                   </div>
 

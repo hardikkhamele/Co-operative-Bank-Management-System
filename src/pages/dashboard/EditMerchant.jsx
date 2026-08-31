@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft,  ChevronRight, UploadCloud, CheckCircle2, Eye, EyeOff, Store, MapPin, Building, CreditCard, X } from 'lucide-react';
+import { ArrowLeft,  ChevronRight, ChevronDown, UploadCloud, CheckCircle2, Eye, EyeOff, Store, MapPin, Building, CreditCard, X } from 'lucide-react';
 import { toast } from 'react-toastify';
 import PageHeader from '../../components/common/PageHeader';
 import { SkeletonForm } from '../../components/common/Skeleton';
@@ -85,9 +85,10 @@ const EditMerchant = () => {
   useEffect(() => {
     const fetchMerchant = async () => {
       try {
-        const response = await merchantService.getMerchantDetails(id);
-        if (response.success) {
-          setMerchant(response.data);
+        const response = await merchantService.getById(id);
+        const data = response?.data || response;
+        if (response && (response.success || data)) {
+          setMerchant(data);
         } else {
           toast.error("Failed to load merchant details.");
           navigate('/merchant');
@@ -116,8 +117,7 @@ const EditMerchant = () => {
     
     const formData = new FormData(e.target);
     
-    // Clean up empty optional fields (like if they clear it out, we don't send empty strings if we don't want to, but here we might want to allow clearing)
-    // For password, if it's empty, don't update it
+    // Clean up empty optional fields
     if (!formData.get('password')) formData.delete('password');
 
     // Clean up empty files
@@ -130,12 +130,12 @@ const EditMerchant = () => {
     });
 
     try {
-      const response = await merchantService.updateMerchant(id, formData);
-      if (response.success) {
-        toast.success("Merchant updated successfully.");
+      const response = await merchantService.update(id, formData);
+      if (response && (response.success || response.data)) {
+        toast.success(response.message || "Merchant updated successfully.");
         navigate('/merchant');
       } else {
-        toast.error(response.message || response.error || "Failed to update merchant.");
+        toast.error(response?.message || "Failed to update merchant.");
       }
     } catch (error) {
       console.error("Update failed", error);
@@ -229,13 +229,13 @@ const EditMerchant = () => {
               <div>
                 <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">Branch</label>
                 <div className="relative">
-                  <select name="branchId" defaultValue={merchant.branchId || ""} className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all bg-white appearance-none text-gray-500 shadow-sm text-[15px]">
-                    <option value="" disabled>Select Branch (Optional)</option>
+                  <select name="branchId" defaultValue={merchant.branchId || ""} className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all bg-white appearance-none text-gray-800 font-medium shadow-sm text-[15px] cursor-pointer">
+                    <option value="">Select Branch (Optional)</option>
                     {branches.map(branch => (
                       <option key={branch.id || branch._id} value={branch.id || branch._id}>{branch.name}</option>
                     ))}
                   </select>
-                  <ChevronRight size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none rotate-90" />
+                  <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
                 </div>
               </div>
 
@@ -271,11 +271,14 @@ const EditMerchant = () => {
               
               <div>
                 <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">Status</label>
-                <select name="status" defaultValue={merchant.status} className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all bg-white shadow-sm text-[15px] appearance-none">
-                  <option value="ACTIVE">ACTIVE</option>
-                  <option value="INACTIVE">INACTIVE</option>
-                  <option value="BLOCKED">BLOCKED</option>
-                </select>
+                <div className="relative">
+                  <select name="status" defaultValue={merchant.status} className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all bg-white shadow-sm text-[15px] appearance-none text-gray-800 font-semibold cursor-pointer">
+                    <option value="ACTIVE">ACTIVE</option>
+                    <option value="INACTIVE">INACTIVE</option>
+                    <option value="BLOCKED">BLOCKED</option>
+                  </select>
+                  <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
+                </div>
               </div>
             </div>
           </div>

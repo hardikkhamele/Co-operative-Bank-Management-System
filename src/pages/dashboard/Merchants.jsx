@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { 
-  ChevronRight, Search, Eye, Edit, Trash2, X, SlidersHorizontal, 
+  ChevronRight, ChevronLeft, Search, Eye, Edit, Trash2, X, SlidersHorizontal, 
   ChevronDown, Download, Table, FileSpreadsheet, FileText, Loader2, 
   Store, Users, UserCheck, UserX, ShieldAlert, Archive, RotateCcw,
   CheckCircle2, AlertTriangle, Building2, MapPin
@@ -11,6 +11,7 @@ import { merchantService } from '../../api/merchantService';
 import { branchService } from '../../api/branchService';
 import useBranchStore from '../../store/branchStore';
 import PageHeader from '../../components/common/PageHeader';
+import SearchableSelect from '../../components/common/SearchableSelect';
 import { Skeleton } from '../../components/common/Skeleton';
 
 // Comprehensive Indian States and Prominent Cities Map for fallback
@@ -184,12 +185,13 @@ const Merchants = () => {
       if (debouncedSearch.trim()) params.search = debouncedSearch.trim();
       
       // Status and Deleted filter handling
-      if (selectedStatus && selectedStatus !== 'ALL') {
+      if (selectedStatus && selectedStatus !== 'ALL' && selectedStatus !== 'DELETED') {
         params.status = selectedStatus;
       }
+      
       if (includeDeleted || selectedStatus === 'DELETED') {
         params.isDeleted = true;
-      } else if (includeDeleted === false && selectedStatus !== 'DELETED') {
+      } else {
         params.isDeleted = false;
       }
       
@@ -236,7 +238,8 @@ const Merchants = () => {
   }, [page, debouncedSearch, selectedStatus, selectedBranchId, selectedState, selectedCity, includeDeleted]);
 
   const handlePageChange = (newPage) => {
-    if (newPage >= 1 && newPage <= (meta.totalPages || 1)) {
+    const totalPages = meta.totalPages || 1;
+    if (newPage >= 1 && newPage <= totalPages) {
       setPage(newPage);
     }
   };
@@ -385,8 +388,8 @@ const Merchants = () => {
         ]}
       />
 
-      {/* 5 Top Stat Overview Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
+      {/* Top Stat Overview Cards (Matching Employee module layout) */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
         {/* Card 1: Total Merchants */}
         <div
           onClick={() => {
@@ -395,21 +398,21 @@ const Merchants = () => {
             setIncludeDeleted(false);
             setPage(1);
           }}
-          className={`bg-white rounded-2xl p-4 border shadow-2xs flex items-center justify-between cursor-pointer transition-all hover:shadow-md ${
+          className={`bg-white rounded-xl p-4 border shadow-xs flex flex-col items-center justify-center cursor-pointer transition-all hover:shadow-md ${
             activeStatCard === 'ALL' && !selectedStatus && !includeDeleted
               ? 'border-[#225091] ring-2 ring-[#225091]/10 bg-blue-50/20'
               : 'border-gray-100 hover:border-gray-200'
           }`}
         >
-          <div>
-            <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Total Merchants</p>
-            <h3 className="text-xl font-black text-[#1b2559] tabular-nums">
+          <div className="flex items-center gap-2 text-[#225091] mb-1">
+            <Store size={18} />
+            <span className="text-[24px] font-bold leading-none tabular-nums">
               {stats.totalMerchants}
-            </h3>
+            </span>
           </div>
-          <div className="w-11 h-11 rounded-xl bg-blue-50 text-[#225091] border border-blue-100 flex items-center justify-center shrink-0 shadow-2xs">
-            <Store size={20} />
-          </div>
+          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider text-center">
+            Total Merchants
+          </span>
         </div>
 
         {/* Card 2: Active Merchants */}
@@ -420,74 +423,24 @@ const Merchants = () => {
             setIncludeDeleted(false);
             setPage(1);
           }}
-          className={`bg-white rounded-2xl p-4 border shadow-2xs flex items-center justify-between cursor-pointer transition-all hover:shadow-md ${
+          className={`bg-white rounded-xl p-4 border shadow-xs flex flex-col items-center justify-center cursor-pointer transition-all hover:shadow-md ${
             activeStatCard === 'ACTIVE' || selectedStatus === 'ACTIVE'
               ? 'border-emerald-500 ring-2 ring-emerald-500/10 bg-emerald-50/20'
               : 'border-gray-100 hover:border-gray-200'
           }`}
         >
-          <div>
-            <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Active</p>
-            <h3 className="text-xl font-black text-emerald-600 tabular-nums">
+          <div className="flex items-center gap-2 text-emerald-600 mb-1">
+            <UserCheck size={18} />
+            <span className="text-[24px] font-bold leading-none tabular-nums">
               {stats.activeMerchants}
-            </h3>
+            </span>
           </div>
-          <div className="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center justify-center shrink-0 shadow-2xs">
-            <UserCheck size={20} />
-          </div>
+          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider text-center">
+            Active Merchants
+          </span>
         </div>
 
-        {/* Card 3: Inactive Merchants */}
-        <div
-          onClick={() => {
-            setActiveStatCard('INACTIVE');
-            setSelectedStatus('INACTIVE');
-            setIncludeDeleted(false);
-            setPage(1);
-          }}
-          className={`bg-white rounded-2xl p-4 border shadow-2xs flex items-center justify-between cursor-pointer transition-all hover:shadow-md ${
-            activeStatCard === 'INACTIVE' || selectedStatus === 'INACTIVE'
-              ? 'border-amber-500 ring-2 ring-amber-500/10 bg-amber-50/20'
-              : 'border-gray-100 hover:border-gray-200'
-          }`}
-        >
-          <div>
-            <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Inactive</p>
-            <h3 className="text-xl font-black text-amber-600 tabular-nums">
-              {stats.inactiveMerchants}
-            </h3>
-          </div>
-          <div className="w-11 h-11 rounded-xl bg-amber-50 text-amber-600 border border-amber-100 flex items-center justify-center shrink-0 shadow-2xs">
-            <UserX size={20} />
-          </div>
-        </div>
-
-        {/* Card 4: Blocked Merchants */}
-        <div
-          onClick={() => {
-            setActiveStatCard('BLOCKED');
-            setSelectedStatus('BLOCKED');
-            setIncludeDeleted(false);
-            setPage(1);
-          }}
-          className={`bg-white rounded-2xl p-4 border shadow-2xs flex items-center justify-between cursor-pointer transition-all hover:shadow-md ${
-            activeStatCard === 'BLOCKED' || selectedStatus === 'BLOCKED'
-              ? 'border-orange-500 ring-2 ring-orange-500/10 bg-orange-50/20'
-              : 'border-gray-100 hover:border-gray-200'
-          }`}
-        >
-          <div>
-            <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Blocked</p>
-            <h3 className="text-xl font-black text-orange-600 tabular-nums">
-              {stats.blockedMerchants}
-            </h3>
-          </div>
-          <div className="w-11 h-11 rounded-xl bg-orange-50 text-orange-600 border border-orange-100 flex items-center justify-center shrink-0 shadow-2xs">
-            <ShieldAlert size={20} />
-          </div>
-        </div>
-
-        {/* Card 5: Soft-Deleted Merchants */}
+        {/* Card 3: Soft-Deleted Merchants */}
         <div
           onClick={() => {
             setActiveStatCard('DELETED');
@@ -495,21 +448,21 @@ const Merchants = () => {
             setIncludeDeleted(true);
             setPage(1);
           }}
-          className={`bg-white rounded-2xl p-4 border shadow-2xs flex items-center justify-between cursor-pointer transition-all hover:shadow-md ${
+          className={`bg-white rounded-xl p-4 border shadow-xs flex flex-col items-center justify-center cursor-pointer transition-all hover:shadow-md ${
             activeStatCard === 'DELETED' || selectedStatus === 'DELETED' || includeDeleted
               ? 'border-rose-500 ring-2 ring-rose-500/10 bg-rose-50/20'
               : 'border-gray-100 hover:border-gray-200'
           }`}
         >
-          <div>
-            <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Soft-Deleted</p>
-            <h3 className="text-xl font-black text-rose-600 tabular-nums">
+          <div className="flex items-center gap-2 text-rose-600 mb-1">
+            <Archive size={18} />
+            <span className="text-[24px] font-bold leading-none tabular-nums">
               {stats.deletedMerchants}
-            </h3>
+            </span>
           </div>
-          <div className="w-11 h-11 rounded-xl bg-rose-50 text-rose-600 border border-rose-100 flex items-center justify-center shrink-0 shadow-2xs">
-            <Archive size={20} />
-          </div>
+          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider text-center">
+            Soft-Deleted
+          </span>
         </div>
       </div>
 
@@ -613,8 +566,8 @@ const Merchants = () => {
           </div>
         </div>
 
-        {/* Bottom Inline Filter Controls: Status -> Branch -> State / Region -> City */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 pt-2.5 border-t border-gray-100">
+        {/* Bottom Inline Filter Controls: Status -> Branch -> State -> City */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 pt-2 border-t border-gray-100">
           {/* 1. Status Filter */}
           <div className="relative">
             <select
@@ -622,16 +575,23 @@ const Merchants = () => {
               onChange={(e) => {
                 const val = e.target.value;
                 setSelectedStatus(val);
-                if (val === 'DELETED') setIncludeDeleted(true);
+                if (val === 'DELETED') {
+                  setIncludeDeleted(true);
+                  setActiveStatCard('DELETED');
+                } else {
+                  setIncludeDeleted(false);
+                  setActiveStatCard(val || 'ALL');
+                }
                 setPage(1);
               }}
-              className="w-full px-3.5 py-2 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-xs font-semibold text-gray-700 shadow-2xs cursor-pointer"
+              className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-xs font-medium text-gray-700 shadow-2xs cursor-pointer"
             >
-              <option value="">All Statuses</option>
+              <option value="">All Statuses (Active & Inactive)</option>
               <option value="ACTIVE">Active Merchants</option>
               <option value="INACTIVE">Inactive Merchants</option>
               <option value="BLOCKED">Blocked Merchants</option>
               <option value="DELETED">Soft-Deleted</option>
+              <option value="ALL">All (Including Deleted)</option>
             </select>
           </div>
 
@@ -643,7 +603,7 @@ const Merchants = () => {
                 setSelectedBranchId(e.target.value);
                 setPage(1);
               }}
-              className="w-full px-3.5 py-2 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-xs font-semibold text-gray-700 shadow-2xs cursor-pointer"
+              className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-xs font-medium text-gray-700 shadow-2xs cursor-pointer"
             >
               <option value="">All Branches</option>
               {(branchOptions || []).map((b) => (
@@ -654,41 +614,42 @@ const Merchants = () => {
             </select>
           </div>
 
-          {/* 3. State / Region Filter */}
+          {/* 3. State Filter */}
           <div className="relative">
             <select
               value={selectedState}
               onChange={(e) => {
-                const st = e.target.value;
-                setSelectedState(st);
+                const newState = e.target.value;
+                setSelectedState(newState);
                 setSelectedCity('');
                 setPage(1);
               }}
-              className="w-full px-3.5 py-2 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-xs font-semibold text-gray-700 shadow-2xs cursor-pointer"
+              className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-xs font-medium text-gray-700 shadow-2xs cursor-pointer"
             >
-              <option value="">All States / Regions</option>
-              {statesList.map((st) => (
-                <option key={st} value={st}>
-                  {st}
+              <option value="">All States</option>
+              {statesList.map((s) => (
+                <option key={s} value={s}>
+                  {s}
                 </option>
               ))}
             </select>
           </div>
 
-          {/* 4. City Filter (Cascading) */}
+          {/* 4. City Filter (Connected to State) */}
           <div className="relative">
             <select
               value={selectedCity}
+              disabled={!selectedState && availableCities.length === 0}
               onChange={(e) => {
                 setSelectedCity(e.target.value);
                 setPage(1);
               }}
-              className="w-full px-3.5 py-2 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-xs font-semibold text-gray-700 shadow-2xs cursor-pointer"
+              className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-xs font-medium text-gray-700 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed shadow-2xs cursor-pointer"
             >
-              <option value="">{selectedState ? `All Cities in ${selectedState}` : 'All Cities'}</option>
-              {availableCities.map((ct) => (
-                <option key={ct} value={ct}>
-                  {ct}
+              <option value="">{selectedState ? 'All Cities' : 'Select State First'}</option>
+              {availableCities.map((c) => (
+                <option key={c} value={c}>
+                  {c}
                 </option>
               ))}
             </select>
@@ -804,8 +765,15 @@ const Merchants = () => {
                 merchants.map((row, idx) => {
                   const srNo = (meta.page - 1) * (meta.limit || 10) + idx + 1;
                   const rowId = row.id || row._id || row.merchantId;
-                  const isDeleted = Boolean(row.isDeleted || row.status === 'DELETED');
-                  const statusStr = (row.status || 'ACTIVE').toUpperCase();
+                  const isDeleted = Boolean(
+                    row.isDeleted === true ||
+                    row.deleted === true ||
+                    row.deletedAt ||
+                    (typeof row.status === 'string' && (row.status.toUpperCase() === 'DELETED' || row.status.toUpperCase() === 'DEACTIVATED')) ||
+                    activeStatCard === 'DELETED' ||
+                    selectedStatus === 'DELETED'
+                  );
+                  const statusStr = (row.status || (isDeleted ? 'DELETED' : 'ACTIVE')).toUpperCase();
 
                   return (
                     <tr key={rowId || idx} className="hover:bg-slate-50/70 transition-colors group">
@@ -921,33 +889,34 @@ const Merchants = () => {
         </div>
         
         {/* Pagination Footer */}
-        {merchants && merchants.length > 0 && (
-          <div className="p-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between text-sm text-gray-500 bg-gray-50/40 gap-4">
-            <div className="text-xs font-medium text-gray-600">
-              Showing <span className="font-semibold text-gray-800">{(meta.page - 1) * (meta.limit || 10) + 1}</span> to <span className="font-semibold text-gray-800">{Math.min(meta.page * (meta.limit || 10), meta.totalRecords || merchants.length)}</span> of <span className="font-semibold text-gray-800">{meta.totalRecords || merchants.length}</span> entries
+        {!loading && merchants && merchants.length > 0 && (
+          <div className="px-6 py-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4 mt-auto bg-gray-50/40">
+            <div className="text-xs text-gray-500 font-medium">
+              Showing page <span className="font-semibold text-gray-800">{page}</span> of{" "}
+              <span className="font-semibold text-gray-800">{meta.totalPages || 1}</span> (
+              <span className="font-semibold text-gray-800">{meta.totalRecords || merchants.length}</span> total entries)
             </div>
-            
-            {meta.totalPages > 1 && (
-              <div className="flex items-center gap-1.5">
-                <button
-                  onClick={() => handlePageChange(meta.page - 1)}
-                  disabled={meta.page <= 1}
-                  className="px-3 py-1.5 border border-gray-200 bg-white rounded-lg text-xs font-semibold text-gray-600 disabled:opacity-40 hover:bg-gray-50 transition-colors shadow-sm cursor-pointer"
-                >
-                  Previous
-                </button>
-                <span className="px-3 py-1 bg-[#225091] text-white rounded-lg text-xs font-bold shadow-sm">
-                  {meta.page}
-                </span>
-                <button
-                  onClick={() => handlePageChange(meta.page + 1)}
-                  disabled={meta.page >= meta.totalPages}
-                  className="px-3 py-1.5 border border-gray-200 bg-white rounded-lg text-xs font-semibold text-gray-600 disabled:opacity-40 hover:bg-gray-50 transition-colors shadow-sm cursor-pointer"
-                >
-                  Next
-                </button>
-              </div>
-            )}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => handlePageChange(page - 1)}
+                disabled={page <= 1}
+                className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-[#225091] hover:bg-[#225091] hover:text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-xs font-semibold cursor-pointer shadow-2xs"
+                title="Previous Page"
+              >
+                <ChevronLeft size={16} />
+              </button>
+              <span className="px-3 py-1 bg-[#225091] text-white text-xs font-bold rounded-full shadow-2xs">
+                {page}
+              </span>
+              <button
+                onClick={() => handlePageChange(page + 1)}
+                disabled={page >= (meta.totalPages || 1)}
+                className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-[#225091] hover:bg-[#225091] hover:text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-xs font-semibold cursor-pointer shadow-2xs"
+                title="Next Page"
+              >
+                <ChevronRight size={16} />
+              </button>
+            </div>
           </div>
         )}
       </div>

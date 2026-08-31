@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { 
   ShieldCheck, 
   Printer, 
@@ -14,21 +14,51 @@ import {
   MapPin, 
   Mail, 
   Calendar,
-  ArrowLeft,
   Phone,
-  Download
+  Download,
+  Search,
+  X,
+  RotateCcw,
+  Eye,
+  ExternalLink,
+  ChevronLeft,
+  ChevronRight,
+  History,
+  Sparkles,
+  AlertTriangle,
+  Loader2,
+  CheckCircle,
+  HelpCircle,
+  Building,
+  User,
+  SlidersHorizontal,
+  Info,
+  BadgeCheck,
+  TrendingUp,
+  Wallet,
+  Shield,
+  Layers,
+  FileCheck,
+  Lock
 } from 'lucide-react';
 import { toast } from 'react-toastify';
 import PageHeader from '../../components/common/PageHeader';
 import { verificationService } from '../../api/verificationService';
 import { validatePAN, sanitizePAN } from '../../utils/validation';
+import { Skeleton } from '../../components/common/Skeleton';
 
 const CheckCibilScore = () => {
+  const navigate = useNavigate();
+
+  // Main View: 'check' (Initiate / Live Result) or 'history' (Historical List)
+  const [mainView, setMainView] = useState('check');
+
+  // Check Form & Live Result State
   const [step, setStep] = useState('form'); // 'form' | 'result'
   const [loading, setLoading] = useState(false);
   const [apiError, setApiError] = useState(null);
   const [reportResult, setReportResult] = useState(null);
-  const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'accounts' | 'inquiries' | 'demographics'
+  const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'accounts' | 'inquiries' | 'bureau'
 
   const [formData, setFormData] = useState({
     fullName: '',
@@ -37,6 +67,31 @@ const CheckCibilScore = () => {
     dob: '',
   });
 
+  // History State
+  const [historyList, setHistoryList] = useState([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [page, setPage] = useState(1);
+  const [limit] = useState(10);
+  const [pagination, setPagination] = useState({
+    total: 0,
+    page: 1,
+    limit: 10,
+    totalPages: 1
+  });
+
+  // Detail Modal State
+  const [selectedReportId, setSelectedReportId] = useState(null);
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [detailReport, setDetailReport] = useState(null);
+  const [detailTab, setDetailTab] = useState('overview');
+
+  // Restore saved form or result from session storage
   useEffect(() => {
     const savedStep = sessionStorage.getItem('cibil_step');
     const savedReport = sessionStorage.getItem('cibil_reportData');
@@ -53,14 +108,102 @@ const CheckCibilScore = () => {
     }
   }, []);
 
+  // Header Back Button Handler: Handles all states cleanly
+  const handleHeaderBack = () => {
+    if (mainView === 'check' && step === 'result') {
+      handleReset();
+    } else if (mainView === 'history') {
+      setMainView('check');
+    } else {
+      navigate('/dashboard');
+    }
+  };
+
+  // Debounce search in history
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchTerm);
+      setPage(1);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // Fetch History List
+  const fetchHistory = async (pageNo = page) => {
+    setHistoryLoading(true);
+    try {
+      const params = {
+        page: pageNo,
+        limit
+      };
+      if (debouncedSearch.trim()) params.search = debouncedSearch.trim();
+      if (statusFilter) params.status = statusFilter;
+      if (startDate) params.startDate = startDate;
+      if (endDate) params.endDate = endDate;
+
+      const response = await verificationService.getHistory(params);
+      if (response && (response.success || response.statusCode === 200)) {
+        const payload = response.data || response;
+        const items = payload.items || payload.data || (Array.isArray(payload) ? payload : []);
+        setHistoryList(Array.isArray(items) ? items : []);
+        
+        const pag = payload.pagination || payload.meta || {
+          total: Array.isArray(items) ? items.length : 0,
+          page: pageNo,
+          limit,
+          totalPages: Math.ceil((Array.isArray(items) ? items.length : 0) / limit) || 1
+        };
+        setPagination(pag);
+      } else {
+        setHistoryList([]);
+      }
+    } catch (err) {
+      console.error("Failed to fetch CIBIL report history", err);
+      if (err.response?.status === 403) {
+        toast.error("Permission denied: You do not have permission to view CIBIL history.");
+      }
+      setHistoryList([]);
+    } finally {
+      setHistoryLoading(false);
+    }
+  };
+
+  // Trigger fetch when on history view or filters change
+  useEffect(() => {
+    if (mainView === 'history') {
+      fetchHistory(page);
+    }
+  }, [mainView, page, debouncedSearch, statusFilter, startDate, endDate]);
+
+  // Load detail report by ID
+  const handleOpenDetail = async (id) => {
+    setSelectedReportId(id);
+    setDetailModalOpen(true);
+    setDetailLoading(true);
+    setDetailTab('overview');
+    try {
+      const response = await verificationService.getReportById(id);
+      if (response && (response.success || response.statusCode === 200)) {
+        setDetailReport(response.data || response);
+      } else {
+        toast.error(response?.message || "Failed to load report details.");
+      }
+    } catch (err) {
+      console.error("Failed to fetch report by ID", err);
+      toast.error(err.response?.data?.message || "Failed to fetch report details.");
+    } finally {
+      setDetailLoading(false);
+    }
+  };
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-      if (name === 'panNumber') {
-        setFormData((prev) => ({ ...prev, [name]: sanitizePAN(value) }));
-      } else if (name === 'mobileNumber') {
-        const cleanPhone = value.replace(/\D/g, '').slice(0, 10);
-        setFormData((prev) => ({ ...prev, [name]: cleanPhone }));
-      } else {
+    if (name === 'panNumber') {
+      setFormData((prev) => ({ ...prev, [name]: sanitizePAN(value) }));
+    } else if (name === 'mobileNumber') {
+      const cleanPhone = value.replace(/\D/g, '').slice(0, 10);
+      setFormData((prev) => ({ ...prev, [name]: cleanPhone }));
+    } else {
       setFormData((prev) => ({ ...prev, [name]: value }));
     }
     if (apiError) setApiError(null);
@@ -89,14 +232,12 @@ const CheckCibilScore = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     if (!validateForm()) return;
 
     setLoading(true);
     setApiError(null);
 
     try {
-      // Convert YYYY-MM-DD to DD/MM/YYYY
       const formattedDob = formData.dob ? formData.dob.split('-').reverse().join('/') : '';
       
       const response = await verificationService.checkCibilScore({
@@ -132,6 +273,10 @@ const CheckCibilScore = () => {
         const msg = err.response?.data?.message || err.response?.data?.details || 'Credit Bureau data is unavailable for these customer details. No previous credit history was found.';
         setApiError(msg);
         toast.info(msg);
+      } else if (statusCode === 403) {
+        const msg = err.response?.data?.message || 'Access denied: You do not have permission to initiate credit checks.';
+        setApiError(msg);
+        toast.error(msg);
       } else if (statusCode === 400) {
         setApiError(`Validation Error: ${errorMsg}`);
         toast.error(errorMsg);
@@ -160,35 +305,152 @@ const CheckCibilScore = () => {
     sessionStorage.removeItem('cibil_step');
   };
 
-  // Helper functions for parsing report
-  const rawData = reportResult?.data || reportResult || {};
-  const creditReport =
-    rawData.reportJson?.data ||
-    rawData.creditReport?.data ||
-    rawData.creditReport ||
-    rawData.report ||
-    rawData ||
-    {};
-  const reportObj =
-    creditReport.credit_report ||
-    creditReport.report ||
-    rawData.creditReport?.report ||
-    creditReport ||
-    {};
-  const scoreVal = Number(
-    creditReport.credit_score ??
-      creditReport.score ??
-      reportObj?.SCORE?.FCIREXScore ??
-      rawData.score ??
-      0
-  );
+  const handleResetHistoryFilters = () => {
+    setSearchTerm('');
+    setDebouncedSearch('');
+    setStatusFilter('');
+    setStartDate('');
+    setEndDate('');
+    setPage(1);
+  };
 
-  const getScoreRating = (score) => {
-    if (isNaN(score) || score === null || score === undefined) {
-      return { text: 'N/A', color: 'text-gray-500', bg: 'bg-gray-100', border: 'border-gray-200' };
+  // Safe and comprehensive parser for Bureau Response into structured visual data
+  const parseScoreData = (dataObj) => {
+    if (!dataObj) return { 
+      score: 0, 
+      rating: getScoreRating(0), 
+      accounts: [], 
+      inquiries: [], 
+      summary: {}, 
+      demographics: {}, 
+      bureauMeta: {} 
+    };
+    
+    const rawData = dataObj.data || dataObj || {};
+    
+    // Safely parse reportJson if it's a string
+    let reportJson = rawData.reportJson;
+    if (typeof reportJson === 'string') {
+      try {
+        reportJson = JSON.parse(reportJson);
+      } catch (e) {
+        console.warn('Could not parse reportJson string', e);
+      }
     }
-    if (score <= 0) {
-      return { text: 'No Credit Record', color: 'text-gray-600', bg: 'bg-gray-100', border: 'border-gray-300' };
+
+    const innerData = reportJson?.data || reportJson || rawData.creditReport?.data || rawData.creditReport || rawData;
+    const bureauReport = innerData.credit_report || innerData.report || innerData || {};
+
+    // Determine Score
+    let score = 0;
+    if (rawData.bureauScore !== undefined && rawData.bureauScore !== null) {
+      score = Number(rawData.bureauScore);
+    } else if (innerData.bureauScore !== undefined && innerData.bureauScore !== null) {
+      score = Number(innerData.bureauScore);
+    } else if (reportJson?.bureauScore !== undefined && reportJson?.bureauScore !== null) {
+      score = Number(reportJson.bureauScore);
+    } else if (innerData.credit_score !== undefined && innerData.credit_score !== null) {
+      score = Number(innerData.credit_score);
+    } else if (innerData.score !== undefined && innerData.score !== null) {
+      score = Number(innerData.score);
+    } else if (bureauReport?.SCORE?.FCIREXScore !== undefined && bureauReport?.SCORE?.FCIREXScore !== null) {
+      score = Number(bureauReport.SCORE.FCIREXScore);
+    } else if (rawData.score !== undefined && rawData.score !== null) {
+      score = Number(rawData.score);
+    }
+
+    const rating = getScoreRating(score);
+
+    // Accounts
+    const accountList = 
+      bureauReport?.ACCOUNT?.CAIS_Account_DETAILS ||
+      innerData?.ACCOUNT?.CAIS_Account_DETAILS ||
+      bureauReport?.accounts ||
+      innerData?.accounts ||
+      rawData?.accounts ||
+      [];
+    const safeAccounts = Array.isArray(accountList) ? accountList : (accountList ? [accountList] : []);
+
+    // Inquiries
+    const inquiryList = 
+      bureauReport?.CAPS?.CAPS_Application_Details ||
+      innerData?.CAPS?.CAPS_Application_Details ||
+      bureauReport?.inquiries ||
+      innerData?.inquiries ||
+      rawData?.inquiries ||
+      [];
+    const safeInquiries = Array.isArray(inquiryList) ? inquiryList : (inquiryList ? [inquiryList] : []);
+
+    // Summary
+    const summary = bureauReport?.ACCOUNT_SUMMARY || innerData?.ACCOUNT_SUMMARY || bureauReport?.summary || innerData?.summary || {};
+
+    // Demographics / Address
+    const demo = bureauReport?.DEMOGRAPHICS || innerData?.DEMOGRAPHICS || {};
+    const address = demo?.Flat_No_Plot_No_House_No || demo?.Address_Line_1 || bureauReport?.ADDRESS_DETAILS?.Address_Line_1 || '—';
+    const city = demo?.City || bureauReport?.ADDRESS_DETAILS?.City || '—';
+    const state = demo?.State || bureauReport?.ADDRESS_DETAILS?.State || '—';
+    const pincode = demo?.PIN_Code || bureauReport?.ADDRESS_DETAILS?.PIN_Code || '—';
+
+    // Applicant Details
+    const applicant = {
+      fullName: rawData.fullName || innerData.fullName || formData.fullName || '—',
+      pan: rawData.pan || innerData.pan || formData.panNumber || '—',
+      mobileNumber: rawData.mobileNumber || innerData.mobileNumber || formData.mobileNumber || '—',
+      dob: rawData.dob || innerData.dob || formData.dob || '—',
+      gender: demo?.Gender || '—',
+      address: address !== '—' ? `${address}, ${city}, ${state} - ${pincode}` : '—',
+      requestId: rawData.requestId || innerData.requestId || rawData._id || '—',
+      status: rawData.status || innerData.status || 'completed',
+      createdAt: rawData.createdAt || innerData.createdAt,
+      requestedBy: rawData.requestedBy || innerData.requestedBy
+    };
+
+    // Calculate total balance across accounts
+    const totalBalance = safeAccounts.reduce((acc, curr) => {
+      const val = Number(curr.Current_Balance || curr.balance || curr.currentBalance || 0);
+      return acc + (isNaN(val) ? 0 : val);
+    }, 0);
+
+    // Credit Card and Loan breakdown
+    const creditCards = safeAccounts.filter(a => (a.Account_Type || a.accountType || '').toLowerCase().includes('credit card'));
+    const loans = safeAccounts.filter(a => !(a.Account_Type || a.accountType || '').toLowerCase().includes('credit card'));
+
+    // Bureau Control Info
+    const bureauHeader = bureauReport?.HEADER || innerData?.HEADER || {};
+    const bureauMeta = {
+      bureauProvider: 'Experian Credit Information Bureau of India / CIBIL',
+      scoreModel: rawData.scoreName || innerData.scoreName || reportJson?.scoreName || 'Experian / CIBIL Risk Score v2.0',
+      controlNumber: bureauHeader?.Bureau_Control_Number || applicant.requestId,
+      reportTimestamp: rawData.createdAt ? new Date(rawData.createdAt).toLocaleString('en-GB') : new Date().toLocaleString('en-GB'),
+      delinquencyCount: summary.Delinquency_Accounts || summary.delinquentAccounts || 0,
+      securedAccounts: summary.Secured_Accounts || 0,
+      unsecuredAccounts: summary.Unsecured_Accounts || 0,
+      totalCreditCards: creditCards.length,
+      totalLoans: loans.length
+    };
+
+    return {
+      score,
+      rating,
+      scoreName: bureauMeta.scoreModel,
+      accounts: safeAccounts,
+      inquiries: safeInquiries,
+      summary,
+      totalBalance,
+      pdfUrl: rawData.pdfUrl || innerData.pdfUrl || reportJson?.pdfUrl,
+      applicant,
+      demographics: {
+        gender: demo?.Gender || '—',
+        email: demo?.E_Mail_ID || '—',
+        address: address !== '—' ? `${address}, ${city}, ${state} ${pincode !== '—' ? `(${pincode})` : ''}` : '—'
+      },
+      bureauMeta
+    };
+  };
+
+  function getScoreRating(score) {
+    if (isNaN(score) || score === null || score === undefined || score === 0) {
+      return { text: 'No Credit Record / 0', color: 'text-gray-600', bg: 'bg-gray-100', border: 'border-gray-300' };
     }
     if (score > 0 && score <= 10) {
       return { text: 'New to Credit (Low/No History)', color: 'text-blue-700', bg: 'bg-blue-50', border: 'border-blue-200' };
@@ -198,660 +460,1037 @@ const CheckCibilScore = () => {
     if (score < 750) return { text: 'Good', color: 'text-yellow-600', bg: 'bg-yellow-50', border: 'border-yellow-200' };
     if (score < 800) return { text: 'Very Good', color: 'text-teal-600', bg: 'bg-teal-50', border: 'border-teal-200' };
     return { text: 'Excellent', color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-200' };
-  };
+  }
 
-  const rating = getScoreRating(scoreVal);
+  const liveParsed = parseScoreData(reportResult);
+  const detailParsed = parseScoreData(detailReport);
 
-  // SVG Gauge Needle Angle (-90 deg at 300 to +90 deg at 900)
-  const clampedScore = Math.max(300, Math.min(900, scoreVal > 10 ? scoreVal : 300));
-  const needleAngle = -90 + ((clampedScore - 300) / 600) * 180;
-
-  const rawCaisSummary = reportObj?.CAIS_Account?.CAIS_Summary;
-  const caisSummary = Array.isArray(rawCaisSummary)
-    ? (rawCaisSummary[0] || {})
-    : (rawCaisSummary || {});
-
-  const creditAccounts = caisSummary?.Credit_Account || {};
-  const balanceSummary = caisSummary?.Total_Outstanding_Balance || {};
-
-  const rawAccountList = reportObj?.CAIS_Account?.CAIS_Account_DETAILS;
-  const accountList = Array.isArray(rawAccountList)
-    ? rawAccountList
-    : rawAccountList
-      ? [rawAccountList]
-      : [];
-
-  const rawCapsSummary = reportObj?.TotalCAPS_Summary || reportObj?.CAPS?.CAPS_Summary;
-  const capsSummary = Array.isArray(rawCapsSummary)
-    ? (rawCapsSummary[0] || {})
-    : (rawCapsSummary || {});
-
-  const rawCapsList = reportObj?.NonCreditCAPS?.CAPS_Application_Details || reportObj?.CAPS?.CAPS_Application_Details;
-  const capsList = Array.isArray(rawCapsList)
-    ? rawCapsList
-    : rawCapsList
-      ? [rawCapsList]
-      : [];
-
-  const headerInfo = reportObj?.CreditProfileHeader || {};
-  const applicantDetails = reportObj?.Current_Application?.Current_Application_Details?.Current_Applicant_Details || {};
-  const addressDetails = reportObj?.Current_Application?.Current_Application_Details?.Current_Applicant_Address_Details || {};
-
-  const formatCurrency = (val) => {
-    if (!val || isNaN(Number(val))) return '₹0';
-    return '₹' + Number(val).toLocaleString('en-IN');
-  };
-
-  const formatDate = (rawDate) => {
-    if (!rawDate) return 'N/A';
-    const str = String(rawDate).trim();
-    if (str.length === 8) {
-      return `${str.substring(6, 8)}/${str.substring(4, 6)}/${str.substring(0, 4)}`;
+  const getStatusBadge = (statusStr) => {
+    const s = (statusStr || 'completed').toLowerCase();
+    if (s === 'completed') {
+      return (
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase tracking-wider">
+          Completed
+        </span>
+      );
     }
-    if (str.includes('-')) {
-      const parts = str.split('-');
-      if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    if (s === 'processing') {
+      return (
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-200 uppercase tracking-wider">
+          Processing
+        </span>
+      );
     }
-    return str;
+    if (s === 'failed') {
+      return (
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200 uppercase tracking-wider">
+          Failed
+        </span>
+      );
+    }
+    return (
+      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200 uppercase tracking-wider">
+        {statusStr || 'Pending'}
+      </span>
+    );
   };
 
-  const formatAddress = (addr) => {
-    if (!addr || typeof addr !== 'object') return 'N/A';
-    const parts = [];
-    if (addr.FlatNoPlotNoHouseNo && addr.FlatNoPlotNoHouseNo !== 'DEFAULT') parts.push(addr.FlatNoPlotNoHouseNo);
-    if (addr.BldgNoSocietyName) parts.push(addr.BldgNoSocietyName);
-    if (addr.RoadNoNameAreaLocality) parts.push(addr.RoadNoNameAreaLocality);
-    if (addr.City) parts.push(addr.City);
-    if (addr.State) parts.push(`State: ${addr.State}`);
-    if (addr.PINCode) parts.push(`PIN: ${addr.PINCode}`);
-    return parts.length > 0 ? parts.join(', ') : 'Mumbai, PIN: 400001';
-  };
+  const hasActiveHistoryFilters = Boolean(debouncedSearch.trim()) || Boolean(statusFilter) || Boolean(startDate) || Boolean(endDate);
 
   return (
-    <div className="w-full h-full flex flex-col">
-      {/* Header Card */}
-      <div className="mb-6 print:hidden">
-        <PageHeader
-          title={step === 'form' ? 'CIBIL Score & Report' : 'Credit Bureau Report'}
-          breadcrumbs={[
-            { label: "Dashboard", to: "/dashboard" },
-            { label: "Verification" },
-            { label: "CIBIL Score & Report", to: step === 'result' ? undefined : undefined },
-            ...(step === 'result' ? [{ label: "Bureau Report" }] : [])
-          ]}
-          showBack={step === 'result'}
-          onBack={handleReset}
-        />
+    <div className="space-y-6 max-w-[1600px] mx-auto pb-10">
+      {/* Unified Page Header with Standard Back Button */}
+      <PageHeader
+        title="CIBIL & Credit Score Verification"
+        breadcrumbs={[
+          { label: 'Dashboard', to: '/dashboard' },
+          { label: 'Verification' },
+          { label: 'CIBIL Score & Report' },
+        ]}
+        showBack={true}
+        onBack={handleHeaderBack}
+      />
+
+      {/* Top View Selector Tabs */}
+      <div className="flex items-center justify-between gap-4 border-b border-gray-200 pb-2">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setMainView('check')}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs transition-all cursor-pointer shadow-2xs ${
+              mainView === 'check'
+                ? 'bg-[#225091] text-white shadow-md'
+                : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-200'
+            }`}
+          >
+            <ShieldCheck size={16} />
+            <span>Check Credit Score</span>
+          </button>
+          <button
+            onClick={() => {
+              setMainView('history');
+              fetchHistory(1);
+            }}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs transition-all cursor-pointer shadow-2xs ${
+              mainView === 'history'
+                ? 'bg-[#225091] text-white shadow-md'
+                : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-200'
+            }`}
+          >
+            <History size={16} />
+            <span>Report History & Records</span>
+          </button>
+        </div>
+
+        {mainView === 'check' && step === 'result' && (
+          <button
+            onClick={handleReset}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-[#225091] bg-blue-50 hover:bg-blue-100 border border-blue-200 transition-colors cursor-pointer shadow-2xs"
+          >
+            <RefreshCw size={14} />
+            <span>Check Another Score</span>
+          </button>
+        )}
       </div>
 
-      {step === 'form' ? (
-        <div className="flex flex-col gap-6 w-full">
-          {/* API Error Notification if any */}
-          {apiError && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-5 py-4 rounded-xl flex items-start gap-3 shadow-sm animate-in fade-in duration-200">
-              <AlertCircle size={20} className="shrink-0 mt-0.5 text-red-600" />
-              <div className="text-sm">
-                <p className="font-semibold text-red-800">Verification Request Failed</p>
-                <p className="mt-0.5">{apiError}</p>
+      {/* VIEW 1: Check Credit Score (Form or Live Result) */}
+      {mainView === 'check' && (
+        <>
+          {step === 'form' ? (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Form Card */}
+              <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8">
+                <div className="flex items-center gap-3 pb-5 border-b border-gray-100 mb-6">
+                  <div className="w-12 h-12 rounded-2xl bg-blue-50 text-[#225091] flex items-center justify-center font-bold shadow-2xs border border-blue-100 shrink-0">
+                    <ShieldCheck size={24} />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-bold text-gray-900">Initiate Bureau Credit Score Check</h2>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      Retrieve official Experian / CIBIL risk score, accounts summary, and comprehensive PDF report.
+                    </p>
+                  </div>
+                </div>
+
+                {apiError && (
+                  <div className="mb-6 p-4 rounded-xl bg-rose-50 border border-rose-200 flex items-start gap-3">
+                    <AlertCircle className="text-rose-600 shrink-0 mt-0.5" size={18} />
+                    <div>
+                      <h4 className="text-xs font-bold text-rose-900">Verification Notice</h4>
+                      <p className="text-xs text-rose-700 mt-0.5">{apiError}</p>
+                    </div>
+                  </div>
+                )}
+
+                <form onSubmit={handleSubmit} className="space-y-5">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    {/* Full Name */}
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 mb-1.5">
+                        Applicant Full Name <span className="text-rose-500">*</span>
+                      </label>
+                      <div className="relative">
+                        <User className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                        <input
+                          type="text"
+                          name="fullName"
+                          value={formData.fullName}
+                          onChange={handleInputChange}
+                          placeholder="e.g. Rahul Sharma"
+                          className="w-full pl-10 pr-4 py-2.5 bg-gray-50 hover:bg-gray-50/80 focus:bg-white border border-gray-200 rounded-xl text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all font-semibold"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    {/* Mobile Number */}
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 mb-1.5">
+                        Mobile Number (10 Digits) <span className="text-rose-500">*</span>
+                      </label>
+                      <div className="relative">
+                        <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                        <input
+                          type="text"
+                          name="mobileNumber"
+                          value={formData.mobileNumber}
+                          onChange={handleInputChange}
+                          maxLength={10}
+                          placeholder="e.g. 9876543210"
+                          className="w-full pl-10 pr-4 py-2.5 bg-gray-50 hover:bg-gray-50/80 focus:bg-white border border-gray-200 rounded-xl text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all font-semibold font-mono"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    {/* PAN Card */}
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 mb-1.5">
+                        PAN Card Number <span className="text-rose-500">*</span>
+                      </label>
+                      <div className="relative">
+                        <CreditCard className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                        <input
+                          type="text"
+                          name="panNumber"
+                          value={formData.panNumber}
+                          onChange={handleInputChange}
+                          maxLength={10}
+                          placeholder="ABCDE1234F"
+                          className="w-full pl-10 pr-4 py-2.5 bg-gray-50 hover:bg-gray-50/80 focus:bg-white border border-gray-200 rounded-xl text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all font-bold uppercase tracking-wider font-mono"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    {/* Date of Birth */}
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 mb-1.5">
+                        Date of Birth <span className="text-rose-500">*</span>
+                      </label>
+                      <div className="relative">
+                        <Calendar className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                        <input
+                          type="date"
+                          name="dob"
+                          value={formData.dob}
+                          onChange={handleInputChange}
+                          className="w-full pl-10 pr-4 py-2.5 bg-gray-50 hover:bg-gray-50/80 focus:bg-white border border-gray-200 rounded-xl text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all font-semibold"
+                          required
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="pt-4 border-t border-gray-100 flex items-center justify-between gap-4">
+                    <p className="text-[11px] text-gray-500">
+                      🔒 Data is encrypted and securely checked with RBI authorized Credit Bureaus.
+                    </p>
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="px-6 py-2.5 bg-[#225091] hover:bg-[#183f72] text-white rounded-xl font-bold text-xs transition-colors shadow-sm flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                    >
+                      {loading ? <Loader2 size={16} className="animate-spin" /> : <ShieldCheck size={16} />}
+                      <span>{loading ? 'Querying Bureau...' : 'Fetch Credit Score'}</span>
+                    </button>
+                  </div>
+                </form>
+              </div>
+
+              {/* Guidelines Card */}
+              <div className="bg-gradient-to-br from-[#225091]/5 via-white to-blue-50/40 rounded-2xl border border-[#225091]/15 p-6 space-y-4">
+                <div className="flex items-center gap-2 text-[#225091]">
+                  <Sparkles size={18} />
+                  <h3 className="text-sm font-bold">Credit Score Bands</h3>
+                </div>
+                <div className="space-y-2.5 text-xs">
+                  <div className="flex items-center justify-between p-2.5 bg-emerald-50 text-emerald-800 rounded-xl border border-emerald-200/60 font-semibold">
+                    <span>750 - 900</span>
+                    <span className="font-bold">Excellent (Lowest Risk)</span>
+                  </div>
+                  <div className="flex items-center justify-between p-2.5 bg-teal-50 text-teal-800 rounded-xl border border-teal-200/60 font-semibold">
+                    <span>700 - 749</span>
+                    <span className="font-bold">Very Good</span>
+                  </div>
+                  <div className="flex items-center justify-between p-2.5 bg-yellow-50 text-yellow-800 rounded-xl border border-yellow-200/60 font-semibold">
+                    <span>600 - 699</span>
+                    <span className="font-bold">Fair / Moderate</span>
+                  </div>
+                  <div className="flex items-center justify-between p-2.5 bg-rose-50 text-rose-800 rounded-xl border border-rose-200/60 font-semibold">
+                    <span>300 - 599</span>
+                    <span className="font-bold">Poor (High Risk)</span>
+                  </div>
+                </div>
+
+                <div className="pt-2 text-[11px] text-gray-500 leading-relaxed">
+                  Tip: Check the <strong>Report History</strong> tab at any time to review previously checked CIBIL records or re-download PDF reports.
+                </div>
+              </div>
+            </div>
+          ) : (
+            /* Live Score Report Result View - Human Readable Structured UI */
+            <div className="space-y-6 animate-in fade-in duration-200">
+              {/* Main Score Hero Card */}
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8">
+                <div className="flex flex-col md:flex-row items-center justify-between gap-6 pb-6 border-b border-gray-100">
+                  <div className="flex items-center gap-6">
+                    {/* Score Circle Gauge */}
+                    <div className={`w-28 h-28 rounded-2xl ${liveParsed.rating.bg} ${liveParsed.rating.border} border-2 flex flex-col items-center justify-center shadow-xs shrink-0`}>
+                      <span className={`text-4xl font-black ${liveParsed.rating.color} tracking-tight`}>
+                        {liveParsed.score > 0 ? liveParsed.score : 'N/A'}
+                      </span>
+                      <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-1">CIBIL Score</span>
+                    </div>
+
+                    <div>
+                      <div className="flex items-center gap-3">
+                        <h2 className="text-2xl font-black text-gray-900">{liveParsed.applicant.fullName}</h2>
+                        <span className={`px-3 py-1 rounded-full text-xs font-bold ${liveParsed.rating.bg} ${liveParsed.rating.color} border ${liveParsed.rating.border}`}>
+                          {liveParsed.rating.text}
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Bureau Assessment: <span className="font-semibold text-gray-700">{liveParsed.scoreName}</span>
+                      </p>
+
+                      <div className="flex flex-wrap items-center gap-4 mt-3 text-xs text-gray-600">
+                        <span className="bg-gray-100 px-2.5 py-1 rounded-lg font-mono font-bold text-gray-800 border border-gray-200">
+                          PAN: {liveParsed.applicant.pan}
+                        </span>
+                        <span className="bg-gray-100 px-2.5 py-1 rounded-lg font-mono font-bold text-gray-800 border border-gray-200">
+                          Mobile: {liveParsed.applicant.mobileNumber}
+                        </span>
+                        {liveParsed.applicant.dob && (
+                          <span className="bg-gray-100 px-2.5 py-1 rounded-lg font-bold text-gray-800 border border-gray-200">
+                            DOB: {liveParsed.applicant.dob}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    {liveParsed.pdfUrl && (
+                      <a
+                        href={liveParsed.pdfUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1.5 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs transition-colors shadow-2xs cursor-pointer"
+                      >
+                        <Download size={15} />
+                        <span>Download Official PDF</span>
+                      </a>
+                    )}
+                  </div>
+                </div>
+
+                {/* 4 Summary Stat Tiles */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-6">
+                  <div className="p-4 bg-gray-50/80 rounded-2xl border border-gray-100">
+                    <div className="flex items-center justify-between text-gray-500 mb-1">
+                      <span className="text-[11px] font-bold uppercase tracking-wider">Total Accounts</span>
+                      <CreditCard size={16} className="text-[#225091]" />
+                    </div>
+                    <h4 className="text-2xl font-black text-gray-900">
+                      {liveParsed.accounts.length || liveParsed.summary?.Total_Accounts || 0}
+                    </h4>
+                  </div>
+
+                  <div className="p-4 bg-emerald-50/40 rounded-2xl border border-emerald-100/80">
+                    <div className="flex items-center justify-between text-emerald-700 mb-1">
+                      <span className="text-[11px] font-bold uppercase tracking-wider">Active Accounts</span>
+                      <CheckCircle2 size={16} className="text-emerald-600" />
+                    </div>
+                    <h4 className="text-2xl font-black text-emerald-700">
+                      {liveParsed.summary?.Active_Accounts || liveParsed.accounts.filter(a => !a.Date_Closed).length || 0}
+                    </h4>
+                  </div>
+
+                  <div className="p-4 bg-blue-50/40 rounded-2xl border border-blue-100/80">
+                    <div className="flex items-center justify-between text-[#225091] mb-1">
+                      <span className="text-[11px] font-bold uppercase tracking-wider">Total Balance</span>
+                      <Wallet size={16} className="text-[#225091]" />
+                    </div>
+                    <h4 className="text-xl font-black text-[#225091]">
+                      ₹{liveParsed.totalBalance.toLocaleString('en-IN')}
+                    </h4>
+                  </div>
+
+                  <div className="p-4 bg-purple-50/40 rounded-2xl border border-purple-100/80">
+                    <div className="flex items-center justify-between text-purple-700 mb-1">
+                      <span className="text-[11px] font-bold uppercase tracking-wider">Credit Inquiries</span>
+                      <Search size={16} className="text-purple-600" />
+                    </div>
+                    <h4 className="text-2xl font-black text-purple-700">
+                      {liveParsed.inquiries.length || 0}
+                    </h4>
+                  </div>
+                </div>
+              </div>
+
+              {/* Multi-Section Content Card */}
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <div className="flex border-b border-gray-100 bg-gray-50/50 px-6 pt-3 gap-2 overflow-x-auto">
+                  {[
+                    { id: 'overview', label: 'Overview & Profile' },
+                    { id: 'accounts', label: `Loan & Credit Accounts (${liveParsed.accounts.length})` },
+                    { id: 'inquiries', label: `Credit Enquiries (${liveParsed.inquiries.length})` },
+                    { id: 'bureau', label: 'Bureau Details' }
+                  ].map((tabItem) => (
+                    <button
+                      key={tabItem.id}
+                      onClick={() => setActiveTab(tabItem.id)}
+                      className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider rounded-t-xl transition-all border-b-2 cursor-pointer ${
+                        activeTab === tabItem.id
+                          ? 'border-[#225091] text-[#225091] bg-white shadow-xs'
+                          : 'border-transparent text-gray-500 hover:text-gray-800'
+                      }`}
+                    >
+                      {tabItem.label}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="p-6">
+                  {/* TAB 1: Overview & Profile */}
+                  {activeTab === 'overview' && (
+                    <div className="space-y-6">
+                      {/* Applicant Profile Information Box */}
+                      <div className="p-5 rounded-2xl bg-gray-50/70 border border-gray-100">
+                        <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wider mb-4 flex items-center gap-2">
+                          <User size={15} className="text-[#225091]" />
+                          <span>Applicant Profile & Identity</span>
+                        </h4>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 text-xs">
+                          <div>
+                            <span className="text-gray-400 block text-[11px] mb-0.5">Full Name</span>
+                            <span className="font-bold text-gray-900 text-sm">{liveParsed.applicant.fullName}</span>
+                          </div>
+                          <div>
+                            <span className="text-gray-400 block text-[11px] mb-0.5">PAN Card</span>
+                            <span className="font-bold text-gray-900 font-mono text-sm">{liveParsed.applicant.pan}</span>
+                          </div>
+                          <div>
+                            <span className="text-gray-400 block text-[11px] mb-0.5">Mobile Number</span>
+                            <span className="font-bold text-gray-900 font-mono text-sm">{liveParsed.applicant.mobileNumber}</span>
+                          </div>
+                          <div>
+                            <span className="text-gray-400 block text-[11px] mb-0.5">Date of Birth</span>
+                            <span className="font-bold text-gray-900 text-sm">{liveParsed.applicant.dob}</span>
+                          </div>
+                          {liveParsed.demographics.gender !== '—' && (
+                            <div>
+                              <span className="text-gray-400 block text-[11px] mb-0.5">Gender</span>
+                              <span className="font-bold text-gray-800">{liveParsed.demographics.gender}</span>
+                            </div>
+                          )}
+                          {liveParsed.demographics.email !== '—' && (
+                            <div>
+                              <span className="text-gray-400 block text-[11px] mb-0.5">Email</span>
+                              <span className="font-bold text-gray-800">{liveParsed.demographics.email}</span>
+                            </div>
+                          )}
+                          {liveParsed.demographics.address !== '—' && (
+                            <div className="sm:col-span-2">
+                              <span className="text-gray-400 block text-[11px] mb-0.5">Address</span>
+                              <span className="font-medium text-gray-800">{liveParsed.demographics.address}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Bureau Rating Guidelines */}
+                      <div className="p-5 rounded-2xl bg-blue-50/30 border border-blue-100">
+                        <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wider mb-2">Score Assessment Summary</h4>
+                        <p className="text-xs text-gray-600 leading-relaxed">
+                          The applicant holds a score of <strong className="text-gray-900">{liveParsed.score}</strong> categorized as <strong className={liveParsed.rating.color}>{liveParsed.rating.text}</strong>. 
+                          A score above 750 represents strong credit health and very low default probability.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* TAB 2: Accounts Table */}
+                  {activeTab === 'accounts' && (
+                    <div className="space-y-4">
+                      {liveParsed.accounts.length > 0 ? (
+                        <div className="border border-gray-100 rounded-2xl overflow-hidden shadow-2xs">
+                          <table className="w-full text-left text-xs border-collapse">
+                            <thead className="bg-[#F8FAFC] text-gray-600 uppercase font-semibold border-b border-gray-200/70">
+                              <tr>
+                                <th className="p-3.5">Institution / Bank</th>
+                                <th className="p-3.5">Account / Loan Type</th>
+                                <th className="p-3.5">Account Number</th>
+                                <th className="p-3.5">Current Balance</th>
+                                <th className="p-3.5">Status</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100 font-medium">
+                              {liveParsed.accounts.map((acc, aIdx) => (
+                                <tr key={aIdx} className="hover:bg-gray-50/60 transition-colors">
+                                  <td className="p-3.5 font-bold text-gray-900 flex items-center gap-2">
+                                    <Building size={14} className="text-[#225091] shrink-0" />
+                                    <span>{acc.Subscriber_Name || acc.institution || 'Financial Institution'}</span>
+                                  </td>
+                                  <td className="p-3.5 text-gray-700">{acc.Account_Type || acc.accountType || 'Credit Account'}</td>
+                                  <td className="p-3.5 font-mono text-gray-800">{acc.Account_Number || acc.accountNumber || '—'}</td>
+                                  <td className="p-3.5 font-bold text-gray-900">₹{Number(acc.Current_Balance || acc.balance || 0).toLocaleString('en-IN')}</td>
+                                  <td className="p-3.5">
+                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                                      acc.Date_Closed ? 'bg-gray-100 text-gray-600 border border-gray-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                    }`}>
+                                      {acc.Date_Closed ? 'Closed' : 'Active'}
+                                    </span>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      ) : (
+                        <div className="text-center py-12 bg-gray-50/50 rounded-2xl border border-gray-100">
+                          <Info size={32} className="text-gray-300 mx-auto mb-2" />
+                          <p className="text-sm font-bold text-gray-800">No active credit accounts returned</p>
+                          <p className="text-xs text-gray-400 mt-1">Applicant has no reported loan or credit card lines on file.</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* TAB 3: Enquiries Table */}
+                  {activeTab === 'inquiries' && (
+                    <div className="space-y-4">
+                      {liveParsed.inquiries.length > 0 ? (
+                        <div className="border border-gray-100 rounded-2xl overflow-hidden shadow-2xs">
+                          <table className="w-full text-left text-xs border-collapse">
+                            <thead className="bg-[#F8FAFC] text-gray-600 uppercase font-semibold border-b border-gray-200/70">
+                              <tr>
+                                <th className="p-3.5">Inquiring Member</th>
+                                <th className="p-3.5">Purpose of Loan / Credit</th>
+                                <th className="p-3.5">Amount</th>
+                                <th className="p-3.5">Enquiry Date</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100 font-medium">
+                              {liveParsed.inquiries.map((inq, iIdx) => (
+                                <tr key={iIdx} className="hover:bg-gray-50/60 transition-colors">
+                                  <td className="p-3.5 font-bold text-gray-900 flex items-center gap-2">
+                                    <Building size={14} className="text-purple-600 shrink-0" />
+                                    <span>{inq.Subscriber_Name || inq.institution || 'Member Institution'}</span>
+                                  </td>
+                                  <td className="p-3.5 text-gray-700">{inq.Enquiry_Purpose || inq.purpose || 'General Enquiry'}</td>
+                                  <td className="p-3.5 font-bold text-gray-900">₹{Number(inq.Enquiry_Amount || inq.amount || 0).toLocaleString('en-IN')}</td>
+                                  <td className="p-3.5 text-gray-500 font-medium">{inq.Date_Of_Request || inq.date || '—'}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      ) : (
+                        <div className="text-center py-12 bg-gray-50/50 rounded-2xl border border-gray-100">
+                          <Info size={32} className="text-gray-300 mx-auto mb-2" />
+                          <p className="text-sm font-bold text-gray-800">No credit enquiries on record</p>
+                          <p className="text-xs text-gray-400 mt-1">No financial institutions have made recent hard credit checks.</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* TAB 4: Bureau Details (Structured Human-Readable Bureau Assessment) */}
+                  {activeTab === 'bureau' && (
+                    <div className="space-y-6">
+                      {/* Bureau Provider & Protocol Details */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="p-5 rounded-2xl bg-gray-50/80 border border-gray-100 space-y-3">
+                          <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wider flex items-center gap-2">
+                            <Shield size={16} className="text-[#225091]" />
+                            <span>Credit Information Provider</span>
+                          </h4>
+                          <div className="space-y-2 text-xs">
+                            <div className="flex justify-between py-1 border-b border-gray-200/50">
+                              <span className="text-gray-500">Bureau Authority</span>
+                              <span className="font-bold text-gray-900">{liveParsed.bureauMeta.bureauProvider}</span>
+                            </div>
+                            <div className="flex justify-between py-1 border-b border-gray-200/50">
+                              <span className="text-gray-500">Score Model</span>
+                              <span className="font-bold text-gray-900">{liveParsed.bureauMeta.scoreModel}</span>
+                            </div>
+                            <div className="flex justify-between py-1 border-b border-gray-200/50">
+                              <span className="text-gray-500">Bureau Control Number</span>
+                              <span className="font-mono font-bold text-[#225091]">{liveParsed.bureauMeta.controlNumber}</span>
+                            </div>
+                            <div className="flex justify-between py-1">
+                              <span className="text-gray-500">Report Issue Timestamp</span>
+                              <span className="font-semibold text-gray-800">{liveParsed.bureauMeta.reportTimestamp}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="p-5 rounded-2xl bg-gray-50/80 border border-gray-100 space-y-3">
+                          <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wider flex items-center gap-2">
+                            <Layers size={16} className="text-purple-600" />
+                            <span>Credit Portfolio & Exposure Split</span>
+                          </h4>
+                          <div className="space-y-2 text-xs">
+                            <div className="flex justify-between py-1 border-b border-gray-200/50">
+                              <span className="text-gray-500">Secured Loan Accounts</span>
+                              <span className="font-bold text-emerald-700">{liveParsed.bureauMeta.securedAccounts}</span>
+                            </div>
+                            <div className="flex justify-between py-1 border-b border-gray-200/50">
+                              <span className="text-gray-500">Unsecured Loan Accounts</span>
+                              <span className="font-bold text-gray-900">{liveParsed.bureauMeta.unsecuredAccounts}</span>
+                            </div>
+                            <div className="flex justify-between py-1 border-b border-gray-200/50">
+                              <span className="text-gray-500">Credit Card Facilities</span>
+                              <span className="font-bold text-[#225091]">{liveParsed.bureauMeta.totalCreditCards}</span>
+                            </div>
+                            <div className="flex justify-between py-1">
+                              <span className="text-gray-500">Past-Due / Delinquent Records</span>
+                              <span className={`font-bold ${liveParsed.bureauMeta.delinquencyCount > 0 ? 'text-rose-600' : 'text-emerald-600'}`}>
+                                {liveParsed.bureauMeta.delinquencyCount === 0 ? '0 (None Recorded)' : liveParsed.bureauMeta.delinquencyCount}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Official Verification Security Badge */}
+                      <div className="p-4 rounded-2xl bg-emerald-50/40 border border-emerald-200/60 flex items-center justify-between gap-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold shrink-0">
+                            <FileCheck size={20} />
+                          </div>
+                          <div>
+                            <h5 className="text-xs font-bold text-emerald-900">Official Credit Report Seal</h5>
+                            <p className="text-[11px] text-emerald-700 mt-0.5">
+                              Certified and generated in real-time under RBI-authorized Credit Information Company protocols.
+                            </p>
+                          </div>
+                        </div>
+                        {liveParsed.pdfUrl && (
+                          <a
+                            href={liveParsed.pdfUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="shrink-0 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs transition-colors shadow-2xs"
+                          >
+                            Open PDF
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           )}
+        </>
+      )}
 
-          {/* Form Container Card */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mt-2">
-            <div className="bg-[#e6f4f5] px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-              <h3 className="text-lg font-bold text-[#225091]">
-                Applicant Information
-              </h3>
+      {/* VIEW 2: Report History & Records */}
+      {mainView === 'history' && (
+        <div className="space-y-4">
+          {/* History Filter Toolbar */}
+          <div className="bg-white rounded-2xl p-4 shadow-xs border border-gray-100 space-y-3.5">
+            <div className="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-3">
+              <div className="relative flex-1">
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={17} />
+                <input
+                  type="text"
+                  placeholder="Search by PAN, Full Name, Mobile, or Request ID..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-9 py-2.5 bg-gray-50 hover:bg-gray-50/80 focus:bg-white border border-gray-200 rounded-xl text-xs text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all shadow-2xs font-medium"
+                />
+                {searchTerm && (
+                  <button onClick={() => setSearchTerm('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer">
+                    <X size={15} />
+                  </button>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2.5 flex-wrap">
+                {hasActiveHistoryFilters && (
+                  <button
+                    onClick={handleResetHistoryFilters}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-gray-600 hover:text-rose-600 bg-gray-50 hover:bg-rose-50 rounded-xl border border-gray-200 transition-colors cursor-pointer shadow-2xs"
+                  >
+                    <RotateCcw size={14} />
+                    <span>Reset</span>
+                  </button>
+                )}
+
+                <button
+                  onClick={() => fetchHistory(page)}
+                  className="flex items-center gap-1.5 px-3.5 py-2 border border-gray-200 text-gray-700 hover:bg-gray-50 rounded-xl font-bold text-xs transition-colors shadow-2xs cursor-pointer"
+                >
+                  <RefreshCw size={14} className={historyLoading ? 'animate-spin' : ''} />
+                  <span>Refresh</span>
+                </button>
+              </div>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-8">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                
-                {/* 1. Full Name */}
-                <div className="space-y-2">
-                  <label className="text-sm font-semibold text-gray-700 block">
-                    Full Name <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="fullName"
-                    value={formData.fullName}
-                    onChange={handleInputChange}
-                    placeholder="Enter full name"
-                    className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all bg-gray-50/50 text-gray-800 font-medium"
-                    required
-                    disabled={loading}
-                  />
-                </div>
-
-                {/* 2. Mobile Number */}
-                <div className="space-y-2">
-                  <label className="text-sm font-semibold text-gray-700 block">
-                    Mobile Number
-                  </label>
-                  <div className="relative flex items-center">
-                    <span className="absolute left-3 text-xs font-bold text-gray-400 select-none">
-                      +91
-                    </span>
-                    <input
-                      type="tel"
-                      name="mobileNumber"
-                      maxLength={10}
-                      value={formData.mobileNumber}
-                      onChange={handleInputChange}
-                      placeholder="Enter 10-digit number"
-                      className="w-full pl-11 pr-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all bg-gray-50/50 text-gray-800 font-medium font-mono"
-                      disabled={loading}
-                    />
-                  </div>
-                </div>
-
-                {/* 3. PAN Card Number */}
-                <div className="space-y-2">
-                  <label className="text-sm font-semibold text-gray-700 block">
-                    PAN Card Number <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="panNumber"
-                    maxLength={10}
-                    value={formData.panNumber}
-                    onChange={handleInputChange}
-                    placeholder="Enter 10-digit PAN"
-                    className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all bg-gray-50/50 uppercase font-mono font-bold tracking-wider text-gray-800"
-                    required
-                    disabled={loading}
-                  />
-                </div>
-
-                {/* 4. Date of Birth */}
-                <div className="space-y-2">
-                  <label className="text-sm font-semibold text-gray-700 block">
-                    Date Of Birth <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="date"
-                    name="dob"
-                    value={formData.dob}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all bg-gray-50/50 text-gray-800 font-medium"
-                    required
-                    disabled={loading}
-                  />
-                </div>
-
+            {/* Bottom Filter Controls: Status + Date Range */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2.5 border-t border-gray-100">
+              <div>
+                <select
+                  value={statusFilter}
+                  onChange={(e) => {
+                    setStatusFilter(e.target.value);
+                    setPage(1);
+                  }}
+                  className="w-full px-3.5 py-2 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-xs font-semibold text-gray-700 shadow-2xs cursor-pointer"
+                >
+                  <option value="">All Statuses</option>
+                  <option value="completed">Completed</option>
+                  <option value="processing">Processing</option>
+                  <option value="pending">Pending</option>
+                  <option value="failed">Failed</option>
+                </select>
               </div>
 
-              {/* Notice Banner */}
-              <div className="bg-[#e6f4f5] text-[#225091] px-5 py-3.5 rounded-xl text-sm font-medium mb-8 border border-[#225091]/15 flex items-center gap-3">
-                <CheckCircle2 size={18} className="shrink-0 text-[#225091]" />
-                <span>30-Day Cache Protection: Credit Bureau profiles queried in the past 30 days are loaded from cached bureau data.</span>
+              <div>
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => {
+                    setStartDate(e.target.value);
+                    setPage(1);
+                  }}
+                  placeholder="Start Date"
+                  className="w-full px-3.5 py-2 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-xs font-semibold text-gray-700 shadow-2xs cursor-pointer"
+                />
               </div>
 
-              {/* Actions */}
-              <div className="flex items-center justify-end gap-4 border-t border-gray-100 pt-6">
-                <button
-                  type="button"
-                  onClick={handleReset}
-                  disabled={loading}
-                  className="px-8 py-2.5 rounded-full text-[#225091] font-semibold border border-[#225091] hover:bg-[#225091]/5 transition-colors disabled:opacity-50"
-                >
-                  Reset
-                </button>
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="px-8 py-2.5 rounded-full bg-[#225091] text-white font-semibold hover:bg-[#163a6c] transition-all shadow-md shadow-[#225091]/20 disabled:opacity-50 disabled:cursor-not-allowed transform active:scale-95 flex items-center gap-2"
-                >
-                  {loading ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      Fetching Report...
-                    </>
+              <div>
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => {
+                    setEndDate(e.target.value);
+                    setPage(1);
+                  }}
+                  placeholder="End Date"
+                  className="w-full px-3.5 py-2 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-xs font-semibold text-gray-700 shadow-2xs cursor-pointer"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* History Data Table */}
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse min-w-[900px]">
+                <thead className="bg-[#F8FAFC] text-gray-600 text-xs uppercase tracking-wider font-semibold border-b border-gray-200/80">
+                  <tr>
+                    <th className="py-3.5 px-5 font-semibold">Sr.No.</th>
+                    <th className="py-3.5 px-5 font-semibold">Applicant Name</th>
+                    <th className="py-3.5 px-5 font-semibold">PAN Card</th>
+                    <th className="py-3.5 px-5 font-semibold">Mobile</th>
+                    <th className="py-3.5 px-5 font-semibold">Status</th>
+                    <th className="py-3.5 px-5 font-semibold">Requested By</th>
+                    <th className="py-3.5 px-5 font-semibold">Checked On</th>
+                    <th className="py-3.5 px-5 font-semibold text-center">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {historyLoading ? (
+                    Array.from({ length: 5 }).map((_, rIdx) => (
+                      <tr key={rIdx} className="animate-pulse">
+                        <td className="py-4 px-5"><Skeleton className="h-4 w-6 rounded" /></td>
+                        <td className="py-4 px-5"><Skeleton className="h-4 w-32 rounded" /></td>
+                        <td className="py-4 px-5"><Skeleton className="h-4 w-24 rounded" /></td>
+                        <td className="py-4 px-5"><Skeleton className="h-3.5 w-24 rounded" /></td>
+                        <td className="py-4 px-5"><Skeleton className="h-6 w-16 rounded-full" /></td>
+                        <td className="py-4 px-5"><Skeleton className="h-3.5 w-28 rounded" /></td>
+                        <td className="py-4 px-5"><Skeleton className="h-3.5 w-20 rounded" /></td>
+                        <td className="py-4 px-5"><Skeleton className="h-6 w-16 rounded-lg mx-auto" /></td>
+                      </tr>
+                    ))
+                  ) : historyList && historyList.length > 0 ? (
+                    historyList.map((item, idx) => {
+                      const srNo = (pagination.page - 1) * (pagination.limit || 10) + idx + 1;
+                      const reportId = item._id || item.requestId || item.id;
+                      const formattedDate = item.createdAt ? new Date(item.createdAt).toLocaleDateString('en-GB') : '—';
+
+                      return (
+                        <tr key={reportId || idx} className="hover:bg-slate-50/70 transition-colors group">
+                          <td className="py-3.5 px-5 text-[13px] text-gray-500 font-medium">{srNo}</td>
+                          <td className="py-3.5 px-5">
+                            <span className="text-sm font-semibold text-gray-900 block">{item.fullName || '—'}</span>
+                            {item.requestId && <span className="text-[10px] text-gray-400 font-mono">REQ: {item.requestId.slice(0, 12)}...</span>}
+                          </td>
+                          <td className="py-3.5 px-5 font-mono font-bold text-xs text-gray-800 uppercase">{item.pan || '—'}</td>
+                          <td className="py-3.5 px-5 font-mono text-xs text-gray-600">{item.mobileNumber || item.mobile || '—'}</td>
+                          <td className="py-3.5 px-5">{getStatusBadge(item.status)}</td>
+                          <td className="py-3.5 px-5 text-xs text-gray-700 font-medium">
+                            {item.requestedBy?.fullName || item.requestedBy?.email || 'System'}
+                          </td>
+                          <td className="py-3.5 px-5 text-xs text-gray-500">{formattedDate}</td>
+                          <td className="py-3.5 px-5">
+                            <div className="flex items-center justify-center gap-1.5">
+                              <button
+                                onClick={() => handleOpenDetail(reportId)}
+                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-[#225091] bg-blue-50 hover:bg-blue-100 border border-[#225091]/15 transition-all shadow-2xs cursor-pointer"
+                                title="View Credit Report"
+                              >
+                                <Eye size={13} /> View
+                              </button>
+
+                              {item.pdfUrl && (
+                                <a
+                                  href={item.pdfUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/60 transition-all shadow-2xs"
+                                  title="Download PDF"
+                                >
+                                  <Download size={13} /> PDF
+                                </a>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
                   ) : (
-                    <>
-                      <ShieldCheck size={18} />
-                      Fetch CIBIL Score
-                    </>
+                    <tr>
+                      <td colSpan="8" className="py-16 text-center">
+                        <div className="flex flex-col items-center justify-center">
+                          <div className="w-10 h-10 bg-gray-50 rounded-full flex items-center justify-center mb-2">
+                            <Search size={20} className="text-gray-300" />
+                          </div>
+                          <p className="text-sm font-semibold text-gray-800">No CIBIL reports found</p>
+                          <p className="text-xs text-gray-400 mt-0.5">Try adjusting your filters or initiate a new score check</p>
+                        </div>
+                      </td>
+                    </tr>
                   )}
-                </button>
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination */}
+            {!historyLoading && historyList && historyList.length > 0 && (
+              <div className="px-6 py-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4 mt-auto bg-gray-50/40">
+                <div className="text-xs text-gray-500 font-medium">
+                  Showing page <span className="font-semibold text-gray-800">{pagination.page}</span> of{' '}
+                  <span className="font-semibold text-gray-800">{pagination.totalPages || 1}</span> (
+                  <span className="font-semibold text-gray-800">{pagination.total || historyList.length}</span> total records)
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setPage(p => Math.max(1, p - 1))}
+                    disabled={pagination.page <= 1}
+                    className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-[#225091] hover:bg-[#225091] hover:text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-xs font-semibold cursor-pointer shadow-2xs"
+                  >
+                    <ChevronLeft size={16} />
+                  </button>
+                  <span className="px-3 py-1 bg-[#225091] text-white text-xs font-bold rounded-full shadow-2xs">
+                    {pagination.page}
+                  </span>
+                  <button
+                    onClick={() => setPage(p => Math.min(pagination.totalPages || 1, p + 1))}
+                    disabled={pagination.page >= (pagination.totalPages || 1)}
+                    className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-[#225091] hover:bg-[#225091] hover:text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-xs font-semibold cursor-pointer shadow-2xs"
+                  >
+                    <ChevronRight size={16} />
+                  </button>
+                </div>
               </div>
-            </form>
+            )}
           </div>
         </div>
-      ) : (
-        /* ================= RESULT SCREEN ================= */
-        <div className="flex flex-col gap-6 w-full animate-in fade-in duration-300">
-          
-          {/* Main Result Content */}
-          <div className="bg-[#f8f9fa] rounded-xl border border-gray-100 p-8 flex flex-col gap-6 relative overflow-hidden">
-            
-            {/* User Profile Info */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-full bg-indigo-100 overflow-hidden border-2 border-indigo-50 shadow-sm relative flex-shrink-0 flex items-center justify-center font-bold text-2xl text-[#225091]">
-                  {(creditReport.name || formData.fullName)?.charAt(0) || 'U'}
+      )}
+
+      {/* Detail Report Modal - Structured Human-Readable UI */}
+      {detailModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 transition-opacity animate-in fade-in">
+          <div className="bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
+            {/* Modal Header */}
+            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/70">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#225091] flex items-center justify-center font-bold border border-blue-100 shrink-0">
+                  <ShieldCheck size={20} />
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold text-gray-800">{creditReport.name || formData.fullName}</h2>
-                  <p className="text-sm text-gray-500 font-mono">
-                    PAN: {creditReport.pan || formData.panNumber}
-                    {headerInfo.ReportNumber && <span className="ml-3 font-sans text-gray-400">Ref: #{headerInfo.ReportNumber}</span>}
+                  <h3 className="text-base font-bold text-gray-900">
+                    {detailParsed.applicant.fullName || 'Credit Bureau Report'}
+                  </h3>
+                  <p className="text-xs text-gray-500 font-mono">
+                    PAN: {detailParsed.applicant.pan} | Mobile: {detailParsed.applicant.mobileNumber}
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-2 px-4 py-1.5 bg-[#22c55e] text-white rounded-full text-sm font-semibold shadow-sm shadow-[#22c55e]/20 self-start sm:self-auto">
-                <CheckCircle2 size={16} />
-                CIBIL Verified
-              </div>
-            </div>
 
-            {/* Main Score & Summary Cards Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-              
-              {/* Speedometer Score Card (5 Cols) */}
-              <div className="lg:col-span-5 bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex flex-col items-center justify-center relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-red-500 via-yellow-400 to-emerald-500"></div>
-                
-                <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-6">Bureau Credit Score</h3>
-                
-                {/* Dynamic SVG Gauge Meter */}
-                <div className="relative w-64 h-36 mb-4">
-                  <svg viewBox="0 0 200 110" className="w-full h-full drop-shadow-sm">
-                    {/* Red (300-500) */}
-                    <path d="M 25 95 A 75 75 0 0 1 55 40" fill="none" stroke="#ef4444" strokeWidth="14" strokeLinecap="round" />
-                    {/* Orange (500-650) */}
-                    <path d="M 55 40 A 75 75 0 0 1 100 20" fill="none" stroke="#f97316" strokeWidth="14" />
-                    {/* Yellow (650-750) */}
-                    <path d="M 100 20 A 75 75 0 0 1 145 40" fill="none" stroke="#eab308" strokeWidth="14" />
-                    {/* Green (750-900) */}
-                    <path d="M 145 40 A 75 75 0 0 1 175 95" fill="none" stroke="#22c55e" strokeWidth="14" strokeLinecap="round" />
-                    
-                    {/* Pivot */}
-                    <circle cx="100" cy="95" r="7" fill="#1f2937" />
-                    
-                    {/* Dynamic Needle */}
-                    <g transform={`rotate(${needleAngle} 100 95)`} className="transition-transform duration-700 ease-out">
-                      <line x1="100" y1="95" x2="100" y2="35" stroke="#1f2937" strokeWidth="4" strokeLinecap="round" />
-                      <polygon points="97,42 103,42 100,30" fill="#1f2937" />
-                    </g>
-                  </svg>
-                  <span className="absolute bottom-1 left-2 text-[11px] font-bold text-gray-400 font-mono">300</span>
-                  <span className="absolute bottom-1 right-2 text-[11px] font-bold text-gray-400 font-mono">900</span>
-                </div>
-
-                {/* Big Score Display */}
-                <div className="flex flex-col items-center">
-                  <span className="text-5xl font-black tracking-tight text-gray-900 font-mono">
-                    {scoreVal || 'N/A'}
-                  </span>
-                  <span className={`mt-2 px-4 py-1 rounded-full text-xs font-bold uppercase tracking-wider border ${rating.bg} ${rating.color} ${rating.border}`}>
-                    {rating.text}
-                  </span>
-                </div>
-
-                <p className="text-xs text-gray-400 text-center mt-6">
-                  Calculated based on credit profile from Experian FCIREX algorithm.
-                </p>
-              </div>
-
-              {/* Metrics Overview (7 Cols) */}
-              <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                
-                {/* Card 1: Total Outstanding */}
-                <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100 flex flex-col justify-between hover:shadow-md transition-shadow">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Total Outstanding</span>
-                    <div className="w-9 h-9 rounded-xl bg-blue-50 text-[#225091] flex items-center justify-center">
-                      <DollarSign size={18} />
-                    </div>
-                  </div>
-                  <div>
-                    <h4 className="text-2xl font-extrabold text-gray-900">
-                      {formatCurrency(balanceSummary.Outstanding_Balance_All)}
-                    </h4>
-                    <div className="mt-2 flex items-center justify-between text-xs text-gray-500 border-t border-gray-100 pt-2 font-medium">
-                      <span>Secured: {formatCurrency(balanceSummary.Outstanding_Balance_Secured)}</span>
-                      <span>Unsecured: {formatCurrency(balanceSummary.Outstanding_Balance_UnSecured)}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Card 2: Credit Accounts */}
-                <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100 flex flex-col justify-between hover:shadow-md transition-shadow">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Credit Accounts</span>
-                    <div className="w-9 h-9 rounded-xl bg-teal-50 text-[#225091] flex items-center justify-center">
-                      <CreditCard size={18} />
-                    </div>
-                  </div>
-                  <div>
-                    <h4 className="text-2xl font-extrabold text-gray-900">
-                      {creditAccounts.CreditAccountTotal || accountList.length || '0'}
-                    </h4>
-                    <div className="mt-2 flex items-center gap-3 text-xs border-t border-gray-100 pt-2 font-medium">
-                      <span className="text-emerald-600 font-semibold">Active: {creditAccounts.CreditAccountActive || '0'}</span>
-                      <span className="text-gray-400">Closed: {creditAccounts.CreditAccountClosed || '0'}</span>
-                      <span className="text-red-500">Default: {creditAccounts.CreditAccountDefault || '0'}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Card 3: Recent Enquiries */}
-                <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100 flex flex-col justify-between hover:shadow-md transition-shadow">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Bureau Enquiries</span>
-                    <div className="w-9 h-9 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
-                      <Clock size={18} />
-                    </div>
-                  </div>
-                  <div>
-                    <h4 className="text-2xl font-extrabold text-gray-900">
-                      {capsSummary.TotalCAPSLast30Days || capsSummary.CAPSLast30Days || '0'}
-                    </h4>
-                    <p className="text-xs text-gray-500 mt-2 border-t border-gray-100 pt-2 font-medium">
-                      Last 30 days ({capsSummary.TotalCAPSLast90Days || '0'} in 90 days)
-                    </p>
-                  </div>
-                </div>
-
-                {/* Card 4: Match & Confidence */}
-                <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100 flex flex-col justify-between hover:shadow-md transition-shadow">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Bureau Identity</span>
-                    <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                      <UserCheck size={18} />
-                    </div>
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-800 text-xs font-bold">
-                        {reportObj.Match_result?.Exact_match === 'Y' ? 'Exact Match' : 'Verified'}
-                      </span>
-                    </div>
-                    <p className="text-xs text-gray-500 mt-2 border-t border-gray-100 pt-2 font-medium">
-                      Bureau Version {headerInfo.Version || 'V2.4'} Record
-                    </p>
-                  </div>
-                </div>
-
-              </div>
-            </div>
-
-            {/* Tab Navigation */}
-            <div className="flex items-center gap-3 print:hidden">
-              <button
-                type="button"
-                onClick={() => setActiveTab('overview')}
-                className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-medium transition-all ${
-                  activeTab === 'overview'
-                    ? 'bg-[#f0f2ff] text-gray-800'
-                    : 'text-gray-500 hover:bg-gray-50'
-                }`}
-              >
-                <FileText size={18} />
-                Accounts Breakdown ({accountList.length})
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab('inquiries')}
-                className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-medium transition-all ${
-                  activeTab === 'inquiries'
-                    ? 'bg-[#f0f2ff] text-gray-800'
-                    : 'text-gray-500 hover:bg-gray-50'
-                }`}
-              >
-                <Clock size={18} />
-                Recent Inquiries ({capsList.length})
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab('demographics')}
-                className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-medium transition-all ${
-                  activeTab === 'demographics'
-                    ? 'bg-[#f0f2ff] text-gray-800'
-                    : 'text-gray-500 hover:bg-gray-50'
-                }`}
-              >
-                <UserCheck size={18} />
-                Bureau Demographic Profile
-              </button>
-            </div>
-
-            {/* Tab 1: Accounts Breakdown */}
-            {activeTab === 'overview' && (
-              <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                <div className="bg-[#e6f4f5] px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-                  <h4 className="text-base font-bold text-[#225091]">Credit Accounts (CAIS Details)</h4>
-                  <span className="text-xs font-semibold text-gray-500 bg-white px-3 py-1 rounded-full border border-gray-200">
-                    {accountList.length} Accounts Found
-                  </span>
-                </div>
-
-                {accountList.length === 0 ? (
-                  <div className="p-8 text-center text-gray-500 text-sm">
-                    No individual credit loan accounts reported in bureau profile.
-                  </div>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left text-sm">
-                      <thead className="bg-[#F8FAFC] text-gray-600 text-xs uppercase tracking-wider font-semibold border-b border-gray-200/80">
-                        <tr>
-                          <th className="py-3.5 px-5 font-semibold">Account / Subscriber</th>
-                          <th className="py-3.5 px-5 font-semibold">Type &amp; Portfolio</th>
-                          <th className="py-3.5 px-5 font-semibold">Sanctioned / High Credit</th>
-                          <th className="py-3.5 px-5 font-semibold">Current Balance</th>
-                          <th className="py-3.5 px-5 font-semibold">Past Due</th>
-                          <th className="py-3.5 px-5 font-semibold">Opened / Reported</th>
-                          <th className="py-3.5 px-5 font-semibold">Status</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-100">
-                        {accountList.map((acc, index) => (
-                          <tr key={index} className="hover:bg-slate-50/70 transition-colors">
-                            <td className="py-3.5 px-5">
-                              <div className="font-semibold text-gray-900 text-sm">{acc.Subscriber_Name || acc.Identification_Number || 'N/A'}</div>
-                              <div className="text-xs font-mono text-gray-400 mt-0.5">{acc.Account_Number || 'XXXX'}</div>
-                            </td>
-                            <td className="py-3.5 px-5 text-xs text-gray-600">
-                              <div className="font-medium text-gray-800">Code: {acc.Account_Type || '01'}</div>
-                              <div className="text-[11px] text-gray-400">Portfolio: {acc.Portfolio_Type || 'I'}</div>
-                            </td>
-                            <td className="py-3.5 px-5 text-sm font-bold text-gray-900 tabular-nums">
-                              {formatCurrency(acc.Highest_Credit_or_Original_Loan_Amount)}
-                            </td>
-                            <td className="py-3.5 px-5 text-sm font-bold text-[#225091] tabular-nums">
-                              {formatCurrency(acc.CurrentBalance || acc.Current_Balance)}
-                            </td>
-                            <td className="py-3.5 px-5 text-sm font-semibold tabular-nums">
-                              <span className={Number(acc.Amount_Past_Due) > 0 ? "text-rose-600 font-bold" : "text-gray-500"}>
-                                {formatCurrency(acc.Amount_Past_Due)}
-                              </span>
-                            </td>
-                            <td className="py-3.5 px-5 text-xs text-gray-500">
-                              <div>Opened: {formatDate(acc.Open_Date)}</div>
-                              <div>Reported: {formatDate(acc.Date_Reported)}</div>
-                            </td>
-                            <td className="py-3.5 px-5">
-                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[12px] font-semibold border border-emerald-200/60 uppercase tracking-wide">
-                                Active (Code {acc.Account_Status || '11'})
-                              </span>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+              <div className="flex items-center gap-2">
+                {detailParsed.pdfUrl && (
+                  <a
+                    href={detailParsed.pdfUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs transition-colors shadow-2xs"
+                  >
+                    <Download size={14} />
+                    <span>Download PDF</span>
+                  </a>
                 )}
-              </div>
-            )}
-
-            {/* Tab 2: Recent Inquiries */}
-            {activeTab === 'inquiries' && (
-              <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                <div className="bg-[#e6f4f5] px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-                  <h4 className="text-base font-bold text-[#225091]">Credit Inquiries (CAPS Record)</h4>
-                  <span className="text-xs font-semibold text-gray-500 bg-white px-3 py-1 rounded-full border border-gray-200">
-                    {capsList.length} Inquiries
-                  </span>
-                </div>
-
-                {capsList.length === 0 ? (
-                  <div className="p-8 text-center text-gray-500 text-sm font-medium">
-                    No recent non-credit bureau inquiries found in this report.
-                  </div>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left text-sm">
-                      <thead className="bg-[#F8FAFC] text-gray-600 text-xs uppercase tracking-wider font-semibold border-b border-gray-200/80">
-                        <tr>
-                          <th className="py-3.5 px-5 font-semibold">Subscriber Institution</th>
-                          <th className="py-3.5 px-5 font-semibold">Inquiry Date</th>
-                          <th className="py-3.5 px-5 font-semibold">Enquiry Purpose</th>
-                          <th className="py-3.5 px-5 font-semibold">Report Number</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-100">
-                        {capsList.map((item, index) => (
-                          <tr key={index} className="hover:bg-slate-50/70 transition-colors">
-                            <td className="py-3.5 px-5">
-                              <div className="font-semibold text-gray-900 text-sm">{item.Subscriber_Name || item.Subscriber_code || 'Financial Institution'}</div>
-                              <div className="text-xs text-gray-400 font-mono">{item.Subscriber_code}</div>
-                            </td>
-                            <td className="py-3.5 px-5 text-xs text-gray-600 font-medium">
-                              {formatDate(item.Date_of_Request)}
-                            </td>
-                            <td className="py-3.5 px-5">
-                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 text-[12px] font-semibold border border-blue-200/60 uppercase tracking-wide">
-                                Purpose: Code {item.Finance_Purpose || item.Enquiry_Reason || '99'}
-                              </span>
-                            </td>
-                            <td className="py-3.5 px-5 font-mono text-xs text-gray-500">
-                              {item.ReportNumber || 'N/A'}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Tab 3: Demographics Profile */}
-            {activeTab === 'demographics' && (
-              <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                <div className="bg-[#e6f4f5] px-6 py-4 border-b border-gray-100">
-                  <h4 className="text-base font-bold text-[#225091]">
-                    Registered Demographics in Bureau
-                  </h4>
-                </div>
-
-                <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  <div className="p-4 rounded-xl bg-gray-50 border border-gray-100 flex items-start gap-3.5 hover:shadow-sm transition-all">
-                    <UserCheck className="text-[#225091] shrink-0 mt-0.5" size={20} />
-                    <div>
-                      <span className="text-xs text-gray-400 font-semibold uppercase block">Applicant Full Name</span>
-                      <span className="text-sm font-bold text-gray-800">
-                        {applicantDetails.First_Name ? `${applicantDetails.First_Name} ${applicantDetails.Last_Name || ''}` : (creditReport.name || formData.fullName)}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="p-4 rounded-xl bg-gray-50 border border-gray-100 flex items-start gap-3.5 hover:shadow-sm transition-all">
-                    <Calendar className="text-[#225091] shrink-0 mt-0.5" size={20} />
-                    <div>
-                      <span className="text-xs text-gray-400 font-semibold uppercase block">Date of Birth</span>
-                      <span className="text-sm font-bold text-gray-800">
-                        {formatDate(applicantDetails.Date_Of_Birth_Applicant || formData.dob)}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="p-4 rounded-xl bg-gray-50 border border-gray-100 flex items-start gap-3.5 hover:shadow-sm transition-all">
-                    <CreditCard className="text-[#225091] shrink-0 mt-0.5" size={20} />
-                    <div>
-                      <span className="text-xs text-gray-400 font-semibold uppercase block">Income Tax PAN</span>
-                      <span className="text-sm font-mono font-bold text-gray-800">
-                        {applicantDetails.IncomeTaxPan || creditReport.pan || formData.panNumber}
-                      </span>
-                    </div>
-                  </div>
-
-                  {(formData.mobileNumber || applicantDetails.MobilePhoneNumber || applicantDetails.Telephone_Number) && (
-                    <div className="p-4 rounded-xl bg-gray-50 border border-gray-100 flex items-start gap-3.5 hover:shadow-sm transition-all">
-                      <Phone className="text-[#225091] shrink-0 mt-0.5" size={20} />
-                      <div>
-                        <span className="text-xs text-gray-400 font-semibold uppercase block">Phone Number</span>
-                        <span className="text-sm font-mono font-bold text-gray-800">
-                          {formData.mobileNumber ? `+91 ${formData.mobileNumber}` : (applicantDetails.MobilePhoneNumber || applicantDetails.Telephone_Number)}
-                        </span>
-                      </div>
-                    </div>
-                  )}
-
-                  {applicantDetails.EMailId && (
-                    <div className="p-4 rounded-xl bg-gray-50 border border-gray-100 flex items-start gap-3.5 hover:shadow-sm transition-all">
-                      <Mail className="text-[#225091] shrink-0 mt-0.5" size={20} />
-                      <div>
-                        <span className="text-xs text-gray-400 font-semibold uppercase block">Bureau Email</span>
-                        <span className="text-sm font-bold text-gray-800">
-                          {applicantDetails.EMailId}
-                        </span>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="p-4 rounded-xl bg-gray-50 border border-gray-100 flex items-start gap-3.5 md:col-span-2 hover:shadow-sm transition-all">
-                    <MapPin className="text-[#225091] shrink-0 mt-0.5" size={20} />
-                    <div>
-                      <span className="text-xs text-gray-400 font-semibold uppercase block">Reported Address</span>
-                      <span className="text-sm font-bold text-gray-800 leading-relaxed">
-                        {formatAddress(addressDetails)}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Action Buttons */}
-            <div className="flex flex-wrap justify-center items-center gap-4 mt-4 print:hidden">
-              <button 
-                onClick={handleReset}
-                className="flex items-center gap-2 px-8 py-2.5 rounded-full border border-gray-300 text-gray-700 font-semibold hover:bg-gray-50 transition-colors shadow-sm"
-              >
-                <ArrowLeft size={18} />
-                Check Another Score
-              </button>
-
-              {(reportResult?.pdfUrl || reportResult?.data?.pdfUrl) && (
-                <button 
-                  onClick={() => {
-                    const pdfUrl = reportResult?.pdfUrl || reportResult?.data?.pdfUrl;
-                    window.open(pdfUrl, '_blank');
-                  }}
-                  className="flex items-center gap-2 px-8 py-2.5 rounded-full bg-[#225091] text-white font-bold hover:bg-[#163a6c] transition-all shadow-md shadow-[#225091]/30 transform hover:-translate-y-0.5 active:scale-95"
+                <button
+                  onClick={() => setDetailModalOpen(false)}
+                  className="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-100 cursor-pointer"
                 >
-                  <Download size={18} />
-                  Download Bureau PDF
+                  <X size={18} />
                 </button>
-              )}
-
-              <button 
-                onClick={() => {
-                  window.print();
-                }}
-                className="flex items-center gap-2 px-8 py-2.5 rounded-full border border-[#225091] text-[#225091] font-bold hover:bg-[#225091]/5 transition-all shadow-sm"
-              >
-                <Printer size={18} />
-                Print / Save Page
-              </button>
+              </div>
             </div>
 
-          </div>
+            {/* Modal Body */}
+            <div className="p-6 overflow-y-auto space-y-6 flex-1">
+              {detailLoading ? (
+                <div className="space-y-4 py-12">
+                  <div className="flex items-center justify-center">
+                    <Loader2 size={32} className="animate-spin text-[#225091]" />
+                  </div>
+                  <p className="text-center text-xs text-gray-500 font-semibold">Loading bureau report details...</p>
+                </div>
+              ) : (
+                <>
+                  {/* Score & Risk Rating Cards */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className={`p-4 rounded-2xl ${detailParsed.rating.bg} border ${detailParsed.rating.border} flex items-center gap-4`}>
+                      <div className="w-14 h-14 rounded-xl bg-white border border-gray-200 flex flex-col items-center justify-center shrink-0">
+                        <span className={`text-xl font-black ${detailParsed.rating.color}`}>
+                          {detailParsed.score > 0 ? detailParsed.score : 'N/A'}
+                        </span>
+                        <span className="text-[9px] font-bold text-gray-400">SCORE</span>
+                      </div>
+                      <div>
+                        <p className="text-[11px] font-bold text-gray-500 uppercase">Bureau Score</p>
+                        <h4 className={`text-sm font-bold ${detailParsed.rating.color}`}>{detailParsed.rating.text}</h4>
+                      </div>
+                    </div>
 
+                    <div className="p-4 rounded-2xl bg-gray-50 border border-gray-100">
+                      <p className="text-[11px] font-bold text-gray-500 uppercase">Verification Status</p>
+                      <div className="mt-1.5">{getStatusBadge(detailReport?.status || detailParsed.applicant.status)}</div>
+                    </div>
+
+                    <div className="p-4 rounded-2xl bg-gray-50 border border-gray-100">
+                      <p className="text-[11px] font-bold text-gray-500 uppercase">Requested By</p>
+                      <h4 className="text-xs font-bold text-gray-900 mt-1">
+                        {detailReport?.requestedBy?.fullName || detailReport?.requestedBy?.email || 'System'}
+                      </h4>
+                      <p className="text-[10px] text-gray-400 mt-0.5">
+                        {detailReport?.createdAt ? new Date(detailReport.createdAt).toLocaleString('en-GB') : '—'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Applicant Details Profile Box */}
+                  <div className="p-5 rounded-2xl bg-gray-50/70 border border-gray-100">
+                    <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wider mb-3">Applicant Information</h4>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
+                      <div>
+                        <span className="text-gray-400 block text-[11px] mb-0.5">Full Name</span>
+                        <span className="font-bold text-gray-900">{detailParsed.applicant.fullName}</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-400 block text-[11px] mb-0.5">PAN Card</span>
+                        <span className="font-bold text-gray-900 font-mono">{detailParsed.applicant.pan}</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-400 block text-[11px] mb-0.5">Mobile</span>
+                        <span className="font-bold text-gray-900 font-mono">{detailParsed.applicant.mobileNumber}</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-400 block text-[11px] mb-0.5">Date of Birth</span>
+                        <span className="font-bold text-gray-900">{detailParsed.applicant.dob}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Accounts Table in Modal */}
+                  <div className="space-y-3">
+                    <h4 className="text-xs font-bold text-gray-800 uppercase tracking-wider">
+                      Report Accounts ({detailParsed.accounts.length})
+                    </h4>
+                    {detailParsed.accounts.length > 0 ? (
+                      <div className="border border-gray-100 rounded-2xl overflow-hidden">
+                        <table className="w-full text-left text-xs border-collapse">
+                          <thead className="bg-gray-50 text-gray-600 uppercase font-semibold">
+                            <tr>
+                              <th className="p-3">Institution</th>
+                              <th className="p-3">Type</th>
+                              <th className="p-3">Balance</th>
+                              <th className="p-3">Status</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-gray-100">
+                            {detailParsed.accounts.map((acc, aIdx) => (
+                              <tr key={aIdx} className="hover:bg-gray-50/40">
+                                <td className="p-3 font-semibold text-gray-900">{acc.Subscriber_Name || acc.institution || '—'}</td>
+                                <td className="p-3 text-gray-700">{acc.Account_Type || acc.accountType || '—'}</td>
+                                <td className="p-3 font-bold text-gray-900">₹{Number(acc.Current_Balance || acc.balance || 0).toLocaleString('en-IN')}</td>
+                                <td className="p-3">
+                                  <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${acc.Date_Closed ? 'bg-gray-100 text-gray-600' : 'bg-emerald-50 text-emerald-700'}`}>
+                                    {acc.Date_Closed ? 'Closed' : 'Active'}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    ) : (
+                      <div className="p-6 text-center bg-gray-50 rounded-xl border border-gray-100 text-xs text-gray-500">
+                        No credit account lines reported for this record.
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Inquiries Table in Modal */}
+                  {detailParsed.inquiries.length > 0 && (
+                    <div className="space-y-3">
+                      <h4 className="text-xs font-bold text-gray-800 uppercase tracking-wider">
+                        Enquiries on Record ({detailParsed.inquiries.length})
+                      </h4>
+                      <div className="border border-gray-100 rounded-2xl overflow-hidden">
+                        <table className="w-full text-left text-xs border-collapse">
+                          <thead className="bg-gray-50 text-gray-600 uppercase font-semibold">
+                            <tr>
+                              <th className="p-3">Member</th>
+                              <th className="p-3">Purpose</th>
+                              <th className="p-3">Amount</th>
+                              <th className="p-3">Date</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-gray-100">
+                            {detailParsed.inquiries.map((inq, iIdx) => (
+                              <tr key={iIdx} className="hover:bg-gray-50/40">
+                                <td className="p-3 font-semibold text-gray-900">{inq.Subscriber_Name || inq.institution || '—'}</td>
+                                <td className="p-3 text-gray-700">{inq.Enquiry_Purpose || inq.purpose || '—'}</td>
+                                <td className="p-3 font-bold text-gray-900">₹{Number(inq.Enquiry_Amount || inq.amount || 0).toLocaleString('en-IN')}</td>
+                                <td className="p-3 text-gray-500">{inq.Date_Of_Request || inq.date || '—'}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Bureau Metadata in Modal */}
+                  <div className="p-4 rounded-2xl bg-gray-50 border border-gray-100">
+                    <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wider mb-2">Bureau Protocol</h4>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
+                      <div>
+                        <span className="text-gray-400 block text-[11px]">Provider</span>
+                        <span className="font-semibold text-gray-800">{detailParsed.bureauMeta.bureauProvider}</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-400 block text-[11px]">Score Model</span>
+                        <span className="font-semibold text-gray-800">{detailParsed.bureauMeta.scoreModel}</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-400 block text-[11px]">Reference ID</span>
+                        <span className="font-mono font-bold text-[#225091]">{detailParsed.bureauMeta.controlNumber}</span>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="px-6 py-3 border-t border-gray-100 bg-gray-50/70 flex justify-end">
+              <button
+                onClick={() => setDetailModalOpen(false)}
+                className="px-4 py-2 rounded-xl border border-gray-200 text-gray-700 font-bold hover:bg-gray-100 text-xs cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

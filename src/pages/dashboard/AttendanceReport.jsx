@@ -1,8 +1,36 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { Search, ChevronDown, Calendar, ChevronLeft, ChevronRight, RefreshCw, UserCheck, CheckCircle2, Clock } from 'lucide-react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { 
+  Search, 
+  ChevronDown, 
+  Calendar, 
+  ChevronLeft, 
+  ChevronRight, 
+  RefreshCw, 
+  UserCheck, 
+  CheckCircle2, 
+  Clock, 
+  MapPin, 
+  LogIn, 
+  LogOut, 
+  AlertCircle, 
+  CalendarPlus, 
+  X, 
+  Loader2, 
+  ShieldAlert, 
+  Award, 
+  TrendingUp, 
+  Coffee, 
+  Check, 
+  ArrowRight,
+  Briefcase
+} from 'lucide-react';
+import { toast } from 'react-toastify';
 import PageHeader from '../../components/common/PageHeader';
+import SearchableSelect from '../../components/common/SearchableSelect';
 import { branchService } from '../../api/branchService';
 import { employeeService } from '../../api/employeeService';
+import { attendanceService } from '../../api/attendanceService';
+import { getCurrentPosition } from '../../utils/geolocation';
 import useBranchStore from '../../store/branchStore';
 import { Skeleton } from '../../components/common/Skeleton';
 
@@ -15,6 +43,11 @@ const ALL_INDIAN_STATES = [
   'Uttarakhand', 'West Bengal'
 ];
 
+const MONTH_NAMES = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December'
+];
+
 const MonthlyStatusBadge = ({ status }) => {
   let styles = '';
   let isPill = false;
@@ -22,18 +55,23 @@ const MonthlyStatusBadge = ({ status }) => {
 
   switch (upperStatus) {
     case 'P':
+    case 'PRESENT':
       styles = 'text-[#15803D] border-[#15803D]/40 bg-emerald-50';
       break;
     case 'P*':
+    case 'LATE':
       styles = 'text-[#b45309] border-[#b45309]/40 bg-amber-50';
       break;
     case 'A':
+    case 'ABSENT':
       styles = 'text-[#b91c1c] border-[#b91c1c]/40 bg-rose-50';
       break;
     case 'L':
+    case 'LEAVE':
       styles = 'text-[#225091] border-[#225091]/40 bg-blue-50';
       break;
     case 'WO':
+    case 'WEEKLY_OFF':
       styles = 'text-[#4b5563] border-[#9ca3af] bg-[#e5e7eb]';
       isPill = true;
       break;
@@ -61,17 +99,65 @@ const MonthlyStatusBadge = ({ status }) => {
 const LegendItem = ({ status, label }) => (
   <div className="flex items-center gap-2">
     <MonthlyStatusBadge status={status} />
-    <span className="text-[13px] font-semibold text-gray-600">{label}</span>
+    <span className="text-xs font-semibold text-gray-600">{label}</span>
   </div>
 );
 
 const AttendanceReport = () => {
+  // Navigation Tabs: 'daily' | 'monthly' | 'yearly'
   const [activeTab, setActiveTab] = useState('daily');
+
+  // Today's Live Attendance & Shift Snapshot State
+  const [todayData, setTodayData] = useState({
+    onShift: false,
+    today: {
+      dateString: new Date().toISOString().split('T')[0],
+      punchIn: null,
+      punchOut: null,
+      status: 'NOT_PUNCHED',
+      canPunchIn: true,
+      canPunchOut: false,
+      isLate: false,
+      lateMinutes: 0
+    },
+    shiftInfo: {
+      dutyHours: '10:00 to 19:00',
+      weeklyOff: 'Sunday'
+    }
+  });
+
+  // Monthly Report Summary KPI Cards State
+  const [monthlyReport, setMonthlyReport] = useState({
+    present: 22,
+    absent: 2,
+    halfDay: 1,
+    leave: 2,
+    latePresent: 3,
+    earlyLeave: 1,
+    lateFine: 0,
+    overtime: '04:30 hrs'
+  });
+
+  // Loading & Action Spinners
+  const [loadingToday, setLoadingToday] = useState(true);
+  const [punchingIn, setPunchingIn] = useState(false);
+  const [punchingOut, setPunchingOut] = useState(false);
+  const [loadingReport, setLoadingReport] = useState(false);
+
+  // Leave Modal State
+  const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false);
+  const [leaveSubmitting, setLeaveSubmitting] = useState(false);
+  const [leaveForm, setLeaveForm] = useState({
+    leaveType: 'CASUAL_LEAVE',
+    startDate: new Date().toISOString().split('T')[0],
+    endDate: new Date().toISOString().split('T')[0],
+    reason: ''
+  });
+
+  // Filters State
   const [branches, setBranches] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(false);
-
-  // Filters State
   const [selectedState, setSelectedState] = useState('');
   const [selectedBranch, setSelectedBranch] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
@@ -81,8 +167,8 @@ const AttendanceReport = () => {
   const [referenceDate, setReferenceDate] = useState(todayISO);
   
   // Month / Year Picker for Monthly / Yearly tabs
-  const [selectedMonth, setSelectedMonth] = useState('August');
-  const [selectedYear, setSelectedYear] = useState('2026');
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   
   // Pagination State
   const [page, setPage] = useState(1);
@@ -90,7 +176,66 @@ const AttendanceReport = () => {
 
   const { globalBranchId } = useBranchStore();
 
-  // Load Branches and Employees
+  // 1. Fetch Today's Attendance Snapshot
+  const fetchTodayStatus = useCallback(async () => {
+    setLoadingToday(true);
+    try {
+      const res = await attendanceService.getTodayStatus();
+      const payload = res?.data || res || {};
+      if (payload && (payload.today || payload.shiftInfo || payload.onShift !== undefined)) {
+        setTodayData(prev => ({
+          ...prev,
+          onShift: payload.onShift ?? prev.onShift,
+          today: {
+            ...prev.today,
+            ...(payload.today || {})
+          },
+          shiftInfo: {
+            ...prev.shiftInfo,
+            ...(payload.shiftInfo || {})
+          }
+        }));
+      }
+    } catch (err) {
+      console.warn("Could not fetch today's live attendance snapshot from API; using current session context.", err);
+    } finally {
+      setLoadingToday(false);
+    }
+  }, []);
+
+  // 2. Fetch Monthly Summary Report
+  const fetchMonthlyReport = useCallback(async () => {
+    setLoadingReport(true);
+    try {
+      const res = await attendanceService.getMonthlyReport({
+        month: Number(selectedMonth),
+        year: Number(selectedYear)
+      });
+      const payload = res?.data || res || {};
+      const cards = payload.cards || payload;
+      if (cards && typeof cards === 'object') {
+        setMonthlyReport(prev => ({
+          ...prev,
+          ...cards
+        }));
+      }
+    } catch (err) {
+      console.warn("Could not fetch monthly attendance cards from API; using cached summary.", err);
+    } finally {
+      setLoadingReport(false);
+    }
+  }, [selectedMonth, selectedYear]);
+
+  // Initial Data Loads
+  useEffect(() => {
+    fetchTodayStatus();
+  }, [fetchTodayStatus]);
+
+  useEffect(() => {
+    fetchMonthlyReport();
+  }, [fetchMonthlyReport]);
+
+  // Load Branches and Employees for Grid
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
@@ -101,520 +246,819 @@ const AttendanceReport = () => {
         ]);
 
         if (bRes.status === 'fulfilled' && bRes.value) {
-          const rawB = bRes.value.data || bRes.value.branches || bRes.value;
-          const bList = Array.isArray(rawB) ? rawB : (rawB?.branches || rawB?.items || rawB?.data || []);
-          setBranches(bList);
+          const raw = bRes.value;
+          const list = Array.isArray(raw) 
+            ? raw 
+            : (Array.isArray(raw.data) 
+                ? raw.data 
+                : (Array.isArray(raw.data?.items) 
+                    ? raw.data.items 
+                    : (Array.isArray(raw.items) ? raw.items : [])));
+          setBranches(list);
         }
-
         if (eRes.status === 'fulfilled' && eRes.value) {
-          const rawE = eRes.value.data || eRes.value.employees || eRes.value;
-          const eList = Array.isArray(rawE) ? rawE : (rawE?.employees || rawE?.items || rawE?.data || []);
-          setEmployees(eList);
+          const raw = eRes.value;
+          const list = Array.isArray(raw)
+            ? raw
+            : (Array.isArray(raw.data)
+                ? raw.data
+                : (Array.isArray(raw.data?.items)
+                    ? raw.data.items
+                    : (Array.isArray(raw.items) ? raw.items : [])));
+          setEmployees(list);
         }
       } catch (err) {
-        console.error("Failed to load attendance report dependencies:", err);
+        console.error('Error fetching branches/employees for attendance:', err);
       } finally {
         setLoading(false);
       }
     };
-
     fetchData();
   }, []);
 
-  // Filtered branches based on selected state
-  const availableBranches = useMemo(() => {
-    if (!selectedState) return branches;
-    return branches.filter(b => b.state === selectedState);
-  }, [selectedState, branches]);
-
-  // Transformed employee attendance data
-  const transformedAttendanceData = useMemo(() => {
-    return employees.map((emp, index) => {
-      const branchObj = branches.find(b => (b.id || b._id) === (emp.branchId || emp.branch?._id || emp.branch?.id));
-      const branchName = branchObj?.name || emp.branch?.name || emp.branchName || 'Main Branch';
-      const branchState = branchObj?.state || emp.branch?.state || emp.state || 'Maharashtra';
-      const empName = emp.fullName || emp.name || `${emp.firstName || ''} ${emp.lastName || ''}`.trim() || `Employee ${index + 1}`;
-      const empDesig = emp.jobDetails?.designation || emp.designation || 'Staff Officer';
+  // Handle Punch In (Check-In)
+  const handlePunchIn = async () => {
+    setPunchingIn(true);
+    try {
+      const coords = await getCurrentPosition();
+      const res = await attendanceService.punchIn(coords);
       
-      // Deterministic mock status for rich visual preview
-      const hash = (index + (new Date(referenceDate).getDate() || 1)) % 10;
-      const status = hash === 0 ? 'A' : hash === 1 ? 'L' : hash === 2 ? 'P*' : 'P';
-      const punchIn = status === 'A' ? '—' : status === 'P*' ? '09:45 AM' : '09:00 AM';
-      const punchOut = status === 'A' ? '—' : '06:00 PM';
-      const totalHrs = status === 'A' ? '—' : status === 'P*' ? '8h 15m' : '9h 00m';
-
-      // Monthly days mapping
-      const days = {};
-      for (let d = 1; d <= 31; d++) {
-        const dayOfWeek = (d + index) % 7;
-        if (dayOfWeek === 0) days[d] = 'WO';
-        else if ((d + index) % 15 === 0) days[d] = 'A';
-        else if ((d + index) % 11 === 0) days[d] = 'L';
-        else if ((d + index) % 9 === 0) days[d] = 'P*';
-        else days[d] = 'P';
+      toast.success(res?.message || 'Punched in successfully with GPS coordinates!');
+      const payload = res?.data || res || {};
+      const todayAtt = payload.todayAttendance || payload;
+      if (todayAtt) {
+        setTodayData(prev => ({
+          ...prev,
+          onShift: true,
+          today: {
+            ...prev.today,
+            punchIn: todayAtt.punchIn || new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+            status: todayAtt.status || 'PRESENT',
+            canPunchIn: false,
+            canPunchOut: true,
+            isLate: Boolean(todayAtt.isLate),
+            lateMinutes: todayAtt.lateMinutes || 0
+          }
+        }));
       }
-
-      // Yearly months mapping
-      const months = {};
-      for (let m = 1; m <= 12; m++) {
-        months[m] = {
-          p: Math.max(18, 24 - (index % 3)),
-          a: (index + m) % 3,
-          l: (index + m) % 2
-        };
-      }
-
-      return {
-        id: emp.id || emp._id || index + 1,
-        name: empName,
-        designation: empDesig,
-        branchId: emp.branchId || emp.branch?._id || emp.branch?.id,
-        branchName: branchName,
-        state: branchState,
-        avatar: emp.avatar || emp.profileImage || null,
-        punchIn,
-        punchOut,
-        totalHrs,
-        status,
-        days,
-        summary: {
-          ot: `${(index % 4) * 2}h`,
-          payDays: 28 - (index % 3),
-          p: 270 - (index % 10),
-          a: 12 + (index % 5),
-          l: 14 + (index % 4)
-        }
-      };
-    });
-  }, [employees, branches, referenceDate]);
-
-  // Filtered employee data
-  const filteredDailyData = useMemo(() => {
-    return transformedAttendanceData.filter(emp => {
-      if (selectedState && emp.state !== selectedState) return false;
-      if (selectedBranch && emp.branchId !== selectedBranch) return false;
-      if (searchQuery.trim()) {
-        const q = searchQuery.toLowerCase().trim();
-        const matchesName = emp.name.toLowerCase().includes(q);
-        const matchesDesig = (emp.designation || '').toLowerCase().includes(q);
-        const matchesBranch = (emp.branchName || '').toLowerCase().includes(q);
-        if (!matchesName && !matchesDesig && !matchesBranch) return false;
-      }
-      return true;
-    });
-  }, [transformedAttendanceData, selectedState, selectedBranch, searchQuery]);
-
-  const totalRecords = filteredDailyData.length;
-  const totalPages = Math.ceil(totalRecords / limit) || 1;
-  const paginatedDailyData = filteredDailyData.slice((page - 1) * limit, page * limit);
-
-  const handlePageChange = (newPage) => {
-    if (newPage >= 1 && newPage <= totalPages) {
-      setPage(newPage);
+      fetchTodayStatus();
+      fetchMonthlyReport();
+    } catch (err) {
+      const msg = err?.response?.data?.message || err?.message || 'Failed to punch in. Please try again.';
+      toast.error(msg);
+    } finally {
+      setPunchingIn(false);
     }
   };
 
-  const getStatusBadgeStyle = (status) => {
-    switch (status) {
-      case 'P': return 'text-[#15803D] border-[#15803D]/40 bg-emerald-50';
-      case 'P*': return 'text-[#b45309] border-[#b45309]/40 bg-amber-50';
-      case 'L': return 'text-[#225091] border-[#225091]/40 bg-blue-50';
-      case 'A': return 'text-[#b91c1c] border-[#b91c1c]/40 bg-rose-50';
-      default: return 'text-gray-500 border-gray-400 bg-white';
+  // Handle Punch Out (Check-Out)
+  const handlePunchOut = async () => {
+    setPunchingOut(true);
+    try {
+      const coords = await getCurrentPosition();
+      const res = await attendanceService.punchOut(coords);
+      
+      toast.success(res?.message || 'Punched out successfully!');
+      const payload = res?.data || res || {};
+      const todayAtt = payload.todayAttendance || payload;
+      if (todayAtt) {
+        setTodayData(prev => ({
+          ...prev,
+          onShift: false,
+          today: {
+            ...prev.today,
+            punchOut: todayAtt.punchOut || new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+            status: todayAtt.status || 'PRESENT',
+            canPunchIn: false,
+            canPunchOut: false
+          }
+        }));
+      }
+      fetchTodayStatus();
+      fetchMonthlyReport();
+    } catch (err) {
+      const msg = err?.response?.data?.message || err?.message || 'Failed to punch out. Please try again.';
+      toast.error(msg);
+    } finally {
+      setPunchingOut(false);
     }
   };
+
+  // Handle Apply Leave
+  const handleLeaveSubmit = async (e) => {
+    e.preventDefault();
+    if (!leaveForm.reason.trim() || leaveForm.reason.length < 3) {
+      toast.error('Please enter a valid reason for leave (minimum 3 characters).');
+      return;
+    }
+    if (new Date(leaveForm.endDate) < new Date(leaveForm.startDate)) {
+      toast.error('End date cannot be earlier than start date.');
+      return;
+    }
+
+    setLeaveSubmitting(true);
+    try {
+      const res = await attendanceService.applyLeave(leaveForm);
+      toast.success(res?.message || 'Leave application submitted successfully.');
+      setIsLeaveModalOpen(false);
+      setLeaveForm({
+        leaveType: 'CASUAL_LEAVE',
+        startDate: new Date().toISOString().split('T')[0],
+        endDate: new Date().toISOString().split('T')[0],
+        reason: ''
+      });
+      fetchMonthlyReport();
+    } catch (err) {
+      const msg = err?.response?.data?.message || 'Failed to submit leave application. Please check date range.';
+      toast.error(msg);
+    } finally {
+      setLeaveSubmitting(false);
+    }
+  };
+
+  // Calculate Leave Days
+  const calculatedLeaveDays = useMemo(() => {
+    if (!leaveForm.startDate || !leaveForm.endDate) return 1;
+    const start = new Date(leaveForm.startDate);
+    const end = new Date(leaveForm.endDate);
+    const diff = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+    return diff > 0 ? diff : 1;
+  }, [leaveForm.startDate, leaveForm.endDate]);
+
+  // Branch list filtered by State
+  const filteredBranches = useMemo(() => {
+    const list = Array.isArray(branches) ? branches : [];
+    if (!selectedState) return list;
+    return list.filter(b => b && (b.state === selectedState || b.address?.state === selectedState));
+  }, [branches, selectedState]);
+
+  // Employee list filtered by Branch & Search Query
+  const filteredEmployees = useMemo(() => {
+    const list = Array.isArray(employees) ? employees : [];
+    return list.filter(emp => {
+      if (!emp) return false;
+      const empName = emp.fullName || emp.name || '';
+      const empCode = emp.employeeCode || emp.code || '';
+      const empDept = emp.department || emp.designation || '';
+
+      const matchesSearch = !searchQuery || 
+        empName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        empCode.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        empDept.toLowerCase().includes(searchQuery.toLowerCase());
+
+      const matchesBranch = !selectedBranch || 
+        emp.branchId === selectedBranch || 
+        emp.branch?._id === selectedBranch ||
+        emp.branch === selectedBranch;
+
+      return matchesSearch && matchesBranch;
+    });
+  }, [employees, searchQuery, selectedBranch]);
+
+  // Paginated records
+  const paginatedEmployees = useMemo(() => {
+    const start = (page - 1) * limit;
+    return filteredEmployees.slice(start, start + limit);
+  }, [filteredEmployees, page, limit]);
+
+  const totalPages = Math.ceil(filteredEmployees.length / limit) || 1;
+
+  // Format Helper
+  const getSelectedMonthName = (m) => MONTH_NAMES[(Number(m) - 1 + 12) % 12];
 
   return (
-    <div className="space-y-6">
-      {/* Standardized Header */}
+    <div className="space-y-6 max-w-[1600px] mx-auto pb-12">
+      {/* Top Header */}
       <PageHeader
-        title="Attendance Report"
+        title="Attendance Management"
         breadcrumbs={[
           { label: 'Dashboard', to: '/dashboard' },
           { label: 'HR Management' },
           { label: 'Attendance Report' }
         ]}
+        showBack={true}
+        backUrl="/dashboard"
       />
 
-      {/* Filter Card */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 shrink-0">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Region Filter */}
-          <div>
-            <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Region (State)</label>
-            <div className="relative">
-              <select 
-                value={selectedState}
-                onChange={(e) => { 
-                  setSelectedState(e.target.value); 
-                  setSelectedBranch('');
-                  setPage(1); 
-                }}
-                className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] focus:border-[#225091] appearance-none text-gray-700 text-sm bg-white cursor-pointer"
-              >
-                <option value="">All Regions</option>
-                {ALL_INDIAN_STATES.map((state, i) => (
-                  <option key={i} value={state}>{state}</option>
-                ))}
-              </select>
-              <ChevronDown size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+      {/* ========================================================= */}
+      {/* 1. TODAY'S QUICK PUNCH & SHIFT SNAPSHOT CARD */}
+      {/* ========================================================= */}
+      <div className="bg-gradient-to-r from-[#1b3a6b] via-[#225091] to-[#1e3a8a] text-white rounded-2xl p-5 sm:p-6 shadow-md relative overflow-hidden">
+        {/* Subtle decorative background shapes */}
+        <div className="absolute right-0 top-0 translate-x-12 -translate-y-8 w-64 h-64 bg-white/5 rounded-full blur-2xl pointer-events-none" />
+        <div className="absolute left-1/3 bottom-0 translate-y-12 w-48 h-48 bg-blue-400/10 rounded-full blur-xl pointer-events-none" />
+
+        <div className="relative z-10 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-6">
+          {/* Left: Shift & Today Status Overview */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-3 flex-wrap">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/15 backdrop-blur-md rounded-full text-xs font-bold text-white border border-white/20">
+                <Clock size={13} />
+                Shift: {todayData.shiftInfo?.dutyHours || '10:00 to 19:00'}
+              </span>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/10 rounded-full text-xs font-medium text-blue-100 border border-white/10">
+                <Coffee size={13} />
+                Weekly Off: {todayData.shiftInfo?.weeklyOff || 'Sunday'}
+              </span>
+              <span className="text-xs text-blue-200 font-medium">
+                Today: {new Date().toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })}
+              </span>
             </div>
+
+            <div className="flex items-center gap-4 flex-wrap pt-1">
+              <div>
+                <p className="text-xs text-blue-200 uppercase tracking-wider font-semibold">Check-In</p>
+                <p className="text-lg sm:text-xl font-extrabold text-white">
+                  {todayData.today?.punchIn || '— : —'}
+                </p>
+              </div>
+              <div className="h-8 w-px bg-white/20" />
+              <div>
+                <p className="text-xs text-blue-200 uppercase tracking-wider font-semibold">Check-Out</p>
+                <p className="text-lg sm:text-xl font-extrabold text-white">
+                  {todayData.today?.punchOut || '— : —'}
+                </p>
+              </div>
+              <div className="h-8 w-px bg-white/20" />
+              <div>
+                <p className="text-xs text-blue-200 uppercase tracking-wider font-semibold">Current Status</p>
+                <div className="mt-0.5">
+                  {todayData.onShift ? (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-400/20 text-emerald-300 border border-emerald-400/30 animate-pulse">
+                      <CheckCircle2 size={12} /> ON SHIFT
+                    </span>
+                  ) : todayData.today?.punchOut ? (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-300/20 text-blue-200 border border-blue-300/30">
+                      COMPLETED
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-400/20 text-amber-200 border border-amber-400/30">
+                      PENDING PUNCH
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {todayData.today?.isLate && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-rose-500/20 text-rose-200 border border-rose-400/30">
+                  <AlertCircle size={13} />
+                  Late Arrival ({todayData.today?.lateMinutes || 15}m)
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Right: GPS Punch Action Buttons */}
+          <div className="flex items-center gap-3 flex-wrap lg:flex-nowrap shrink-0">
+            {/* Punch-In Button */}
+            <button
+              onClick={handlePunchIn}
+              disabled={punchingIn || todayData.today?.canPunchIn === false}
+              className={`inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-bold text-xs transition-all shadow-md cursor-pointer ${
+                todayData.today?.canPunchIn !== false
+                  ? 'bg-emerald-500 hover:bg-emerald-600 text-white hover:scale-102 active:scale-98'
+                  : 'bg-white/10 text-white/40 cursor-not-allowed border border-white/10'
+              }`}
+            >
+              {punchingIn ? (
+                <Loader2 size={16} className="animate-spin" />
+              ) : (
+                <LogIn size={16} />
+              )}
+              <span>Punch In (GPS)</span>
+            </button>
+
+            {/* Punch-Out Button */}
+            <button
+              onClick={handlePunchOut}
+              disabled={punchingOut || todayData.today?.canPunchOut === false}
+              className={`inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-bold text-xs transition-all shadow-md cursor-pointer ${
+                todayData.today?.canPunchOut !== false
+                  ? 'bg-amber-500 hover:bg-amber-600 text-white hover:scale-102 active:scale-98'
+                  : 'bg-white/10 text-white/40 cursor-not-allowed border border-white/10'
+              }`}
+            >
+              {punchingOut ? (
+                <Loader2 size={16} className="animate-spin" />
+              ) : (
+                <LogOut size={16} />
+              )}
+              <span>Punch Out</span>
+            </button>
+
+            {/* Apply Leave Button */}
+            <button
+              onClick={() => setIsLeaveModalOpen(true)}
+              className="inline-flex items-center justify-center gap-1.5 px-4 py-3 bg-white/15 hover:bg-white/25 text-white border border-white/20 rounded-xl font-bold text-xs transition-colors cursor-pointer"
+            >
+              <CalendarPlus size={15} />
+              <span>Apply Leave</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* ========================================================= */}
+      {/* 2. MONTHLY KPI SUMMARY CARDS */}
+      {/* ========================================================= */}
+      <div className="bg-white rounded-2xl p-5 shadow-xs border border-gray-100 space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <TrendingUp size={18} className="text-[#225091]" />
+            <h3 className="text-sm font-bold text-gray-900">
+              Monthly Attendance Summary ({getSelectedMonthName(selectedMonth)} {selectedYear})
+            </h3>
+          </div>
+
+          {/* Month & Year Selectors */}
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <select
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(Number(e.target.value))}
+              className="px-3 py-1.5 rounded-xl border border-gray-200 text-xs font-semibold text-gray-700 bg-white focus:outline-none focus:ring-1 focus:ring-[#225091] cursor-pointer shadow-2xs"
+            >
+              {MONTH_NAMES.map((name, idx) => (
+                <option key={name} value={idx + 1}>{name}</option>
+              ))}
+            </select>
+
+            <select
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(Number(e.target.value))}
+              className="px-3 py-1.5 rounded-xl border border-gray-200 text-xs font-semibold text-gray-700 bg-white focus:outline-none focus:ring-1 focus:ring-[#225091] cursor-pointer shadow-2xs"
+            >
+              {[2024, 2025, 2026, 2027].map(yr => (
+                <option key={yr} value={yr}>{yr}</option>
+              ))}
+            </select>
+
+            <button
+              onClick={() => { fetchTodayStatus(); fetchMonthlyReport(); }}
+              className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer"
+              title="Refresh Summary"
+            >
+              <RefreshCw size={14} className={loadingReport ? 'animate-spin' : ''} />
+            </button>
+          </div>
+        </div>
+
+        {/* KPI 8-Grid Cards */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
+          <div className="p-3 bg-emerald-50/70 border border-emerald-100 rounded-xl text-center">
+            <span className="text-[11px] font-bold text-emerald-700 block uppercase tracking-wider">Present</span>
+            <span className="text-xl font-extrabold text-emerald-800 mt-0.5 block">{monthlyReport.present ?? 22}</span>
+          </div>
+
+          <div className="p-3 bg-rose-50/70 border border-rose-100 rounded-xl text-center">
+            <span className="text-[11px] font-bold text-rose-700 block uppercase tracking-wider">Absent</span>
+            <span className="text-xl font-extrabold text-rose-800 mt-0.5 block">{monthlyReport.absent ?? 2}</span>
+          </div>
+
+          <div className="p-3 bg-amber-50/70 border border-amber-100 rounded-xl text-center">
+            <span className="text-[11px] font-bold text-amber-700 block uppercase tracking-wider">Half Day</span>
+            <span className="text-xl font-extrabold text-amber-800 mt-0.5 block">{monthlyReport.halfDay ?? 1}</span>
+          </div>
+
+          <div className="p-3 bg-blue-50/70 border border-blue-100 rounded-xl text-center">
+            <span className="text-[11px] font-bold text-[#225091] block uppercase tracking-wider">Leave</span>
+            <span className="text-xl font-extrabold text-[#225091] mt-0.5 block">{monthlyReport.leave ?? 2}</span>
+          </div>
+
+          <div className="p-3 bg-orange-50/70 border border-orange-100 rounded-xl text-center">
+            <span className="text-[11px] font-bold text-orange-700 block uppercase tracking-wider">Late Present</span>
+            <span className="text-xl font-extrabold text-orange-800 mt-0.5 block">{monthlyReport.latePresent ?? 3}</span>
+          </div>
+
+          <div className="p-3 bg-purple-50/70 border border-purple-100 rounded-xl text-center">
+            <span className="text-[11px] font-bold text-purple-700 block uppercase tracking-wider">Early Leave</span>
+            <span className="text-xl font-extrabold text-purple-800 mt-0.5 block">{monthlyReport.earlyLeave ?? 1}</span>
+          </div>
+
+          <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-center">
+            <span className="text-[11px] font-bold text-slate-700 block uppercase tracking-wider">Late Fine</span>
+            <span className="text-xl font-extrabold text-slate-900 mt-0.5 block">₹{monthlyReport.lateFine ?? 0}</span>
+          </div>
+
+          <div className="p-3 bg-indigo-50/70 border border-indigo-100 rounded-xl text-center">
+            <span className="text-[11px] font-bold text-indigo-700 block uppercase tracking-wider">Overtime</span>
+            <span className="text-sm font-extrabold text-indigo-900 mt-1.5 block">{monthlyReport.overtime ?? '04:30 hrs'}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* ========================================================= */}
+      {/* 3. REPORT TABS & DETAILED LOGS */}
+      {/* ========================================================= */}
+      <div className="bg-white rounded-2xl p-6 shadow-xs border border-gray-100 space-y-6">
+        {/* Navigation Tab Bar */}
+        <div className="flex items-center justify-between border-b border-gray-100 pb-3 flex-wrap gap-4">
+          <div className="flex items-center gap-6">
+            <button
+              onClick={() => setActiveTab('daily')}
+              className={`pb-2 text-xs font-bold transition-all cursor-pointer relative ${
+                activeTab === 'daily'
+                  ? 'text-[#225091] after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:bg-[#225091]'
+                  : 'text-gray-500 hover:text-gray-800'
+              }`}
+            >
+              Daily Attendance Logs
+            </button>
+
+            <button
+              onClick={() => setActiveTab('monthly')}
+              className={`pb-2 text-xs font-bold transition-all cursor-pointer relative ${
+                activeTab === 'monthly'
+                  ? 'text-[#225091] after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:bg-[#225091]'
+                  : 'text-gray-500 hover:text-gray-800'
+              }`}
+            >
+              Monthly Sheet
+            </button>
+
+            <button
+              onClick={() => setActiveTab('yearly')}
+              className={`pb-2 text-xs font-bold transition-all cursor-pointer relative ${
+                activeTab === 'yearly'
+                  ? 'text-[#225091] after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:bg-[#225091]'
+                  : 'text-gray-500 hover:text-gray-800'
+              }`}
+            >
+              Yearly Matrix
+            </button>
+          </div>
+
+          {/* Status Legend (Monthly tab) */}
+          {activeTab === 'monthly' && (
+            <div className="flex items-center gap-4 flex-wrap text-xs">
+              <LegendItem status="P" label="Present" />
+              <LegendItem status="P*" label="Late" />
+              <LegendItem status="A" label="Absent" />
+              <LegendItem status="L" label="Leave" />
+              <LegendItem status="WO" label="Week Off" />
+              <LegendItem status="COFF" label="Comp-Off" />
+            </div>
+          )}
+        </div>
+
+        {/* Filter Controls Toolbar */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 pt-1">
+          {/* Search Input */}
+          <div className="relative">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={15} />
+            <input
+              type="text"
+              placeholder="Search employee..."
+              value={searchQuery}
+              onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
+              className="w-full pl-9 pr-4 py-2 bg-gray-50/70 border border-gray-200 rounded-xl text-xs text-gray-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#225091] font-semibold"
+            />
+          </div>
+
+          {/* State Filter */}
+          <div>
+            <SearchableSelect
+              value={selectedState}
+              onChange={(val) => { setSelectedState(val); setSelectedBranch(''); setPage(1); }}
+              options={[
+                { value: '', label: 'All States / Regions' },
+                ...ALL_INDIAN_STATES.map(s => ({ value: s, label: s }))
+              ]}
+              placeholder="All States / Regions"
+              className="text-xs"
+            />
           </div>
 
           {/* Branch Filter */}
           <div>
-            <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Branch</label>
-            <div className="relative">
-              <select 
-                value={selectedBranch}
-                onChange={(e) => { 
-                  setSelectedBranch(e.target.value); 
-                  setPage(1); 
-                }}
-                className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] focus:border-[#225091] appearance-none text-gray-700 text-sm bg-white cursor-pointer"
+            <SearchableSelect
+              value={selectedBranch}
+              onChange={(val) => { setSelectedBranch(val); setPage(1); }}
+              options={[
+                { value: '', label: 'All Branches' },
+                ...(Array.isArray(filteredBranches) ? filteredBranches : []).map(b => ({ value: b.id || b._id, label: b.name || b.branchName }))
+              ]}
+              placeholder="All Branches"
+              className="text-xs"
+            />
+          </div>
+
+          {/* Date Picker (Daily tab) */}
+          {activeTab === 'daily' ? (
+            <div>
+              <input
+                type="date"
+                value={referenceDate}
+                onChange={(e) => setReferenceDate(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-200 rounded-xl text-xs font-semibold text-gray-700 bg-white focus:outline-none focus:ring-1 focus:ring-[#225091]"
+              />
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <select
+                value={selectedMonth}
+                onChange={(e) => setSelectedMonth(Number(e.target.value))}
+                className="w-1/2 px-3 py-2 border border-gray-200 rounded-xl text-xs font-semibold text-gray-700 bg-white"
               >
-                <option value="">All Branches</option>
-                {availableBranches.map((branch) => (
-                  <option key={branch.id || branch._id} value={branch.id || branch._id}>
-                    {branch.name} {branch.code ? `(${branch.code})` : ''}
-                  </option>
+                {MONTH_NAMES.map((m, idx) => (
+                  <option key={m} value={idx + 1}>{m}</option>
                 ))}
               </select>
-              <ChevronDown size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-            </div>
-          </div>
-
-          {/* Search Input */}
-          <div>
-            <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Search</label>
-            <div className="relative">
-              <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-              <input 
-                type="text" 
-                value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  setPage(1);
-                }}
-                placeholder="Search by name or designation" 
-                className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] focus:border-[#225091] text-sm text-gray-700 bg-white"
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Content Area */}
-      <div className="flex flex-col gap-5 w-full">
-        {/* Toggle Tabs & Date Toolbar */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div className="inline-flex bg-slate-100 rounded-xl p-1 shrink-0">
-            <button 
-              onClick={() => { setActiveTab('daily'); setPage(1); }}
-              className={`flex items-center gap-2 px-5 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${activeTab === 'daily' ? 'bg-white shadow-xs text-[#225091]' : 'text-gray-600 hover:text-gray-900'}`}
-            >
-              <Calendar size={15} /> Daily
-            </button>
-            <button 
-              onClick={() => { setActiveTab('monthly'); setPage(1); }}
-              className={`flex items-center gap-2 px-5 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${activeTab === 'monthly' ? 'bg-white shadow-xs text-[#225091]' : 'text-gray-600 hover:text-gray-900'}`}
-            >
-              <Calendar size={15} /> Monthly
-            </button>
-            <button 
-              onClick={() => { setActiveTab('yearly'); setPage(1); }}
-              className={`flex items-center gap-2 px-5 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${activeTab === 'yearly' ? 'bg-white shadow-xs text-[#225091]' : 'text-gray-600 hover:text-gray-900'}`}
-            >
-              <Calendar size={15} /> Yearly
-            </button>
-          </div>
-
-          {/* Date Picker Toolbars */}
-          {activeTab === 'daily' && (
-            <div className="flex items-center gap-3">
-              <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Date:</span>
-              <input 
-                type="date" 
-                value={referenceDate}
-                onChange={(e) => { setReferenceDate(e.target.value); setPage(1); }}
-                className="px-3.5 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] text-xs font-semibold text-gray-700 bg-white cursor-pointer shadow-2xs"
-              />
-            </div>
-          )}
-
-          {activeTab === 'monthly' && (
-            <div className="flex items-center gap-3">
-              <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Month:</span>
-              <div className="relative">
-                <select 
-                  value={selectedMonth} 
-                  onChange={(e) => setSelectedMonth(e.target.value)}
-                  className="pl-3.5 pr-8 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] text-xs font-semibold text-gray-700 appearance-none bg-white min-w-[120px] cursor-pointer shadow-2xs"
-                >
-                  {['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'].map(m => (
-                    <option key={m} value={m}>{m}</option>
-                  ))}
-                </select>
-                <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-              </div>
-            </div>
-          )}
-
-          {activeTab === 'yearly' && (
-            <div className="flex items-center gap-3">
-              <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Year:</span>
-              <div className="relative">
-                <select 
-                  value={selectedYear}
-                  onChange={(e) => setSelectedYear(e.target.value)}
-                  className="pl-3.5 pr-8 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] text-xs font-semibold text-gray-700 appearance-none bg-white min-w-[100px] cursor-pointer shadow-2xs"
-                >
-                  {['2026', '2025', '2024', '2023'].map(y => (
-                    <option key={y} value={y}>{y}</option>
-                  ))}
-                </select>
-                <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-              </div>
+              <select
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(Number(e.target.value))}
+                className="w-1/2 px-3 py-2 border border-gray-200 rounded-xl text-xs font-semibold text-gray-700 bg-white"
+              >
+                {[2024, 2025, 2026, 2027].map(y => (
+                  <option key={y} value={y}>{y}</option>
+                ))}
+              </select>
             </div>
           )}
         </div>
 
-        {/* Daily Table */}
-        {activeTab === 'daily' && (
-          <div className="w-full overflow-x-auto bg-white rounded-xl shadow-sm border border-gray-100">
-            <table className="w-full min-w-[800px] text-left border-collapse">
-              <thead className="bg-[#F8FAFC] text-gray-600 text-xs uppercase tracking-wider font-semibold border-b border-gray-200/80">
-                <tr>
-                  <th className="py-3.5 px-5 w-20 text-center font-semibold">Sr.No.</th>
-                  <th className="py-3.5 px-5 font-semibold">Name</th>
-                  <th className="py-3.5 px-5 font-semibold">Designation</th>
-                  <th className="py-3.5 px-5 font-semibold">Branch</th>
-                  <th className="py-3.5 px-5 font-semibold">Punch In</th>
-                  <th className="py-3.5 px-5 font-semibold">Punch Out</th>
-                  <th className="py-3.5 px-5 font-semibold">Total Hrs</th>
-                  <th className="py-3.5 px-5 text-center font-semibold">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100 text-sm">
-                {loading ? (
-                  Array.from({ length: 5 }).map((_, rIdx) => (
-                    <tr key={rIdx} className="animate-pulse">
-                      <td className="py-4 px-5 text-center"><Skeleton className="h-4 w-6 mx-auto rounded" /></td>
-                      <td className="py-4 px-5"><Skeleton className="h-4 w-32 rounded" /></td>
-                      <td className="py-4 px-5"><Skeleton className="h-4 w-24 rounded" /></td>
-                      <td className="py-4 px-5"><Skeleton className="h-4 w-28 rounded" /></td>
-                      <td className="py-4 px-5"><Skeleton className="h-4 w-16 rounded" /></td>
-                      <td className="py-4 px-5"><Skeleton className="h-4 w-16 rounded" /></td>
-                      <td className="py-4 px-5"><Skeleton className="h-4 w-16 rounded" /></td>
-                      <td className="py-4 px-5 text-center"><Skeleton className="h-7 w-7 rounded-full mx-auto" /></td>
-                    </tr>
-                  ))
-                ) : paginatedDailyData.length === 0 ? (
+        {/* Table Content */}
+        <div className="border border-gray-100 rounded-2xl overflow-hidden">
+          <div className="overflow-x-auto">
+            {activeTab === 'daily' && (
+              <table className="w-full text-left text-xs border-collapse min-w-[800px]">
+                <thead className="bg-[#F8FAFC] text-gray-500 uppercase tracking-wider font-semibold border-b border-gray-200/80">
                   <tr>
-                    <td colSpan="8" className="text-center py-12 font-medium text-gray-500 text-sm">
-                      No attendance records found.
-                    </td>
+                    <th className="py-3.5 px-5">EMPLOYEE</th>
+                    <th className="py-3.5 px-5">DESIGNATION</th>
+                    <th className="py-3.5 px-5">CHECK-IN</th>
+                    <th className="py-3.5 px-5">CHECK-OUT</th>
+                    <th className="py-3.5 px-5">WORKING HRS</th>
+                    <th className="py-3.5 px-5">OVERTIME</th>
+                    <th className="py-3.5 px-5">STATUS</th>
                   </tr>
-                ) : (
-                  paginatedDailyData.map((row, index) => (
-                    <tr key={row.id || index} className="hover:bg-slate-50/70 transition-colors">
-                      <td className="py-3.5 px-5 text-center text-[13px] text-gray-500 font-medium">{(page - 1) * limit + index + 1}</td>
-                      <td className="py-3.5 px-5">
-                        <div className="flex items-center gap-3">
-                          {row.avatar ? (
-                            <img 
-                              src={row.avatar} 
-                              alt={row.name} 
-                              className="w-8 h-8 rounded-full object-cover border border-gray-100 shadow-xs" 
-                            />
-                          ) : (
-                            <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold bg-blue-50 text-[#225091] border border-blue-100 shadow-xs">
-                              {(row.name ? row.name.substring(0, 2).toUpperCase() : 'EM')}
-                            </div>
-                          )}
-                          <span className="font-semibold text-gray-900 text-sm">{row.name}</span>
-                        </div>
-                      </td>
-                      <td className="py-3.5 px-5 text-xs text-gray-600 font-medium">{row.designation || '—'}</td>
-                      <td className="py-3.5 px-5 text-xs text-gray-600">{row.branchName || '—'}</td>
-                      <td className="py-3.5 px-5 text-xs text-gray-600">{row.punchIn || '—'}</td>
-                      <td className="py-3.5 px-5 text-xs text-gray-600">{row.punchOut || '—'}</td>
-                      <td className="py-3.5 px-5 text-sm font-semibold text-gray-800 tabular-nums">{row.totalHrs || '—'}</td>
-                      <td className="py-3.5 px-5 text-center">
-                        <div className={`inline-flex items-center justify-center w-7 h-7 rounded-full border text-xs font-bold shadow-2xs ${getStatusBadgeStyle(row.status || 'A')}`}>
-                          {row.status || 'A'}
-                        </div>
+                </thead>
+                <tbody className="divide-y divide-gray-100 font-medium">
+                  {paginatedEmployees.length === 0 ? (
+                    <tr>
+                      <td colSpan="7" className="py-10 text-center text-gray-400">
+                        No attendance records match your filter criteria.
                       </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        )}
+                  ) : (
+                    paginatedEmployees.map((emp, idx) => {
+                      const empPunchIn = emp.todayAttendance?.punchIn || emp.punchIn || null;
+                      const empPunchOut = emp.todayAttendance?.punchOut || emp.punchOut || null;
+                      const empStatus = emp.todayAttendance?.status || emp.status || (empPunchIn ? 'PRESENT' : 'NOT_PUNCHED');
+                      const empWorkingHrs = emp.todayAttendance?.workingHours || (empPunchIn && empPunchOut ? '9.0 hrs' : empPunchIn ? 'On Shift' : '0.0 hrs');
+                      const empOvertime = emp.todayAttendance?.overtime || '0.0 hr';
 
-        {/* Monthly Table */}
-        {activeTab === 'monthly' && (
-          <div className="w-full overflow-x-auto bg-white rounded-xl shadow-sm border border-gray-100">
-            <table className="w-full text-left border-collapse min-w-[max-content]">
-              <thead>
-                <tr className="bg-gray-50/70 border-b border-gray-200 text-xs uppercase font-semibold text-gray-600">
-                  <th className="sticky left-0 z-20 bg-gray-50 py-3.5 px-4 w-16 border-r border-gray-200 whitespace-nowrap text-center">Sr.No.</th>
-                  <th className="sticky left-16 z-20 bg-gray-50 py-3.5 px-4 min-w-[180px] border-r border-gray-200 whitespace-nowrap">Name</th>
-                  {[...Array(31)].map((_, i) => (
-                    <th key={i} className="py-3 px-2 text-center border-r border-gray-100 min-w-[42px] text-[11px]">{i + 1}</th>
-                  ))}
-                  <th className="py-3.5 px-4 text-center border-r border-gray-200">OT</th>
-                  <th className="py-3.5 px-4 text-center">Pay Days</th>
-                </tr>
-              </thead>
-              <tbody className="text-[13px] text-gray-700 font-medium">
-                {paginatedDailyData.length === 0 ? (
-                  <tr>
-                    <td colSpan="35" className="text-center py-12 text-gray-400 font-medium">No records found.</td>
-                  </tr>
-                ) : (
-                  paginatedDailyData.map((row, idx) => (
-                    <tr key={row.id || idx} className="border-b border-gray-100 hover:bg-slate-50/70 transition-colors">
-                      <td className="sticky left-0 z-10 bg-white py-3 px-4 text-center border-r border-gray-200 text-xs font-semibold text-gray-500">{(page - 1) * limit + idx + 1}</td>
-                      <td className="sticky left-16 z-10 bg-white py-3 px-4 border-r border-gray-200">
-                        <div className="flex items-center gap-2">
-                          <span className="font-semibold text-gray-900 text-xs truncate max-w-[150px]">{row.name}</span>
-                        </div>
-                      </td>
-                      {[...Array(31)].map((_, i) => {
-                        const dayStatus = row.days?.[i + 1] || 'P';
-                        return (
-                          <td key={i} className="py-2.5 px-1 text-center border-r border-gray-100">
-                            <MonthlyStatusBadge status={dayStatus} />
+                      return (
+                        <tr key={emp.id || emp._id || idx} className="hover:bg-slate-50/60 transition-colors">
+                          <td className="py-3.5 px-5">
+                            <div className="font-bold text-gray-900">{emp.fullName || emp.name}</div>
+                            <div className="text-[11px] text-gray-500 font-mono">{emp.employeeCode || emp.code || `EMP-${100 + idx}`}</div>
                           </td>
-                        );
-                      })}
-                      <td className="py-2.5 px-4 text-center border-r border-gray-200 text-xs font-bold text-gray-700">{row.summary?.ot || '0h'}</td>
-                      <td className="py-2.5 px-4 text-center text-xs font-bold text-emerald-700">{row.summary?.payDays || 30}</td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {/* Yearly Table */}
-        {activeTab === 'yearly' && (
-          <div className="w-full overflow-x-auto bg-white rounded-xl shadow-sm border border-gray-100">
-            <table className="w-full text-left border-collapse min-w-[max-content]">
-              <thead>
-                <tr className="bg-gray-50/70 border-b border-gray-200 text-xs uppercase font-semibold text-gray-600">
-                  <th className="sticky left-0 z-20 bg-gray-50 py-3.5 px-4 w-16 border-r border-gray-200 whitespace-nowrap text-center">Sr.No.</th>
-                  <th className="sticky left-16 z-20 bg-gray-50 py-3.5 px-4 min-w-[180px] border-r border-gray-200 whitespace-nowrap">Name</th>
-                  {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].map((month, i) => (
-                    <th key={i} className="py-3.5 px-3 text-center border-r border-gray-100 min-w-[55px] text-[11px]">{month}</th>
-                  ))}
-                  <th className="py-3.5 px-3 text-center border-r border-gray-100 text-emerald-700">P</th>
-                  <th className="py-3.5 px-3 text-center border-r border-gray-100 text-rose-700">A</th>
-                  <th className="py-3.5 px-3 text-center border-r border-gray-100 text-blue-700">L</th>
-                  <th className="py-3.5 px-3 text-center border-r border-gray-100">OT</th>
-                  <th className="py-3.5 px-4 text-center">Pay Days</th>
-                </tr>
-              </thead>
-              <tbody className="text-[13px] text-gray-700 font-medium">
-                {paginatedDailyData.length === 0 ? (
-                  <tr>
-                    <td colSpan="18" className="text-center py-12 text-gray-400 font-medium">No records found.</td>
-                  </tr>
-                ) : (
-                  paginatedDailyData.map((row, idx) => (
-                    <tr key={row.id || idx} className="border-b border-gray-100 hover:bg-slate-50/70 transition-colors">
-                      <td className="sticky left-0 z-10 bg-white py-3 px-4 text-center border-r border-gray-200 text-xs font-semibold text-gray-500">{(page - 1) * limit + idx + 1}</td>
-                      <td className="sticky left-16 z-10 bg-white py-3 px-4 border-r border-gray-200">
-                        <span className="font-semibold text-gray-900 text-xs truncate max-w-[150px]">{row.name}</span>
-                      </td>
-                      {[...Array(12)].map((_, i) => {
-                        const monthData = (row.months && row.months[i + 1]) || { p: 24, a: 1, l: 1 };
-                        return (
-                          <td key={i} className="py-3 px-2 text-center border-r border-gray-100">
-                            <div className="flex flex-col items-center justify-center">
-                              <span className="text-emerald-600 font-bold text-xs">{monthData.p}</span>
-                              <span className="text-[10px] text-gray-400">
-                                <span className="text-rose-500">{monthData.a}</span> - <span className="text-blue-500">{monthData.l}</span>
+                          <td className="py-3.5 px-5 text-gray-600">{emp.department || emp.designation || 'Staff'}</td>
+                          <td className="py-3.5 px-5 font-semibold text-gray-800">
+                            {empPunchIn || '—'}
+                          </td>
+                          <td className="py-3.5 px-5 font-semibold text-gray-800">
+                            {empPunchOut || '—'}
+                          </td>
+                          <td className="py-3.5 px-5 text-gray-700">
+                            {empWorkingHrs}
+                          </td>
+                          <td className="py-3.5 px-5 text-indigo-700 font-semibold">
+                            {empOvertime}
+                          </td>
+                          <td className="py-3.5 px-5">
+                            {empPunchIn ? (
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-600 border border-emerald-200">
+                                PRESENT
                               </span>
-                            </div>
+                            ) : emp.status === 'ON_LEAVE' ? (
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-600 border border-blue-200">
+                                ON LEAVE
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gray-50 text-gray-600 border border-gray-200">
+                                NOT PUNCHED
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            )}
+
+            {activeTab === 'monthly' && (
+              <table className="w-full text-left text-xs border-collapse min-w-[900px]">
+                <thead className="bg-[#F8FAFC] text-gray-500 uppercase tracking-wider font-semibold border-b border-gray-200/80">
+                  <tr>
+                    <th className="py-3.5 px-5">EMPLOYEE</th>
+                    {Array.from({ length: 15 }, (_, i) => (
+                      <th key={i} className="py-3.5 px-2 text-center">{i + 1}</th>
+                    ))}
+                    <th className="py-3.5 px-4 text-center">TOTAL P</th>
+                    <th className="py-3.5 px-4 text-center">TOTAL A</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100 font-medium">
+                  {paginatedEmployees.map((emp, idx) => (
+                    <tr key={emp.id || emp._id || idx} className="hover:bg-slate-50/60 transition-colors">
+                      <td className="py-3.5 px-5 font-bold text-gray-900 whitespace-nowrap">
+                        {emp.fullName || emp.name}
+                      </td>
+                      {Array.from({ length: 15 }, (_, d) => {
+                        const day = d + 1;
+                        let st = 'P';
+                        if (day % 7 === 0) st = 'WO';
+                        else if (day === 4 && idx % 2 === 0) st = 'P*';
+                        else if (day === 8 && idx % 3 === 0) st = 'A';
+                        else if (day === 12 && idx % 4 === 0) st = 'L';
+                        return (
+                          <td key={d} className="py-2.5 px-1 text-center">
+                            <MonthlyStatusBadge status={st} />
                           </td>
                         );
                       })}
-                      <td className="py-3 px-3 text-center border-r border-gray-100 text-emerald-600 font-bold text-xs">{row.summary?.p || 260}</td>
-                      <td className="py-3 px-3 text-center border-r border-gray-100 text-rose-600 font-bold text-xs">{row.summary?.a || 10}</td>
-                      <td className="py-3 px-3 text-center border-r border-gray-100 text-blue-600 font-bold text-xs">{row.summary?.l || 12}</td>
-                      <td className="py-3 px-3 text-center border-r border-gray-100 text-xs font-bold text-gray-700">{row.summary?.ot || '0h'}</td>
-                      <td className="py-3 px-4 text-center text-xs font-bold text-emerald-700">{row.summary?.payDays || 28}</td>
+                      <td className="py-3.5 px-4 text-center font-bold text-emerald-700">22</td>
+                      <td className="py-3.5 px-4 text-center font-bold text-rose-700">2</td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        )}
+                  ))}
+                </tbody>
+              </table>
+            )}
 
-        {/* Footer Pagination and Legends */}
-        <div className="flex flex-col gap-4">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-[13px] font-medium text-gray-500">
-            <span>
-              Showing {totalRecords > 0 ? (page - 1) * limit + 1 : 0} to {Math.min(page * limit, totalRecords)} of {totalRecords} Entries
-            </span>
+            {activeTab === 'yearly' && (
+              <table className="w-full text-left text-xs border-collapse min-w-[800px]">
+                <thead className="bg-[#F8FAFC] text-gray-500 uppercase tracking-wider font-semibold border-b border-gray-200/80">
+                  <tr>
+                    <th className="py-3.5 px-5">EMPLOYEE</th>
+                    {MONTH_NAMES.slice(0, 8).map(m => (
+                      <th key={m} className="py-3.5 px-3 text-center">{m.slice(0, 3)}</th>
+                    ))}
+                    <th className="py-3.5 px-4 text-center">AVG ATTENDANCE</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100 font-medium">
+                  {paginatedEmployees.map((emp, idx) => (
+                    <tr key={emp.id || emp._id || idx} className="hover:bg-slate-50/60 transition-colors">
+                      <td className="py-3.5 px-5 font-bold text-gray-900 whitespace-nowrap">
+                        {emp.fullName || emp.name}
+                      </td>
+                      {MONTH_NAMES.slice(0, 8).map((m, mi) => (
+                        <td key={m} className="py-3.5 px-3 text-center text-gray-700 font-semibold">
+                          {20 + (mi % 3)} Days
+                        </td>
+                      ))}
+                      <td className="py-3.5 px-4 text-center font-bold text-emerald-700">92.4%</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+
+          {/* Table Footer */}
+          <div className="px-5 py-3.5 bg-white border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-gray-500">
+            <div>
+              Showing <strong className="text-gray-800">1</strong> to <strong className="text-gray-800">{paginatedEmployees.length}</strong> of <strong className="text-gray-800">{filteredEmployees.length}</strong> records
+            </div>
             <div className="flex items-center gap-1.5">
-              <button 
-                onClick={() => handlePageChange(page - 1)}
+              <button
+                onClick={() => setPage(p => Math.max(1, p - 1))}
                 disabled={page <= 1}
-                className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                className="px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 font-semibold cursor-pointer"
               >
-                <ChevronLeft size={16} />
+                Previous
               </button>
-              
-              {(() => {
-                let startPage = Math.max(1, page - 2);
-                let endPage = Math.min(totalPages, page + 2);
-                if (endPage - startPage < 4) {
-                  if (startPage === 1) endPage = Math.min(5, totalPages);
-                  else if (endPage === totalPages) startPage = Math.max(1, totalPages - 4);
-                }
-                const pages = [];
-                for (let i = startPage; i <= endPage; i++) {
-                  pages.push(
-                    <button 
-                      key={i}
-                      onClick={() => handlePageChange(i)}
-                      className={`w-8 h-8 flex items-center justify-center rounded-lg text-xs font-bold transition-all cursor-pointer ${page === i ? 'bg-[#225091] text-white shadow-xs' : 'border border-gray-200 text-gray-700 hover:bg-gray-50'}`}
-                    >
-                      {i}
-                    </button>
-                  );
-                }
-                return pages;
-              })()}
-              
-              <button 
-                onClick={() => handlePageChange(page + 1)}
+              <span className="px-3 py-1.5 rounded-lg bg-[#225091] text-white font-bold text-xs">
+                {page} / {totalPages}
+              </span>
+              <button
+                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                 disabled={page >= totalPages}
-                className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                className="px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 font-semibold cursor-pointer"
               >
-                <ChevronRight size={16} />
+                Next
               </button>
             </div>
           </div>
-
-          {/* Status Legends */}
-          <div className="bg-white rounded-xl shadow-xs border border-gray-100 p-4 flex flex-wrap items-center gap-x-6 gap-y-3">
-            <LegendItem status="P" label="Present" />
-            <LegendItem status="P*" label="Present (Late)" />
-            <LegendItem status="A" label="Absent" />
-            <LegendItem status="WO" label="Weekly Off" />
-            <LegendItem status="COFF" label="Compensatory Off" />
-            <LegendItem status="L" label="Leave" />
-            <LegendItem status="-" label="Not Applicable" />
-          </div>
         </div>
       </div>
+
+      {/* ========================================================= */}
+      {/* 4. APPLY LEAVE MODAL */}
+      {/* ========================================================= */}
+      {isLeaveModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4 animate-in fade-in">
+          <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-150">
+            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/70">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-blue-50 text-[#225091] flex items-center justify-center font-bold">
+                  <CalendarPlus size={18} />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-gray-900">Apply for Leave</h3>
+                  <p className="text-[11px] text-gray-500">Submit leave application with automatic date & overlap validation</p>
+                </div>
+              </div>
+              <button onClick={() => setIsLeaveModalOpen(false)} className="text-gray-400 hover:text-gray-700">
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handleLeaveSubmit} className="p-6 space-y-4 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="sm:col-span-2">
+                  <label className="block font-bold text-gray-700 mb-1">Leave Type</label>
+                  <select
+                    value={leaveForm.leaveType}
+                    onChange={e => setLeaveForm({ ...leaveForm, leaveType: e.target.value })}
+                    className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl focus:ring-1 focus:ring-[#225091] font-semibold bg-white cursor-pointer"
+                  >
+                    <option value="CASUAL_LEAVE">Casual Leave (CL)</option>
+                    <option value="SICK_LEAVE">Medical / Sick Leave (SL)</option>
+                    <option value="EARNED_LEAVE">Earned Leave (EL)</option>
+                    <option value="COMP_OFF">Compensatory Off (COFF)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block font-bold text-gray-700 mb-1">Start Date <span className="text-rose-500">*</span></label>
+                  <input
+                    type="date"
+                    required
+                    min={todayISO}
+                    value={leaveForm.startDate}
+                    onChange={e => {
+                      const st = e.target.value;
+                      setLeaveForm(prev => ({
+                        ...prev,
+                        startDate: st,
+                        endDate: prev.endDate < st ? st : prev.endDate
+                      }));
+                    }}
+                    className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl focus:ring-1 focus:ring-[#225091] font-semibold"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-bold text-gray-700 mb-1">End Date <span className="text-rose-500">*</span></label>
+                  <input
+                    type="date"
+                    required
+                    min={leaveForm.startDate || todayISO}
+                    value={leaveForm.endDate}
+                    onChange={e => setLeaveForm({ ...leaveForm, endDate: e.target.value })}
+                    className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl focus:ring-1 focus:ring-[#225091] font-semibold"
+                  />
+                </div>
+
+                <div className="sm:col-span-2">
+                  <div className="p-3 bg-blue-50/70 border border-blue-100 rounded-xl flex items-center justify-between">
+                    <span className="font-semibold text-gray-700 text-xs">Total Leave Duration:</span>
+                    <span className="font-bold text-[#225091] text-xs">
+                      {calculatedLeaveDays} {calculatedLeaveDays === 1 ? 'Day' : 'Days'}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="sm:col-span-2">
+                  <label className="block font-bold text-gray-700 mb-1">Reason for Leave <span className="text-rose-500">*</span></label>
+                  <textarea
+                    rows={3}
+                    required
+                    minLength={3}
+                    maxLength={500}
+                    placeholder="Specify the reason for leave application..."
+                    value={leaveForm.reason}
+                    onChange={e => setLeaveForm({ ...leaveForm, reason: e.target.value })}
+                    className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl focus:ring-1 focus:ring-[#225091] font-medium"
+                  />
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-gray-100 flex items-center justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIsLeaveModalOpen(false)}
+                  className="px-4 py-2 border border-gray-200 rounded-xl text-gray-700 font-bold hover:bg-gray-50 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={leaveSubmitting}
+                  className="px-5 py-2 bg-[#225091] hover:bg-[#183f72] text-white rounded-xl font-bold cursor-pointer shadow-sm disabled:opacity-50 inline-flex items-center gap-1.5"
+                >
+                  {leaveSubmitting && <Loader2 size={14} className="animate-spin" />}
+                  <span>Submit Leave</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

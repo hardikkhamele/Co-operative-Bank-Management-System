@@ -82,8 +82,29 @@ export const merchantService = {
 
   // 7. Restore soft-deleted merchant partner account
   restore: async (id) => {
-    const response = await axiosInstance.patch(`/v1/society/merchants/${id}/restore`);
-    return response.data;
+    try {
+      const response = await axiosInstance.patch(`/v1/society/merchants/${id}/restore`);
+      return response.data;
+    } catch (err) {
+      if (err.response?.status === 404 || err.response?.status === 405) {
+        const fallbackRes = await axiosInstance.put(`/v1/society/merchants/${id}/restore`);
+        return fallbackRes.data;
+      }
+      throw err;
+    }
+  },
+
+  restoreMerchant: async (id) => {
+    try {
+      const response = await axiosInstance.patch(`/v1/society/merchants/${id}/restore`);
+      return response.data;
+    } catch (err) {
+      if (err.response?.status === 404 || err.response?.status === 405) {
+        const fallbackRes = await axiosInstance.put(`/v1/society/merchants/${id}/restore`);
+        return fallbackRes.data;
+      }
+      throw err;
+    }
   },
 
   // 8. Permanently (hard) delete merchant account from MongoDB

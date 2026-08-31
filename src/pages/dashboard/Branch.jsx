@@ -20,7 +20,6 @@ import {
   RotateCcw
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import CardCreditSettingsModal from '../../components/modals/CardCreditSettingsModal';
 import { branchService } from '../../api/branchService';
 import PageHeader from '../../components/common/PageHeader';
 import SearchableSelect from '../../components/common/SearchableSelect';
@@ -79,7 +78,6 @@ const Branch = () => {
   const [debouncedSearch, setDebouncedSearch] = useState('');
   
   // Search & Filter State
-  const [selectedStatus, setSelectedStatus] = useState('');
   const [selectedState, setSelectedState] = useState('');
   const [selectedCity, setSelectedCity] = useState('');
   
@@ -87,7 +85,6 @@ const Branch = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [isCardCreditModalOpen, setIsCardCreditModalOpen] = useState(false);
   const [selectedBranch, setSelectedBranch] = useState(null);
 
   // Locations Data (State and City mapping)
@@ -128,17 +125,18 @@ const Branch = () => {
     return ALL_INDIAN_STATES;
   }, [locationsData.states]);
 
-  // Cascading Available Cities for the Selected State
-  const availableCities = useMemo(() => {
-    if (!selectedState) {
-      return locationsData.cities && locationsData.cities.length > 0
-        ? locationsData.cities
-        : [];
-    }
-    const fromDictionary = INDIAN_STATES_WITH_CITIES[selectedState] || [];
-    const fromApi = (locationsData.stateCitiesMap && locationsData.stateCitiesMap[selectedState]) || [];
+  // Helper to get cities for any state (combining dictionary and API)
+  const getCitiesForState = (stateName) => {
+    if (!stateName) return locationsData.cities || [];
+    const fromDictionary = INDIAN_STATES_WITH_CITIES[stateName] || [];
+    const fromApi = (locationsData.stateCitiesMap && locationsData.stateCitiesMap[stateName]) || [];
     const combined = Array.from(new Set([...fromDictionary, ...fromApi])).sort((a, b) => a.localeCompare(b));
     return combined.length > 0 ? combined : (locationsData.cities || []);
+  };
+
+  // Cascading Available Cities for the Selected State Filter
+  const availableCities = useMemo(() => {
+    return getCitiesForState(selectedState);
   }, [selectedState, locationsData]);
   
   // Create Modal State
@@ -163,7 +161,6 @@ const Branch = () => {
     try {
       const params = { page, limit: 10 };
       if (debouncedSearch.trim()) params.search = debouncedSearch.trim();
-      if (selectedStatus) params.status = selectedStatus;
       if (selectedState) params.state = selectedState;
       if (selectedCity) params.city = selectedCity;
       
@@ -215,18 +212,17 @@ const Branch = () => {
 
   useEffect(() => {
     fetchBranches();
-  }, [page, debouncedSearch, selectedStatus, selectedState, selectedCity]);
+  }, [page, debouncedSearch, selectedState, selectedCity]);
 
   const handleResetFilters = () => {
     setSearchTerm('');
     setDebouncedSearch('');
-    setSelectedStatus('');
     setSelectedState('');
     setSelectedCity('');
     setPage(1);
   };
 
-  const hasActiveFilters = Boolean(debouncedSearch.trim()) || Boolean(selectedStatus) || Boolean(selectedState) || Boolean(selectedCity);
+  const hasActiveFilters = Boolean(debouncedSearch.trim()) || Boolean(selectedState) || Boolean(selectedCity);
 
   const handleCreateChange = (section, field, value) => {
     setCreateForm(prev => ({
@@ -557,71 +553,71 @@ const Branch = () => {
         ]}
       />
 
-      {/* 5 Stats Overview Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+      {/* 5 Stats Overview Cards (Matching Employee module layout) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
         {/* Card 1: Total Branches */}
-        <div className="bg-white rounded-2xl p-4.5 border border-gray-100 shadow-2xs flex items-center justify-between">
-          <div>
-            <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Total Branches</p>
-            <h3 className="text-xl font-black text-[#1b2559] tabular-nums">
+        <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-xs flex flex-col items-center justify-center transition-all hover:shadow-md">
+          <div className="flex items-center gap-2 text-[#225091] mb-1">
+            <Building2 size={18} />
+            <span className="text-[24px] font-bold leading-none tabular-nums">
               {stats?.totalBranches ?? branches.length}
-            </h3>
+            </span>
           </div>
-          <div className="w-11 h-11 rounded-xl bg-blue-50 text-[#225091] border border-blue-100 flex items-center justify-center shrink-0 shadow-2xs">
-            <Building2 size={20} />
-          </div>
+          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider text-center">
+            Total Branches
+          </span>
         </div>
 
         {/* Card 2: Available Card Stock */}
-        <div className="bg-white rounded-2xl p-4.5 border border-gray-100 shadow-2xs flex items-center justify-between">
-          <div>
-            <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Available Card Stock</p>
-            <h3 className="text-xl font-black text-emerald-600 tabular-nums">
+        <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-xs flex flex-col items-center justify-center transition-all hover:shadow-md">
+          <div className="flex items-center gap-2 text-emerald-600 mb-1">
+            <CreditCard size={18} />
+            <span className="text-[24px] font-bold leading-none tabular-nums">
               {stats?.availableCardStock !== undefined ? stats.availableCardStock.toLocaleString('en-IN') : 0}
-            </h3>
+            </span>
           </div>
-          <div className="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center justify-center shrink-0 shadow-2xs">
-            <CreditCard size={20} />
-          </div>
+          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider text-center">
+            Available Card Stock
+          </span>
         </div>
 
         {/* Card 3: Verification Credits */}
-        <div className="bg-white rounded-2xl p-4.5 border border-gray-100 shadow-2xs flex items-center justify-between">
-          <div>
-            <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Verification Credits</p>
-            <h3 className="text-xl font-black text-amber-600 tabular-nums">
+        <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-xs flex flex-col items-center justify-center transition-all hover:shadow-md">
+          <div className="flex items-center gap-2 text-amber-600 mb-1">
+            <ShieldCheck size={18} />
+            <span className="text-[24px] font-bold leading-none tabular-nums">
               {stats?.availableVerificationCredits !== undefined ? stats.availableVerificationCredits.toLocaleString('en-IN') : 0}
-            </h3>
+            </span>
           </div>
-          <div className="w-11 h-11 rounded-xl bg-amber-50 text-amber-600 border border-amber-100 flex items-center justify-center shrink-0 shadow-2xs">
-            <ShieldCheck size={20} />
-          </div>
+          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider text-center">
+            Verification Credits
+          </span>
         </div>
 
         {/* Card 4: Total Employees */}
-        <div className="bg-white rounded-2xl p-4.5 border border-gray-100 shadow-2xs flex items-center justify-between">
-          <div>
-            <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Total Employees</p>
-            <h3 className="text-xl font-black text-indigo-600 tabular-nums">
+        <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-xs flex flex-col items-center justify-center transition-all hover:shadow-md">
+          <div className="flex items-center gap-2 text-indigo-600 mb-1">
+            <Users size={18} />
+            <span className="text-[24px] font-bold leading-none tabular-nums">
               {stats?.totalEmployees !== undefined ? stats.totalEmployees.toLocaleString('en-IN') : 0}
-            </h3>
+            </span>
           </div>
-          <div className="w-11 h-11 rounded-xl bg-indigo-50 text-indigo-600 border border-indigo-100 flex items-center justify-center shrink-0 shadow-2xs">
-            <Users size={20} />
-          </div>
+          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider text-center">
+            Total Staff
+          </span>
         </div>
 
         {/* Card 5: Total Merchants */}
-        <div className="bg-white rounded-2xl p-4.5 border border-gray-100 shadow-2xs flex items-center justify-between">
-          <div>
-            <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Total Merchants</p>
-            <h3 className="text-xl font-black text-purple-600 tabular-nums">
+        <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-xs flex flex-col items-center justify-center transition-all hover:shadow-md">
+          <div className="flex items-center gap-2 text-purple-600 mb-1">
+            <Store size={18} />
+            <span className="text-[24px] font-bold leading-none tabular-nums">
               {stats?.totalMerchants !== undefined ? stats.totalMerchants.toLocaleString('en-IN') : 0}
-            </h3>
+            </span>
           </div>
-          <div className="w-11 h-11 rounded-xl bg-purple-50 text-purple-600 border border-purple-100 flex items-center justify-center shrink-0 shadow-2xs">
-            <Store size={20} />
-          </div>
+          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider text-center">
+            Total Merchants
+          </span>
         </div>
       </div>
 
@@ -664,12 +660,6 @@ const Branch = () => {
             )}
 
             <button
-              onClick={() => setIsCardCreditModalOpen(true)}
-              className="border border-[#225091] text-[#225091] hover:bg-blue-50 bg-white px-4 py-2.5 rounded-xl font-bold transition-all text-xs shadow-2xs flex-shrink-0 cursor-pointer"
-            >
-              Card & Credit Settings
-            </button>
-            <button
               onClick={() => { setCreateStep(1); setIsCreateModalOpen(true); }}
               className="bg-[#225091] hover:bg-[#183f72] text-white px-4.5 py-2.5 rounded-xl font-bold transition-all text-xs shadow-2xs flex-shrink-0 cursor-pointer"
             >
@@ -678,59 +668,44 @@ const Branch = () => {
           </div>
         </div>
 
-        {/* Bottom Inline Filter Controls: Status -> State / Region -> City */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2.5 border-t border-gray-100">
-          {/* 1. Status Filter */}
-          <div className="relative">
-            <select
-              value={selectedStatus}
-              onChange={(e) => {
-                setSelectedStatus(e.target.value);
-                setPage(1);
-              }}
-              className="w-full px-3.5 py-2 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-xs font-semibold text-gray-700 shadow-2xs cursor-pointer"
-            >
-              <option value="">All Statuses (Active & Inactive)</option>
-              <option value="ACTIVE">Active Branches</option>
-              <option value="INACTIVE">Inactive / Deactivated</option>
-            </select>
-          </div>
-
-          {/* 2. State / Region Filter */}
+        {/* Bottom Inline Filter Controls: State -> City */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-gray-100">
+          {/* 1. State Filter */}
           <div className="relative">
             <select
               value={selectedState}
               onChange={(e) => {
-                const st = e.target.value;
-                setSelectedState(st);
+                const newState = e.target.value;
+                setSelectedState(newState);
                 setSelectedCity('');
                 setPage(1);
               }}
-              className="w-full px-3.5 py-2 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-xs font-semibold text-gray-700 shadow-2xs cursor-pointer"
+              className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-xs font-medium text-gray-700 shadow-2xs cursor-pointer"
             >
               <option value="">All States / Regions</option>
-              {statesList.map((st) => (
-                <option key={st} value={st}>
-                  {st}
+              {statesList.map((s) => (
+                <option key={s} value={s}>
+                  {s}
                 </option>
               ))}
             </select>
           </div>
 
-          {/* 3. City Filter (Cascading) */}
+          {/* 2. City Filter (Connected to State) */}
           <div className="relative">
             <select
               value={selectedCity}
+              disabled={!selectedState && availableCities.length === 0}
               onChange={(e) => {
                 setSelectedCity(e.target.value);
                 setPage(1);
               }}
-              className="w-full px-3.5 py-2 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-xs font-semibold text-gray-700 shadow-2xs cursor-pointer"
+              className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-xs font-medium text-gray-700 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed shadow-2xs cursor-pointer"
             >
               <option value="">{selectedState ? `All Cities in ${selectedState}` : 'All Cities'}</option>
-              {availableCities.map((ct) => (
-                <option key={ct} value={ct}>
-                  {ct}
+              {availableCities.map((c) => (
+                <option key={c} value={c}>
+                  {c}
                 </option>
               ))}
             </select>
@@ -742,14 +717,6 @@ const Branch = () => {
           <div className="pt-2 border-t border-gray-100 flex items-center justify-between gap-3 flex-wrap text-xs">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="font-bold text-gray-600 text-[11px]">Active:</span>
-              {selectedStatus && (
-                <span className="bg-blue-50 text-[#225091] border border-blue-200 px-2.5 py-0.5 rounded-md text-[11px] font-semibold flex items-center gap-1.5 shadow-2xs">
-                  Status: {selectedStatus}
-                  <button onClick={() => { setSelectedStatus(''); setPage(1); }} className="hover:text-red-500 cursor-pointer">
-                    <X size={12} />
-                  </button>
-                </span>
-              )}
               {selectedState && (
                 <span className="bg-blue-50 text-[#225091] border border-blue-200 px-2.5 py-0.5 rounded-md text-[11px] font-semibold flex items-center gap-1.5 shadow-2xs">
                   State: {selectedState}
@@ -1355,12 +1322,6 @@ const Branch = () => {
           </div>
         </div>
       )}
-
-      {/* Card & Credit Settings Modal */}
-      <CardCreditSettingsModal 
-        isOpen={isCardCreditModalOpen} 
-        onClose={() => setIsCardCreditModalOpen(false)} 
-      />
     </div>
   );
 };
