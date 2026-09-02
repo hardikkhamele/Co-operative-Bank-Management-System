@@ -254,6 +254,7 @@ function App() {
               {/* Cash Payment */}
               <Route element={<PermissionRoute permission="cash_payment.view" />}>
                 <Route path="cash-payment" element={<CashPayment />} />
+                <Route path="cash-payment/:id" element={<ViewCashPayment />} />
                 <Route path="cash-payment/view/:id" element={<ViewCashPayment />} />
               </Route>
 

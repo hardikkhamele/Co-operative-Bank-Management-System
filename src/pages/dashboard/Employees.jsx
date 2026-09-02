@@ -3,6 +3,7 @@ import { toast } from "react-toastify";
 import { Link, useNavigate } from "react-router-dom";
 import {
   ChevronRight,
+  ChevronDown,
   Search,
   Eye,
   Edit,
@@ -26,6 +27,7 @@ import { roleService } from "../../api/roleService";
 import { branchService } from "../../api/branchService";
 import useBranchStore from "../../store/branchStore";
 import PageHeader from "../../components/common/PageHeader";
+import SearchableSelect from "../../components/common/SearchableSelect";
 import { Skeleton, SkeletonAvatar } from "../../components/common/Skeleton";
 
 // Comprehensive Indian States and Prominent Cities Map
@@ -667,7 +669,7 @@ const Employees = () => {
                 }
                 setPage(1);
               }}
-              className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-xs font-medium text-gray-700 shadow-2xs cursor-pointer"
+              className="w-full pl-3 pr-8 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-xs font-medium text-gray-700 shadow-2xs appearance-none cursor-pointer"
             >
               <option value="">All Statuses (Active & Inactive)</option>
               <option value="ACTIVE">Active Staff</option>
@@ -675,6 +677,7 @@ const Employees = () => {
               <option value="DELETED">Soft-Deleted Staff</option>
               <option value="ALL">All (Including Deleted)</option>
             </select>
+            <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
           </div>
 
           {/* 2. Department / Role Filter */}
@@ -685,7 +688,7 @@ const Employees = () => {
                 setSelectedRoleId(e.target.value);
                 setPage(1);
               }}
-              className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-xs font-medium text-gray-700 shadow-2xs cursor-pointer"
+              className="w-full pl-3 pr-8 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-xs font-medium text-gray-700 shadow-2xs appearance-none cursor-pointer"
             >
               <option value="">All Roles / Depts</option>
               <option value="BRANCH_MANAGER">Branch Manager</option>
@@ -695,6 +698,7 @@ const Employees = () => {
                 </option>
               ))}
             </select>
+            <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
           </div>
 
           {/* 3. Branch Filter (Independent) */}
@@ -705,7 +709,7 @@ const Employees = () => {
                 setSelectedBranchId(e.target.value);
                 setPage(1);
               }}
-              className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-xs font-medium text-gray-700 shadow-2xs cursor-pointer"
+              className="w-full pl-3 pr-8 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-xs font-medium text-gray-700 shadow-2xs appearance-none cursor-pointer"
             >
               <option value="">All Branches</option>
               {(branchOptions || []).map((b) => (
@@ -714,49 +718,46 @@ const Employees = () => {
                 </option>
               ))}
             </select>
+            <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
           </div>
 
-          {/* 4. State Filter (Connected to City only) */}
-          <div className="relative">
-            <select
+          {/* 4. State / Region Filter */}
+          <div>
+            <SearchableSelect
               value={selectedState}
-              onChange={(e) => {
-                const newState = e.target.value;
-                setSelectedState(newState);
+              onChange={(val) => {
+                setSelectedState(val);
                 setSelectedCity("");
                 setPage(1);
               }}
-              className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-xs font-medium text-gray-700 shadow-2xs cursor-pointer"
-            >
-              <option value="">All States</option>
-              {statesList.map((s) => (
-                <option key={s} value={s}>
-                  {s}
-                </option>
-              ))}
-            </select>
+              options={[
+                { value: "", label: "All States / Regions" },
+                ...statesList.map((s) => ({ value: s, label: s }))
+              ]}
+              placeholder="All States / Regions"
+              searchPlaceholder="Search state or region..."
+              className="text-xs"
+            />
           </div>
 
           {/* 5. City Filter (Connected to State) */}
-          <div className="relative">
-            <select
+          <div>
+            <SearchableSelect
               value={selectedCity}
-              disabled={!selectedState && availableCities.length === 0}
-              onChange={(e) => {
-                setSelectedCity(e.target.value);
+              disabled={Boolean(selectedState && availableCities.length === 0)}
+              disabledPlaceholder="No cities available"
+              onChange={(val) => {
+                setSelectedCity(val);
                 setPage(1);
               }}
-              className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-xs font-medium text-gray-700 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed shadow-2xs cursor-pointer"
-            >
-              <option value="">
-                {selectedState ? "All Cities" : "Select State First"}
-              </option>
-              {availableCities.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
+              options={[
+                { value: "", label: selectedState ? `All Cities in ${selectedState}` : "All Cities" },
+                ...availableCities.map((c) => ({ value: c, label: c }))
+              ]}
+              placeholder={selectedState ? `All Cities in ${selectedState}` : "All Cities"}
+              searchPlaceholder="Search city..."
+              className="text-xs"
+            />
           </div>
         </div>
       </div>

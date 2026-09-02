@@ -140,11 +140,19 @@ const KPAReport = () => {
           roleService.list({ limit: 100 }),
         ]);
 
-        if (branchRes.status === 'fulfilled' && branchRes.value?.success) {
-          setBranchOptions(branchRes.value.data || []);
+        if (branchRes.status === 'fulfilled' && branchRes.value) {
+          const raw = branchRes.value;
+          const list = Array.isArray(raw.data)
+            ? raw.data
+            : (raw.data?.branches || raw.data?.items || raw.data?.data || Array.isArray(raw) ? raw : []);
+          setBranchOptions(Array.isArray(list) ? list : []);
         }
-        if (roleRes.status === 'fulfilled' && roleRes.value?.success) {
-          setRoleOptions(roleRes.value.data || []);
+        if (roleRes.status === 'fulfilled' && roleRes.value) {
+          const raw = roleRes.value;
+          const list = Array.isArray(raw.data)
+            ? raw.data
+            : (raw.data?.roles || raw.data?.items || raw.data?.data || Array.isArray(raw) ? raw : []);
+          setRoleOptions(Array.isArray(list) ? list : []);
         }
       } catch (err) {
         console.error('Failed to load filter options:', err);
@@ -842,7 +850,7 @@ const KPAReport = () => {
                   className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#225091] bg-white appearance-none"
                 >
                   <option value="">All Branches</option>
-                  {branchOptions.map((branch) => {
+                  {(Array.isArray(branchOptions) ? branchOptions : []).map((branch) => {
                     const bId = branch.id || branch._id;
                     const bName = branch.branchName || branch.name || `Branch #${bId}`;
                     return (

@@ -1,26 +1,97 @@
-import React, { useRef,  useState, useEffect, useCallback  } from 'react';
-import { Search, ChevronRight, ChevronLeft, SlidersHorizontal, ChevronDown, X, Eye, Download, Loader2, ArrowDownCircle , Table, FileSpreadsheet, FileText} from 'lucide-react';
+import React, { useRef, useState, useEffect, useCallback, useMemo } from 'react';
+import { 
+  Search, 
+  ChevronRight, 
+  ChevronLeft, 
+  ChevronDown, 
+  X, 
+  Eye, 
+  Download, 
+  Loader2, 
+  ArrowDownCircle, 
+  RotateCcw,
+  Table, 
+  FileSpreadsheet, 
+  FileText,
+  Calendar,
+  Building2,
+  MapPin,
+  Coins
+} from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { cashPaymentService } from '../../api/cashPaymentService';
+import { branchService } from '../../api/branchService';
 import useBranchStore from '../../store/branchStore';
 import PageHeader from '../../components/common/PageHeader';
+import SearchableSelect from '../../components/common/SearchableSelect';
 import { Skeleton, SkeletonTableRow } from '../../components/common/Skeleton';
 
-const CashPayment = () => {
+// Comprehensive Indian States and Prominent Cities Map
+const INDIAN_STATES_WITH_CITIES = {
+  "Andhra Pradesh": ["Visakhapatnam", "Vijayawada", "Guntur", "Nellore", "Kurnool", "Rajahmundry", "Tirupati", "Kadapa", "Kakinada", "Anantapur"],
+  "Arunachal Pradesh": ["Itanagar", "Naharlagun", "Pasighat", "Tawang", "Ziro"],
+  "Assam": ["Guwahati", "Silchar", "Dibrugarh", "Jorhat", "Nagaon", "Tinsukia", "Tezpur"],
+  "Bihar": ["Patna", "Gaya", "Bhagalpur", "Muzaffarpur", "Purnia", "Darbhanga", "Bihar Sharif", "Arrah", "Begusarai", "Katihar"],
+  "Chandigarh": ["Chandigarh"],
+  "Chhattisgarh": ["Raipur", "Bhilai", "Bilaspur", "Korba", "Rajnandgaon", "Durg", "Jagdalpur", "Ambikapur"],
+  "Dadra and Nagar Haveli and Daman and Diu": ["Daman", "Diu", "Silvassa"],
+  "Delhi": ["New Delhi", "North Delhi", "South Delhi", "East Delhi", "West Delhi", "Central Delhi"],
+  "Goa": ["Panaji", "Margao", "Vasco da Gama", "Mapusa", "Ponda"],
+  "Gujarat": ["Ahmedabad", "Surat", "Vadodara", "Rajkot", "Bhavnagar", "Jamnagar", "Junagadh", "Gandhinagar", "Anand", "Navsari", "Morbi", "Bharuch"],
+  "Haryana": ["Faridabad", "Gurugram", "Panipat", "Ambala", "Yamunanagar", "Rohtak", "Hisar", "Karnal", "Sonipat", "Panchkula"],
+  "Himachal Pradesh": ["Shimla", "Dharamshala", "Mandi", "Solan", "Kullu", "Manali", "Baddi"],
+  "Jammu and Kashmir": ["Srinagar", "Jammu", "Anantnag", "Baramulla", "Kathua", "Udhampur", "Sopore"],
+  "Jharkhand": ["Ranchi", "Jamshedpur", "Dhanbad", "Bokaro", "Deoghar", "Hazaribagh", "Giridih", "Ramgarh"],
+  "Karnataka": ["Bengaluru", "Mysuru", "Hubballi", "Mangaluru", "Belagavi", "Davanagere", "Ballari", "Vijayapura", "Shivamogga", "Tumakuru", "Kalaburagi"],
+  "Kerala": ["Thiruvananthapuram", "Kochi", "Kozhikode", "Kollam", "Thrissur", "Kannur", "Alappuzha", "Kottayam", "Palakkad", "Malappuram"],
+  "Ladakh": ["Leh", "Kargil"],
+  "Lakshadweep": ["Kavaratti", "Agatti", "Andrott"],
+  "Madhya Pradesh": ["Indore", "Bhopal", "Jabalpur", "Gwalior", "Ujjain", "Sagar", "Dewas", "Satna", "Ratlam", "Rewa"],
+  "Maharashtra": ["Mumbai", "Pune", "Nagpur", "Thane", "Nashik", "Kalyan-Dombivli", "Vasai-Virar", "Aurangabad", "Navi Mumbai", "Solapur", "Mira-Bhayandar", "Amravati", "Kolhapur", "Nanded", "Sangli", "Jalgaon", "Akola", "Latur", "Dhule", "Ahmednagar", "Chandrapur", "Parbhani", "Panvel"],
+  "Manipur": ["Imphal", "Churachandpur", "Thoubal", "Kakching"],
+  "Meghalaya": ["Shillong", "Tura", "Jowai", "Nongpoh"],
+  "Mizoram": ["Aizawl", "Lunglei", "Saiha", "Champhai"],
+  "Nagaland": ["Kohima", "Dimapur", "Mokokchung", "Tuensang", "Wokha"],
+  "Odisha": ["Bhubaneswar", "Cuttack", "Rourkela", "Berhampur", "Sambalpur", "Puri", "Balasore", "Bhadrak", "Baripada", "Jharsuguda"],
+  "Puducherry": ["Puducherry", "Karaikal", "Mahe", "Yanam"],
+  "Punjab": ["Ludhiana", "Amritsar", "Jalandhar", "Patiala", "Bathinda", "Mohali", "Hoshiarpur", "Batala", "Pathankot", "Moga"],
+  "Rajasthan": ["Jaipur", "Jodhpur", "Kota", "Bikaner", "Ajmer", "Udaipur", "Bhilwara", "Alwar", "Bharatpur", "Sikar", "Pali", "Sri Ganganagar"],
+  "Sikkim": ["Gangtok", "Namchi", "Gyalshing", "Mangan"],
+  "Tamil Nadu": ["Chennai", "Coimbatore", "Madurai", "Tiruchirappalli", "Salem", "Tiruppur", "Erode", "Vellore", "Thoothukudi", "Dindigul", "Thanjavur", "Nagercoil"],
+  "Telangana": ["Hyderabad", "Warangal", "Nizamabad", "Khammam", "Karimnagar", "Ramagundam", "Mahbubnagar", "Nalgonda", "Adilabad", "Suryapet"],
+  "Tripura": ["Agartala", "Udaipur", "Dharmanagar", "Kailashahar", "Belonia"],
+  "Uttar Pradesh": ["Lucknow", "Kanpur", "Ghaziabad", "Agra", "Meerut", "Varanasi", "Prayagraj", "Bareilly", "Aligarh", "Moradabad", "Saharanpur", "Gorakhpur", "Noida", "Firozabad", "Jhansi", "Muzaffarnagar", "Mathura", "Ayodhya"],
+  "Uttarakhand": ["Dehradun", "Haridwar", "Roorkee", "Haldwani", "Rudrapur", "Kashipur", "Rishikesh", "Nainital"],
+  "West Bengal": ["Kolkata", "Howrah", "Asansol", "Siliguri", "Durgapur", "Bardhaman", "Malda", "Baharampur", "Habra", "Kharagpur", "Shantipur", "Dankuni"]
+};
 
+const statesList = Object.keys(INDIAN_STATES_WITH_CITIES).sort((a, b) => a.localeCompare(b));
+
+const CashPayment = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const [exporting, setExporting] = useState(false);
   const [items, setItems] = useState([]);
+  const [stats, setStats] = useState({
+    totalCashCollection: 0,
+    totalCashSubmitted: 0,
+    totalCashPending: 0,
+    formattedTotalCashCollection: '₹0',
+    formattedTotalCashSubmitted: '₹0',
+    formattedTotalCashPending: '₹0'
+  });
   
   // Search & Filter State
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [openFilterDropdown, setOpenFilterDropdown] = useState(null);
-  const [filterDesignation, setFilterDesignation] = useState([]);
+  const [selectedBranchId, setSelectedBranchId] = useState('');
+  const [selectedState, setSelectedState] = useState('');
+  const [selectedCity, setSelectedCity] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
   
+  // Available Branches List
+  const [branchOptions, setBranchOptions] = useState([]);
   const globalBranchId = useBranchStore(state => state.globalBranchId);
   
   // Pagination State
@@ -44,20 +115,54 @@ const CashPayment = () => {
     remarks: ''
   });
 
-  const toggleFilter = (setter, value) => {
-    setter(prev => prev.includes(value) ? prev.filter(v => v !== value) : [...prev, value]);
-  };
+  // Export State
+  const tableRef = useRef(null);
+  const [isExportOpen, setIsExportOpen] = useState(false);
+
+  // Available cities for selected state
+  const availableCities = useMemo(() => {
+    if (!selectedState) return [];
+    return INDIAN_STATES_WITH_CITIES[selectedState] || [];
+  }, [selectedState]);
+
+  // Check if any filter is active
+  const hasActiveFilters = Boolean(
+    searchTerm || 
+    selectedBranchId || 
+    selectedState || 
+    selectedCity || 
+    startDate || 
+    endDate
+  );
 
   // Debounce search input
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedSearch(searchTerm);
       setPage(1);
-    }, 400);
+    }, 350);
     return () => clearTimeout(handler);
   }, [searchTerm]);
 
-  // Fetch Cash Payments from API
+  // Fetch branches on mount
+  useEffect(() => {
+    const loadBranches = async () => {
+      try {
+        const res = await branchService.list({ limit: 100 });
+        if (res && res.success) {
+          const bList = Array.isArray(res.data) 
+            ? res.data 
+            : (res.data?.branches || res.data?.items || res.data?.data || []);
+          setBranchOptions(bList);
+        }
+      } catch (err) {
+        console.error('Failed to load branches:', err);
+      }
+    };
+    loadBranches();
+  }, []);
+
+  // Fetch Cash Payments & Staff Summary from API
   const fetchCashPayments = useCallback(async () => {
     setLoading(true);
     try {
@@ -65,23 +170,60 @@ const CashPayment = () => {
         page,
         limit
       };
+
       if (debouncedSearch.trim()) {
         params.search = debouncedSearch.trim();
       }
-      if (globalBranchId) {
-        params.branchId = globalBranchId;
+
+      // Location & Branch Filters
+      const activeBranch = selectedBranchId || globalBranchId;
+      if (activeBranch) {
+        params.branchId = activeBranch;
+      }
+      if (selectedState) {
+        params.state = selectedState;
+      }
+      if (selectedCity) {
+        params.city = selectedCity;
+      }
+
+      // Date Range Filters
+      if (startDate) {
+        params.startDate = startDate;
+        params.fromDate = startDate;
+      }
+      if (endDate) {
+        params.endDate = endDate;
+        params.toDate = endDate;
       }
 
       const res = await cashPaymentService.list(params);
       if (res && (res.success || res.statusCode === 200)) {
         const dataPayload = res.data || {};
+        
+        // Extract stats
+        if (dataPayload.stats) {
+          setStats(dataPayload.stats);
+        }
+
+        // Extract items
         const itemsList = Array.isArray(dataPayload.items)
           ? dataPayload.items
           : Array.isArray(dataPayload)
           ? dataPayload
           : [];
         setItems(itemsList);
-        if (res.meta || res.pagination || res.data?.meta || res.data?.pagination) { setMeta(res.meta || res.pagination || res.data?.meta || res.data?.pagination); } else {
+
+        // Extract pagination meta
+        const metaPayload = res.meta || res.pagination || dataPayload.meta || dataPayload.pagination;
+        if (metaPayload) {
+          setMeta({
+            page: Number(metaPayload.page) || page,
+            limit: Number(metaPayload.limit) || limit,
+            totalRecords: Number(metaPayload.totalRecords ?? metaPayload.total ?? itemsList.length),
+            totalPages: Number((metaPayload.totalPages ?? metaPayload.pages ?? Math.ceil((metaPayload.totalRecords || itemsList.length) / limit)) || 1)
+          });
+        } else {
           setMeta({
             page,
             limit,
@@ -99,19 +241,23 @@ const CashPayment = () => {
     } finally {
       setLoading(false);
     }
-  }, [page, limit, debouncedSearch, globalBranchId]);
+  }, [page, limit, debouncedSearch, selectedBranchId, globalBranchId, selectedState, selectedCity, startDate, endDate]);
 
   useEffect(() => {
     fetchCashPayments();
   }, [fetchCashPayments]);
 
-  // Client-side filtering for designation if selected
-  const displayedItems = items.filter(item => {
-    if (filterDesignation.length > 0 && item.designation) {
-      if (!filterDesignation.includes(item.designation)) return false;
-    }
-    return true;
-  });
+  // Handle Reset Filters
+  const handleResetFilters = () => {
+    setSearchTerm('');
+    setDebouncedSearch('');
+    setSelectedBranchId('');
+    setSelectedState('');
+    setSelectedCity('');
+    setStartDate('');
+    setEndDate('');
+    setPage(1);
+  };
 
   // Open Submit Cash Modal
   const openSubmitModal = (employee) => {
@@ -127,7 +273,7 @@ const CashPayment = () => {
   // Handle Cash Submission
   const handleSubmitCash = async (e) => {
     e.preventDefault();
-    const empId = selectedEmployee?.employeeId || selectedEmployee?._id || selectedEmployee?.id;
+    const empId = selectedEmployee?.employeeId || selectedEmployee?.userId || selectedEmployee?._id || selectedEmployee?.id;
     if (!empId) {
       toast.error('Employee ID is missing');
       return;
@@ -160,7 +306,7 @@ const CashPayment = () => {
           amountSubmitted: '',
           remarks: ''
         });
-        // Re-fetch cash payments
+        // Re-fetch cash payments and update summary
         fetchCashPayments();
       } else {
         throw new Error(res?.message || 'Failed to submit cash');
@@ -173,46 +319,12 @@ const CashPayment = () => {
     }
   };
 
-  // Export to CSV
-  const handleExport = () => {
-    setExporting(true);
-    try {
-      const headers = ['Sr.No.', 'Employee ID', 'Employee Name', 'Designation', 'Total Cash Collection', 'Total Cash Submitted', 'Total Cash Pending'];
-      const rows = displayedItems.map((item, idx) => [
-        (page - 1) * limit + idx + 1,
-        `"${item.employeeId || item._id || ''}"`,
-        `"${item.employeeName || item.name || ''}"`,
-        `"${item.designation || 'Onboarding Team'}"`,
-        item.totalCashCollection || 0,
-        item.totalCashSubmitted || 0,
-        item.totalCashPending || 0
-      ]);
-
-      const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
-      const encodedUri = encodeURI(csvContent);
-      const link = document.createElement('a');
-      link.setAttribute('href', encodedUri);
-      link.setAttribute('download', `cash-payments-page-${page}.csv`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-
-      toast.success('Cash payment records exported successfully!');
-    } catch (err) {
-      console.error('Export error:', err);
-      toast.error('Failed to export CSV');
-    } finally {
-      setExporting(false);
-    }
-  };
-
   const formatCurrency = (val) => {
     const num = Number(val) || 0;
     return num.toLocaleString('en-IN');
   };
-  const tableRef = useRef(null);
-  const [isExportOpen, setIsExportOpen] = useState(false);
 
+  // Export handlers
   const getSelectedDataFromTable = () => {
     if (!tableRef.current) return { headers: [], rows: [] };
     const table = tableRef.current;
@@ -241,7 +353,7 @@ const CashPayment = () => {
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = 'Export.csv';
+    link.download = `Cash-Payments-${todayISO}.csv`;
     link.click();
     setIsExportOpen(false);
   };
@@ -249,7 +361,7 @@ const CashPayment = () => {
   const exportToExcel = () => {
     const { headers, rows } = getSelectedDataFromTable();
     const tableHtml = `
-      <table ref={tableRef}  border="1">
+      <table border="1">
         <thead>
           <tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr>
         </thead>
@@ -261,7 +373,7 @@ const CashPayment = () => {
     const blob = new Blob([tableHtml], { type: 'application/vnd.ms-excel' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = 'Export.xls';
+    link.download = `Cash-Payments-${todayISO}.xls`;
     link.click();
     setIsExportOpen(false);
   };
@@ -270,8 +382,8 @@ const CashPayment = () => {
     const { headers, rows } = getSelectedDataFromTable();
     const tableHtml = `
       <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
-      <head><meta charset='utf-8'><title>Export</title></head><body>
-      <table ref={tableRef} border="1">
+      <head><meta charset='utf-8'><title>Cash Payments Export</title></head><body>
+      <table border="1">
         <thead>
           <tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr>
         </thead>
@@ -284,23 +396,10 @@ const CashPayment = () => {
     const blob = new Blob([tableHtml], { type: 'application/msword' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = 'Export.doc';
+    link.download = `Cash-Payments-${todayISO}.doc`;
     link.click();
     setIsExportOpen(false);
   };
-
-  // Calculate overview totals
-  const overviewTotals = React.useMemo(() => {
-    let collection = 0;
-    let submitted = 0;
-    let pending = 0;
-    items.forEach(item => {
-      collection += Number(item.totalCashCollection) || 0;
-      submitted += Number(item.totalCashSubmitted) || 0;
-      pending += Number(item.totalCashPending) || 0;
-    });
-    return { collection, submitted, pending, count: items.length };
-  }, [items]);
 
   return (
     <div className="w-full flex flex-col gap-5 font-sans antialiased pb-16">
@@ -312,46 +411,15 @@ const CashPayment = () => {
           { label: "Payment Operations" },
           { label: "Cash Payments" }
         ]}
-      >
-        <div className="flex items-center gap-3">
-          <div className="relative flex-shrink-0">
-            <button 
-              onClick={() => setIsExportOpen(!isExportOpen)}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-full font-semibold transition-colors text-sm shadow-sm border bg-white text-gray-700 border-gray-300 hover:bg-gray-50 cursor-pointer"
-            >
-              <Download size={16} />
-              <span>Export</span>
-              <ChevronDown size={14} />
-            </button>
-            
-            {isExportOpen && (
-              <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-100 rounded-xl shadow-lg z-50 overflow-hidden">
-                <div className="p-1">
-                  <button onClick={exportToCSV} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors text-left cursor-pointer">
-                    <Table size={16} className="text-green-600" />
-                    Export to CSV
-                  </button>
-                  <button onClick={exportToExcel} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors text-left cursor-pointer">
-                    <FileSpreadsheet size={16} className="text-green-600" />
-                    Export to Excel
-                  </button>
-                  <button onClick={exportToWord} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors text-left cursor-pointer">
-                    <FileText size={16} className="text-blue-600" />
-                    Export to Word
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </PageHeader>
+      />
 
-      {/* 2. Top Stats Overview (4 KPI Cards Matching Employees.jsx) */}
+      {/* 2. Top Stats Overview (4 Centered KPI Cards Matching Employee Standard) */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Card 1: Total Staff Handlers */}
         <div className="bg-white rounded-xl p-4.5 border border-gray-100 shadow-xs flex flex-col items-center justify-center transition-all hover:shadow-md">
           <div className="flex items-center gap-2 text-[#225091] mb-1">
             <span className="text-[26px] font-bold leading-none font-heading">
-              {overviewTotals.count}
+              {meta.totalRecords || items.length}
             </span>
           </div>
           <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider text-center">
@@ -359,11 +427,11 @@ const CashPayment = () => {
           </span>
         </div>
 
+        {/* Card 2: Total Cash Collected */}
         <div className="bg-white rounded-xl p-4.5 border border-gray-100 shadow-xs flex flex-col items-center justify-center transition-all hover:shadow-md">
-          <div className="flex items-center gap-1.5 text-gray-900 mb-1">
-            <span className="text-lg font-bold text-gray-500">₹</span>
+          <div className="flex items-center gap-1 text-gray-900 mb-1">
             <span className="text-[24px] font-bold leading-none font-heading">
-              {formatCurrency(overviewTotals.collection)}
+              {stats.formattedTotalCashCollection || `₹${formatCurrency(stats.totalCashCollection)}`}
             </span>
           </div>
           <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider text-center">
@@ -371,11 +439,11 @@ const CashPayment = () => {
           </span>
         </div>
 
+        {/* Card 3: Total Cash Submitted */}
         <div className="bg-white rounded-xl p-4.5 border border-gray-100 shadow-xs flex flex-col items-center justify-center transition-all hover:shadow-md">
-          <div className="flex items-center gap-1.5 text-emerald-600 mb-1">
-            <span className="text-lg font-bold text-emerald-500">₹</span>
+          <div className="flex items-center gap-1 text-emerald-600 mb-1">
             <span className="text-[24px] font-bold leading-none font-heading">
-              {formatCurrency(overviewTotals.submitted)}
+              {stats.formattedTotalCashSubmitted || `₹${formatCurrency(stats.totalCashSubmitted)}`}
             </span>
           </div>
           <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider text-center">
@@ -383,11 +451,11 @@ const CashPayment = () => {
           </span>
         </div>
 
+        {/* Card 4: Total Pending Cash */}
         <div className="bg-white rounded-xl p-4.5 border border-gray-100 shadow-xs flex flex-col items-center justify-center transition-all hover:shadow-md">
-          <div className="flex items-center gap-1.5 text-amber-600 mb-1">
-            <span className="text-lg font-bold text-amber-500">₹</span>
+          <div className="flex items-center gap-1 text-amber-600 mb-1">
             <span className="text-[24px] font-bold leading-none font-heading">
-              {formatCurrency(overviewTotals.pending)}
+              {stats.formattedTotalCashPending || `₹${formatCurrency(stats.totalCashPending)}`}
             </span>
           </div>
           <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider text-center">
@@ -396,200 +464,344 @@ const CashPayment = () => {
         </div>
       </div>
 
-      {/* 3. Action Bar */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div className="flex items-center gap-4 w-full sm:w-auto">
-          <div className="relative w-full sm:w-80">
-            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-              <Search size={16} className="text-gray-400" />
-            </div>
+      {/* 3. Filter Toolbar Card (Matching Employee Filter Standards) */}
+      <div className="bg-white rounded-2xl border border-gray-200/80 p-3.5 sm:p-4.5 shadow-2xs space-y-3.5">
+        {/* Top Controls: Search Bar + Date Range + Reset Button */}
+        <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
+          {/* Search Input */}
+          <div className="relative flex-1">
+            <Search
+              size={16}
+              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+            />
             <input
               type="text"
-              className="block w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] text-sm bg-gray-50/70 hover:bg-gray-50 focus:bg-white text-gray-800 transition-all shadow-2xs"
-              placeholder="Search employee by name..."
+              placeholder="Search employee name or branch..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-9 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-gray-50/70 hover:bg-gray-50 focus:bg-white text-xs font-medium text-gray-800 placeholder-gray-400 transition-all shadow-2xs"
+            />
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
+                title="Clear search"
+              >
+                <X size={14} />
+              </button>
+            )}
+          </div>
+
+          {/* Date Range Inputs & Reset */}
+          <div className="flex items-center gap-2.5 flex-wrap sm:flex-nowrap">
+            {/* Start Date */}
+            <div className="relative flex items-center">
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => {
+                  setStartDate(e.target.value);
+                  setPage(1);
+                }}
+                className="pl-3 pr-2 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-xs font-medium text-gray-700 shadow-2xs cursor-pointer"
+                title="From Date"
+              />
+            </div>
+
+            <span className="text-xs text-gray-400 font-semibold">to</span>
+
+            {/* End Date */}
+            <div className="relative flex items-center">
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => {
+                  setEndDate(e.target.value);
+                  setPage(1);
+                }}
+                className="pl-3 pr-2 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-xs font-medium text-gray-700 shadow-2xs cursor-pointer"
+                title="To Date"
+              />
+            </div>
+
+            {/* Reset Button */}
+            {hasActiveFilters && (
+              <button
+                onClick={handleResetFilters}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-100 transition-all text-xs font-semibold shadow-2xs bg-white cursor-pointer"
+                title="Reset all filters"
+              >
+                <RotateCcw size={13} className="text-gray-500" />
+                <span>Reset</span>
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Bottom Inline Filter Controls: Branch -> State -> City */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-gray-100">
+          {/* 1. Branch Filter */}
+          <div className="relative">
+            <select
+              value={selectedBranchId}
+              onChange={(e) => {
+                setSelectedBranchId(e.target.value);
+                setPage(1);
+              }}
+              className="w-full pl-3 pr-8 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-xs font-medium text-gray-700 shadow-2xs appearance-none cursor-pointer"
+            >
+              <option value="">All Branches</option>
+              {(branchOptions || []).map((b) => (
+                <option key={b.id || b._id} value={b.id || b._id}>
+                  {b.name || b.branchName}
+                </option>
+              ))}
+            </select>
+            <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+          </div>
+
+          {/* 2. State / Region Filter */}
+          <div>
+            <SearchableSelect
+              value={selectedState}
+              onChange={(val) => {
+                setSelectedState(val);
+                setSelectedCity('');
+                setPage(1);
+              }}
+              options={[
+                { value: '', label: 'All States / Regions' },
+                ...statesList.map((st) => ({ value: st, label: st }))
+              ]}
+              placeholder="All States / Regions"
+              searchPlaceholder="Search state or region..."
+              className="text-xs"
             />
           </div>
-          
-          <div className="relative">
-            <button 
-              onClick={() => setIsFilterOpen(!isFilterOpen)}
-              className="flex items-center justify-center p-2.5 border border-gray-200 rounded-lg text-gray-500 hover:bg-gray-50 transition-colors relative focus:outline-none bg-white"
-              title="Filters"
-            >
-              <SlidersHorizontal size={18} />
-              {filterDesignation.length > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-[#225091] rounded-full border border-white flex items-center justify-center text-[9px] text-white font-bold">
-                  {filterDesignation.length > 0 ? 1 : 0}
+
+          {/* 3. City Filter (Cascading) */}
+          <div>
+            <SearchableSelect
+              value={selectedCity}
+              disabled={Boolean(selectedState && availableCities.length === 0)}
+              disabledPlaceholder="No cities available"
+              onChange={(val) => {
+                setSelectedCity(val);
+                setPage(1);
+              }}
+              options={[
+                { value: '', label: selectedState ? `All Cities in ${selectedState}` : 'All Cities' },
+                ...availableCities.map((ct) => ({ value: ct, label: ct }))
+              ]}
+              placeholder={selectedState ? `All Cities in ${selectedState}` : 'All Cities'}
+              searchPlaceholder="Search city..."
+              className="text-xs"
+            />
+          </div>
+        </div>
+
+        {/* Active Filter Chips Bar */}
+        {hasActiveFilters && (
+          <div className="pt-2 border-t border-gray-100 flex items-center justify-between gap-3 flex-wrap text-xs">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="font-bold text-gray-600 text-[11px]">Active:</span>
+              {searchTerm && (
+                <span className="bg-blue-50 text-[#225091] border border-blue-200 px-2.5 py-0.5 rounded-md text-[11px] font-semibold flex items-center gap-1.5 shadow-2xs">
+                  Search: "{searchTerm}"
+                  <button onClick={() => setSearchTerm('')} className="hover:text-red-500 cursor-pointer">
+                    <X size={12} />
+                  </button>
                 </span>
               )}
-            </button>
-            
-            {isFilterOpen && (
-              <div className="absolute z-20 top-full left-0 sm:left-auto sm:right-0 mt-2 w-72 bg-[#f8f9fb] border border-gray-100 rounded-2xl shadow-xl p-5">
-                <div className="flex justify-between items-center mb-5">
-                  <h3 className="font-bold text-gray-800 text-[16px]">Filter</h3>
-                  <button onClick={() => setIsFilterOpen(false)} className="text-gray-500 hover:text-gray-800 transition-colors">
-                    <X size={22} />
+              {selectedBranchId && (
+                <span className="bg-blue-50 text-[#225091] border border-blue-200 px-2.5 py-0.5 rounded-md text-[11px] font-semibold flex items-center gap-1.5 shadow-2xs">
+                  Branch: {branchOptions.find(b => (b.id || b._id) === selectedBranchId)?.name || selectedBranchId}
+                  <button onClick={() => { setSelectedBranchId(''); setPage(1); }} className="hover:text-red-500 cursor-pointer">
+                    <X size={12} />
                   </button>
-                </div>
-
-                <div className="space-y-4 mb-6">
-                  {/* Designation Dropdown */}
-                  <div className="relative">
-                    <div 
-                      className="w-full px-4 py-3 rounded-xl border border-gray-200 flex justify-between items-center cursor-pointer bg-white"
-                      onClick={() => setOpenFilterDropdown(openFilterDropdown === 'designation' ? null : 'designation')}
-                    >
-                      <span className="text-gray-500 text-[14px] font-medium">Designation</span>
-                      <ChevronDown size={18} className={`text-gray-400 transition-transform ${openFilterDropdown === 'designation' ? 'rotate-180' : ''}`} />
-                    </div>
-
-                    {openFilterDropdown === 'designation' && (
-                      <div className="absolute z-30 top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-lg border border-gray-100 p-4 space-y-3">
-                        {['Onboarding Team', 'Branch Manager', 'Collection Officer', 'Field Agent'].map((desig) => (
-                          <label key={desig} className="flex items-center gap-3 cursor-pointer select-none">
-                            <input 
-                              type="checkbox" 
-                              checked={filterDesignation.includes(desig)}
-                              onChange={() => toggleFilter(setFilterDesignation, desig)}
-                              className="w-4 h-4 text-[#225091] rounded border-gray-300 focus:ring-[#225091]" 
-                            />
-                            <span className="text-sm font-medium text-gray-700">{desig}</span>
-                          </label>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="flex gap-3">
-                  <button 
-                    onClick={() => {
-                      setFilterDesignation([]);
-                      setPage(1);
-                      setIsFilterOpen(false);
-                    }}
-                    className="flex-1 py-2.5 rounded-full border border-[#225091] text-[#225091] font-semibold text-sm hover:bg-teal-50 transition-colors"
-                  >
-                    Reset
+                </span>
+              )}
+              {selectedState && (
+                <span className="bg-blue-50 text-[#225091] border border-blue-200 px-2.5 py-0.5 rounded-md text-[11px] font-semibold flex items-center gap-1.5 shadow-2xs">
+                  State: {selectedState}
+                  <button onClick={() => { setSelectedState(''); setSelectedCity(''); setPage(1); }} className="hover:text-red-500 cursor-pointer">
+                    <X size={12} />
                   </button>
-                  <button 
-                    onClick={() => setIsFilterOpen(false)}
-                    className="flex-1 py-2.5 rounded-full bg-[#225091] text-white font-semibold text-sm hover:bg-[#154685] transition-colors"
-                  >
-                    Apply
+                </span>
+              )}
+              {selectedCity && (
+                <span className="bg-blue-50 text-[#225091] border border-blue-200 px-2.5 py-0.5 rounded-md text-[11px] font-semibold flex items-center gap-1.5 shadow-2xs">
+                  City: {selectedCity}
+                  <button onClick={() => { setSelectedCity(''); setPage(1); }} className="hover:text-red-500 cursor-pointer">
+                    <X size={12} />
                   </button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
+                </span>
+              )}
+              {(startDate || endDate) && (
+                <span className="bg-blue-50 text-[#225091] border border-blue-200 px-2.5 py-0.5 rounded-md text-[11px] font-semibold flex items-center gap-1.5 shadow-2xs">
+                  Date: {startDate || '...'} to {endDate || '...'}
+                  <button onClick={() => { setStartDate(''); setEndDate(''); setPage(1); }} className="hover:text-red-500 cursor-pointer">
+                    <X size={12} />
+                  </button>
+                </span>
+              )}
+            </div>
 
-        <div className="flex items-center gap-3">
-          <div className="relative flex-shrink-0">
-            <button 
-              onClick={() => setIsExportOpen(!isExportOpen)}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-full font-semibold transition-colors text-sm shadow-sm border bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+            <button
+              onClick={handleResetFilters}
+              className="text-[#225091] hover:underline font-bold text-[11px] cursor-pointer ml-auto"
             >
-              <Download size={18} />
-              Export
-              <ChevronDown size={16} />
+              Clear All Filters
             </button>
-            
-            {isExportOpen && (
-              <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-100 rounded-xl shadow-lg z-50 overflow-hidden">
-                <div className="p-1">
-                  <button onClick={exportToCSV} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors text-left">
-                    <Table size={16} className="text-green-600" />
-                    Export to CSV
-                  </button>
-                  <button onClick={exportToExcel} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors text-left">
-                    <FileSpreadsheet size={16} className="text-green-600" />
-                    Export to Excel
-                  </button>
-                  <button onClick={exportToWord} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors text-left">
-                    <FileText size={16} className="text-blue-600" />
-                    Export to Word
-                  </button>
-                </div>
-              </div>
-            )}
           </div>
-        </div>
+        )}
       </div>
 
-      {/* Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      {/* 4. Table Card */}
+      <div className="bg-white rounded-2xl border border-gray-200/80 shadow-2xs overflow-hidden">
         <div className="overflow-x-auto">
-          <table ref={tableRef} className="w-full text-left text-sm whitespace-nowrap">
-            <thead className="bg-[#F8FAFC] text-gray-600 text-xs uppercase tracking-wider font-semibold border-b border-gray-200/80">
-              <tr>
-                <th className="py-3.5 px-5 font-semibold">Sr.No.</th>
-                <th className="py-3.5 px-5 font-semibold">Employee Name</th>
-                <th className="py-3.5 px-5 font-semibold">Designation</th>
-                <th className="py-3.5 px-5 font-semibold">Total Cash Collection</th>
-                <th className="py-3.5 px-5 font-semibold">Total Cash Submitted</th>
-                <th className="py-3.5 px-5 font-semibold">Total Cash Pending</th>
-                <th className="py-3.5 px-5 font-semibold text-center">Action</th>
+          <table ref={tableRef} className="w-full text-left border-collapse min-w-[900px]">
+            <thead>
+              <tr className="border-b border-gray-100 bg-gray-50/50">
+                <th className="py-4 px-4 text-[12px] font-bold text-gray-500 uppercase tracking-wider text-center w-16">
+                  Sr.No.
+                </th>
+                <th className="py-4 px-4 text-[12px] font-bold text-gray-500 uppercase tracking-wider">
+                  Staff Member
+                </th>
+                <th className="py-4 px-4 text-[12px] font-bold text-gray-500 uppercase tracking-wider">
+                  Branch & Location
+                </th>
+                <th className="py-4 px-4 text-[12px] font-bold text-gray-500 uppercase tracking-wider">
+                  Designation
+                </th>
+                <th className="py-4 px-4 text-[12px] font-bold text-gray-500 uppercase tracking-wider text-right">
+                  Collected
+                </th>
+                <th className="py-4 px-4 text-[12px] font-bold text-gray-500 uppercase tracking-wider text-right">
+                  Submitted
+                </th>
+                <th className="py-4 px-4 text-[12px] font-bold text-gray-500 uppercase tracking-wider text-right">
+                  Pending
+                </th>
+                <th className="py-4 px-4 text-[12px] font-bold text-gray-500 uppercase tracking-wider text-center w-36">
+                  Actions
+                </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-gray-100 text-sm">
               {loading ? (
-                Array.from({ length: 8 }).map((_, idx) => (
-                  <SkeletonTableRow key={idx} cols={7} />
+                Array.from({ length: 5 }).map((_, idx) => (
+                  <SkeletonTableRow key={idx} columns={8} />
                 ))
-              ) : displayedItems.length === 0 ? (
+              ) : items.length === 0 ? (
                 <tr>
-                  <td colSpan="7" className="text-center py-12 text-gray-500 font-medium text-sm">
-                    No cash payment records found.
+                  <td colSpan={8} className="py-12 text-center text-gray-400">
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      <Coins size={36} className="text-gray-300 stroke-[1.5]" />
+                      <span className="text-sm font-medium text-gray-500">No cash payment records found</span>
+                      <span className="text-xs text-gray-400">Try adjusting your search or location filters</span>
+                    </div>
                   </td>
                 </tr>
               ) : (
-                displayedItems.map((payment, index) => {
-                  const empId = payment.employeeId || payment._id || payment.id;
-                  const empName = payment.employeeName || payment.name || 'Unnamed Employee';
-                  const designation = payment.designation || 'Onboarding Team';
-                  const avatarUrl = payment.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(empName)}&background=random`;
+                items.map((item, idx) => {
+                  const empId = item.employeeId || item.userId || item._id || item.id;
+                  const collected = Number(item.totalCashCollection) || 0;
+                  const submitted = Number(item.totalCashSubmitted) || 0;
+                  const pending = Number(item.totalCashPending) || 0;
 
                   return (
-                    <tr key={empId || index} className="hover:bg-slate-50/70 transition-colors">
-                      <td className="py-3.5 px-5 text-[13px] text-gray-500 font-medium">
-                        {(page - 1) * limit + index + 1}
+                    <tr key={empId || idx} className="hover:bg-blue-50/30 transition-colors group">
+                      {/* Sr No */}
+                      <td className="py-3.5 px-4 text-center font-medium text-gray-500 text-xs">
+                        {(page - 1) * limit + idx + 1}
                       </td>
-                      <td className="py-3.5 px-5">
+
+                      {/* Staff Member */}
+                      <td className="py-3.5 px-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 border border-gray-100 shadow-xs">
-                            <img src={avatarUrl} alt={empName} className="w-full h-full object-cover" />
+                          <div className="w-8 h-8 rounded-full bg-blue-50 text-[#225091] font-bold text-xs flex items-center justify-center uppercase shrink-0 border border-blue-100">
+                            {(item.employeeName || item.name || 'S').slice(0, 2)}
                           </div>
-                          <span className="text-gray-900 font-semibold text-sm">{empName}</span>
+                          <div>
+                            <Link 
+                              to={`/cash-payment/${empId}`}
+                              className="font-bold text-gray-800 text-xs hover:text-[#225091] transition-colors line-clamp-1"
+                            >
+                              {item.employeeName || item.name || 'Unknown Staff'}
+                            </Link>
+                            <span className="text-[11px] text-gray-400 block">
+                              {item.phoneNumber || item.email || empId}
+                            </span>
+                          </div>
                         </div>
                       </td>
-                      <td className="py-3.5 px-5 text-xs text-gray-600 font-medium">{designation}</td>
-                      <td className="py-3.5 px-5 text-sm font-bold text-gray-900 tabular-nums">₹{formatCurrency(payment.totalCashCollection)}</td>
-                      <td className="py-3.5 px-5 text-sm font-semibold text-emerald-600 tabular-nums">₹{formatCurrency(payment.totalCashSubmitted)}</td>
-                      <td className="py-3.5 px-5 text-sm font-semibold tabular-nums">
-                        <span className={`${Number(payment.totalCashPending) > 0 ? 'text-amber-600' : 'text-gray-700'}`}>
-                          ₹{formatCurrency(payment.totalCashPending)}
+
+                      {/* Branch & Location */}
+                      <td className="py-3.5 px-4">
+                        <div className="flex flex-col">
+                          <span className="font-semibold text-gray-700 text-xs flex items-center gap-1">
+                            <Building2 size={12} className="text-gray-400 shrink-0" />
+                            {item.branchName || 'Main Branch'}
+                          </span>
+                          {(item.city || item.state) && (
+                            <span className="text-[11px] text-gray-400 flex items-center gap-1 mt-0.5">
+                              <MapPin size={11} className="text-gray-400 shrink-0" />
+                              {[item.city, item.state].filter(Boolean).join(', ')}
+                            </span>
+                          )}
+                        </div>
+                      </td>
+
+                      {/* Designation */}
+                      <td className="py-3.5 px-4">
+                        <span className="inline-block px-2.5 py-0.5 bg-gray-100 text-gray-700 rounded-md text-[11px] font-semibold">
+                          {item.designation || 'Staff Member'}
                         </span>
                       </td>
-                      <td className="py-3.5 px-5">
+
+                      {/* Cash Collected */}
+                      <td className="py-3.5 px-4 text-right font-bold text-gray-800 text-xs">
+                        ₹{formatCurrency(collected)}
+                      </td>
+
+                      {/* Cash Submitted */}
+                      <td className="py-3.5 px-4 text-right font-bold text-emerald-600 text-xs">
+                        ₹{formatCurrency(submitted)}
+                      </td>
+
+                      {/* Pending Cash */}
+                      <td className="py-3.5 px-4 text-right">
+                        <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                          pending > 0 
+                            ? 'bg-amber-50 text-amber-700 border border-amber-200' 
+                            : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                        }`}>
+                          ₹{formatCurrency(pending)}
+                        </span>
+                      </td>
+
+                      {/* Actions */}
+                      <td className="py-3.5 px-4 text-center">
                         <div className="flex items-center justify-center gap-1.5">
-                          <button 
-                            onClick={() => openSubmitModal(payment)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200/60 font-semibold text-xs transition-all shadow-xs"
-                            title="Submit Cash"
+                          {/* View Details */}
+                          <Link
+                            to={`/cash-payment/${empId}`}
+                            className="p-1.5 rounded-lg text-gray-500 hover:text-[#225091] hover:bg-blue-50 transition-colors"
+                            title="View Staff Ledger & Payment History"
                           >
-                            <ArrowDownCircle size={13} />
-                            <span>Submit Cash</span>
-                          </button>
-                          <button 
-                            onClick={() => navigate(`/cash-payment/view/${empId}`)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-[#225091] bg-[#EAF2FB] hover:bg-[#d8e8f8] border border-[#225091]/15 transition-all shadow-xs" 
-                            title="View Employee Cash Details"
+                            <Eye size={15} />
+                          </Link>
+
+                          {/* Submit Cash */}
+                          <button
+                            onClick={() => openSubmitModal(item)}
+                            className="px-2.5 py-1 bg-[#225091] hover:bg-[#183f72] text-white rounded-lg font-bold text-[11px] transition-colors flex items-center gap-1 shadow-2xs cursor-pointer"
+                            title="Deposit Collected Cash"
                           >
-                            <Eye size={13} /> View
+                            <ArrowDownCircle size={12} />
+                            Deposit
                           </button>
                         </div>
                       </td>
@@ -600,126 +812,181 @@ const CashPayment = () => {
             </tbody>
           </table>
         </div>
-        
-        {/* Pagination */}
-        <div className="px-6 py-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="text-sm text-gray-800 font-medium">
-            Showing {displayedItems.length > 0 ? (page - 1) * limit + 1 : 0} to {Math.min(page * limit, meta.totalRecords || displayedItems.length)} of {meta.totalRecords || displayedItems.length} Entries
+
+        {/* 5. Pagination Bar */}
+        <div className="p-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs">
+          <div className="text-gray-500 font-medium">
+            Showing <span className="font-bold text-gray-800">{items.length > 0 ? (page - 1) * limit + 1 : 0}</span> to{' '}
+            <span className="font-bold text-gray-800">
+              {Math.min(page * limit, meta.totalRecords || items.length)}
+            </span>{' '}
+            of <span className="font-bold text-gray-800">{meta.totalRecords || items.length}</span> staff handlers
           </div>
-          <div className="flex items-center gap-2">
-            <button 
+
+          <div className="flex items-center gap-1.5">
+            <button
               onClick={() => setPage(p => Math.max(1, p - 1))}
-              disabled={page <= 1}
-              className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors disabled:opacity-50"
+              disabled={page <= 1 || loading}
+              className="p-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              title="Previous Page"
             >
-              <ChevronLeft size={16} />
+              <ChevronLeft size={15} />
             </button>
 
-            {(() => {
-              const totalPages = meta.totalPages || 1;
-              let startPage = Math.max(1, page - 2);
-              let endPage = Math.min(totalPages, page + 2);
-              if (endPage - startPage < 4) {
-                if (startPage === 1) endPage = Math.min(5, totalPages);
-                else if (endPage === totalPages) startPage = Math.max(1, totalPages - 4);
+            {Array.from({ length: Math.min(5, meta.totalPages || 1) }, (_, i) => {
+              let pageNum;
+              const totalP = meta.totalPages || 1;
+              if (totalP <= 5) {
+                pageNum = i + 1;
+              } else if (page <= 3) {
+                pageNum = i + 1;
+              } else if (page >= totalP - 2) {
+                pageNum = totalP - 4 + i;
+              } else {
+                pageNum = page - 2 + i;
               }
-              const pageButtons = [];
-              for (let i = startPage; i <= endPage; i++) {
-                pageButtons.push(
-                  <button 
-                    key={i}
-                    onClick={() => setPage(i)}
-                    className={`w-8 h-8 flex items-center justify-center rounded-full font-medium transition-colors ${page === i ? 'bg-[#225091] text-white shadow-sm' : 'border border-gray-200 text-gray-700 hover:bg-gray-50'}`}
-                  >
-                    {i}
-                  </button>
-                );
-              }
-              return pageButtons;
-            })()}
 
-            <button 
+              return (
+                <button
+                  key={pageNum}
+                  onClick={() => setPage(pageNum)}
+                  className={`w-8 h-8 rounded-lg font-bold transition-colors ${
+                    page === pageNum
+                      ? 'bg-[#225091] text-white shadow-2xs'
+                      : 'border border-gray-200 text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  {pageNum}
+                </button>
+              );
+            })}
+
+            <button
               onClick={() => setPage(p => Math.min(meta.totalPages || 1, p + 1))}
-              disabled={page >= (meta.totalPages || 1)}
-              className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors disabled:opacity-50"
+              disabled={page >= (meta.totalPages || 1) || loading}
+              className="p-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              title="Next Page"
             >
-              <ChevronRight size={16} />
+              <ChevronRight size={15} />
             </button>
           </div>
         </div>
       </div>
 
-      {/* Quick Submit Cash Modal */}
+      {/* 6. Deposit Cash Modal */}
       {isSubmitModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 transition-opacity">
-          <div className="bg-white rounded-xl w-full max-w-[500px] shadow-2xl overflow-hidden flex flex-col">
-            <div className="flex justify-between items-center p-6 pb-3 border-b border-gray-100">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-2xl max-w-md w-full overflow-hidden">
+            {/* Modal Header */}
+            <div className="px-6 py-4.5 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
               <div>
-                <h2 className="text-xl font-bold text-[#1b2559]">Submit Cash</h2>
+                <h3 className="font-bold text-gray-800 text-[16px]">
+                  Deposit Cash to Society Vault
+                </h3>
                 <p className="text-xs text-gray-500 mt-0.5">
-                  Deposit cash collected by <span className="font-semibold text-[#225091]">{selectedEmployee?.employeeName || selectedEmployee?.name || 'Employee'}</span>
+                  Staff: <span className="font-semibold text-gray-700">{selectedEmployee?.employeeName || selectedEmployee?.name}</span>
                 </p>
               </div>
-              <button onClick={() => setIsSubmitModalOpen(false)} className="text-gray-500 hover:text-gray-800 transition-colors">
-                <X size={24} />
+              <button
+                onClick={() => {
+                  setIsSubmitModalOpen(false);
+                  setSelectedEmployee(null);
+                }}
+                className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-lg hover:bg-gray-100 cursor-pointer"
+              >
+                <X size={18} />
               </button>
             </div>
-            <form onSubmit={handleSubmitCash} className="p-6 pt-4 space-y-4">
+
+            {/* Modal Form */}
+            <form onSubmit={handleSubmitCash} className="p-6 space-y-4">
+              {/* Outstanding Pending Info Banner */}
+              <div className="p-3 bg-blue-50/70 border border-blue-100 rounded-xl flex items-center justify-between text-xs">
+                <span className="text-gray-600 font-medium">Current Pending Cash:</span>
+                <span className="font-bold text-[#225091] text-sm">
+                  ₹{formatCurrency(selectedEmployee?.totalCashPending || 0)}
+                </span>
+              </div>
+
+              {/* Date */}
               <div>
-                <label className="block text-[14px] font-semibold text-gray-700 mb-1.5">
-                  Date <span className="text-red-500">*</span>
+                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                  Deposit Date <span className="text-rose-500">*</span>
                 </label>
-                <input 
-                  type="date" 
+                <input
+                  type="date"
                   required
+                  max={todayISO}
                   value={submitForm.date}
                   onChange={(e) => setSubmitForm({ ...submitForm, date: e.target.value })}
-                  className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all bg-white text-[15px] text-gray-800" 
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] text-xs font-medium text-gray-800 bg-white"
                 />
               </div>
-              
+
+              {/* Amount */}
               <div>
-                <label className="block text-[14px] font-semibold text-gray-700 mb-1.5">
-                  Amount (₹) <span className="text-red-500">*</span>
+                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                  Amount Submitted (₹) <span className="text-rose-500">*</span>
                 </label>
-                <input 
-                  type="number" 
-                  required
-                  min="1"
-                  step="any"
-                  placeholder="Enter Amount (e.g. 5000)"
-                  value={submitForm.amountSubmitted}
-                  onChange={(e) => setSubmitForm({ ...submitForm, amountSubmitted: e.target.value })}
-                  className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all bg-white text-[15px] text-gray-800 appearance-none font-medium" 
-                />
+                <div className="relative">
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-sm">
+                    ₹
+                  </span>
+                  <input
+                    type="number"
+                    min="1"
+                    step="1"
+                    required
+                    placeholder="Enter submitted cash amount"
+                    value={submitForm.amountSubmitted}
+                    onChange={(e) => setSubmitForm({ ...submitForm, amountSubmitted: e.target.value })}
+                    className="w-full pl-8 pr-3.5 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] text-xs font-bold text-gray-800 bg-white"
+                  />
+                </div>
               </div>
-              
+
+              {/* Remarks */}
               <div>
-                <label className="block text-[14px] font-semibold text-gray-700 mb-1.5">Remarks</label>
-                <textarea 
-                  rows="3" 
-                  placeholder="Enter remarks (e.g. Cash deposited successfully)..." 
+                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                  Remarks / Receipt Note
+                </label>
+                <textarea
+                  rows={3}
+                  placeholder="e.g. Deposited cash to Head Office cash counter"
                   value={submitForm.remarks}
                   onChange={(e) => setSubmitForm({ ...submitForm, remarks: e.target.value })}
-                  className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all bg-white text-[15px] text-gray-800 resize-none"
-                ></textarea>
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] text-xs font-medium text-gray-800 bg-white resize-none"
+                />
               </div>
-              
-              <div className="flex justify-end items-center gap-3 mt-6 pt-4 border-t border-gray-100">
-                <button 
+
+              {/* Action Buttons */}
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-gray-100">
+                <button
                   type="button"
-                  onClick={() => setIsSubmitModalOpen(false)} 
-                  className="px-6 py-2.5 rounded-full border-[1.5px] border-gray-300 text-gray-700 font-semibold hover:bg-gray-50 transition-colors text-[14px] bg-white"
+                  onClick={() => {
+                    setIsSubmitModalOpen(false);
+                    setSelectedEmployee(null);
+                  }}
+                  className="px-4 py-2.5 rounded-xl border border-gray-200 text-gray-700 hover:bg-gray-50 font-bold text-xs transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
-                <button 
+                <button
                   type="submit"
                   disabled={submitting}
-                  className="flex items-center gap-2 px-7 py-2.5 rounded-full bg-[#225091] text-white font-semibold hover:bg-[#168f94] transition-colors shadow-sm text-[14px] disabled:opacity-50"
+                  className="px-5 py-2.5 rounded-xl bg-[#225091] hover:bg-[#183f72] text-white font-bold text-xs transition-colors flex items-center gap-1.5 shadow-2xs disabled:opacity-60 cursor-pointer"
                 >
-                  {submitting && <Loader2 size={16} className="animate-spin" />}
-                  {submitting ? 'Submitting...' : 'Submit Cash'}
+                  {submitting ? (
+                    <>
+                      <Loader2 size={14} className="animate-spin" />
+                      <span>Depositing...</span>
+                    </>
+                  ) : (
+                    <>
+                      <ArrowDownCircle size={14} />
+                      <span>Confirm Deposit</span>
+                    </>
+                  )}
                 </button>
               </div>
             </form>

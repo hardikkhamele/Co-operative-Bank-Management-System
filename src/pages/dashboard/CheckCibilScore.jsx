@@ -316,15 +316,56 @@ const CheckCibilScore = () => {
 
   // Safe and comprehensive parser for Bureau Response into structured visual data
   const parseScoreData = (dataObj) => {
-    if (!dataObj) return { 
-      score: 0, 
-      rating: getScoreRating(0), 
-      accounts: [], 
-      inquiries: [], 
-      summary: {}, 
-      demographics: {}, 
-      bureauMeta: {} 
+    const defaultApplicant = {
+      fullName: '—',
+      pan: '—',
+      mobileNumber: '—',
+      dob: '—',
+      gender: '—',
+      address: '—',
+      requestId: '—',
+      status: 'completed',
+      createdAt: null,
+      requestedBy: null
     };
+
+    const defaultBureauMeta = {
+      bureauProvider: 'Experian Credit Information Bureau of India / CIBIL',
+      scoreModel: 'Experian / CIBIL Risk Score v2.0',
+      controlNumber: '—',
+      reportTimestamp: '—',
+      delinquencyCount: 0,
+      securedAccounts: 0,
+      unsecuredAccounts: 0,
+      totalCreditCards: 0,
+      totalLoans: 0
+    };
+
+    if (!dataObj) {
+      return { 
+        score: 0, 
+        rating: getScoreRating(0), 
+        scoreName: 'Experian / CIBIL Risk Score v2.0',
+        accounts: [], 
+        inquiries: [], 
+        summary: {}, 
+        totalBalance: 0,
+        pdfUrl: null,
+        applicant: {
+          ...defaultApplicant,
+          fullName: formData?.fullName || '—',
+          pan: formData?.panNumber || '—',
+          mobileNumber: formData?.mobileNumber || '—',
+          dob: formData?.dob || '—',
+        }, 
+        demographics: {
+          gender: '—',
+          email: '—',
+          address: '—'
+        }, 
+        bureauMeta: defaultBureauMeta 
+      };
+    }
     
     const rawData = dataObj.data || dataObj || {};
     
@@ -339,7 +380,7 @@ const CheckCibilScore = () => {
     }
 
     const innerData = reportJson?.data || reportJson || rawData.creditReport?.data || rawData.creditReport || rawData;
-    const bureauReport = innerData.credit_report || innerData.report || innerData || {};
+    const bureauReport = innerData?.credit_report || innerData?.report || innerData || {};
 
     // Determine Score
     let score = 0;
@@ -393,10 +434,10 @@ const CheckCibilScore = () => {
 
     // Applicant Details
     const applicant = {
-      fullName: rawData.fullName || innerData.fullName || formData.fullName || '—',
-      pan: rawData.pan || innerData.pan || formData.panNumber || '—',
-      mobileNumber: rawData.mobileNumber || innerData.mobileNumber || formData.mobileNumber || '—',
-      dob: rawData.dob || innerData.dob || formData.dob || '—',
+      fullName: rawData.fullName || innerData.fullName || formData?.fullName || '—',
+      pan: rawData.pan || innerData.pan || formData?.panNumber || '—',
+      mobileNumber: rawData.mobileNumber || innerData.mobileNumber || formData?.mobileNumber || '—',
+      dob: rawData.dob || innerData.dob || formData?.dob || '—',
       gender: demo?.Gender || '—',
       address: address !== '—' ? `${address}, ${city}, ${state} - ${pincode}` : '—',
       requestId: rawData.requestId || innerData.requestId || rawData._id || '—',
@@ -407,13 +448,13 @@ const CheckCibilScore = () => {
 
     // Calculate total balance across accounts
     const totalBalance = safeAccounts.reduce((acc, curr) => {
-      const val = Number(curr.Current_Balance || curr.balance || curr.currentBalance || 0);
+      const val = Number(curr?.Current_Balance || curr?.balance || curr?.currentBalance || 0);
       return acc + (isNaN(val) ? 0 : val);
     }, 0);
 
     // Credit Card and Loan breakdown
-    const creditCards = safeAccounts.filter(a => (a.Account_Type || a.accountType || '').toLowerCase().includes('credit card'));
-    const loans = safeAccounts.filter(a => !(a.Account_Type || a.accountType || '').toLowerCase().includes('credit card'));
+    const creditCards = safeAccounts.filter(a => (a?.Account_Type || a?.accountType || '').toLowerCase().includes('credit card'));
+    const loans = safeAccounts.filter(a => !(a?.Account_Type || a?.accountType || '').toLowerCase().includes('credit card'));
 
     // Bureau Control Info
     const bureauHeader = bureauReport?.HEADER || innerData?.HEADER || {};
@@ -422,9 +463,9 @@ const CheckCibilScore = () => {
       scoreModel: rawData.scoreName || innerData.scoreName || reportJson?.scoreName || 'Experian / CIBIL Risk Score v2.0',
       controlNumber: bureauHeader?.Bureau_Control_Number || applicant.requestId,
       reportTimestamp: rawData.createdAt ? new Date(rawData.createdAt).toLocaleString('en-GB') : new Date().toLocaleString('en-GB'),
-      delinquencyCount: summary.Delinquency_Accounts || summary.delinquentAccounts || 0,
-      securedAccounts: summary.Secured_Accounts || 0,
-      unsecuredAccounts: summary.Unsecured_Accounts || 0,
+      delinquencyCount: summary?.Delinquency_Accounts || summary?.delinquentAccounts || 0,
+      securedAccounts: summary?.Secured_Accounts || 0,
+      unsecuredAccounts: summary?.Unsecured_Accounts || 0,
       totalCreditCards: creditCards.length,
       totalLoans: loans.length
     };
@@ -437,7 +478,7 @@ const CheckCibilScore = () => {
       inquiries: safeInquiries,
       summary,
       totalBalance,
-      pdfUrl: rawData.pdfUrl || innerData.pdfUrl || reportJson?.pdfUrl,
+      pdfUrl: rawData.pdfUrl || innerData.pdfUrl || reportJson?.pdfUrl || null,
       applicant,
       demographics: {
         gender: demo?.Gender || '—',
@@ -1295,16 +1336,16 @@ const CheckCibilScore = () => {
                 </div>
                 <div>
                   <h3 className="text-base font-bold text-gray-900">
-                    {detailParsed.applicant.fullName || 'Credit Bureau Report'}
+                    {detailParsed?.applicant?.fullName || 'Credit Bureau Report'}
                   </h3>
                   <p className="text-xs text-gray-500 font-mono">
-                    PAN: {detailParsed.applicant.pan} | Mobile: {detailParsed.applicant.mobileNumber}
+                    PAN: {detailParsed?.applicant?.pan || '—'} | Mobile: {detailParsed?.applicant?.mobileNumber || '—'}
                   </p>
                 </div>
               </div>
 
               <div className="flex items-center gap-2">
-                {detailParsed.pdfUrl && (
+                {detailParsed?.pdfUrl && (
                   <a
                     href={detailParsed.pdfUrl}
                     target="_blank"
@@ -1337,22 +1378,22 @@ const CheckCibilScore = () => {
                 <>
                   {/* Score & Risk Rating Cards */}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className={`p-4 rounded-2xl ${detailParsed.rating.bg} border ${detailParsed.rating.border} flex items-center gap-4`}>
+                    <div className={`p-4 rounded-2xl ${detailParsed?.rating?.bg || 'bg-gray-100'} border ${detailParsed?.rating?.border || 'border-gray-300'} flex items-center gap-4`}>
                       <div className="w-14 h-14 rounded-xl bg-white border border-gray-200 flex flex-col items-center justify-center shrink-0">
-                        <span className={`text-xl font-black ${detailParsed.rating.color}`}>
-                          {detailParsed.score > 0 ? detailParsed.score : 'N/A'}
+                        <span className={`text-xl font-black ${detailParsed?.rating?.color || 'text-gray-700'}`}>
+                          {detailParsed?.score > 0 ? detailParsed.score : 'N/A'}
                         </span>
                         <span className="text-[9px] font-bold text-gray-400">SCORE</span>
                       </div>
                       <div>
                         <p className="text-[11px] font-bold text-gray-500 uppercase">Bureau Score</p>
-                        <h4 className={`text-sm font-bold ${detailParsed.rating.color}`}>{detailParsed.rating.text}</h4>
+                        <h4 className={`text-sm font-bold ${detailParsed?.rating?.color || 'text-gray-800'}`}>{detailParsed?.rating?.text || 'No Score'}</h4>
                       </div>
                     </div>
 
                     <div className="p-4 rounded-2xl bg-gray-50 border border-gray-100">
                       <p className="text-[11px] font-bold text-gray-500 uppercase">Verification Status</p>
-                      <div className="mt-1.5">{getStatusBadge(detailReport?.status || detailParsed.applicant.status)}</div>
+                      <div className="mt-1.5">{getStatusBadge(detailReport?.status || detailParsed?.applicant?.status)}</div>
                     </div>
 
                     <div className="p-4 rounded-2xl bg-gray-50 border border-gray-100">
@@ -1372,19 +1413,19 @@ const CheckCibilScore = () => {
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
                       <div>
                         <span className="text-gray-400 block text-[11px] mb-0.5">Full Name</span>
-                        <span className="font-bold text-gray-900">{detailParsed.applicant.fullName}</span>
+                        <span className="font-bold text-gray-900">{detailParsed?.applicant?.fullName || '—'}</span>
                       </div>
                       <div>
                         <span className="text-gray-400 block text-[11px] mb-0.5">PAN Card</span>
-                        <span className="font-bold text-gray-900 font-mono">{detailParsed.applicant.pan}</span>
+                        <span className="font-bold text-gray-900 font-mono">{detailParsed?.applicant?.pan || '—'}</span>
                       </div>
                       <div>
                         <span className="text-gray-400 block text-[11px] mb-0.5">Mobile</span>
-                        <span className="font-bold text-gray-900 font-mono">{detailParsed.applicant.mobileNumber}</span>
+                        <span className="font-bold text-gray-900 font-mono">{detailParsed?.applicant?.mobileNumber || '—'}</span>
                       </div>
                       <div>
                         <span className="text-gray-400 block text-[11px] mb-0.5">Date of Birth</span>
-                        <span className="font-bold text-gray-900">{detailParsed.applicant.dob}</span>
+                        <span className="font-bold text-gray-900">{detailParsed?.applicant?.dob || '—'}</span>
                       </div>
                     </div>
                   </div>
@@ -1392,9 +1433,9 @@ const CheckCibilScore = () => {
                   {/* Accounts Table in Modal */}
                   <div className="space-y-3">
                     <h4 className="text-xs font-bold text-gray-800 uppercase tracking-wider">
-                      Report Accounts ({detailParsed.accounts.length})
+                      Report Accounts ({detailParsed?.accounts?.length || 0})
                     </h4>
-                    {detailParsed.accounts.length > 0 ? (
+                    {(detailParsed?.accounts?.length || 0) > 0 ? (
                       <div className="border border-gray-100 rounded-2xl overflow-hidden">
                         <table className="w-full text-left text-xs border-collapse">
                           <thead className="bg-gray-50 text-gray-600 uppercase font-semibold">
@@ -1408,12 +1449,12 @@ const CheckCibilScore = () => {
                           <tbody className="divide-y divide-gray-100">
                             {detailParsed.accounts.map((acc, aIdx) => (
                               <tr key={aIdx} className="hover:bg-gray-50/40">
-                                <td className="p-3 font-semibold text-gray-900">{acc.Subscriber_Name || acc.institution || '—'}</td>
-                                <td className="p-3 text-gray-700">{acc.Account_Type || acc.accountType || '—'}</td>
-                                <td className="p-3 font-bold text-gray-900">₹{Number(acc.Current_Balance || acc.balance || 0).toLocaleString('en-IN')}</td>
+                                <td className="p-3 font-semibold text-gray-900">{acc?.Subscriber_Name || acc?.institution || '—'}</td>
+                                <td className="p-3 text-gray-700">{acc?.Account_Type || acc?.accountType || '—'}</td>
+                                <td className="p-3 font-bold text-gray-900">₹{Number(acc?.Current_Balance || acc?.balance || 0).toLocaleString('en-IN')}</td>
                                 <td className="p-3">
-                                  <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${acc.Date_Closed ? 'bg-gray-100 text-gray-600' : 'bg-emerald-50 text-emerald-700'}`}>
-                                    {acc.Date_Closed ? 'Closed' : 'Active'}
+                                  <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${acc?.Date_Closed ? 'bg-gray-100 text-gray-600' : 'bg-emerald-50 text-emerald-700'}`}>
+                                    {acc?.Date_Closed ? 'Closed' : 'Active'}
                                   </span>
                                 </td>
                               </tr>
@@ -1429,7 +1470,7 @@ const CheckCibilScore = () => {
                   </div>
 
                   {/* Inquiries Table in Modal */}
-                  {detailParsed.inquiries.length > 0 && (
+                  {(detailParsed?.inquiries?.length || 0) > 0 && (
                     <div className="space-y-3">
                       <h4 className="text-xs font-bold text-gray-800 uppercase tracking-wider">
                         Enquiries on Record ({detailParsed.inquiries.length})
@@ -1447,10 +1488,10 @@ const CheckCibilScore = () => {
                           <tbody className="divide-y divide-gray-100">
                             {detailParsed.inquiries.map((inq, iIdx) => (
                               <tr key={iIdx} className="hover:bg-gray-50/40">
-                                <td className="p-3 font-semibold text-gray-900">{inq.Subscriber_Name || inq.institution || '—'}</td>
-                                <td className="p-3 text-gray-700">{inq.Enquiry_Purpose || inq.purpose || '—'}</td>
-                                <td className="p-3 font-bold text-gray-900">₹{Number(inq.Enquiry_Amount || inq.amount || 0).toLocaleString('en-IN')}</td>
-                                <td className="p-3 text-gray-500">{inq.Date_Of_Request || inq.date || '—'}</td>
+                                <td className="p-3 font-semibold text-gray-900">{inq?.Subscriber_Name || inq?.institution || '—'}</td>
+                                <td className="p-3 text-gray-700">{inq?.Enquiry_Purpose || inq?.purpose || '—'}</td>
+                                <td className="p-3 font-bold text-gray-900">₹{Number(inq?.Enquiry_Amount || inq?.amount || 0).toLocaleString('en-IN')}</td>
+                                <td className="p-3 text-gray-500">{inq?.Date_Of_Request || inq?.date || '—'}</td>
                               </tr>
                             ))}
                           </tbody>
@@ -1465,15 +1506,15 @@ const CheckCibilScore = () => {
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
                       <div>
                         <span className="text-gray-400 block text-[11px]">Provider</span>
-                        <span className="font-semibold text-gray-800">{detailParsed.bureauMeta.bureauProvider}</span>
+                        <span className="font-semibold text-gray-800">{detailParsed?.bureauMeta?.bureauProvider || 'Experian / CIBIL'}</span>
                       </div>
                       <div>
                         <span className="text-gray-400 block text-[11px]">Score Model</span>
-                        <span className="font-semibold text-gray-800">{detailParsed.bureauMeta.scoreModel}</span>
+                        <span className="font-semibold text-gray-800">{detailParsed?.bureauMeta?.scoreModel || 'Experian / CIBIL Risk Score v2.0'}</span>
                       </div>
                       <div>
                         <span className="text-gray-400 block text-[11px]">Reference ID</span>
-                        <span className="font-mono font-bold text-[#225091]">{detailParsed.bureauMeta.controlNumber}</span>
+                        <span className="font-mono font-bold text-[#225091]">{detailParsed?.bureauMeta?.controlNumber || '—'}</span>
                       </div>
                     </div>
                   </div>

@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { 
   Download, CheckCircle2, User, Calendar, Users, MapPin, CreditCard, 
   FileText, AlertCircle, Loader2, ShieldCheck, Copy, History, Search, 
-  RefreshCw, Eye, ArrowLeft, CheckCircle, Clock, XCircle, ChevronLeft, ChevronRight, FileCheck
+  RefreshCw, Eye, ArrowLeft, CheckCircle, Clock, XCircle, ChevronLeft, ChevronRight, FileCheck, X
 } from 'lucide-react';
 import { kycService } from '../../api/kycService';
 import { toast } from 'react-toastify';
@@ -39,35 +39,71 @@ const KycVerification = () => {
   const [fullReportRecord, setFullReportRecord] = useState(null);
   const [currentRefId, setCurrentRefId] = useState(null);
 
-  // History State
+  // History State with Server Pagination & Filters (API 4.5)
   const [historyList, setHistoryList] = useState([]);
+  const [historyPagination, setHistoryPagination] = useState({ total: 0, page: 1, limit: 10, totalPages: 1 });
   const [historyLoading, setHistoryLoading] = useState(false);
   const [historySearch, setHistorySearch] = useState('');
   const [historyDocFilter, setHistoryDocFilter] = useState('ALL');
   const [historyStatusFilter, setHistoryStatusFilter] = useState('ALL');
+  const [historyStartDate, setHistoryStartDate] = useState('');
+  const [historyEndDate, setHistoryEndDate] = useState('');
   const [lookupRefId, setLookupRefId] = useState('');
   const [lookupLoading, setLookupLoading] = useState(false);
   const [historyPage, setHistoryPage] = useState(1);
-  const historyPerPage = 8;
+  const historyPerPage = 10;
 
-  // Load History
-  const fetchHistory = async () => {
+  // Load History from API 4.5: GET /v1/society/kyc-verification/history
+  const fetchHistory = useCallback(async (pageNo = historyPage) => {
     setHistoryLoading(true);
     try {
-      const res = await kycService.getKycHistory();
+      const params = {
+        page: pageNo,
+        limit: historyPerPage,
+      };
+      if (historySearch.trim()) params.search = historySearch.trim();
+      if (historyDocFilter && historyDocFilter !== 'ALL') params.documentType = historyDocFilter;
+      if (historyStatusFilter && historyStatusFilter !== 'ALL') params.status = historyStatusFilter;
+      if (historyStartDate) {
+        const startD = new Date(historyStartDate);
+        startD.setHours(0, 0, 0, 0);
+        params.startDate = startD.toISOString();
+      }
+      if (historyEndDate) {
+        const endD = new Date(historyEndDate);
+        endD.setHours(23, 59, 59, 999);
+        params.endDate = endD.toISOString();
+      }
+
+      const res = await kycService.getKycHistory(params);
       if (res && res.data) {
-        setHistoryList(res.data);
+        const items = res.data.items || (Array.isArray(res.data) ? res.data : []);
+        setHistoryList(items);
+        if (res.data.pagination) {
+          setHistoryPagination(res.data.pagination);
+        } else {
+          setHistoryPagination({
+            total: items.length,
+            page: pageNo,
+            limit: historyPerPage,
+            totalPages: Math.ceil(items.length / historyPerPage) || 1,
+          });
+        }
       }
     } catch (err) {
       console.warn('Failed to load KYC verification history:', err);
     } finally {
       setHistoryLoading(false);
     }
-  };
+  }, [historyPage, historyPerPage, historySearch, historyDocFilter, historyStatusFilter, historyStartDate, historyEndDate]);
 
+  // Trigger fetch with debounce on filter/page updates
   useEffect(() => {
-    fetchHistory();
-  }, []);
+    const timer = setTimeout(() => {
+      fetchHistory(historyPage);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [historyPage, historySearch, historyDocFilter, historyStatusFilter, historyStartDate, historyEndDate]);
 
   // Check if returning from callback with a refid
   useEffect(() => {
@@ -372,9 +408,9 @@ const KycVerification = () => {
   };
 
   // Compute Metrics
-  const totalVerifications = historyList.length;
+  const totalVerifications = historyPagination.total || historyList.length;
   const verifiedCount = historyList.filter(
-    (h) => h.status === 'VERIFIED' || h.status === 'SUCCESS' || (h.personalDetails && h.status !== 'FAILED')
+    (h) => (h.status || '').toUpperCase() === 'VERIFIED' || (h.status || '').toUpperCase() === 'SUCCESS' || (h.personalDetails && (h.status || '').toUpperCase() !== 'FAILED')
   ).length;
   const aadhaarVerificationsCount = historyList.filter(
     (h) => (h.documentType || '').toUpperCase() === 'AADHAAR' || h.personalDetails?.aadhaarNumber
@@ -382,29 +418,6 @@ const KycVerification = () => {
   const panVerificationsCount = historyList.filter(
     (h) => (h.documentType || '').toUpperCase() === 'PAN' || h.personalDetails?.panNumber
   ).length;
-
-  // Filter History Records
-  const filteredHistory = historyList.filter((item) => {
-    const q = historySearch.toLowerCase().trim();
-    const nameMatch = (item.personalDetails?.fullName || item.personalDetails?.name || item.name || '').toLowerCase().includes(q);
-    const refMatch = (item.refid || '').toLowerCase().includes(q);
-    const idMatch = (item.idNumber || item.personalDetails?.aadhaarNumber || item.personalDetails?.panNumber || '').toLowerCase().includes(q);
-    const matchesSearch = !q || nameMatch || refMatch || idMatch;
-
-    const docType = (item.documentType || (item.personalDetails?.aadhaarNumber ? 'AADHAAR' : 'PAN')).toUpperCase();
-    const matchesDoc = historyDocFilter === 'ALL' || docType === historyDocFilter;
-
-    const status = (item.status || (item.personalDetails ? 'VERIFIED' : 'INITIATED')).toUpperCase();
-    const matchesStatus = historyStatusFilter === 'ALL' || status === historyStatusFilter;
-
-    return matchesSearch && matchesDoc && matchesStatus;
-  });
-
-  const totalHistoryPages = Math.ceil(filteredHistory.length / historyPerPage) || 1;
-  const paginatedHistory = filteredHistory.slice(
-    (historyPage - 1) * historyPerPage,
-    historyPage * historyPerPage
-  );
 
   return (
     <div className="w-full h-full flex flex-col">
@@ -760,7 +773,7 @@ const KycVerification = () => {
           {activeTab === 'history' && (
             <div className="bg-white rounded-2xl shadow-xs border border-gray-100 overflow-hidden flex flex-col gap-4 p-6">
               {/* Top History Controls Bar */}
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                 {/* Search box */}
                 <div className="relative flex-1 max-w-md">
                   <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -768,9 +781,18 @@ const KycVerification = () => {
                     type="text"
                     value={historySearch}
                     onChange={(e) => { setHistorySearch(e.target.value); setHistoryPage(1); }}
-                    placeholder="Search by Reference ID, Applicant Name, or Document Number..."
-                    className="w-full pl-10 pr-4 py-2.5 text-xs sm:text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#225091] bg-gray-50/50"
+                    placeholder="Search by Ref ID, Applicant Name, or Document Number..."
+                    className="w-full pl-10 pr-9 py-2.5 text-xs sm:text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#225091] bg-gray-50/50"
                   />
+                  {historySearch && (
+                    <button
+                      type="button"
+                      onClick={() => { setHistorySearch(''); setHistoryPage(1); }}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    >
+                      <X size={14} />
+                    </button>
+                  )}
                 </div>
 
                 {/* Filters and Refresh */}
@@ -796,17 +818,48 @@ const KycVerification = () => {
                     <option value="VERIFIED">Verified</option>
                     <option value="INITIATED">Initiated</option>
                     <option value="FAILED">Failed</option>
+                    <option value="EXPIRED">Expired</option>
                   </select>
+
+                  {/* Date Filters */}
+                  <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-xl px-2.5 py-1">
+                    <Calendar size={13} className="text-gray-400 shrink-0" />
+                    <input
+                      type="date"
+                      value={historyStartDate}
+                      onChange={(e) => { setHistoryStartDate(e.target.value); setHistoryPage(1); }}
+                      title="Start Date"
+                      className="text-xs bg-transparent text-gray-700 focus:outline-none cursor-pointer"
+                    />
+                    <span className="text-xs text-gray-400">to</span>
+                    <input
+                      type="date"
+                      value={historyEndDate}
+                      onChange={(e) => { setHistoryEndDate(e.target.value); setHistoryPage(1); }}
+                      title="End Date"
+                      className="text-xs bg-transparent text-gray-700 focus:outline-none cursor-pointer"
+                    />
+                    {(historyStartDate || historyEndDate) && (
+                      <button
+                        type="button"
+                        onClick={() => { setHistoryStartDate(''); setHistoryEndDate(''); setHistoryPage(1); }}
+                        title="Clear Date Filter"
+                        className="text-gray-400 hover:text-red-500 transition-colors ml-1"
+                      >
+                        <X size={13} />
+                      </button>
+                    )}
+                  </div>
 
                   {/* Refresh Button */}
                   <button
                     type="button"
-                    onClick={fetchHistory}
+                    onClick={() => fetchHistory(historyPage)}
                     disabled={historyLoading}
                     title="Refresh History"
                     className="p-2.5 rounded-xl border border-gray-200 hover:bg-gray-50 text-gray-600 transition-colors cursor-pointer"
                   >
-                    <RefreshCw size={16} className={historyLoading ? 'animate-spin' : ''} />
+                    <RefreshCw size={16} className={historyLoading ? 'animate-spin text-[#225091]' : ''} />
                   </button>
                 </div>
               </div>
@@ -851,6 +904,7 @@ const KycVerification = () => {
                       <th className="py-3 px-4">Reference ID</th>
                       <th className="py-3 px-4">Document Type</th>
                       <th className="py-3 px-4">Applicant / ID</th>
+                      <th className="py-3 px-4">Created By</th>
                       <th className="py-3 px-4">Status</th>
                       <th className="py-3 px-4">Verified / Created Date</th>
                       <th className="py-3 px-4 text-right">Actions</th>
@@ -859,21 +913,21 @@ const KycVerification = () => {
                   <tbody className="divide-y divide-gray-100 text-xs">
                     {historyLoading ? (
                       <tr>
-                        <td colSpan={6} className="py-12 text-center text-gray-400">
+                        <td colSpan={7} className="py-12 text-center text-gray-400">
                           <Loader2 size={24} className="animate-spin mx-auto mb-2 text-[#225091]" />
                           <span>Loading verification history...</span>
                         </td>
                       </tr>
-                    ) : paginatedHistory.length === 0 ? (
+                    ) : historyList.length === 0 ? (
                       <tr>
-                        <td colSpan={6} className="py-12 text-center">
+                        <td colSpan={7} className="py-12 text-center">
                           <div className="w-12 h-12 rounded-full bg-gray-100 text-gray-400 flex items-center justify-center mx-auto mb-3">
                             <History size={24} />
                           </div>
                           <p className="text-sm font-semibold text-gray-700">No verification records found</p>
                           <p className="text-xs text-gray-400 mt-1">
-                            {historySearch || historyDocFilter !== 'ALL' || historyStatusFilter !== 'ALL'
-                              ? 'Try adjusting your search terms or filters.'
+                            {historySearch || historyDocFilter !== 'ALL' || historyStatusFilter !== 'ALL' || historyStartDate || historyEndDate
+                              ? 'Try adjusting your search terms or date filters.'
                               : 'Initiate a new KYC verification above to see its record history here.'}
                           </p>
                           {(activeTab === 'history' && totalVerifications === 0) && (
@@ -888,12 +942,13 @@ const KycVerification = () => {
                         </td>
                       </tr>
                     ) : (
-                      paginatedHistory.map((item, idx) => {
+                      historyList.map((item, idx) => {
                         const ref = item.refid || 'N/A';
                         const doc = (item.documentType || (item.personalDetails?.aadhaarNumber ? 'AADHAAR' : 'PAN')).toUpperCase();
                         const name = item.personalDetails?.fullName || item.personalDetails?.name || item.name || 'N/A';
                         const maskedId = item.idNumber || item.personalDetails?.aadhaarNumber || item.personalDetails?.panNumber || '—';
                         const status = (item.status || (item.personalDetails ? 'VERIFIED' : 'INITIATED')).toUpperCase();
+                        const creatorName = item.createdBy?.fullName || item.createdBy?.email || (item.requestById?.fullName ? `For: ${item.requestById.fullName}` : 'Self / Direct');
                         const dateVal = item.verifiedAt || item.createdAt || item.updatedAt;
                         const dateFormatted = dateVal ? new Date(dateVal).toLocaleString('en-IN', {
                           day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
@@ -901,6 +956,7 @@ const KycVerification = () => {
 
                         const isVerified = status === 'VERIFIED' || status === 'SUCCESS';
                         const isFailed = status === 'FAILED' || status === 'REJECTED';
+                        const isExpired = status === 'EXPIRED';
 
                         return (
                           <tr key={item._id || item.refid || idx} className="hover:bg-gray-50/70 transition-colors">
@@ -939,6 +995,14 @@ const KycVerification = () => {
                               </div>
                             </td>
 
+                            {/* Created By */}
+                            <td className="py-3 px-4">
+                              <span className="text-gray-700 font-medium text-[11px] flex items-center gap-1">
+                                <User size={12} className="text-gray-400 shrink-0" />
+                                <span className="truncate max-w-[130px]" title={creatorName}>{creatorName}</span>
+                              </span>
+                            </td>
+
                             {/* Status */}
                             <td className="py-3 px-4">
                               <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
@@ -946,6 +1010,8 @@ const KycVerification = () => {
                                   ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                                   : isFailed
                                   ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                                  : isExpired
+                                  ? 'bg-gray-100 text-gray-600 border border-gray-200'
                                   : 'bg-amber-50 text-amber-700 border border-amber-200'
                               }`}>
                                 {isVerified ? <CheckCircle size={11} /> : isFailed ? <XCircle size={11} /> : <Clock size={11} />}
@@ -1009,28 +1075,28 @@ const KycVerification = () => {
                 </table>
               </div>
 
-              {/* Pagination */}
-              {totalHistoryPages > 1 && (
-                <div className="flex items-center justify-between border-t border-gray-100 pt-4 mt-2">
+              {/* Server-Side Pagination */}
+              {historyPagination.totalPages > 1 && (
+                <div className="flex flex-col sm:flex-row items-center justify-between border-t border-gray-100 pt-4 mt-2 gap-3">
                   <span className="text-xs text-gray-500">
-                    Showing {(historyPage - 1) * historyPerPage + 1} to {Math.min(historyPage * historyPerPage, filteredHistory.length)} of {filteredHistory.length} records
+                    Showing {(historyPagination.page - 1) * historyPagination.limit + 1} to {Math.min(historyPagination.page * historyPagination.limit, historyPagination.total)} of {historyPagination.total} records
                   </span>
                   <div className="flex items-center gap-1.5">
                     <button
                       type="button"
-                      disabled={historyPage === 1}
+                      disabled={historyPagination.page <= 1 || historyLoading}
                       onClick={() => setHistoryPage((p) => Math.max(1, p - 1))}
                       className="p-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
                     >
                       <ChevronLeft size={16} />
                     </button>
                     <span className="text-xs font-semibold px-3 py-1 bg-gray-100 text-gray-700 rounded-lg">
-                      Page {historyPage} of {totalHistoryPages}
+                      Page {historyPagination.page} of {historyPagination.totalPages}
                     </span>
                     <button
                       type="button"
-                      disabled={historyPage === totalHistoryPages}
-                      onClick={() => setHistoryPage((p) => Math.min(totalHistoryPages, p + 1))}
+                      disabled={historyPagination.page >= historyPagination.totalPages || historyLoading}
+                      onClick={() => setHistoryPage((p) => Math.min(historyPagination.totalPages, p + 1))}
                       className="p-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
                     >
                       <ChevronRight size={16} />

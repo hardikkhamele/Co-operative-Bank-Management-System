@@ -1,74 +1,4 @@
-import axios from 'axios';
-import useAuthStore from '../store/authStore';
-
-// Dedicated KYC API URL configured via env (Shared for CIBIL & KYC, defaults to proxy /api in DEV)
-let kycBaseUrl = '/api';
-
-if (!import.meta.env.DEV) {
-  const customUrl = import.meta.env.VITE_VERIFICATION_API_URL || import.meta.env.VITE_KYC_API_URL || import.meta.env.VITE_CIBIL_API_URL || import.meta.env.VITE_API_URL || 'https://devapi.advitacredit.com';
-  if (!customUrl.match(/\/api\/?$/)) {
-    kycBaseUrl = customUrl.endsWith('/') ? `${customUrl}api` : `${customUrl}/api`;
-  } else {
-    kycBaseUrl = customUrl;
-  }
-}
-
-const kycAxiosInstance = axios.create({
-  baseURL: kycBaseUrl,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
-
-// Attach auth token if available
-kycAxiosInstance.interceptors.request.use(
-  (config) => {
-    const token = useAuthStore.getState().accessToken;
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
-
-// Response interceptor with 401 token refresh
-kycAxiosInstance.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    const originalRequest = error.config;
-    if (!originalRequest) return Promise.reject(error);
-
-    if (error.response && error.response.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
-      const refreshToken = useAuthStore.getState().refreshToken;
-
-      if (refreshToken) {
-        try {
-          const res = await axios.post(`${kycBaseUrl}/v1/society/auth/refresh`, {
-            refreshToken,
-          });
-
-          if (res.data && res.data.success && res.data.data) {
-            const newAccessToken = res.data.data.accessToken || res.data.data.tokens?.accessToken || res.data.data.token;
-            const newRefreshToken = res.data.data.refreshToken || res.data.data.tokens?.refreshToken || null;
-
-            useAuthStore.getState().setTokens({
-              accessToken: newAccessToken,
-              refreshToken: newRefreshToken,
-            });
-
-            originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-            return kycAxiosInstance(originalRequest);
-          }
-        } catch (refreshErr) {
-          console.warn('KYC token refresh failed, session expired:', refreshErr);
-        }
-      }
-    }
-    return Promise.reject(error);
-  }
-);
+import axiosInstance from './axiosConfig';
 
 const STORAGE_KEY = 'advita_kyc_verification_history';
 
@@ -112,7 +42,10 @@ const saveLocalRecord = (record) => {
 
 export const kycService = {
   /**
-   * Initiate KYC Verification Session
+   * 4.1 Initiate KYC Verification Session
+   * Method: POST /v1/society/kyc-verification/initiate
+   * Permission: kyc.create
+   * 
    * @param {Object} data
    * @param {string} data.documentType - AADHAAR or PAN
    * @param {string} data.idNumber - Document identifier number
@@ -121,149 +54,167 @@ export const kycService = {
    * @returns {Promise<Object>} API response
    */
   initiateKyc: async (data) => {
-    try {
-      const response = await kycAxiosInstance.post('/v1/society/kyc-verification/initiate', data);
-      if (response.data?.data?.refid) {
-        saveLocalRecord({
-          refid: response.data.data.refid,
-          documentType: data.documentType,
-          idNumber: data.idNumber,
-          status: response.data.data.status || 'INITIATED',
-          personalDetails: response.data.data.personalDetails || null,
-          createdAt: new Date().toISOString(),
-        });
-      }
-      return response.data;
-    } catch (error) {
-      throw error;
+    const response = await axiosInstance.post('/v1/society/kyc-verification/initiate', data);
+    if (response.data?.data?.refid) {
+      saveLocalRecord({
+        refid: response.data.data.refid,
+        documentType: data.documentType,
+        idNumber: data.idNumber,
+        status: response.data.data.status || 'INITIATED',
+        personalDetails: response.data.data.personalDetails || null,
+        createdAt: new Date().toISOString(),
+      });
     }
+    return response.data;
   },
 
   /**
-   * Complete KYC Verification
+   * 4.2 Complete KYC Verification
+   * Method: POST /v1/society/kyc-verification/complete
+   * Permission: kyc.create
+   * 
    * @param {Object} data
    * @param {string} data.refid - Reference ID of the session
    * @returns {Promise<Object>} API response
    */
   completeKyc: async (data) => {
-    try {
-      const response = await kycAxiosInstance.post('/v1/society/kyc-verification/complete', data);
-      if (response.data?.data) {
-        const item = response.data.data;
-        saveLocalRecord({
-          refid: item.refid || data.refid,
-          documentType: item.documentType || item.personalDetails?.documentType || 'AADHAAR',
-          idNumber: item.idNumber || item.personalDetails?.aadhaarNumber || item.personalDetails?.panNumber,
-          status: item.status || 'VERIFIED',
-          personalDetails: item.personalDetails,
-          verifiedAt: item.verifiedAt || new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        });
-      }
-      return response.data;
-    } catch (error) {
-      throw error;
+    const response = await axiosInstance.post('/v1/society/kyc-verification/complete', data);
+    if (response.data?.data) {
+      const item = response.data.data;
+      saveLocalRecord({
+        refid: item.refid || data.refid,
+        documentType: item.documentType || item.personalDetails?.documentType || 'AADHAAR',
+        idNumber: item.idNumber || item.personalDetails?.aadhaarNumber || item.personalDetails?.panNumber,
+        status: item.status || 'VERIFIED',
+        personalDetails: item.personalDetails,
+        verifiedAt: item.verifiedAt || new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
     }
+    return response.data;
   },
 
   /**
-   * Get KYC Report
+   * 4.3 Get KYC Report
+   * Method: GET /v1/society/kyc-verification/report/:refid
+   * Permission: kyc.view
+   * 
    * @param {string} refid - Reference ID of the session
    * @returns {Promise<Object>} API response
    */
   getKycReport: async (refid) => {
-    try {
-      const response = await kycAxiosInstance.get(`/v1/society/kyc-verification/report/${refid}`);
-      if (response.data?.data) {
-        const item = response.data.data;
-        saveLocalRecord({
-          _id: item._id,
-          refid: item.refid || refid,
-          documentType: item.documentType,
-          idNumber: item.idNumber,
-          status: item.status || 'VERIFIED',
-          personalDetails: item.personalDetails,
-          verifiedAt: item.verifiedAt,
-          createdAt: item.createdAt,
-          updatedAt: item.updatedAt,
-        });
-      }
-      return response.data;
-    } catch (error) {
-      throw error;
+    const response = await axiosInstance.get(`/v1/society/kyc-verification/report/${refid}`);
+    if (response.data?.data) {
+      const item = response.data.data;
+      saveLocalRecord({
+        _id: item._id,
+        refid: item.refid || refid,
+        documentType: item.documentType,
+        idNumber: item.idNumber,
+        status: item.status || 'VERIFIED',
+        personalDetails: item.personalDetails,
+        verifiedAt: item.verifiedAt,
+        createdAt: item.createdAt,
+        updatedAt: item.updatedAt,
+      });
     }
+    return response.data;
   },
 
   /**
-   * Download KYC PDF Report
+   * 4.4 Download KYC PDF Report
+   * Method: GET /v1/society/kyc-verification/report/:refid/download-pdf/:documentType
+   * Permission: kyc.view
+   * 
    * @param {string} refid - Reference ID of the session
    * @param {string} documentType - AADHAAR or PAN
    * @returns {Promise<Blob>} PDF Blob data
    */
   downloadKycPdf: async (refid, documentType) => {
-    try {
-      const response = await kycAxiosInstance.get(`/v1/society/kyc-verification/report/${refid}/download-pdf/${documentType}`, {
-        responseType: 'blob',
-      });
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
+    const response = await axiosInstance.get(`/v1/society/kyc-verification/report/${refid}/download-pdf/${documentType}`, {
+      responseType: 'blob',
+    });
+    return response.data;
   },
 
   /**
-   * Get KYC Verification History
+   * 4.5 Get KYC Verification History
+   * Method: GET /v1/society/kyc-verification/history
+   * Permission: kyc.view
+   * 
    * @param {Object} [params]
-   * @returns {Promise<Object>} List of verification sessions
+   * @param {number} [params.page=1] - Page number (min 1)
+   * @param {number} [params.limit=10] - Records per page (min 1, max 100)
+   * @param {string} [params.search] - Case-insensitive search on refid, idNumber, or parsed name/ID numbers
+   * @param {string} [params.requestById] - Filter by target user ID (24-Hex String ObjectId)
+   * @param {string} [params.createdBy] - Filter by creator employee/user ID (24-Hex String ObjectId)
+   * @param {string} [params.documentType] - Filter by document type ('AADHAAR' | 'PAN')
+   * @param {string} [params.status] - Filter by status ('INITIATED' | 'VERIFIED' | 'FAILED' | 'EXPIRED')
+   * @param {string} [params.startDate] - Start timestamp ISO string (e.g. 2026-01-01T00:00:00.000Z)
+   * @param {string} [params.endDate] - End timestamp ISO string (e.g. 2026-12-31T23:59:59.999Z)
+   * @returns {Promise<Object>} Standard API response: { success, statusCode, message, data: { items, pagination } }
    */
   getKycHistory: async (params = {}) => {
-    let apiData = [];
-
-    // Only attempt history endpoint if configured or silent fallback
     try {
-      const res = await kycAxiosInstance.get('/v1/society/kyc-verification/history', { 
-        params,
-        validateStatus: (status) => (status >= 200 && status < 300) || status === 404
-      });
-      if (res.status === 200 && res.data && (res.data.success || Array.isArray(res.data.data))) {
-        const list = Array.isArray(res.data.data) 
-          ? res.data.data 
-          : (res.data.data?.verifications || res.data.verifications || res.data.data?.history || []);
-        if (Array.isArray(list)) {
-          apiData = list;
-        }
+      const cleanParams = {};
+      if (params.page !== undefined) cleanParams.page = params.page;
+      if (params.limit !== undefined) cleanParams.limit = params.limit;
+      if (params.search && params.search.trim()) cleanParams.search = params.search.trim();
+      if (params.documentType && params.documentType !== 'ALL') cleanParams.documentType = params.documentType;
+      if (params.status && params.status !== 'ALL') cleanParams.status = params.status;
+      if (params.startDate) cleanParams.startDate = params.startDate;
+      if (params.endDate) cleanParams.endDate = params.endDate;
+      if (params.requestById) cleanParams.requestById = params.requestById;
+      if (params.createdBy) cleanParams.createdBy = params.createdBy;
+
+      const response = await axiosInstance.get('/v1/society/kyc-verification/history', { params: cleanParams });
+      
+      const payload = response.data || {};
+      const dataObj = payload.data || {};
+      
+      let items = [];
+      if (Array.isArray(dataObj.items)) {
+        items = dataObj.items;
+      } else if (Array.isArray(dataObj)) {
+        items = dataObj;
+      } else if (Array.isArray(payload.items)) {
+        items = payload.items;
       }
-    } catch (err) {
-      // Backend history endpoint not deployed yet - gracefully use client history
+
+      const pagination = dataObj.pagination || payload.pagination || {
+        total: items.length,
+        page: cleanParams.page || 1,
+        limit: cleanParams.limit || 10,
+        totalPages: Math.ceil(items.length / (cleanParams.limit || 10)) || 1,
+      };
+
+      return {
+        success: payload.success ?? true,
+        statusCode: payload.statusCode || 200,
+        message: payload.message || 'KYC verification history retrieved successfully.',
+        data: {
+          items,
+          pagination,
+        },
+      };
+    } catch (error) {
+      console.warn('KYC History API error, falling back to cached local storage:', error.message);
+      const localList = getLocalHistory();
+      return {
+        success: false,
+        isFallback: true,
+        data: {
+          items: localList,
+          pagination: {
+            total: localList.length,
+            page: params.page || 1,
+            limit: params.limit || 10,
+            totalPages: Math.ceil(localList.length / (params.limit || 10)) || 1,
+          },
+        },
+        error: error.response?.data || error.message,
+      };
     }
-
-    // Merge server data with local stored records (deduped by refid)
-    const localList = getLocalHistory();
-    const map = new Map();
-
-    // Add local records first
-    localList.forEach((item) => {
-      if (item.refid) map.set(item.refid, item);
-    });
-
-    // Add / override with API data if present
-    apiData.forEach((item) => {
-      if (item.refid) {
-        map.set(item.refid, { ...(map.get(item.refid) || {}), ...item });
-      }
-    });
-
-    const combinedList = Array.from(map.values()).sort((a, b) => {
-      const dateA = new Date(a.verifiedAt || a.createdAt || a.updatedAt || 0);
-      const dateB = new Date(b.verifiedAt || b.createdAt || b.updatedAt || 0);
-      return dateB - dateA;
-    });
-
-    return {
-      success: true,
-      data: combinedList,
-      totalCount: combinedList.length,
-    };
   },
 
   /**

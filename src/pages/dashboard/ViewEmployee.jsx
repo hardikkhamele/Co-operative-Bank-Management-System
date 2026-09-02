@@ -12,13 +12,18 @@ import { deriveKpaGoals } from '../../utils/kpaConstants';
 import { SkeletonDetailView } from '../../components/common/Skeleton';
 
 const InfoCard = ({ icon: Icon, title, value }) => (
-  <div className="bg-[#fafafa] rounded-xl p-4 flex items-center gap-4 border border-gray-100/60">
+  <div className="bg-[#fafafa] rounded-xl p-4 flex items-center gap-4 border border-gray-100/60 overflow-hidden">
     <div className="text-[#225091] shrink-0 bg-white p-2.5 rounded-lg shadow-2xs border border-gray-100">
       <Icon size={20} strokeWidth={2} />
     </div>
-    <div className="flex flex-col min-w-0">
-      <span className="text-[13px] text-gray-500 font-medium mb-0.5">{title}</span>
-      <span className="text-[14px] text-gray-800 font-semibold truncate">{value || '—'}</span>
+    <div className="flex flex-col min-w-0 flex-1">
+      <span className="text-[13px] text-gray-500 font-medium mb-0.5 truncate" title={title}>{title}</span>
+      <span 
+        className="text-[14px] text-gray-800 font-semibold truncate cursor-default" 
+        title={typeof value === 'string' || typeof value === 'number' ? String(value) : undefined}
+      >
+        {value || '—'}
+      </span>
     </div>
   </div>
 );

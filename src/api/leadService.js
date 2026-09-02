@@ -114,7 +114,57 @@ export const leadService = {
     } catch (error) {
       throw error;
     }
-  }
+  },
+
+  // 12. List Customer System Leads (GET /api/v1/employee/leads/customer-system)
+  listCustomerSystemLeads: async (params = {}) => {
+    try {
+      const response = await axiosInstance.get('/v1/employee/leads/customer-system', { params });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  // 13. Manual Approve Customer Request (POST /api/v1/employee/leads/:id/approve)
+  approveCustomerLead: async (id, data = {}) => {
+    try {
+      const response = await axiosInstance.post(`/v1/employee/leads/${id}/approve`, data);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  // 14. Manual Reject Customer Request (POST /api/v1/employee/leads/:id/reject)
+  rejectCustomerLead: async (id, data = {}) => {
+    try {
+      const response = await axiosInstance.post(`/v1/employee/leads/${id}/reject`, data);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  // 15. List Merchant System Leads (GET /api/v1/employee/leads/merchant-system)
+  listMerchantSystemLeads: async (params = {}) => {
+    try {
+      const response = await axiosInstance.get('/v1/employee/leads/merchant-system', { params });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  // 16. Execute Next-Day Merchant Settlement (POST /api/v1/employee/leads/:id/settle-merchant)
+  settleMerchantLead: async (id, data = {}) => {
+    try {
+      const response = await axiosInstance.post(`/v1/employee/leads/${id}/settle-merchant`, data);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
 };
 
 export default leadService;

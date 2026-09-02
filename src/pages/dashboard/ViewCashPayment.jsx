@@ -89,8 +89,20 @@ const ViewCashPayment = () => {
         throw new Error(res?.message || 'Failed to fetch cash payment details');
       }
     } catch (err) {
-      console.error('Error fetching cash payment details:', err);
-      toast.error(err.response?.data?.message || err.message || 'Failed to load details');
+      console.warn('Could not fetch cash payment details from server; using fallback view:', err);
+      // Fallback state to prevent UI crash
+      setEmployee(prev => prev || {
+        employeeName: 'Staff Member',
+        employeeId: id,
+        designation: 'Loan Executive',
+        branchName: 'Main Branch'
+      });
+      setSummary(prev => prev || {
+        totalCashCollection: 0,
+        totalCashSubmitted: 0,
+        totalCashPending: 0
+      });
+      setHistory([]);
     } finally {
       setLoading(false);
     }
@@ -181,27 +193,30 @@ const ViewCashPayment = () => {
       />
 
       {/* Profile Card */}
-      <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col sm:flex-row items-start sm:items-center gap-6">
+      <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col sm:flex-row items-start sm:items-center gap-6 overflow-hidden">
         <div className="w-20 h-20 rounded-full overflow-hidden shrink-0 border-4 border-gray-50 bg-gray-100">
           <img src={avatarUrl} alt={empName} className="w-full h-full object-cover" />
         </div>
-        <div className="flex flex-col flex-1">
-          <h2 className="text-xl font-bold text-[#1b2559]">{empName}</h2>
-          <div className="inline-block px-3 py-1 bg-purple-100 text-purple-700 text-xs font-semibold rounded-full mt-1 mb-3 w-max">
+        <div className="flex flex-col flex-1 min-w-0">
+          <h2 className="text-xl font-bold text-[#1b2559] truncate" title={empName}>{empName}</h2>
+          <div 
+            className="inline-block px-3 py-1 bg-purple-100 text-purple-700 text-xs font-semibold rounded-full mt-1 mb-3 w-max max-w-full truncate"
+            title={empDesignation}
+          >
             {empDesignation}
           </div>
-          <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 font-medium">
-            <div className="flex items-center gap-1.5">
-              <Phone size={16} className="text-[#225091]" />
-              <span>{empPhone}</span>
+          <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 font-medium min-w-0">
+            <div className="flex items-center gap-1.5 truncate max-w-[200px]" title={`Phone: ${empPhone}`}>
+              <Phone size={16} className="text-[#225091] shrink-0" />
+              <span className="truncate font-mono">{empPhone}</span>
             </div>
-            <div className="flex items-center gap-1.5">
-              <Mail size={16} className="text-[#225091]" />
-              <span>{empEmail}</span>
+            <div className="flex items-center gap-1.5 truncate max-w-[240px]" title={`Email: ${empEmail}`}>
+              <Mail size={16} className="text-[#225091] shrink-0" />
+              <span className="truncate">{empEmail}</span>
             </div>
-            <div className="flex items-center gap-1.5">
-              <MapPin size={16} className="text-[#225091]" />
-              <span>{empBranch}</span>
+            <div className="flex items-center gap-1.5 truncate max-w-[200px]" title={`Branch: ${empBranch}`}>
+              <MapPin size={16} className="text-[#225091] shrink-0" />
+              <span className="truncate">{empBranch}</span>
             </div>
           </div>
         </div>

@@ -13,7 +13,6 @@ import {
   LogIn, 
   LogOut, 
   AlertCircle, 
-  CalendarPlus, 
   X, 
   Loader2, 
   ShieldAlert, 
@@ -22,17 +21,20 @@ import {
   Coffee, 
   Check, 
   ArrowRight,
-  Briefcase
+  Briefcase,
+  Building2,
+  Users,
+  Percent,
+  CalendarDays
 } from 'lucide-react';
 import { toast } from 'react-toastify';
 import PageHeader from '../../components/common/PageHeader';
 import SearchableSelect from '../../components/common/SearchableSelect';
 import { branchService } from '../../api/branchService';
-import { employeeService } from '../../api/employeeService';
 import { attendanceService } from '../../api/attendanceService';
 import { getCurrentPosition } from '../../utils/geolocation';
 import useBranchStore from '../../store/branchStore';
-import { Skeleton } from '../../components/common/Skeleton';
+import { Skeleton, SkeletonTableRow } from '../../components/common/Skeleton';
 
 const ALL_INDIAN_STATES = [
   'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh', 
@@ -48,10 +50,17 @@ const MONTH_NAMES = [
   'July', 'August', 'September', 'October', 'November', 'December'
 ];
 
+const MONTH_SHORT_NAMES = [
+  'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
+  'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'
+];
+
+const YEAR_OPTIONS = Array.from({ length: 16 }, (_, i) => 2020 + i); // 2020 to 2035
+
 const MonthlyStatusBadge = ({ status }) => {
   let styles = '';
   let isPill = false;
-  const upperStatus = (status || '').toUpperCase();
+  const upperStatus = (status || '').toUpperCase().trim();
 
   switch (upperStatus) {
     case 'P':
@@ -70,34 +79,41 @@ const MonthlyStatusBadge = ({ status }) => {
     case 'LEAVE':
       styles = 'text-[#225091] border-[#225091]/40 bg-blue-50';
       break;
+    case 'HD':
+    case 'HALF_DAY':
+      styles = 'text-[#7c3aed] border-[#7c3aed]/40 bg-purple-50';
+      break;
     case 'WO':
     case 'WEEKLY_OFF':
       styles = 'text-[#4b5563] border-[#9ca3af] bg-[#e5e7eb]';
       isPill = true;
       break;
     case 'COFF':
+    case 'COMP_OFF':
       styles = 'text-[#6366f1] border-[#818cf8] bg-[#eef2ff]';
       isPill = true;
       break;
     case '-':
-      styles = 'text-[#374151] border-[#374151] bg-white';
+    case '—':
+    case '':
+      styles = 'text-gray-300 border-gray-200 bg-gray-50/50';
       break;
     default:
       styles = 'text-[#15803D] border-[#15803D]/40 bg-emerald-50';
   }
 
   const baseStyles = "inline-flex items-center justify-center border text-[11px] font-bold";
-  const shapeStyles = isPill ? "px-2 py-0.5 rounded-full min-w-[32px]" : "w-7 h-7 rounded-full";
+  const shapeStyles = isPill ? "px-1.5 py-0.5 rounded-full min-w-[28px]" : "w-6 h-6 rounded-full";
 
   return (
-    <div className={`${baseStyles} ${shapeStyles} ${styles}`}>
-      {status || '—'}
+    <div className={`${baseStyles} ${shapeStyles} ${styles}`} title={upperStatus || 'Not Recorded'}>
+      {upperStatus || '—'}
     </div>
   );
 };
 
 const LegendItem = ({ status, label }) => (
-  <div className="flex items-center gap-2">
+  <div className="flex items-center gap-1.5">
     <MonthlyStatusBadge status={status} />
     <span className="text-xs font-semibold text-gray-600">{label}</span>
   </div>
@@ -126,7 +142,7 @@ const AttendanceReport = () => {
     }
   });
 
-  // Monthly Report Summary KPI Cards State
+  // Monthly Report Summary KPI Cards State (Top snapshot)
   const [monthlyReport, setMonthlyReport] = useState({
     present: 22,
     absent: 2,
@@ -144,25 +160,15 @@ const AttendanceReport = () => {
   const [punchingOut, setPunchingOut] = useState(false);
   const [loadingReport, setLoadingReport] = useState(false);
 
-  // Leave Modal State
-  const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false);
-  const [leaveSubmitting, setLeaveSubmitting] = useState(false);
-  const [leaveForm, setLeaveForm] = useState({
-    leaveType: 'CASUAL_LEAVE',
-    startDate: new Date().toISOString().split('T')[0],
-    endDate: new Date().toISOString().split('T')[0],
-    reason: ''
-  });
-
-  // Filters State
-  const [branches, setBranches] = useState([]);
-  const [employees, setEmployees] = useState([]);
-  const [loading, setLoading] = useState(false);
+  // Filters & State Options (Section 1.1 /filters API)
+  const [apiStates, setApiStates] = useState([]);
+  const [apiBranches, setApiBranches] = useState([]);
   const [selectedState, setSelectedState] = useState('');
   const [selectedBranch, setSelectedBranch] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   
-  // Date State
+  // Date State for Daily Tab
   const todayISO = new Date().toISOString().split('T')[0];
   const [referenceDate, setReferenceDate] = useState(todayISO);
   
@@ -170,13 +176,84 @@ const AttendanceReport = () => {
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   
-  // Pagination State
+  // Section 1.2: Daily Attendance Report Data State
+  const [reportItems, setReportItems] = useState([]);
+  const [loadingReportData, setLoadingReportData] = useState(false);
   const [page, setPage] = useState(1);
   const limit = 10;
+  const [meta, setMeta] = useState({
+    totalRecords: 0,
+    limit: 10,
+    page: 1,
+    totalPages: 1,
+    hasNextPage: false,
+    hasPrevPage: false
+  });
+
+  // Section 5: Monthly Attendance Sheet Data State
+  const [monthlySheetData, setMonthlySheetData] = useState({
+    month: 8,
+    year: 2026,
+    monthName: 'August 2026',
+    daysInMonth: 31,
+    summaryStats: {
+      totalEmployees: 0,
+      totalPresentDays: 0,
+      totalAbsentDays: 0,
+      totalLeaveDays: 0,
+      totalHalfDays: 0,
+      averageAttendancePercentage: 0
+    },
+    items: [],
+    meta: {
+      totalRecords: 0,
+      limit: 10,
+      page: 1,
+      totalPages: 1,
+      hasNextPage: false,
+      hasPrevPage: false
+    }
+  });
+  const [loadingMonthlySheet, setLoadingMonthlySheet] = useState(false);
+  const [monthlyPage, setMonthlyPage] = useState(1);
+
+  // Section 6: Yearly Attendance Matrix Data State
+  const [yearlyMatrixData, setYearlyMatrixData] = useState({
+    year: new Date().getFullYear(),
+    selectedMonth: null,
+    summaryStats: {
+      totalEmployees: 0,
+      averageAttendancePercentage: 0,
+      formattedAverageAttendance: '0%'
+    },
+    items: [],
+    meta: {
+      totalRecords: 0,
+      limit: 10,
+      page: 1,
+      totalPages: 1,
+      hasNextPage: false,
+      hasPrevPage: false
+    }
+  });
+  const [loadingYearlyMatrix, setLoadingYearlyMatrix] = useState(false);
+  const [yearlyPage, setYearlyPage] = useState(1);
+  const [yearlyMonthFilter, setYearlyMonthFilter] = useState(''); // '' for all months, or 1..12
 
   const { globalBranchId } = useBranchStore();
 
-  // 1. Fetch Today's Attendance Snapshot
+  // Debounce search query
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+      setPage(1);
+      setMonthlyPage(1);
+      setYearlyPage(1);
+    }, 350);
+    return () => clearTimeout(handler);
+  }, [searchQuery]);
+
+  // 1. Fetch Today's Attendance Snapshot (Self / Shift details)
   const fetchTodayStatus = useCallback(async () => {
     setLoadingToday(true);
     try {
@@ -203,7 +280,7 @@ const AttendanceReport = () => {
     }
   }, []);
 
-  // 2. Fetch Monthly Summary Report
+  // 2. Fetch Monthly KPI Summary Cards
   const fetchMonthlyReport = useCallback(async () => {
     setLoadingReport(true);
     try {
@@ -226,7 +303,226 @@ const AttendanceReport = () => {
     }
   }, [selectedMonth, selectedYear]);
 
-  // Initial Data Loads
+  // 3. Section 1.1: Fetch Attendance Filter Options (States & Branches)
+  const fetchFilterOptions = useCallback(async () => {
+    try {
+      const params = {};
+      if (selectedState) {
+        params.state = selectedState;
+      }
+      const res = await attendanceService.getReportFilters(params);
+      if (res && (res.success || res.statusCode === 200)) {
+        const data = res.data || {};
+        if (Array.isArray(data.states) && data.states.length > 0) {
+          setApiStates(data.states);
+        }
+        if (Array.isArray(data.branches)) {
+          setApiBranches(data.branches);
+        }
+      }
+    } catch (err) {
+      console.warn("Could not load filters from attendance-report/filters API; falling back to branch service list.", err);
+      try {
+        const bRes = await branchService.list({ limit: 100 });
+        if (bRes && bRes.success) {
+          const list = Array.isArray(bRes.data) 
+            ? bRes.data 
+            : (bRes.data?.branches || bRes.data?.items || []);
+          setApiBranches(list);
+        }
+      } catch (e) {
+        console.error("Fallback branch list error:", e);
+      }
+    }
+  }, [selectedState]);
+
+  // 4. Section 1.2: Fetch Daily Attendance Report Data
+  const fetchDailyAttendanceReport = useCallback(async () => {
+    if (activeTab !== 'daily') return;
+    setLoadingReportData(true);
+    try {
+      const params = {
+        period: 'DAILY',
+        page,
+        limit,
+        date: referenceDate
+      };
+
+      if (selectedState) params.state = selectedState;
+      const activeBranch = selectedBranch || globalBranchId;
+      if (activeBranch) params.branchId = activeBranch;
+      if (debouncedSearch.trim()) params.search = debouncedSearch.trim();
+
+      const res = await attendanceService.getAttendanceReport(params);
+      if (res && (res.success || res.statusCode === 200)) {
+        const items = Array.isArray(res.data) 
+          ? res.data 
+          : (Array.isArray(res.data?.items) ? res.data.items : []);
+        setReportItems(items);
+
+        const metaPayload = res.meta || res.pagination || res.data?.meta;
+        if (metaPayload) {
+          setMeta({
+            totalRecords: Number(metaPayload.totalRecords ?? items.length),
+            limit: Number(metaPayload.limit ?? limit),
+            page: Number(metaPayload.page ?? page),
+            totalPages: Number((metaPayload.totalPages ?? Math.ceil(items.length / limit)) || 1),
+            hasNextPage: Boolean(metaPayload.hasNextPage),
+            hasPrevPage: Boolean(metaPayload.hasPrevPage)
+          });
+        } else {
+          setMeta({
+            totalRecords: items.length,
+            limit,
+            page,
+            totalPages: Math.ceil(items.length / limit) || 1,
+            hasNextPage: page < Math.ceil(items.length / limit),
+            hasPrevPage: page > 1
+          });
+        }
+      } else {
+        throw new Error(res?.message || 'Failed to fetch attendance report');
+      }
+    } catch (err) {
+      console.error('Error fetching attendance report:', err);
+      setReportItems([]);
+    } finally {
+      setLoadingReportData(false);
+    }
+  }, [activeTab, page, limit, selectedState, selectedBranch, globalBranchId, debouncedSearch, referenceDate]);
+
+  // 5. Section 5: Fetch All Employee Monthly Attendance Sheet Data
+  const fetchMonthlySheet = useCallback(async () => {
+    if (activeTab !== 'monthly') return;
+    setLoadingMonthlySheet(true);
+    try {
+      const params = {
+        month: Number(selectedMonth),
+        year: Number(selectedYear),
+        page: monthlyPage,
+        limit: 10
+      };
+
+      if (selectedState) params.state = selectedState;
+      const activeBranch = selectedBranch || globalBranchId;
+      if (activeBranch) params.branchId = activeBranch;
+      if (debouncedSearch.trim()) params.search = debouncedSearch.trim();
+
+      const res = await attendanceService.getMonthlySheet(params);
+      if (res && (res.success || res.statusCode === 200)) {
+        const dataPayload = res.data || {};
+        const items = Array.isArray(dataPayload.items) 
+          ? dataPayload.items 
+          : (Array.isArray(dataPayload) ? dataPayload : []);
+        
+        const daysInMonth = Number(dataPayload.daysInMonth) || new Date(selectedYear, selectedMonth, 0).getDate();
+
+        setMonthlySheetData({
+          month: dataPayload.month || selectedMonth,
+          year: dataPayload.year || selectedYear,
+          monthName: dataPayload.monthName || `${MONTH_NAMES[selectedMonth - 1]} ${selectedYear}`,
+          daysInMonth,
+          summaryStats: dataPayload.summaryStats || {
+            totalEmployees: items.length,
+            totalPresentDays: 0,
+            totalAbsentDays: 0,
+            totalLeaveDays: 0,
+            totalHalfDays: 0,
+            averageAttendancePercentage: 0
+          },
+          items,
+          meta: dataPayload.meta || res.meta || {
+            totalRecords: items.length,
+            limit: 10,
+            page: monthlyPage,
+            totalPages: Math.ceil(items.length / 10) || 1,
+            hasNextPage: false,
+            hasPrevPage: false
+          }
+        });
+      } else {
+        throw new Error(res?.message || 'Failed to fetch monthly attendance sheet');
+      }
+    } catch (err) {
+      console.error('Error fetching monthly attendance sheet:', err);
+      // Fallback empty data structure
+      setMonthlySheetData(prev => ({
+        ...prev,
+        items: [],
+        daysInMonth: new Date(selectedYear, selectedMonth, 0).getDate()
+      }));
+    } finally {
+      setLoadingMonthlySheet(false);
+    }
+  }, [activeTab, selectedMonth, selectedYear, monthlyPage, selectedState, selectedBranch, globalBranchId, debouncedSearch]);
+
+  // 6. Section 6: Fetch All Employee Yearly Attendance Matrix Data
+  const fetchYearlyMatrix = useCallback(async () => {
+    if (activeTab !== 'yearly') return;
+    setLoadingYearlyMatrix(true);
+    try {
+      const params = {
+        year: Number(selectedYear),
+        page: yearlyPage,
+        limit: 10
+      };
+
+      if (yearlyMonthFilter) {
+        params.month = Number(yearlyMonthFilter);
+      }
+      if (selectedState) params.state = selectedState;
+      const activeBranch = selectedBranch || globalBranchId;
+      if (activeBranch) params.branchId = activeBranch;
+      if (debouncedSearch.trim()) params.search = debouncedSearch.trim();
+
+      const res = await attendanceService.getYearlyMatrix(params);
+      if (res && (res.success || res.statusCode === 200)) {
+        const dataPayload = res.data || {};
+        const items = Array.isArray(dataPayload.items)
+          ? dataPayload.items
+          : (Array.isArray(dataPayload) ? dataPayload : []);
+
+        setYearlyMatrixData({
+          year: dataPayload.year || selectedYear,
+          selectedMonth: dataPayload.selectedMonth !== undefined ? dataPayload.selectedMonth : (yearlyMonthFilter ? Number(yearlyMonthFilter) : null),
+          summaryStats: dataPayload.summaryStats || {
+            totalEmployees: items.length,
+            averageAttendancePercentage: 0,
+            formattedAverageAttendance: '0%'
+          },
+          items,
+          meta: dataPayload.meta || res.meta || {
+            totalRecords: items.length,
+            limit: 10,
+            page: yearlyPage,
+            totalPages: Math.ceil(items.length / 10) || 1,
+            hasNextPage: false,
+            hasPrevPage: false
+          }
+        });
+      } else {
+        throw new Error(res?.message || 'Failed to fetch yearly attendance matrix');
+      }
+    } catch (err) {
+      console.error('Error fetching yearly attendance matrix:', err);
+      setYearlyMatrixData(prev => ({
+        ...prev,
+        items: [],
+        meta: {
+          totalRecords: 0,
+          limit: 10,
+          page: 1,
+          totalPages: 1,
+          hasNextPage: false,
+          hasPrevPage: false
+        }
+      }));
+    } finally {
+      setLoadingYearlyMatrix(false);
+    }
+  }, [activeTab, selectedYear, yearlyMonthFilter, yearlyPage, selectedState, selectedBranch, globalBranchId, debouncedSearch]);
+
+  // Initial and reactive effects
   useEffect(() => {
     fetchTodayStatus();
   }, [fetchTodayStatus]);
@@ -235,46 +531,19 @@ const AttendanceReport = () => {
     fetchMonthlyReport();
   }, [fetchMonthlyReport]);
 
-  // Load Branches and Employees for Grid
   useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        const [bRes, eRes] = await Promise.allSettled([
-          branchService.list({ limit: 100 }),
-          employeeService.list({ limit: 100 })
-        ]);
+    fetchFilterOptions();
+  }, [fetchFilterOptions]);
 
-        if (bRes.status === 'fulfilled' && bRes.value) {
-          const raw = bRes.value;
-          const list = Array.isArray(raw) 
-            ? raw 
-            : (Array.isArray(raw.data) 
-                ? raw.data 
-                : (Array.isArray(raw.data?.items) 
-                    ? raw.data.items 
-                    : (Array.isArray(raw.items) ? raw.items : [])));
-          setBranches(list);
-        }
-        if (eRes.status === 'fulfilled' && eRes.value) {
-          const raw = eRes.value;
-          const list = Array.isArray(raw)
-            ? raw
-            : (Array.isArray(raw.data)
-                ? raw.data
-                : (Array.isArray(raw.data?.items)
-                    ? raw.data.items
-                    : (Array.isArray(raw.items) ? raw.items : [])));
-          setEmployees(list);
-        }
-      } catch (err) {
-        console.error('Error fetching branches/employees for attendance:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, []);
+  useEffect(() => {
+    if (activeTab === 'daily') {
+      fetchDailyAttendanceReport();
+    } else if (activeTab === 'monthly') {
+      fetchMonthlySheet();
+    } else if (activeTab === 'yearly') {
+      fetchYearlyMatrix();
+    }
+  }, [activeTab, fetchDailyAttendanceReport, fetchMonthlySheet, fetchYearlyMatrix]);
 
   // Handle Punch In (Check-In)
   const handlePunchIn = async () => {
@@ -301,11 +570,13 @@ const AttendanceReport = () => {
           }
         }));
       }
-      fetchTodayStatus();
       fetchMonthlyReport();
+      if (activeTab === 'daily') fetchDailyAttendanceReport();
+      if (activeTab === 'monthly') fetchMonthlySheet();
+      if (activeTab === 'yearly') fetchYearlyMatrix();
     } catch (err) {
-      const msg = err?.response?.data?.message || err?.message || 'Failed to punch in. Please try again.';
-      toast.error(msg);
+      console.error('Punch in error:', err);
+      toast.error(err.response?.data?.message || err.message || 'Punch in failed. Ensure location permissions are enabled.');
     } finally {
       setPunchingIn(false);
     }
@@ -328,175 +599,80 @@ const AttendanceReport = () => {
           today: {
             ...prev.today,
             punchOut: todayAtt.punchOut || new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
-            status: todayAtt.status || 'PRESENT',
-            canPunchIn: false,
+            status: todayAtt.status || 'COMPLETED',
             canPunchOut: false
           }
         }));
       }
-      fetchTodayStatus();
       fetchMonthlyReport();
+      if (activeTab === 'daily') fetchDailyAttendanceReport();
+      if (activeTab === 'monthly') fetchMonthlySheet();
+      if (activeTab === 'yearly') fetchYearlyMatrix();
     } catch (err) {
-      const msg = err?.response?.data?.message || err?.message || 'Failed to punch out. Please try again.';
-      toast.error(msg);
+      console.error('Punch out error:', err);
+      toast.error(err.response?.data?.message || err.message || 'Punch out failed.');
     } finally {
       setPunchingOut(false);
     }
   };
 
-  // Handle Apply Leave
-  const handleLeaveSubmit = async (e) => {
-    e.preventDefault();
-    if (!leaveForm.reason.trim() || leaveForm.reason.length < 3) {
-      toast.error('Please enter a valid reason for leave (minimum 3 characters).');
-      return;
-    }
-    if (new Date(leaveForm.endDate) < new Date(leaveForm.startDate)) {
-      toast.error('End date cannot be earlier than start date.');
-      return;
-    }
+  // Combined States List
+  const mergedStatesList = useMemo(() => {
+    if (apiStates.length > 0) return apiStates;
+    return ALL_INDIAN_STATES;
+  }, [apiStates]);
 
-    setLeaveSubmitting(true);
-    try {
-      const res = await attendanceService.applyLeave(leaveForm);
-      toast.success(res?.message || 'Leave application submitted successfully.');
-      setIsLeaveModalOpen(false);
-      setLeaveForm({
-        leaveType: 'CASUAL_LEAVE',
-        startDate: new Date().toISOString().split('T')[0],
-        endDate: new Date().toISOString().split('T')[0],
-        reason: ''
-      });
-      fetchMonthlyReport();
-    } catch (err) {
-      const msg = err?.response?.data?.message || 'Failed to submit leave application. Please check date range.';
-      toast.error(msg);
-    } finally {
-      setLeaveSubmitting(false);
-    }
-  };
-
-  // Calculate Leave Days
-  const calculatedLeaveDays = useMemo(() => {
-    if (!leaveForm.startDate || !leaveForm.endDate) return 1;
-    const start = new Date(leaveForm.startDate);
-    const end = new Date(leaveForm.endDate);
-    const diff = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
-    return diff > 0 ? diff : 1;
-  }, [leaveForm.startDate, leaveForm.endDate]);
-
-  // Branch list filtered by State
-  const filteredBranches = useMemo(() => {
-    const list = Array.isArray(branches) ? branches : [];
-    if (!selectedState) return list;
-    return list.filter(b => b && (b.state === selectedState || b.address?.state === selectedState));
-  }, [branches, selectedState]);
-
-  // Employee list filtered by Branch & Search Query
-  const filteredEmployees = useMemo(() => {
-    const list = Array.isArray(employees) ? employees : [];
-    return list.filter(emp => {
-      if (!emp) return false;
-      const empName = emp.fullName || emp.name || '';
-      const empCode = emp.employeeCode || emp.code || '';
-      const empDept = emp.department || emp.designation || '';
-
-      const matchesSearch = !searchQuery || 
-        empName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        empCode.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        empDept.toLowerCase().includes(searchQuery.toLowerCase());
-
-      const matchesBranch = !selectedBranch || 
-        emp.branchId === selectedBranch || 
-        emp.branch?._id === selectedBranch ||
-        emp.branch === selectedBranch;
-
-      return matchesSearch && matchesBranch;
-    });
-  }, [employees, searchQuery, selectedBranch]);
-
-  // Paginated records
-  const paginatedEmployees = useMemo(() => {
-    const start = (page - 1) * limit;
-    return filteredEmployees.slice(start, start + limit);
-  }, [filteredEmployees, page, limit]);
-
-  const totalPages = Math.ceil(filteredEmployees.length / limit) || 1;
-
-  // Format Helper
-  const getSelectedMonthName = (m) => MONTH_NAMES[(Number(m) - 1 + 12) % 12];
+  const getSelectedMonthName = (monthNum) => MONTH_NAMES[monthNum - 1] || 'Current Month';
 
   return (
-    <div className="space-y-6 max-w-[1600px] mx-auto pb-12">
-      {/* Top Header */}
-      <PageHeader
-        title="Attendance Management"
-        breadcrumbs={[
-          { label: 'Dashboard', to: '/dashboard' },
-          { label: 'HR Management' },
-          { label: 'Attendance Report' }
-        ]}
-        showBack={true}
-        backUrl="/dashboard"
-      />
-
+    <div className="w-full flex flex-col gap-6 font-sans antialiased pb-16">
       {/* ========================================================= */}
-      {/* 1. TODAY'S QUICK PUNCH & SHIFT SNAPSHOT CARD */}
+      {/* 1. TOP QUICK PUNCH & LIVE SHIFT SNAPSHOT CARD */}
       {/* ========================================================= */}
-      <div className="bg-gradient-to-r from-[#1b3a6b] via-[#225091] to-[#1e3a8a] text-white rounded-2xl p-5 sm:p-6 shadow-md relative overflow-hidden">
-        {/* Subtle decorative background shapes */}
-        <div className="absolute right-0 top-0 translate-x-12 -translate-y-8 w-64 h-64 bg-white/5 rounded-full blur-2xl pointer-events-none" />
-        <div className="absolute left-1/3 bottom-0 translate-y-12 w-48 h-48 bg-blue-400/10 rounded-full blur-xl pointer-events-none" />
+      <div className="bg-gradient-to-br from-[#225091] via-[#1b3f72] to-[#122e54] rounded-2xl p-6 text-white shadow-lg relative overflow-hidden">
+        {/* Ambient background decoration */}
+        <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 left-1/3 w-64 h-64 bg-teal-400/10 rounded-full blur-2xl pointer-events-none" />
 
-        <div className="relative z-10 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-6">
-          {/* Left: Shift & Today Status Overview */}
-          <div className="space-y-3">
-            <div className="flex items-center gap-3 flex-wrap">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/15 backdrop-blur-md rounded-full text-xs font-bold text-white border border-white/20">
+        <div className="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+          {/* Left: Employee Shift & Live Status */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-3">
+              <span className="px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-xs font-bold uppercase tracking-wider text-white border border-white/20 flex items-center gap-1.5">
                 <Clock size={13} />
                 Shift: {todayData.shiftInfo?.dutyHours || '10:00 to 19:00'}
               </span>
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/10 rounded-full text-xs font-medium text-blue-100 border border-white/10">
-                <Coffee size={13} />
-                Weekly Off: {todayData.shiftInfo?.weeklyOff || 'Sunday'}
-              </span>
-              <span className="text-xs text-blue-200 font-medium">
-                Today: {new Date().toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })}
+              <span className="text-xs text-white/80 font-medium">
+                Off: <strong className="text-white">{todayData.shiftInfo?.weeklyOff || 'Sunday'}</strong>
               </span>
             </div>
 
-            <div className="flex items-center gap-4 flex-wrap pt-1">
-              <div>
-                <p className="text-xs text-blue-200 uppercase tracking-wider font-semibold">Check-In</p>
-                <p className="text-lg sm:text-xl font-extrabold text-white">
-                  {todayData.today?.punchIn || '— : —'}
-                </p>
+            <h2 className="text-2xl font-black tracking-tight text-white flex items-center gap-2.5">
+              <span>Society Attendance Operations</span>
+              {todayData.onShift ? (
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-400/20 text-emerald-300 border border-emerald-400/30 animate-pulse">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                  ON SHIFT
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-white/10 text-white/70 border border-white/15">
+                  OFF SHIFT
+                </span>
+              )}
+            </h2>
+
+            {/* Check-In / Check-Out Badges */}
+            <div className="flex items-center gap-4 text-xs font-medium text-white/90 pt-1 flex-wrap">
+              <div className="flex items-center gap-1.5 bg-black/20 px-3 py-1.5 rounded-xl border border-white/10">
+                <LogIn size={14} className="text-emerald-400" />
+                <span>Punch-In:</span>
+                <strong className="text-white font-mono">{todayData.today?.punchIn || 'Not Recorded'}</strong>
               </div>
-              <div className="h-8 w-px bg-white/20" />
-              <div>
-                <p className="text-xs text-blue-200 uppercase tracking-wider font-semibold">Check-Out</p>
-                <p className="text-lg sm:text-xl font-extrabold text-white">
-                  {todayData.today?.punchOut || '— : —'}
-                </p>
-              </div>
-              <div className="h-8 w-px bg-white/20" />
-              <div>
-                <p className="text-xs text-blue-200 uppercase tracking-wider font-semibold">Current Status</p>
-                <div className="mt-0.5">
-                  {todayData.onShift ? (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-400/20 text-emerald-300 border border-emerald-400/30 animate-pulse">
-                      <CheckCircle2 size={12} /> ON SHIFT
-                    </span>
-                  ) : todayData.today?.punchOut ? (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-300/20 text-blue-200 border border-blue-300/30">
-                      COMPLETED
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-400/20 text-amber-200 border border-amber-400/30">
-                      PENDING PUNCH
-                    </span>
-                  )}
-                </div>
+
+              <div className="flex items-center gap-1.5 bg-black/20 px-3 py-1.5 rounded-xl border border-white/10">
+                <LogOut size={14} className="text-amber-400" />
+                <span>Punch-Out:</span>
+                <strong className="text-white font-mono">{todayData.today?.punchOut || 'Not Recorded'}</strong>
               </div>
 
               {todayData.today?.isLate && (
@@ -545,15 +721,6 @@ const AttendanceReport = () => {
               )}
               <span>Punch Out</span>
             </button>
-
-            {/* Apply Leave Button */}
-            <button
-              onClick={() => setIsLeaveModalOpen(true)}
-              className="inline-flex items-center justify-center gap-1.5 px-4 py-3 bg-white/15 hover:bg-white/25 text-white border border-white/20 rounded-xl font-bold text-xs transition-colors cursor-pointer"
-            >
-              <CalendarPlus size={15} />
-              <span>Apply Leave</span>
-            </button>
           </div>
         </div>
       </div>
@@ -574,7 +741,11 @@ const AttendanceReport = () => {
           <div className="flex items-center gap-2.5 flex-wrap">
             <select
               value={selectedMonth}
-              onChange={(e) => setSelectedMonth(Number(e.target.value))}
+              onChange={(e) => {
+                setSelectedMonth(Number(e.target.value));
+                setPage(1);
+                setMonthlyPage(1);
+              }}
               className="px-3 py-1.5 rounded-xl border border-gray-200 text-xs font-semibold text-gray-700 bg-white focus:outline-none focus:ring-1 focus:ring-[#225091] cursor-pointer shadow-2xs"
             >
               {MONTH_NAMES.map((name, idx) => (
@@ -584,20 +755,31 @@ const AttendanceReport = () => {
 
             <select
               value={selectedYear}
-              onChange={(e) => setSelectedYear(Number(e.target.value))}
+              onChange={(e) => {
+                setSelectedYear(Number(e.target.value));
+                setPage(1);
+                setMonthlyPage(1);
+                setYearlyPage(1);
+              }}
               className="px-3 py-1.5 rounded-xl border border-gray-200 text-xs font-semibold text-gray-700 bg-white focus:outline-none focus:ring-1 focus:ring-[#225091] cursor-pointer shadow-2xs"
             >
-              {[2024, 2025, 2026, 2027].map(yr => (
+              {YEAR_OPTIONS.map(yr => (
                 <option key={yr} value={yr}>{yr}</option>
               ))}
             </select>
 
             <button
-              onClick={() => { fetchTodayStatus(); fetchMonthlyReport(); }}
+              onClick={() => { 
+                fetchTodayStatus(); 
+                fetchMonthlyReport(); 
+                if (activeTab === 'daily') fetchDailyAttendanceReport();
+                if (activeTab === 'monthly') fetchMonthlySheet(); 
+                if (activeTab === 'yearly') fetchYearlyMatrix();
+              }}
               className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer"
               title="Refresh Summary"
             >
-              <RefreshCw size={14} className={loadingReport ? 'animate-spin' : ''} />
+              <RefreshCw size={14} className={loadingReport || loadingMonthlySheet || loadingYearlyMatrix || loadingReportData ? 'animate-spin' : ''} />
             </button>
           </div>
         </div>
@@ -647,14 +829,14 @@ const AttendanceReport = () => {
       </div>
 
       {/* ========================================================= */}
-      {/* 3. REPORT TABS & DETAILED LOGS */}
+      {/* 3. SECTION 1 & 5: ATTENDANCE REPORT & MONTHLY MATRIX */}
       {/* ========================================================= */}
       <div className="bg-white rounded-2xl p-6 shadow-xs border border-gray-100 space-y-6">
         {/* Navigation Tab Bar */}
         <div className="flex items-center justify-between border-b border-gray-100 pb-3 flex-wrap gap-4">
           <div className="flex items-center gap-6">
             <button
-              onClick={() => setActiveTab('daily')}
+              onClick={() => { setActiveTab('daily'); setPage(1); }}
               className={`pb-2 text-xs font-bold transition-all cursor-pointer relative ${
                 activeTab === 'daily'
                   ? 'text-[#225091] after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:bg-[#225091]'
@@ -665,7 +847,7 @@ const AttendanceReport = () => {
             </button>
 
             <button
-              onClick={() => setActiveTab('monthly')}
+              onClick={() => { setActiveTab('monthly'); setMonthlyPage(1); }}
               className={`pb-2 text-xs font-bold transition-all cursor-pointer relative ${
                 activeTab === 'monthly'
                   ? 'text-[#225091] after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:bg-[#225091]'
@@ -676,7 +858,7 @@ const AttendanceReport = () => {
             </button>
 
             <button
-              onClick={() => setActiveTab('yearly')}
+              onClick={() => { setActiveTab('yearly'); setYearlyPage(1); }}
               className={`pb-2 text-xs font-bold transition-all cursor-pointer relative ${
                 activeTab === 'yearly'
                   ? 'text-[#225091] after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:bg-[#225091]'
@@ -689,75 +871,106 @@ const AttendanceReport = () => {
 
           {/* Status Legend (Monthly tab) */}
           {activeTab === 'monthly' && (
-            <div className="flex items-center gap-4 flex-wrap text-xs">
+            <div className="flex items-center gap-3.5 flex-wrap text-xs">
               <LegendItem status="P" label="Present" />
               <LegendItem status="P*" label="Late" />
               <LegendItem status="A" label="Absent" />
               <LegendItem status="L" label="Leave" />
+              <LegendItem status="HD" label="Half Day" />
               <LegendItem status="WO" label="Week Off" />
               <LegendItem status="COFF" label="Comp-Off" />
             </div>
           )}
         </div>
 
-        {/* Filter Controls Toolbar */}
+        {/* Section 1.1 Filter Controls Toolbar (State, Branch, Search, Date/Period) */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 pt-1">
           {/* Search Input */}
           <div className="relative">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={15} />
             <input
               type="text"
-              placeholder="Search employee..."
+              placeholder="Search employee, code, role..."
               value={searchQuery}
-              onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
-              className="w-full pl-9 pr-4 py-2 bg-gray-50/70 border border-gray-200 rounded-xl text-xs text-gray-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#225091] font-semibold"
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-9 pr-8 py-2 bg-gray-50/70 border border-gray-200 rounded-xl text-xs text-gray-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#225091] font-semibold"
             />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
+              >
+                <X size={13} />
+              </button>
+            )}
           </div>
 
-          {/* State Filter */}
+          {/* State Filter (Section 1.1) */}
           <div>
             <SearchableSelect
               value={selectedState}
-              onChange={(val) => { setSelectedState(val); setSelectedBranch(''); setPage(1); }}
+              onChange={(val) => { 
+                setSelectedState(val); 
+                setSelectedBranch(''); 
+                setPage(1); 
+                setMonthlyPage(1);
+                setYearlyPage(1);
+              }}
               options={[
                 { value: '', label: 'All States / Regions' },
-                ...ALL_INDIAN_STATES.map(s => ({ value: s, label: s }))
+                ...mergedStatesList.map(s => ({ value: s, label: s }))
               ]}
               placeholder="All States / Regions"
+              searchPlaceholder="Search state..."
               className="text-xs"
             />
           </div>
 
-          {/* Branch Filter */}
+          {/* Branch Filter (Section 1.1 Scoped by state) */}
           <div>
             <SearchableSelect
               value={selectedBranch}
-              onChange={(val) => { setSelectedBranch(val); setPage(1); }}
+              onChange={(val) => { 
+                setSelectedBranch(val); 
+                setPage(1); 
+                setMonthlyPage(1);
+                setYearlyPage(1);
+              }}
               options={[
                 { value: '', label: 'All Branches' },
-                ...(Array.isArray(filteredBranches) ? filteredBranches : []).map(b => ({ value: b.id || b._id, label: b.name || b.branchName }))
+                ...apiBranches.map(b => ({ 
+                  value: b.id || b._id, 
+                  label: b.name ? `${b.name}${b.code ? ` (${b.code})` : ''}` : (b.branchName || b.id) 
+                }))
               ]}
               placeholder="All Branches"
+              searchPlaceholder="Search branch..."
               className="text-xs"
             />
           </div>
 
-          {/* Date Picker (Daily tab) */}
+          {/* Date Picker (Daily tab) or Month/Year for Monthly or Year/Month for Yearly */}
           {activeTab === 'daily' ? (
-            <div>
+            <div className="relative">
               <input
                 type="date"
                 value={referenceDate}
-                onChange={(e) => setReferenceDate(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-200 rounded-xl text-xs font-semibold text-gray-700 bg-white focus:outline-none focus:ring-1 focus:ring-[#225091]"
+                onChange={(e) => {
+                  setReferenceDate(e.target.value);
+                  setPage(1);
+                }}
+                className="w-full px-3 py-2 border border-gray-200 rounded-xl text-xs font-semibold text-gray-700 bg-white focus:outline-none focus:ring-1 focus:ring-[#225091] cursor-pointer"
               />
             </div>
-          ) : (
+          ) : activeTab === 'monthly' ? (
             <div className="flex items-center gap-2">
               <select
                 value={selectedMonth}
-                onChange={(e) => setSelectedMonth(Number(e.target.value))}
-                className="w-1/2 px-3 py-2 border border-gray-200 rounded-xl text-xs font-semibold text-gray-700 bg-white"
+                onChange={(e) => {
+                  setSelectedMonth(Number(e.target.value));
+                  setMonthlyPage(1);
+                }}
+                className="w-1/2 px-3 py-2 border border-gray-200 rounded-xl text-xs font-semibold text-gray-700 bg-white cursor-pointer"
               >
                 {MONTH_NAMES.map((m, idx) => (
                   <option key={m} value={idx + 1}>{m}</option>
@@ -765,79 +978,220 @@ const AttendanceReport = () => {
               </select>
               <select
                 value={selectedYear}
-                onChange={(e) => setSelectedYear(Number(e.target.value))}
-                className="w-1/2 px-3 py-2 border border-gray-200 rounded-xl text-xs font-semibold text-gray-700 bg-white"
+                onChange={(e) => {
+                  setSelectedYear(Number(e.target.value));
+                  setMonthlyPage(1);
+                }}
+                className="w-1/2 px-3 py-2 border border-gray-200 rounded-xl text-xs font-semibold text-gray-700 bg-white cursor-pointer"
               >
-                {[2024, 2025, 2026, 2027].map(y => (
+                {YEAR_OPTIONS.map(y => (
                   <option key={y} value={y}>{y}</option>
+                ))}
+              </select>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <select
+                value={selectedYear}
+                onChange={(e) => {
+                  setSelectedYear(Number(e.target.value));
+                  setYearlyPage(1);
+                }}
+                className="w-1/2 px-3 py-2 border border-gray-200 rounded-xl text-xs font-semibold text-gray-700 bg-white cursor-pointer"
+              >
+                {YEAR_OPTIONS.map(y => (
+                  <option key={y} value={y}>{y}</option>
+                ))}
+              </select>
+              <select
+                value={yearlyMonthFilter}
+                onChange={(e) => {
+                  setYearlyMonthFilter(e.target.value);
+                  setYearlyPage(1);
+                }}
+                className="w-1/2 px-3 py-2 border border-gray-200 rounded-xl text-xs font-semibold text-gray-700 bg-white cursor-pointer"
+              >
+                <option value="">All Months</option>
+                {MONTH_NAMES.map((m, idx) => (
+                  <option key={m} value={idx + 1}>{m.slice(0, 3)}</option>
                 ))}
               </select>
             </div>
           )}
         </div>
 
+        {/* Section 5: Monthly Sheet Aggregated Summary Ribbon */}
+        {activeTab === 'monthly' && monthlySheetData.summaryStats && (
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 p-3.5 bg-gray-50/70 border border-gray-100 rounded-xl text-xs">
+            <div className="flex items-center gap-2">
+              <Users size={16} className="text-[#225091]" />
+              <div>
+                <span className="text-gray-500 font-medium block text-[10px] uppercase">Employees</span>
+                <strong className="text-gray-900 font-bold text-sm">{monthlySheetData.summaryStats.totalEmployees || monthlySheetData.items.length}</strong>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <CheckCircle2 size={16} className="text-emerald-600" />
+              <div>
+                <span className="text-gray-500 font-medium block text-[10px] uppercase">Present Days</span>
+                <strong className="text-emerald-700 font-bold text-sm">{monthlySheetData.summaryStats.totalPresentDays || 0}</strong>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <AlertCircle size={16} className="text-rose-600" />
+              <div>
+                <span className="text-gray-500 font-medium block text-[10px] uppercase">Absent Days</span>
+                <strong className="text-rose-700 font-bold text-sm">{monthlySheetData.summaryStats.totalAbsentDays || 0}</strong>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Coffee size={16} className="text-amber-600" />
+              <div>
+                <span className="text-gray-500 font-medium block text-[10px] uppercase">Leave Days</span>
+                <strong className="text-amber-700 font-bold text-sm">{monthlySheetData.summaryStats.totalLeaveDays || 0}</strong>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Percent size={16} className="text-indigo-600" />
+              <div>
+                <span className="text-gray-500 font-medium block text-[10px] uppercase">Avg Attendance</span>
+                <strong className="text-indigo-700 font-bold text-sm">{monthlySheetData.summaryStats.averageAttendancePercentage ?? 0}%</strong>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Section 6: Yearly Matrix Aggregated Summary Ribbon */}
+        {activeTab === 'yearly' && yearlyMatrixData.summaryStats && (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3.5 bg-gradient-to-r from-blue-50/60 via-indigo-50/40 to-slate-50 border border-blue-100/80 rounded-xl text-xs">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-blue-100/80 text-[#225091] flex items-center justify-center font-bold shrink-0">
+                <Users size={18} />
+              </div>
+              <div>
+                <span className="text-gray-500 font-medium block text-[10px] uppercase tracking-wider">Total Employees</span>
+                <strong className="text-gray-900 font-bold text-base">
+                  {yearlyMatrixData.summaryStats.totalEmployees || yearlyMatrixData.items.length}
+                </strong>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-emerald-100/80 text-emerald-700 flex items-center justify-center font-bold shrink-0">
+                <Percent size={18} />
+              </div>
+              <div>
+                <span className="text-gray-500 font-medium block text-[10px] uppercase tracking-wider">Average Attendance</span>
+                <strong className="text-emerald-700 font-bold text-base">
+                  {yearlyMatrixData.summaryStats.formattedAverageAttendance || `${yearlyMatrixData.summaryStats.averageAttendancePercentage ?? 0}%`}
+                </strong>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-indigo-100/80 text-indigo-700 flex items-center justify-center font-bold shrink-0">
+                <CalendarDays size={18} />
+              </div>
+              <div>
+                <span className="text-gray-500 font-medium block text-[10px] uppercase tracking-wider">Evaluation Period</span>
+                <strong className="text-indigo-900 font-bold text-base">
+                  {selectedYear} {yearlyMonthFilter ? `(${MONTH_NAMES[Number(yearlyMonthFilter) - 1]})` : '(Full Year)'}
+                </strong>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Table Content */}
-        <div className="border border-gray-100 rounded-2xl overflow-hidden">
+        <div className="border border-gray-100 rounded-2xl overflow-hidden shadow-2xs">
           <div className="overflow-x-auto">
+            {/* TAB 1: DAILY LOGS (Section 1.2) */}
             {activeTab === 'daily' && (
               <table className="w-full text-left text-xs border-collapse min-w-[800px]">
                 <thead className="bg-[#F8FAFC] text-gray-500 uppercase tracking-wider font-semibold border-b border-gray-200/80">
                   <tr>
+                    <th className="py-3.5 px-4 text-center w-14">SR.NO.</th>
                     <th className="py-3.5 px-5">EMPLOYEE</th>
                     <th className="py-3.5 px-5">DESIGNATION</th>
                     <th className="py-3.5 px-5">CHECK-IN</th>
                     <th className="py-3.5 px-5">CHECK-OUT</th>
                     <th className="py-3.5 px-5">WORKING HRS</th>
-                    <th className="py-3.5 px-5">OVERTIME</th>
-                    <th className="py-3.5 px-5">STATUS</th>
+                    <th className="py-3.5 px-5 text-center">STATUS</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 font-medium">
-                  {paginatedEmployees.length === 0 ? (
+                  {loadingReportData ? (
+                    Array.from({ length: 5 }).map((_, idx) => (
+                      <SkeletonTableRow key={idx} columns={7} />
+                    ))
+                  ) : reportItems.length === 0 ? (
                     <tr>
-                      <td colSpan="7" className="py-10 text-center text-gray-400">
-                        No attendance records match your filter criteria.
+                      <td colSpan="7" className="py-12 text-center text-gray-400">
+                        <div className="flex flex-col items-center justify-center gap-2">
+                          <Users size={32} className="text-gray-300 stroke-[1.5]" />
+                          <span className="text-sm font-medium text-gray-500">No attendance records found</span>
+                          <span className="text-xs text-gray-400">No staff attendance logged for the selected date and filters</span>
+                        </div>
                       </td>
                     </tr>
                   ) : (
-                    paginatedEmployees.map((emp, idx) => {
-                      const empPunchIn = emp.todayAttendance?.punchIn || emp.punchIn || null;
-                      const empPunchOut = emp.todayAttendance?.punchOut || emp.punchOut || null;
-                      const empStatus = emp.todayAttendance?.status || emp.status || (empPunchIn ? 'PRESENT' : 'NOT_PUNCHED');
-                      const empWorkingHrs = emp.todayAttendance?.workingHours || (empPunchIn && empPunchOut ? '9.0 hrs' : empPunchIn ? 'On Shift' : '0.0 hrs');
-                      const empOvertime = emp.todayAttendance?.overtime || '0.0 hr';
+                    reportItems.map((emp, idx) => {
+                      const empSrNo = emp.srNo ?? ((page - 1) * limit + idx + 1);
+                      const empPunchIn = emp.punchIn || null;
+                      const empPunchOut = emp.punchOut || null;
+                      const empTotalHrs = emp.totalHrs || (empPunchIn && empPunchOut ? '8 hrs' : empPunchIn ? 'On Shift' : null);
+                      const empStatus = (emp.status || (empPunchIn ? 'P' : 'A')).toUpperCase();
 
                       return (
                         <tr key={emp.id || emp._id || idx} className="hover:bg-slate-50/60 transition-colors">
-                          <td className="py-3.5 px-5">
-                            <div className="font-bold text-gray-900">{emp.fullName || emp.name}</div>
-                            <div className="text-[11px] text-gray-500 font-mono">{emp.employeeCode || emp.code || `EMP-${100 + idx}`}</div>
+                          <td className="py-3.5 px-4 text-center font-bold text-gray-500">
+                            {empSrNo}
                           </td>
-                          <td className="py-3.5 px-5 text-gray-600">{emp.department || emp.designation || 'Staff'}</td>
-                          <td className="py-3.5 px-5 font-semibold text-gray-800">
+                          <td className="py-3.5 px-5">
+                            <div className="flex items-center gap-3">
+                              {emp.profileImage ? (
+                                <img 
+                                  src={emp.profileImage} 
+                                  alt={emp.name} 
+                                  className="w-8 h-8 rounded-full object-cover border border-gray-200" 
+                                />
+                              ) : (
+                                <div className="w-8 h-8 rounded-full bg-blue-50 text-[#225091] font-bold text-xs flex items-center justify-center uppercase shrink-0 border border-blue-100">
+                                  {(emp.name || 'E').slice(0, 2)}
+                                </div>
+                              )}
+                              <div>
+                                <div className="font-bold text-gray-900">{emp.name}</div>
+                                {emp.id && (
+                                  <div className="text-[10px] text-gray-400 font-mono">ID: {emp.id.slice(-6)}</div>
+                                )}
+                              </div>
+                            </div>
+                          </td>
+                          <td className="py-3.5 px-5 text-gray-600 font-semibold">
+                            {emp.designation || 'Staff'}
+                          </td>
+                          <td className="py-3.5 px-5 font-semibold text-gray-800 font-mono">
                             {empPunchIn || '—'}
                           </td>
-                          <td className="py-3.5 px-5 font-semibold text-gray-800">
+                          <td className="py-3.5 px-5 font-semibold text-gray-800 font-mono">
                             {empPunchOut || '—'}
                           </td>
-                          <td className="py-3.5 px-5 text-gray-700">
-                            {empWorkingHrs}
+                          <td className="py-3.5 px-5 text-gray-700 font-semibold">
+                            {empTotalHrs || '—'}
                           </td>
-                          <td className="py-3.5 px-5 text-indigo-700 font-semibold">
-                            {empOvertime}
-                          </td>
-                          <td className="py-3.5 px-5">
-                            {empPunchIn ? (
-                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-600 border border-emerald-200">
+                          <td className="py-3.5 px-5 text-center">
+                            {empStatus === 'P' || empStatus === 'PRESENT' ? (
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                                 PRESENT
                               </span>
-                            ) : emp.status === 'ON_LEAVE' ? (
-                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-600 border border-blue-200">
+                            ) : empStatus === 'L' || empStatus === 'LEAVE' ? (
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 text-[#225091] border border-blue-200">
                                 ON LEAVE
                               </span>
                             ) : (
-                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gray-50 text-gray-600 border border-gray-200">
-                                NOT PUNCHED
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                                ABSENT
                               </span>
                             )}
                           </td>
@@ -849,216 +1203,334 @@ const AttendanceReport = () => {
               </table>
             )}
 
+            {/* TAB 2: MONTHLY SHEET (Section 5: /api/v1/society/attendance/sheet) */}
             {activeTab === 'monthly' && (
-              <table className="w-full text-left text-xs border-collapse min-w-[900px]">
-                <thead className="bg-[#F8FAFC] text-gray-500 uppercase tracking-wider font-semibold border-b border-gray-200/80">
+              <table className="w-full text-left text-xs border-collapse min-w-[1100px]">
+                <thead className="bg-[#F8FAFC] text-gray-500 uppercase tracking-wider font-semibold border-b border-gray-200/80 sticky top-0 z-10">
                   <tr>
-                    <th className="py-3.5 px-5">EMPLOYEE</th>
-                    {Array.from({ length: 15 }, (_, i) => (
-                      <th key={i} className="py-3.5 px-2 text-center">{i + 1}</th>
+                    <th className="py-3.5 px-4 sticky left-0 bg-[#F8FAFC] z-20 shadow-xs min-w-[180px]">
+                      EMPLOYEE
+                    </th>
+                    {Array.from({ length: monthlySheetData.daysInMonth || 31 }, (_, i) => (
+                      <th key={i} className="py-3.5 px-1.5 text-center font-mono font-bold text-[11px] min-w-[34px]">
+                        {i + 1}
+                      </th>
                     ))}
-                    <th className="py-3.5 px-4 text-center">TOTAL P</th>
-                    <th className="py-3.5 px-4 text-center">TOTAL A</th>
+                    <th className="py-3.5 px-3 text-center font-bold text-emerald-700 min-w-[48px]">P</th>
+                    <th className="py-3.5 px-3 text-center font-bold text-rose-700 min-w-[48px]">A</th>
+                    <th className="py-3.5 px-3 text-center font-bold text-[#225091] min-w-[48px]">L</th>
+                    <th className="py-3.5 px-3 text-center font-bold text-purple-700 min-w-[48px]">HD</th>
+                    <th className="py-3.5 px-3 text-center font-bold text-indigo-700 min-w-[60px]">%</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 font-medium">
-                  {paginatedEmployees.map((emp, idx) => (
-                    <tr key={emp.id || emp._id || idx} className="hover:bg-slate-50/60 transition-colors">
-                      <td className="py-3.5 px-5 font-bold text-gray-900 whitespace-nowrap">
-                        {emp.fullName || emp.name}
+                  {loadingMonthlySheet ? (
+                    Array.from({ length: 5 }).map((_, idx) => (
+                      <SkeletonTableRow key={idx} columns={(monthlySheetData.daysInMonth || 31) + 6} />
+                    ))
+                  ) : monthlySheetData.items.length === 0 ? (
+                    <tr>
+                      <td colSpan={(monthlySheetData.daysInMonth || 31) + 6} className="py-12 text-center text-gray-400">
+                        <div className="flex flex-col items-center justify-center gap-2">
+                          <CalendarDays size={32} className="text-gray-300 stroke-[1.5]" />
+                          <span className="text-sm font-medium text-gray-500">No monthly attendance records found</span>
+                          <span className="text-xs text-gray-400">Try selecting another month or adjusting your branch/state filters</span>
+                        </div>
                       </td>
-                      {Array.from({ length: 15 }, (_, d) => {
-                        const day = d + 1;
-                        let st = 'P';
-                        if (day % 7 === 0) st = 'WO';
-                        else if (day === 4 && idx % 2 === 0) st = 'P*';
-                        else if (day === 8 && idx % 3 === 0) st = 'A';
-                        else if (day === 12 && idx % 4 === 0) st = 'L';
-                        return (
-                          <td key={d} className="py-2.5 px-1 text-center">
-                            <MonthlyStatusBadge status={st} />
-                          </td>
-                        );
-                      })}
-                      <td className="py-3.5 px-4 text-center font-bold text-emerald-700">22</td>
-                      <td className="py-3.5 px-4 text-center font-bold text-rose-700">2</td>
                     </tr>
-                  ))}
+                  ) : (
+                    monthlySheetData.items.map((emp, idx) => {
+                      const totalDays = monthlySheetData.daysInMonth || 31;
+                      const summary = emp.summary || {};
+                      const presentCount = summary.presentDays ?? 0;
+                      const absentCount = summary.absentDays ?? 0;
+                      const leaveCount = summary.leaveDays ?? 0;
+                      const halfDayCount = summary.halfDays ?? 0;
+                      const percentage = summary.attendancePercentage !== undefined 
+                        ? `${summary.attendancePercentage}%` 
+                        : (totalDays > 0 ? `${Math.round((presentCount / totalDays) * 100)}%` : '—');
+
+                      return (
+                        <tr key={emp.id || emp._id || idx} className="hover:bg-slate-50/60 transition-colors">
+                          {/* Employee Info Sticky Column */}
+                          <td className="py-3 px-4 font-bold text-gray-900 sticky left-0 bg-white hover:bg-slate-50/90 transition-colors z-10 shadow-xs">
+                            <div className="flex flex-col">
+                              <span className="line-clamp-1 text-gray-900 font-bold">{emp.employeeName || emp.name}</span>
+                              <span className="text-[10px] text-gray-400 font-normal">{emp.employeeCode || emp.designation || 'Staff'}</span>
+                            </div>
+                          </td>
+
+                          {/* Days Columns (1 to daysInMonth) */}
+                          {Array.from({ length: totalDays }, (_, d) => {
+                            const dayNum = d + 1;
+                            const statusStr = emp.daysMap?.[String(dayNum)] || emp.daysMap?.[dayNum] || emp.days?.find(item => item.day === dayNum)?.statusCode || '—';
+
+                            return (
+                              <td key={dayNum} className="py-2 px-1 text-center">
+                                <MonthlyStatusBadge status={statusStr} />
+                              </td>
+                            );
+                          })}
+
+                          {/* Summary Counters */}
+                          <td className="py-3 px-3 text-center font-bold text-emerald-700 bg-emerald-50/30">
+                            {presentCount}
+                          </td>
+                          <td className="py-3 px-3 text-center font-bold text-rose-700 bg-rose-50/30">
+                            {absentCount}
+                          </td>
+                          <td className="py-3 px-3 text-center font-bold text-[#225091] bg-blue-50/30">
+                            {leaveCount}
+                          </td>
+                          <td className="py-3 px-3 text-center font-bold text-purple-700 bg-purple-50/30">
+                            {halfDayCount}
+                          </td>
+                          <td className="py-3 px-3 text-center font-bold text-indigo-700 bg-indigo-50/30">
+                            {percentage}
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
                 </tbody>
               </table>
             )}
 
+            {/* TAB 3: YEARLY MATRIX (Section 6: /api/v1/society/attendance/yearly-matrix) */}
             {activeTab === 'yearly' && (
-              <table className="w-full text-left text-xs border-collapse min-w-[800px]">
-                <thead className="bg-[#F8FAFC] text-gray-500 uppercase tracking-wider font-semibold border-b border-gray-200/80">
+              <table className="w-full text-left text-xs border-collapse min-w-[1000px]">
+                <thead className="bg-[#F8FAFC] text-gray-500 uppercase tracking-wider font-semibold border-b border-gray-200/80 sticky top-0 z-10">
                   <tr>
-                    <th className="py-3.5 px-5">EMPLOYEE</th>
-                    {MONTH_NAMES.slice(0, 8).map(m => (
-                      <th key={m} className="py-3.5 px-3 text-center">{m.slice(0, 3)}</th>
-                    ))}
-                    <th className="py-3.5 px-4 text-center">AVG ATTENDANCE</th>
+                    <th className="py-3.5 px-3 text-center w-12 sticky left-0 bg-[#F8FAFC] z-20">SR.NO.</th>
+                    <th className="py-3.5 px-4 sticky left-12 bg-[#F8FAFC] z-20 shadow-xs min-w-[200px]">
+                      EMPLOYEE
+                    </th>
+                    {MONTH_SHORT_NAMES.map((mCode, idx) => {
+                      const isMonthFiltered = (yearlyMonthFilter && Number(yearlyMonthFilter) === idx + 1) || 
+                                              (yearlyMatrixData.selectedMonth === idx + 1);
+                      return (
+                        <th 
+                          key={mCode} 
+                          className={`py-3.5 px-2 text-center font-mono font-bold text-[11px] min-w-[68px] ${
+                            isMonthFiltered ? 'bg-blue-100/70 text-[#225091]' : ''
+                          }`}
+                        >
+                          {mCode}
+                        </th>
+                      );
+                    })}
+                    <th className="py-3.5 px-3 text-center font-bold text-slate-800 min-w-[90px]">TOTAL PRESENT</th>
+                    <th className="py-3.5 px-4 text-center font-bold text-emerald-700 min-w-[95px]">AVG ATTENDANCE</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 font-medium">
-                  {paginatedEmployees.map((emp, idx) => (
-                    <tr key={emp.id || emp._id || idx} className="hover:bg-slate-50/60 transition-colors">
-                      <td className="py-3.5 px-5 font-bold text-gray-900 whitespace-nowrap">
-                        {emp.fullName || emp.name}
+                  {loadingYearlyMatrix ? (
+                    Array.from({ length: 5 }).map((_, idx) => (
+                      <SkeletonTableRow key={idx} columns={15} />
+                    ))
+                  ) : yearlyMatrixData.items.length === 0 ? (
+                    <tr>
+                      <td colSpan={15} className="py-12 text-center text-gray-400">
+                        <div className="flex flex-col items-center justify-center gap-2">
+                          <CalendarDays size={32} className="text-gray-300 stroke-[1.5]" />
+                          <span className="text-sm font-medium text-gray-500">No yearly attendance records found</span>
+                          <span className="text-xs text-gray-400">Try selecting another year or adjusting branch/state filters</span>
+                        </div>
                       </td>
-                      {MONTH_NAMES.slice(0, 8).map((m, mi) => (
-                        <td key={m} className="py-3.5 px-3 text-center text-gray-700 font-semibold">
-                          {20 + (mi % 3)} Days
-                        </td>
-                      ))}
-                      <td className="py-3.5 px-4 text-center font-bold text-emerald-700">92.4%</td>
                     </tr>
-                  ))}
+                  ) : (
+                    yearlyMatrixData.items.map((emp, idx) => {
+                      const empSrNo = emp.srNo ?? ((yearlyPage - 1) * 10 + idx + 1);
+                      const avgPercentageStr = emp.formattedAverageAttendance || 
+                        (emp.averageAttendancePercentage !== undefined ? `${emp.averageAttendancePercentage}%` : '—');
+                      const numericAvg = typeof emp.averageAttendancePercentage === 'number'
+                        ? emp.averageAttendancePercentage
+                        : parseFloat(emp.formattedAverageAttendance || '0');
+
+                      let badgeColor = 'bg-emerald-50 text-emerald-700 border-emerald-200';
+                      if (numericAvg < 50) {
+                        badgeColor = 'bg-rose-50 text-rose-700 border-rose-200';
+                      } else if (numericAvg < 75) {
+                        badgeColor = 'bg-amber-50 text-amber-700 border-amber-200';
+                      } else if (numericAvg < 90) {
+                        badgeColor = 'bg-blue-50 text-[#225091] border-blue-200';
+                      }
+
+                      return (
+                        <tr key={emp.id || emp._id || idx} className="hover:bg-slate-50/60 transition-colors">
+                          <td className="py-3.5 px-3 text-center font-bold text-gray-500 sticky left-0 bg-white hover:bg-slate-50/90 z-10">
+                            {empSrNo}
+                          </td>
+                          <td className="py-3 px-4 font-bold text-gray-900 sticky left-12 bg-white hover:bg-slate-50/90 transition-colors z-10 shadow-xs">
+                            <div className="flex items-center gap-2.5">
+                              <div className="w-7 h-7 rounded-full bg-blue-50 text-[#225091] font-bold text-[11px] flex items-center justify-center uppercase shrink-0 border border-blue-100">
+                                {(emp.employeeName || emp.name || 'E').slice(0, 2)}
+                              </div>
+                              <div className="flex flex-col min-w-0">
+                                <span className="text-gray-900 font-bold truncate max-w-[140px] text-xs">
+                                  {emp.employeeName || emp.name}
+                                </span>
+                                <div className="flex items-center gap-1.5 text-[10px] text-gray-400 font-normal">
+                                  {emp.employeeCode && (
+                                    <span className="font-mono text-gray-500 bg-gray-100 px-1 rounded-xs">{emp.employeeCode}</span>
+                                  )}
+                                  <span className="truncate max-w-[90px]">{emp.designation || 'Staff'}</span>
+                                  {emp.branchName && (
+                                    <span className="text-gray-400">• {emp.branchName}</span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+
+                          {/* 12 Months Columns */}
+                          {MONTH_SHORT_NAMES.map((mCode, mIdx) => {
+                            const monthNumber = mIdx + 1;
+                            const isMonthFiltered = (yearlyMonthFilter && Number(yearlyMonthFilter) === monthNumber) || 
+                                                    (yearlyMatrixData.selectedMonth === monthNumber);
+                            
+                            // Check monthsMap or months array
+                            let displayVal = emp.monthsMap?.[mCode];
+                            if (!displayVal && Array.isArray(emp.months)) {
+                              const found = emp.months.find(m => m.code === mCode || m.month === monthNumber);
+                              if (found) {
+                                displayVal = found.formatted || (found.presentDays !== undefined ? `${found.presentDays} Days` : null);
+                              }
+                            }
+                            if (!displayVal) displayVal = '0 Days';
+
+                            const isPresent = displayVal !== '0 Days' && displayVal !== '0' && displayVal !== '0 days';
+
+                            return (
+                              <td 
+                                key={mCode} 
+                                className={`py-3 px-2 text-center text-xs transition-colors ${
+                                  isMonthFiltered ? 'bg-blue-50/50 font-bold' : ''
+                                }`}
+                              >
+                                {isPresent ? (
+                                  <span className="inline-block px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 font-bold text-[11px] border border-emerald-200/60 shadow-2xs whitespace-nowrap">
+                                    {displayVal}
+                                  </span>
+                                ) : (
+                                  <span className="text-gray-400 font-normal text-[11px] whitespace-nowrap">
+                                    {displayVal}
+                                  </span>
+                                )}
+                              </td>
+                            );
+                          })}
+
+                          {/* Total Present Days */}
+                          <td className="py-3 px-3 text-center font-extrabold text-slate-800 bg-slate-50/50 whitespace-nowrap">
+                            {emp.totalPresentDaysYear !== undefined ? `${emp.totalPresentDaysYear} Days` : '—'}
+                          </td>
+
+                          {/* Average Attendance */}
+                          <td className="py-3 px-4 text-center whitespace-nowrap">
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-extrabold border ${badgeColor}`}>
+                              {avgPercentageStr}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
                 </tbody>
               </table>
             )}
           </div>
 
-          {/* Table Footer */}
+          {/* Table Footer with Pagination */}
           <div className="px-5 py-3.5 bg-white border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-gray-500">
-            <div>
-              Showing <strong className="text-gray-800">1</strong> to <strong className="text-gray-800">{paginatedEmployees.length}</strong> of <strong className="text-gray-800">{filteredEmployees.length}</strong> records
-            </div>
-            <div className="flex items-center gap-1.5">
-              <button
-                onClick={() => setPage(p => Math.max(1, p - 1))}
-                disabled={page <= 1}
-                className="px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 font-semibold cursor-pointer"
-              >
-                Previous
-              </button>
-              <span className="px-3 py-1.5 rounded-lg bg-[#225091] text-white font-bold text-xs">
-                {page} / {totalPages}
-              </span>
-              <button
-                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                disabled={page >= totalPages}
-                className="px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 font-semibold cursor-pointer"
-              >
-                Next
-              </button>
-            </div>
+            {activeTab === 'daily' ? (
+              <>
+                <div>
+                  Showing <strong className="text-gray-800">{reportItems.length > 0 ? (page - 1) * limit + 1 : 0}</strong> to{' '}
+                  <strong className="text-gray-800">
+                    {Math.min(page * limit, meta.totalRecords || reportItems.length)}
+                  </strong> of <strong className="text-gray-800">{meta.totalRecords || reportItems.length}</strong> staff records
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => setPage(p => Math.max(1, p - 1))}
+                    disabled={page <= 1 || loadingReportData}
+                    className="px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 font-semibold cursor-pointer transition-colors"
+                  >
+                    Previous
+                  </button>
+                  <span className="px-3 py-1.5 rounded-lg bg-[#225091] text-white font-bold text-xs">
+                    {page} / {meta.totalPages || 1}
+                  </span>
+                  <button
+                    onClick={() => setPage(p => Math.min(meta.totalPages || 1, p + 1))}
+                    disabled={page >= (meta.totalPages || 1) || loadingReportData}
+                    className="px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 font-semibold cursor-pointer transition-colors"
+                  >
+                    Next
+                  </button>
+                </div>
+              </>
+            ) : activeTab === 'monthly' ? (
+              <>
+                <div>
+                  Showing <strong className="text-gray-800">{monthlySheetData.items.length > 0 ? (monthlyPage - 1) * 10 + 1 : 0}</strong> to{' '}
+                  <strong className="text-gray-800">
+                    {Math.min(monthlyPage * 10, monthlySheetData.meta.totalRecords || monthlySheetData.items.length)}
+                  </strong> of <strong className="text-gray-800">{monthlySheetData.meta.totalRecords || monthlySheetData.items.length}</strong> staff records
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => setMonthlyPage(p => Math.max(1, p - 1))}
+                    disabled={monthlyPage <= 1 || loadingMonthlySheet}
+                    className="px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 font-semibold cursor-pointer transition-colors"
+                  >
+                    Previous
+                  </button>
+                  <span className="px-3 py-1.5 rounded-lg bg-[#225091] text-white font-bold text-xs">
+                    {monthlyPage} / {monthlySheetData.meta.totalPages || 1}
+                  </span>
+                  <button
+                    onClick={() => setMonthlyPage(p => Math.min(monthlySheetData.meta.totalPages || 1, p + 1))}
+                    disabled={monthlyPage >= (monthlySheetData.meta.totalPages || 1) || loadingMonthlySheet}
+                    className="px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 font-semibold cursor-pointer transition-colors"
+                  >
+                    Next
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div>
+                  Showing <strong className="text-gray-800">{yearlyMatrixData.items.length > 0 ? (yearlyPage - 1) * 10 + 1 : 0}</strong> to{' '}
+                  <strong className="text-gray-800">
+                    {Math.min(yearlyPage * 10, yearlyMatrixData.meta.totalRecords || yearlyMatrixData.items.length)}
+                  </strong> of <strong className="text-gray-800">{yearlyMatrixData.meta.totalRecords || yearlyMatrixData.items.length}</strong> staff records
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => setYearlyPage(p => Math.max(1, p - 1))}
+                    disabled={yearlyPage <= 1 || loadingYearlyMatrix}
+                    className="px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 font-semibold cursor-pointer transition-colors"
+                  >
+                    Previous
+                  </button>
+                  <span className="px-3 py-1.5 rounded-lg bg-[#225091] text-white font-bold text-xs">
+                    {yearlyPage} / {yearlyMatrixData.meta.totalPages || 1}
+                  </span>
+                  <button
+                    onClick={() => setYearlyPage(p => Math.min(yearlyMatrixData.meta.totalPages || 1, p + 1))}
+                    disabled={yearlyPage >= (yearlyMatrixData.meta.totalPages || 1) || loadingYearlyMatrix}
+                    className="px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 font-semibold cursor-pointer transition-colors"
+                  >
+                    Next
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>
-
-      {/* ========================================================= */}
-      {/* 4. APPLY LEAVE MODAL */}
-      {/* ========================================================= */}
-      {isLeaveModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4 animate-in fade-in">
-          <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-150">
-            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/70">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-blue-50 text-[#225091] flex items-center justify-center font-bold">
-                  <CalendarPlus size={18} />
-                </div>
-                <div>
-                  <h3 className="text-base font-bold text-gray-900">Apply for Leave</h3>
-                  <p className="text-[11px] text-gray-500">Submit leave application with automatic date & overlap validation</p>
-                </div>
-              </div>
-              <button onClick={() => setIsLeaveModalOpen(false)} className="text-gray-400 hover:text-gray-700">
-                <X size={18} />
-              </button>
-            </div>
-
-            <form onSubmit={handleLeaveSubmit} className="p-6 space-y-4 text-xs">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="sm:col-span-2">
-                  <label className="block font-bold text-gray-700 mb-1">Leave Type</label>
-                  <select
-                    value={leaveForm.leaveType}
-                    onChange={e => setLeaveForm({ ...leaveForm, leaveType: e.target.value })}
-                    className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl focus:ring-1 focus:ring-[#225091] font-semibold bg-white cursor-pointer"
-                  >
-                    <option value="CASUAL_LEAVE">Casual Leave (CL)</option>
-                    <option value="SICK_LEAVE">Medical / Sick Leave (SL)</option>
-                    <option value="EARNED_LEAVE">Earned Leave (EL)</option>
-                    <option value="COMP_OFF">Compensatory Off (COFF)</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block font-bold text-gray-700 mb-1">Start Date <span className="text-rose-500">*</span></label>
-                  <input
-                    type="date"
-                    required
-                    min={todayISO}
-                    value={leaveForm.startDate}
-                    onChange={e => {
-                      const st = e.target.value;
-                      setLeaveForm(prev => ({
-                        ...prev,
-                        startDate: st,
-                        endDate: prev.endDate < st ? st : prev.endDate
-                      }));
-                    }}
-                    className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl focus:ring-1 focus:ring-[#225091] font-semibold"
-                  />
-                </div>
-
-                <div>
-                  <label className="block font-bold text-gray-700 mb-1">End Date <span className="text-rose-500">*</span></label>
-                  <input
-                    type="date"
-                    required
-                    min={leaveForm.startDate || todayISO}
-                    value={leaveForm.endDate}
-                    onChange={e => setLeaveForm({ ...leaveForm, endDate: e.target.value })}
-                    className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl focus:ring-1 focus:ring-[#225091] font-semibold"
-                  />
-                </div>
-
-                <div className="sm:col-span-2">
-                  <div className="p-3 bg-blue-50/70 border border-blue-100 rounded-xl flex items-center justify-between">
-                    <span className="font-semibold text-gray-700 text-xs">Total Leave Duration:</span>
-                    <span className="font-bold text-[#225091] text-xs">
-                      {calculatedLeaveDays} {calculatedLeaveDays === 1 ? 'Day' : 'Days'}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="sm:col-span-2">
-                  <label className="block font-bold text-gray-700 mb-1">Reason for Leave <span className="text-rose-500">*</span></label>
-                  <textarea
-                    rows={3}
-                    required
-                    minLength={3}
-                    maxLength={500}
-                    placeholder="Specify the reason for leave application..."
-                    value={leaveForm.reason}
-                    onChange={e => setLeaveForm({ ...leaveForm, reason: e.target.value })}
-                    className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl focus:ring-1 focus:ring-[#225091] font-medium"
-                  />
-                </div>
-              </div>
-
-              <div className="pt-4 border-t border-gray-100 flex items-center justify-end gap-3">
-                <button
-                  type="button"
-                  onClick={() => setIsLeaveModalOpen(false)}
-                  className="px-4 py-2 border border-gray-200 rounded-xl text-gray-700 font-bold hover:bg-gray-50 cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={leaveSubmitting}
-                  className="px-5 py-2 bg-[#225091] hover:bg-[#183f72] text-white rounded-xl font-bold cursor-pointer shadow-sm disabled:opacity-50 inline-flex items-center gap-1.5"
-                >
-                  {leaveSubmitting && <Loader2 size={14} className="animate-spin" />}
-                  <span>Submit Leave</span>
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

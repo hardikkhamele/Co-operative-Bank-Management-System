@@ -9,7 +9,7 @@ const SelectLeadSystem = () => {
     {
       id: 'customer',
       title: 'Customer',
-      description: 'Manage direct customer loan and banking leads',
+      description: 'Manage customer loan application leads and manual approvals',
       path: '/leads/customer',
       icon: Users,
       gradient: 'from-[#1b58a6] to-[#2b72cf]',
@@ -23,7 +23,7 @@ const SelectLeadSystem = () => {
     {
       id: 'merchant',
       title: 'Merchant',
-      description: 'Manage local leads created by you personally',
+      description: 'Merchant partner shop loan leads & next-day disbursal settlements',
       path: '/leads/merchant',
       icon: Store,
       gradient: 'from-[#7c3aed] to-[#a855f7]',
@@ -37,7 +37,7 @@ const SelectLeadSystem = () => {
     {
       id: 'sip',
       title: 'Smart SIP',
-      description: 'Manage Smart Systematic Investment Plan leads',
+      description: 'Systematic Investment Plan leads & long-term wealth portfolios',
       path: '/leads/sip',
       icon: TrendingUp,
       gradient: 'from-[#0d9488] to-[#14b8a6]',
