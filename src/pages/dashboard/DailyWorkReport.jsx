@@ -23,7 +23,8 @@ import {
   Sparkles,
   Zap,
   CheckCircle2,
-  Layers
+  Layers,
+  RotateCcw
 } from 'lucide-react';
 import { workReportService } from '../../api/workReportService';
 import { branchService } from '../../api/branchService';
@@ -51,11 +52,12 @@ const DEFAULT_DESIGNATIONS = [
 ];
 
 const AVAILABLE_PRODUCTS = [
-  'Loan Disbursement', 'Deposit Collection', 'Lead Generation',
-  'Share Capital', 'Staff Onboarding', 'Cash Collection',
-  'Fixed Deposit', 'Recurring Deposit', 'Savings Account',
-  'Current Account', 'Insurance Policy', 'Gold Loan', 'Member Cash Deposit',
-  'Cash Collection Account', 'Other'
+  'Credit Receipts',
+  'Debit Receipts',
+  'Cash Submissions',
+  'Loans Disbursed',
+  'Leads Generated',
+  'Manual Entries'
 ];
 
 const formatDate = (dateStr) => {
@@ -109,7 +111,7 @@ const DailyWorkReport = () => {
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const globalBranchId = useBranchStore(state => state.globalBranchId);
+  const { globalBranchId, branchOptions: storeBranchOptions, fetchBranches } = useBranchStore();
 
   // Log Work Report Modal State
   const [isLogModalOpen, setIsLogModalOpen] = useState(false);
@@ -128,6 +130,18 @@ const DailyWorkReport = () => {
   const [branchOptions, setBranchOptions] = useState([]);
   const [roleOptions, setRoleOptions] = useState([]);
   const [employeeOptions, setEmployeeOptions] = useState([]);
+
+  // Fetch branches from store
+  useEffect(() => {
+    fetchBranches();
+  }, [fetchBranches]);
+
+  // Combined branch options from API & store
+  const displayBranches = useMemo(() => {
+    if (branchOptions.length > 0) return branchOptions;
+    if (storeBranchOptions && storeBranchOptions.length > 0) return storeBranchOptions;
+    return [];
+  }, [branchOptions, storeBranchOptions]);
 
   // Applied Filters
   const [appliedFilters, setAppliedFilters] = useState({
@@ -162,20 +176,42 @@ const DailyWorkReport = () => {
     return () => clearTimeout(timer);
   }, [search]);
 
-  // Load dropdown options for Branch, Roles, and Employees
+  // Load dropdown options via Branch API, Role API, and Employee API
   useEffect(() => {
     const fetchDropdownOptions = async () => {
       try {
-        const [branchRes, roleRes, empRes] = await Promise.allSettled([
-          branchService.list({ limit: 100 }),
+        let branches = [];
+        try {
+          const bRes = await branchService.getDropdownList();
+          if (bRes && bRes.success && Array.isArray(bRes.data)) {
+            branches = bRes.data;
+          }
+        } catch (e) {
+          console.warn("Dropdown list endpoint failed, attempting fallback branchService.list()...", e);
+        }
+
+        if (branches.length === 0) {
+          try {
+            const bRes = await branchService.list({ limit: 100 });
+            if (bRes && bRes.success) {
+              branches = Array.isArray(bRes.data)
+                ? bRes.data
+                : (bRes.data?.branches || bRes.data?.items || []);
+            }
+          } catch (e) {
+            console.warn("branchService.list() error:", e);
+          }
+        }
+
+        if (branches.length > 0) {
+          setBranchOptions(branches);
+        }
+
+        const [roleRes, empRes] = await Promise.allSettled([
           roleService.list({ limit: 100 }),
           employeeService.list({ limit: 100 }),
         ]);
 
-        if (branchRes.status === 'fulfilled' && branchRes.value?.success) {
-          const list = branchRes.value.data || [];
-          setBranchOptions(Array.isArray(list) ? list : (list.branches || []));
-        }
         if (roleRes.status === 'fulfilled' && roleRes.value?.success) {
           const list = roleRes.value.data || [];
           setRoleOptions(Array.isArray(list) ? list : (list.roles || []));
@@ -322,6 +358,7 @@ const DailyWorkReport = () => {
     };
     setTempFilters(reset);
     setAppliedFilters(reset);
+    setSearch('');
     setPage(1);
     setIsFilterOpen(false);
   };
@@ -338,6 +375,11 @@ const DailyWorkReport = () => {
     if (appliedFilters.date) count++;
     return count;
   }, [appliedFilters]);
+
+  // Check if any filter or search is active
+  const hasActiveFilters = useMemo(() => {
+    return Boolean(activeFilterCount > 0 || search);
+  }, [activeFilterCount, search]);
 
   // Handle Log Work Report Submit (POST /api/v1/society/employees/hr/work-reports)
   const handleLogWorkReport = async (e) => {
@@ -500,136 +542,249 @@ const DailyWorkReport = () => {
         </div>
       </div>
 
-      {/* Main Content Card */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col overflow-hidden">
-        {/* Toolbar */}
-        <div className="p-5 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 border-b border-gray-100">
-          <div className="flex items-center gap-3 flex-1 flex-wrap">
-            {/* Search Input */}
-            <div className="relative flex-1 sm:w-80 min-w-[220px]">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={17} />
-              <input 
-                type="text" 
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search employee, branch, product..." 
-                className="w-full pl-10 pr-8 py-2.5 rounded-xl border border-gray-200 text-xs focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-gray-800"
-              />
-              {search && (
-                <button 
-                  onClick={() => setSearch('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
-                >
-                  <X size={14} />
-                </button>
-              )}
-            </div>
+      {/* Filter Toolbar Card (Matching Merchant submodule inline standard) */}
+      <div className="bg-white rounded-2xl p-4 shadow-xs border border-gray-100 space-y-3.5">
+        {/* Top Row: Search + Action Buttons */}
+        <div className="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-3">
+          <div className="relative flex-1">
+            <Search
+              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+              size={17}
+            />
+            <input
+              type="text"
+              placeholder="Search by employee, branch, product, remarks..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-10 pr-9 py-2.5 bg-gray-50/70 hover:bg-gray-50 focus:bg-white border border-gray-200 rounded-xl text-xs text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all shadow-2xs"
+            />
+            {search && (
+              <button
+                onClick={() => setSearch("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
+              >
+                <X size={15} />
+              </button>
+            )}
+          </div>
 
-            {/* Filter Trigger Button */}
-            <button 
-              onClick={handleOpenFilterModal}
-              className="px-3 py-2.5 flex items-center gap-1.5 rounded-xl border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors text-xs font-bold shrink-0 bg-white cursor-pointer"
-              title="Filter Reports"
-            >
-              <SlidersHorizontal size={16} />
-              <span>Filter</span>
-              {activeFilterCount > 0 && (
-                <span className="w-5 h-5 rounded-full bg-[#225091] text-white text-[10px] font-bold flex items-center justify-center">
-                  {activeFilterCount}
-                </span>
-              )}
-            </button>
+          <div className="flex items-center gap-2.5 flex-wrap">
+            {hasActiveFilters && (
+              <button
+                onClick={handleResetFilter}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-gray-600 hover:text-rose-600 bg-gray-50 hover:bg-rose-50 rounded-xl border border-gray-200 transition-colors cursor-pointer shadow-2xs"
+                title="Reset all filters"
+              >
+                <RotateCcw size={14} />
+                <span>Reset</span>
+              </button>
+            )}
 
-            {/* Refresh Button */}
             <button
               onClick={fetchWorkReports}
               disabled={loading}
-              className="p-2.5 flex items-center justify-center rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors shadow-2xs shrink-0 bg-white cursor-pointer"
+              className="p-2.5 flex items-center justify-center rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors shadow-2xs bg-white cursor-pointer"
               title="Refresh Data"
             >
               <RefreshCw size={16} className={loading ? 'animate-spin text-[#225091]' : ''} />
             </button>
-          </div>
-          
-          {/* Export Report Button */}
-          <div className="relative flex-shrink-0">
-            <button 
-              onClick={() => setIsExportOpen(!isExportOpen)}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold transition-colors text-xs shadow-2xs border bg-white text-gray-700 border-gray-200 hover:bg-gray-50 cursor-pointer"
+
+            {/* Export Dropdown */}
+            <div className="relative">
+              <button 
+                onClick={() => setIsExportOpen(!isExportOpen)}
+                className="flex items-center gap-2 px-3.5 py-2 rounded-xl font-bold transition-colors text-xs shadow-2xs border bg-white text-gray-700 border-gray-200 hover:bg-gray-50 cursor-pointer"
+              >
+                <Download size={15} />
+                <span>Export</span>
+                <ChevronDown size={13} className={`transition-transform duration-200 ${isExportOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {isExportOpen && (
+                <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-100 rounded-xl shadow-xl py-2 z-50 animate-in fade-in zoom-in-95 duration-150 p-1.5">
+                  <button
+                    onClick={exportToCSV}
+                    className="w-full px-3 py-2 text-left text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2 font-medium rounded-lg cursor-pointer"
+                  >
+                    <Table size={14} className="text-gray-500" />
+                    <span>Export to CSV</span>
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Log Daily Work Entry Button */}
+            <button
+              onClick={() => setIsLogModalOpen(true)}
+              className="flex items-center gap-1.5 px-4.5 py-2 bg-[#225091] hover:bg-[#183f72] text-white rounded-xl font-bold text-xs transition-colors shadow-2xs shrink-0 cursor-pointer"
             >
-              <Download size={15} />
-              <span>Export</span>
-              <ChevronDown size={14} />
+              <Plus size={15} />
+              <span>Log Daily Work</span>
             </button>
-            
-            {isExportOpen && (
-              <div className="absolute right-0 mt-2 w-44 bg-white border border-gray-100 rounded-xl shadow-xl z-50 overflow-hidden p-1.5">
-                <button 
-                  onClick={exportToCSV} 
-                  className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50 rounded-lg transition-colors text-left cursor-pointer"
-                >
-                  <Table size={14} className="text-emerald-600" />
-                  Export to CSV
-                </button>
-              </div>
-            )}
           </div>
         </div>
 
-        {/* Active Filters Display Bar */}
-        {activeFilterCount > 0 && (
-          <div className="px-5 py-2.5 bg-blue-50/50 border-b border-blue-100/60 flex items-center justify-between gap-3 flex-wrap text-xs">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-bold text-gray-700">Active Filters:</span>
-              {appliedFilters.startDate && (
-                <span className="bg-white text-[#225091] border border-blue-200 px-2.5 py-0.5 rounded-md text-[11px] font-semibold flex items-center gap-1.5 shadow-2xs">
-                  From: {formatDate(appliedFilters.startDate)}
-                  <button onClick={() => setAppliedFilters(prev => ({ ...prev, startDate: '' }))} className="hover:text-red-500 cursor-pointer">
-                    <X size={12} />
-                  </button>
-                </span>
+        {/* Bottom Inline Filter Controls: Branch -> Employee -> Designation -> Start Date -> End Date */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 pt-2 border-t border-gray-100">
+          {/* 1. Branch */}
+          <div className="relative">
+            <select
+              value={appliedFilters.branchId || appliedFilters.branchIds || ''}
+              onChange={(e) => {
+                setAppliedFilters(prev => ({ ...prev, branchId: e.target.value, branchIds: e.target.value }));
+                setPage(1);
+              }}
+              className="w-full pl-3 pr-8 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-xs font-medium text-gray-700 shadow-2xs appearance-none cursor-pointer"
+            >
+              <option value="">All Branches</option>
+              {displayBranches.map((branch) => {
+                const bId = branch.id || branch._id;
+                const bName = branch.branchName || branch.name || `Branch #${bId}`;
+                return <option key={bId} value={bId}>{bName}</option>;
+              })}
+            </select>
+            <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+          </div>
+
+          {/* 2. Employee */}
+          <div className="relative">
+            <select
+              value={appliedFilters.employeeId || ''}
+              onChange={(e) => {
+                setAppliedFilters(prev => ({ ...prev, employeeId: e.target.value }));
+                setPage(1);
+              }}
+              className="w-full pl-3 pr-8 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-xs font-medium text-gray-700 shadow-2xs appearance-none cursor-pointer"
+            >
+              <option value="">All Employees</option>
+              {employeeOptions.map(e => (
+                <option key={e.id || e._id} value={e.id || e._id}>
+                  {e.fullName || e.name}
+                </option>
+              ))}
+            </select>
+            <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+          </div>
+
+          {/* 3. Designation */}
+          <div className="relative">
+            <select
+              value={appliedFilters.designations || ''}
+              onChange={(e) => {
+                setAppliedFilters(prev => ({ ...prev, designations: e.target.value }));
+                setPage(1);
+              }}
+              className="w-full pl-3 pr-8 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-xs font-medium text-gray-700 shadow-2xs appearance-none cursor-pointer"
+            >
+              <option value="">All Designations</option>
+              {roleOptions.length > 0 ? (
+                roleOptions.map((role) => (
+                  <option key={role.id || role._id || role.name} value={role.name || role.roleName}>
+                    {role.name || role.roleName}
+                  </option>
+                ))
+              ) : (
+                DEFAULT_DESIGNATIONS.map((d, i) => (
+                  <option key={i} value={d}>{d}</option>
+                ))
               )}
-              {appliedFilters.endDate && (
-                <span className="bg-white text-[#225091] border border-blue-200 px-2.5 py-0.5 rounded-md text-[11px] font-semibold flex items-center gap-1.5 shadow-2xs">
-                  To: {formatDate(appliedFilters.endDate)}
-                  <button onClick={() => setAppliedFilters(prev => ({ ...prev, endDate: '' }))} className="hover:text-red-500 cursor-pointer">
-                    <X size={12} />
-                  </button>
-                </span>
-              )}
-              {(appliedFilters.branchId || appliedFilters.branchIds) && (
-                <span className="bg-white text-[#225091] border border-blue-200 px-2.5 py-0.5 rounded-md text-[11px] font-semibold flex items-center gap-1.5 shadow-2xs">
-                  Branch: {branchOptions.find(b => (b.id === (appliedFilters.branchId || appliedFilters.branchIds) || b._id === (appliedFilters.branchId || appliedFilters.branchIds)))?.name || (appliedFilters.branchId || appliedFilters.branchIds)}
-                  <button onClick={() => setAppliedFilters(prev => ({ ...prev, branchId: '', branchIds: '' }))} className="hover:text-red-500 cursor-pointer">
-                    <X size={12} />
-                  </button>
-                </span>
-              )}
-              {appliedFilters.employeeId && (
-                <span className="bg-white text-[#225091] border border-blue-200 px-2.5 py-0.5 rounded-md text-[11px] font-semibold flex items-center gap-1.5 shadow-2xs">
-                  Employee: {employeeOptions.find(e => (e.id === appliedFilters.employeeId || e._id === appliedFilters.employeeId))?.fullName || appliedFilters.employeeId}
-                  <button onClick={() => setAppliedFilters(prev => ({ ...prev, employeeId: '' }))} className="hover:text-red-500 cursor-pointer">
-                    <X size={12} />
-                  </button>
-                </span>
-              )}
-              {appliedFilters.designations && (
-                <span className="bg-white text-[#225091] border border-blue-200 px-2.5 py-0.5 rounded-md text-[11px] font-semibold flex items-center gap-1.5 shadow-2xs">
-                  Designation: {appliedFilters.designations}
-                  <button onClick={() => setAppliedFilters(prev => ({ ...prev, designations: '' }))} className="hover:text-red-500 cursor-pointer">
-                    <X size={12} />
-                  </button>
-                </span>
-              )}
-            </div>
+            </select>
+            <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+          </div>
+
+          {/* 4. Start Date */}
+          <div className="relative">
+            <input
+              type="date"
+              value={appliedFilters.startDate || ''}
+              onChange={(e) => {
+                setAppliedFilters(prev => ({ ...prev, startDate: e.target.value }));
+                setPage(1);
+              }}
+              title="Start Date"
+              className="w-full px-3 py-1.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-xs font-medium text-gray-700 shadow-2xs cursor-pointer"
+            />
+          </div>
+
+          {/* 5. End Date */}
+          <div className="relative">
+            <input
+              type="date"
+              value={appliedFilters.endDate || ''}
+              onChange={(e) => {
+                setAppliedFilters(prev => ({ ...prev, endDate: e.target.value }));
+                setPage(1);
+              }}
+              title="End Date"
+              className="w-full px-3 py-1.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-xs font-medium text-gray-700 shadow-2xs cursor-pointer"
+            />
+          </div>
+        </div>
+
+        {/* Active Filter Chips */}
+        {hasActiveFilters && (
+          <div className="pt-2 border-t border-gray-100 flex items-center flex-wrap gap-2 text-xs">
+            <span className="font-bold text-gray-500 uppercase tracking-wider text-[10px] flex items-center gap-1 mr-1">
+              Active:
+            </span>
+
+            {(appliedFilters.branchId || appliedFilters.branchIds) && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-indigo-50 text-indigo-800 border border-indigo-200 text-[11px] font-semibold">
+                <span>Branch: {displayBranches.find(b => (b.id === (appliedFilters.branchId || appliedFilters.branchIds) || b._id === (appliedFilters.branchId || appliedFilters.branchIds)))?.branchName || displayBranches.find(b => (b.id === (appliedFilters.branchId || appliedFilters.branchIds) || b._id === (appliedFilters.branchId || appliedFilters.branchIds)))?.name || 'Selected Branch'}</span>
+                <button onClick={() => setAppliedFilters(prev => ({ ...prev, branchId: '', branchIds: '' }))} className="hover:text-rose-600 cursor-pointer">
+                  <X size={11} />
+                </button>
+              </span>
+            )}
+
+            {appliedFilters.employeeId && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200 text-[11px] font-semibold">
+                <span>Employee: {employeeOptions.find(e => (e.id === appliedFilters.employeeId || e._id === appliedFilters.employeeId))?.fullName || 'Selected Employee'}</span>
+                <button onClick={() => setAppliedFilters(prev => ({ ...prev, employeeId: '' }))} className="hover:text-rose-600 cursor-pointer">
+                  <X size={11} />
+                </button>
+              </span>
+            )}
+
+            {appliedFilters.designations && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-blue-50 text-[#225091] border border-blue-200 text-[11px] font-semibold">
+                <span>Designation: {appliedFilters.designations}</span>
+                <button onClick={() => setAppliedFilters(prev => ({ ...prev, designations: '' }))} className="hover:text-rose-600 cursor-pointer">
+                  <X size={11} />
+                </button>
+              </span>
+            )}
+
+            {appliedFilters.startDate && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-purple-50 text-purple-800 border border-purple-200 text-[11px] font-semibold">
+                <span>From: {formatDate(appliedFilters.startDate)}</span>
+                <button onClick={() => setAppliedFilters(prev => ({ ...prev, startDate: '' }))} className="hover:text-rose-600 cursor-pointer">
+                  <X size={11} />
+                </button>
+              </span>
+            )}
+
+            {appliedFilters.endDate && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-purple-50 text-purple-800 border border-purple-200 text-[11px] font-semibold">
+                <span>To: {formatDate(appliedFilters.endDate)}</span>
+                <button onClick={() => setAppliedFilters(prev => ({ ...prev, endDate: '' }))} className="hover:text-rose-600 cursor-pointer">
+                  <X size={11} />
+                </button>
+              </span>
+            )}
+
             <button
               onClick={handleResetFilter}
-              className="text-[11px] text-rose-600 hover:text-rose-800 font-bold underline cursor-pointer"
+              className="text-xs text-rose-600 hover:text-rose-800 font-bold ml-auto hover:underline cursor-pointer"
             >
               Clear All
             </button>
           </div>
         )}
+      </div>
+
+      {/* Main Table Card */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col overflow-hidden">
 
         {/* Table View */}
         <div className="overflow-x-auto min-h-[300px] relative">
@@ -776,99 +931,7 @@ const DailyWorkReport = () => {
         </div>
       </div>
 
-      {/* Filter Modal */}
-      {isFilterOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-gray-100 space-y-4 animate-in zoom-in-95">
-            <div className="flex items-center justify-between pb-3 border-b border-gray-100">
-              <h3 className="text-sm font-bold text-gray-900">Filter Work Reports</h3>
-              <button onClick={() => setIsFilterOpen(false)} className="text-gray-400 hover:text-gray-600 cursor-pointer">
-                <X size={18} />
-              </button>
-            </div>
 
-            <div className="space-y-3.5 text-xs">
-              <div>
-                <label className="block font-bold text-gray-700 uppercase tracking-wider mb-1.5">Branch</label>
-                <select 
-                  value={tempFilters.branchId || tempFilters.branchIds}
-                  onChange={(e) => setTempFilters(prev => ({ ...prev, branchId: e.target.value, branchIds: e.target.value }))}
-                  className="w-full px-3.5 py-2 rounded-lg border border-gray-200 text-gray-800 bg-white"
-                >
-                  <option value="">All Branches</option>
-                  {branchOptions.map(b => (
-                    <option key={b.id || b._id} value={b.id || b._id}>{b.name || b.branchName}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block font-bold text-gray-700 uppercase tracking-wider mb-1.5">Employee</label>
-                <select 
-                  value={tempFilters.employeeId}
-                  onChange={(e) => setTempFilters(prev => ({ ...prev, employeeId: e.target.value }))}
-                  className="w-full px-3.5 py-2 rounded-lg border border-gray-200 text-gray-800 bg-white"
-                >
-                  <option value="">All Employees</option>
-                  {employeeOptions.map(e => (
-                    <option key={e.id || e._id} value={e.id || e._id}>{e.fullName || e.name}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block font-bold text-gray-700 uppercase tracking-wider mb-1.5">Designation</label>
-                <select 
-                  value={tempFilters.designations}
-                  onChange={(e) => setTempFilters(prev => ({ ...prev, designations: e.target.value }))}
-                  className="w-full px-3.5 py-2 rounded-lg border border-gray-200 text-gray-800 bg-white"
-                >
-                  <option value="">All Designations</option>
-                  {DEFAULT_DESIGNATIONS.map((d, i) => (
-                    <option key={i} value={d}>{d}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-bold text-gray-700 uppercase tracking-wider mb-1.5">Start Date</label>
-                  <input 
-                    type="date"
-                    value={tempFilters.startDate}
-                    onChange={(e) => setTempFilters(prev => ({ ...prev, startDate: e.target.value }))}
-                    className="w-full px-3 py-2 rounded-lg border border-gray-200 text-gray-800 bg-white"
-                  />
-                </div>
-                <div>
-                  <label className="block font-bold text-gray-700 uppercase tracking-wider mb-1.5">End Date</label>
-                  <input 
-                    type="date"
-                    value={tempFilters.endDate}
-                    onChange={(e) => setTempFilters(prev => ({ ...prev, endDate: e.target.value }))}
-                    className="w-full px-3 py-2 rounded-lg border border-gray-200 text-gray-800 bg-white"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="pt-3 flex gap-2">
-              <button 
-                onClick={handleResetFilter}
-                className="flex-1 py-2 px-3 rounded-xl border border-gray-200 text-gray-600 font-bold hover:bg-gray-50 text-xs transition-colors cursor-pointer"
-              >
-                Reset
-              </button>
-              <button 
-                onClick={handleApplyFilter}
-                className="flex-1 py-2 px-3 rounded-xl bg-[#225091] text-white font-bold hover:bg-[#193d6e] text-xs transition-colors shadow-2xs cursor-pointer"
-              >
-                Apply Filters
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Log Work Report Modal */}
       {isLogModalOpen && (
