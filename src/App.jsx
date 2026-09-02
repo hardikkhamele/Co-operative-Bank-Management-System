@@ -97,6 +97,10 @@ const ViewCashPayment = lazy(() => import('./pages/dashboard/ViewCashPayment'));
 const CardsAndCredit = lazy(() => import('./pages/dashboard/CardsAndCredit'));
 const ChoosePaymentMethod = lazy(() => import('./pages/dashboard/ChoosePaymentMethod'));
 const PaymentSuccessful = lazy(() => import('./pages/dashboard/PaymentSuccessful'));
+
+// Geo Tagging & Audit
+const GeoTagging = lazy(() => import('./pages/dashboard/GeoTagging'));
+
 // General
 const ComingSoon = lazy(() => import('./pages/dashboard/ComingSoon'));
 
@@ -304,9 +308,11 @@ function App() {
                 <Route path="settings/help" element={<HelpSupport />} />
               </Route>
 
-              {/* Coming Soon */}
-              <Route path="geo-tagging" element={<ComingSoon featureName="Geo Tagging" />} />
+              {/* Geo Tagging & Audit */}
+              <Route path="geo-tagging" element={<GeoTagging />} />
               <Route path="jio-tagging" element={<Navigate to="/geo-tagging" replace />} />
+              
+              {/* Coming Soon Features */}
               <Route path="upi-autopay" element={<ComingSoon featureName="UPI Autopay" />} />
               <Route path="whatsapp-banking" element={<ComingSoon featureName="WhatsApp Banking" />} />
               <Route path="biomatrix-integration" element={<ComingSoon featureName="Biomatrix Integration" />} />

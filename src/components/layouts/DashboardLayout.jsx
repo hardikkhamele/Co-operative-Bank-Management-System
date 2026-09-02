@@ -1,6 +1,6 @@
 import React, { useState, useEffect, createContext, useContext, Children, isValidElement, Fragment, useCallback } from 'react';
 import { NavLink, Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, MapPin, IdCard, UserPlus, List, ClipboardList, Store, Box, ArrowDownRight, ArrowUpRight, ArrowRightLeft, RefreshCcw, UserCheck, UserCog, Tag, ChevronDown, Bell, User, LogOut, CreditCard, MoreHorizontal, Headphones, FileText, BarChart2, TrendingUp, CalendarDays, CalendarCheck, Banknote, Smartphone, MessageCircle, Fingerprint, ArrowLeft, ArrowRight } from 'lucide-react';
+import { LayoutDashboard, MapPin, IdCard, UserPlus, List, ClipboardList, Store, Box, ArrowDownRight, ArrowUpRight, ArrowRightLeft, RefreshCcw, UserCheck, UserCog, Tag, ChevronDown, Bell, User, LogOut, CreditCard, MoreHorizontal, Headphones, FileText, BarChart2, TrendingUp, CalendarDays, CalendarCheck, Banknote, Smartphone, MessageCircle, Fingerprint, ArrowLeft, ArrowRight, Menu, X, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
 import useLoadingStore from '../../store/loadingStore';
 import useBranchStore from '../../store/branchStore';
@@ -82,26 +82,21 @@ const SidebarGroup = ({ title, children }) => {
             {title}
           </h3>
         </div>
-        <ChevronDown size={16} className={`transition-transform duration-300 ease-out ${
-          isOpen 
-            ? 'rotate-180 text-brand-primary' 
-            : hasActiveChild 
-              ? 'text-brand-primary font-bold' 
+        <ChevronDown 
+          size={16} 
+          className={`transition-transform duration-200 ${
+            hasActiveChild 
+              ? 'text-brand-primary' 
               : 'text-text-muted'
-        }`} />
+          } ${isOpen ? 'rotate-180' : ''}`} 
+        />
       </div>
-      
-      <div 
-        className={`grid transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] bg-transparent ${
-          isOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
-        }`}
-      >
-        <div className="overflow-hidden">
-          <div className="space-y-1 py-2">
-            {validChildren}
-          </div>
+
+      {isOpen && (
+        <div className="py-1 space-y-0.5 bg-brand-surface/50 animate-in fade-in slide-in-from-top-1 duration-150">
+          {validChildren}
         </div>
-      </div>
+      )}
     </div>
   );
 };
@@ -112,21 +107,44 @@ const DashboardLayout = () => {
   const location = useLocation();
   const { hasPermission, hasAnyPermission } = usePermission();
   
+  // Hidden / Show More Routes
   const hiddenRoutes = [
-    '/credit', '/debit', '/transfer', '/contra', 
-    '/cash-payment', '/cards-credit', '/geo-tagging', '/upi-autopay', 
-    '/whatsapp-banking', '/biomatrix-integration', 
-    '/roles-permissions', '/settings'
+    '/upi-autopay',
+    '/whatsapp-banking',
+    '/biomatrix',
+    '/roles-permissions',
+    '/help-support',
   ];
   
   const [showMore, setShowMore] = useState(() => {
     return hiddenRoutes.some(route => location.pathname.startsWith(route));
   });
 
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isDesktopSidebarOpen, setIsDesktopSidebarOpen] = useState(() => {
+    try {
+      const saved = localStorage.getItem('advita_desktop_sidebar_open');
+      return saved !== null ? JSON.parse(saved) : true;
+    } catch {
+      return true;
+    }
+  });
+
+  const toggleDesktopSidebar = () => {
+    setIsDesktopSidebarOpen(prev => {
+      const next = !prev;
+      try {
+        localStorage.setItem('advita_desktop_sidebar_open', JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+  };
+
   useEffect(() => {
     if (hiddenRoutes.some(route => location.pathname.startsWith(route))) {
       setShowMore(true);
     }
+    setIsMobileMenuOpen(false);
   }, [location.pathname]);
 
   const logout = useAuthStore((state) => state.logout);
@@ -198,10 +216,26 @@ const DashboardLayout = () => {
 
   return (
     <div className="flex h-screen bg-bg-page overflow-hidden">
-      {/* Sidebar */}
-      <div className="w-[236px] bg-brand-sidebar border-r border-border-divider flex flex-col shadow-sm z-10 print:hidden shrink-0">
+      {/* Mobile Drawer Backdrop */}
+      {isMobileMenuOpen && (
+        <div 
+          className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-40 lg:hidden animate-in fade-in duration-200"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
+      {/* Sidebar (Desktop Collapsible & Mobile Slide Drawer) */}
+      <aside 
+        className={`fixed inset-y-0 left-0 z-50 bg-brand-sidebar border-r border-border-divider flex flex-col shadow-2xl lg:shadow-sm lg:static lg:z-10 transition-all duration-300 ease-in-out print:hidden shrink-0 ${
+          isMobileMenuOpen ? 'w-[260px] translate-x-0' : '-translate-x-full lg:translate-x-0'
+        } ${
+          isDesktopSidebarOpen
+            ? 'lg:w-[236px] lg:opacity-100 lg:visible'
+            : 'lg:w-0 lg:opacity-0 lg:invisible lg:border-none lg:p-0 lg:overflow-hidden'
+        }`}
+      >
         {/* Logo Area */}
-        <div className="h-[76px] flex items-center px-4 border-b border-border-divider">
+        <div className="h-[76px] flex items-center justify-between px-4 border-b border-border-divider shrink-0 overflow-hidden">
           <div className="flex items-center gap-3">
             {/* Logo Icon Box */}
             <div className="bg-white rounded-lg shadow-sm flex flex-col items-center justify-center shrink-0 w-11 h-11 p-1">
@@ -213,10 +247,19 @@ const DashboardLayout = () => {
             </div>
             {/* Logo Text */}
             <div className="flex flex-col text-[#1b58a6]">
-              <span className="font-extrabold text-[17px] leading-tight tracking-wide">ADVITA CREDIT</span>
-              <span className="font-bold text-[10px] leading-tight tracking-wide">INFO PVRIVATE LIMITED</span>
+              <span className="font-extrabold text-[17px] leading-tight tracking-wide whitespace-nowrap">ADVITA CREDIT</span>
+              <span className="font-bold text-[10px] leading-tight tracking-wide whitespace-nowrap">INFO PRIVATE LIMITED</span>
             </div>
           </div>
+          {/* Mobile-Only Close Button */}
+          <button
+            type="button"
+            onClick={() => setIsMobileMenuOpen(false)}
+            aria-label="Close menu"
+            className="lg:hidden p-1.5 rounded-lg text-gray-500 hover:text-gray-800 hover:bg-gray-100 transition-colors cursor-pointer"
+          >
+            <X size={20} />
+          </button>
         </div>
 
         {/* Navigation */}
@@ -352,14 +395,15 @@ const DashboardLayout = () => {
             )}
           </SidebarGroup>
 
+          {/* Geo Tagging */}
+          <SidebarGroup title="Geo Tagging">
+            <NavLink to="/geo-tagging" className={subNavLinkClass}>
+              <MapPin size={18} /> Geo Tagging
+            </NavLink>
+          </SidebarGroup>
+
           {showMore && (
             <>
-              <SidebarGroup title="Geo Tagging">
-                <NavLink to="/geo-tagging" className={subNavLinkClass}>
-                  <MapPin size={18} /> Geo Tagging
-                </NavLink>
-              </SidebarGroup>
-
               <SidebarGroup title="UPI Smart">
                 {hasAnyPermission(['upi_autopay.view', 'upi.view']) && (
                   <NavLink to="/upi-autopay" className={subNavLinkClass}>
@@ -434,19 +478,48 @@ const DashboardLayout = () => {
           )}
         </div>
       </SidebarAccordionContext.Provider>
-      </div>
+      </aside>
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden relative">
         {/* Topbar */}
-        <header className="h-[76px] bg-brand-header text-white flex items-center justify-between px-8 shadow-sm shrink-0 print:hidden">
-          <div className="flex items-center gap-8">
+        <header className="h-[76px] bg-brand-header text-white flex items-center justify-between px-4 sm:px-8 shadow-sm shrink-0 print:hidden">
+          <div className="flex items-center gap-3 sm:gap-4">
+            {/* Sidebar Toggle Button (Desktop & Mobile) */}
+            <button
+              type="button"
+              onClick={() => {
+                if (window.innerWidth < 1024) {
+                  setIsMobileMenuOpen(true);
+                } else {
+                  toggleDesktopSidebar();
+                }
+              }}
+              aria-label={isDesktopSidebarOpen ? "Collapse navigation sidebar" : "Expand navigation sidebar"}
+              title={isDesktopSidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
+              className={`w-10 h-10 rounded-xl transition-all duration-200 cursor-pointer flex items-center justify-center shrink-0 border focus:outline-none focus:ring-2 focus:ring-white/30 active:scale-95 ${
+                isDesktopSidebarOpen
+                  ? "bg-white/10 hover:bg-white/20 border-white/15 text-white/90 hover:text-white shadow-2xs"
+                  : "bg-white/25 hover:bg-white/35 border-white/30 text-white shadow-sm ring-2 ring-white/15"
+              }`}
+            >
+              {isDesktopSidebarOpen ? (
+                <PanelLeftClose size={20} className="hidden lg:block transition-transform duration-200" />
+              ) : (
+                <PanelLeftOpen size={20} className="hidden lg:block transition-transform duration-200" />
+              )}
+              <Menu size={22} className="lg:hidden" />
+            </button>
+
+            {/* Subtle Vertical Divider */}
+            <div className="hidden sm:block h-6 w-px bg-white/20 shrink-0" />
+
             <div>
-              <div className="text-xs text-white/80 font-medium">Welcome</div>
-              <div className="flex items-center gap-2.5">
-                <div className="text-lg font-semibold tracking-wide">{userName}</div>
+              <div className="text-[11px] sm:text-xs text-white/80 font-medium">Welcome</div>
+              <div className="flex items-center gap-2">
+                <div className="text-base sm:text-lg font-semibold tracking-wide truncate max-w-[130px] sm:max-w-none">{userName}</div>
                 {roleName && (
-                  <span className="bg-white/15 text-white/90 border border-white/20 px-2 py-0.5 rounded-full text-[11px] font-medium tracking-wide">
+                  <span className="hidden sm:inline-block bg-white/15 text-white/90 border border-white/20 px-2 py-0.5 rounded-full text-[10px] sm:text-[11px] font-medium tracking-wide">
                     {roleName}
                   </span>
                 )}
@@ -454,7 +527,7 @@ const DashboardLayout = () => {
             </div>
           </div>
           
-          <div className="flex items-center gap-5 relative">
+          <div className="flex items-center gap-3 sm:gap-5 relative">
             <Link to="/notifications" className="relative p-2 bg-white/20 rounded-full hover:bg-white/30 transition-colors block">
               <Bell size={18} className="text-white" />
               <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-semantic-danger rounded-full border border-brand-header flex items-center justify-center text-[8px] font-bold"></span>
@@ -465,10 +538,10 @@ const DashboardLayout = () => {
                 onClick={() => setIsProfileOpen(!isProfileOpen)}
                 className="flex items-center gap-2 bg-white/90 text-text-heading py-1.5 px-2 pr-3 rounded-full cursor-pointer hover:bg-white transition-colors shadow-sm"
               >
-                <div className="w-8 h-8 rounded-full bg-gray-200 overflow-hidden border border-gray-100 flex items-center justify-center">
+                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gray-200 overflow-hidden border border-gray-100 flex items-center justify-center">
                   <img src={userAvatar} alt={userName} className="w-full h-full object-cover" />
                 </div>
-                <span className="text-sm font-medium">{userName.split(' ')[0]}</span>
+                <span className="text-xs sm:text-sm font-medium hidden xs:inline">{userName.split(' ')[0]}</span>
                 <ChevronDown size={14} className={`text-text-muted transition-transform ${isProfileOpen ? 'rotate-180' : ''}`} />
               </div>
 
@@ -496,7 +569,7 @@ const DashboardLayout = () => {
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-y-auto bg-bg-page p-6 relative">
+        <main className="flex-1 overflow-y-auto bg-bg-page p-3.5 sm:p-6 relative">
           
           
           <GlobalLoader />
@@ -508,4 +581,3 @@ const DashboardLayout = () => {
 };
 
 export default DashboardLayout;
-

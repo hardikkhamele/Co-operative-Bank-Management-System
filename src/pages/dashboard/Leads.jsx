@@ -272,9 +272,25 @@ const Leads = ({ leadType: propLeadType, systemTitle: propSystemTitle }) => {
       };
 
       if (debouncedSearch.trim()) params.search = debouncedSearch.trim();
-      if (selectedStatus) {
-        params.status = selectedStatus;
-        params.approvalStatus = selectedStatus;
+      if (selectedStatus && selectedStatus !== 'ALL') {
+        if (selectedStatus === 'PENDING_BRANCH_PAYMENT' || selectedStatus === 'PENDING_SETTLEMENT') {
+          params.settlementStatus = 'PENDING_BRANCH_PAYMENT';
+          params.status = 'PENDING_BRANCH_PAYMENT';
+        } else if (selectedStatus === 'SETTLED_BY_BRANCH' || selectedStatus === 'SETTLED') {
+          params.settlementStatus = 'SETTLED_BY_BRANCH';
+          params.status = 'SETTLED_BY_BRANCH';
+        } else if (selectedStatus === 'PENDING_APPROVAL') {
+          params.status = 'PENDING_APPROVAL';
+          params.approvalStatus = 'PENDING_APPROVAL';
+        } else if (selectedStatus === 'APPROVED') {
+          params.status = 'APPROVED';
+          params.approvalStatus = 'APPROVED';
+        } else if (selectedStatus === 'ACTIVE') {
+          params.status = 'ACTIVE';
+        } else {
+          params.status = selectedStatus;
+          params.approvalStatus = selectedStatus;
+        }
       }
       if (dateFrom) params.startDate = dateFrom;
       if (dateTo) params.endDate = dateTo;
@@ -299,15 +315,25 @@ const Leads = ({ leadType: propLeadType, systemTitle: propSystemTitle }) => {
         if (apiStats && typeof apiStats === 'object' && Object.keys(apiStats).length > 0) {
           setStats(prev => {
             const isPrevAllZeros = !prev || (prev.totalLeads === 0 && prev.pendingLeads === 0 && prev.approvedLeads === 0);
-            if (!selectedStatus || isPrevAllZeros) {
-              return { ...prev, ...apiStats };
+            if (!selectedStatus || selectedStatus === 'ALL' || isPrevAllZeros) {
+              return { 
+                ...prev, 
+                ...apiStats,
+                pendingSettlementLeads: apiStats.pendingSettlementLeads ?? apiStats.pendingSettlement ?? 0,
+                settledLeads: apiStats.settledLeads ?? apiStats.settled ?? 0,
+                approvedLeads: apiStats.approvedLeads ?? 0,
+                activeLeads: apiStats.activeLeads ?? 0,
+                totalBusinessVolume: apiStats.totalBusinessVolume ?? 0,
+                pendingSettlementAmount: apiStats.pendingSettlementAmount ?? 0,
+                totalSettledAmount: apiStats.totalSettledAmount ?? 0
+              };
             }
             return prev;
           });
         }
 
         // Store master list when unfiltered
-        if (!selectedStatus) {
+        if (!selectedStatus || selectedStatus === 'ALL') {
           setMasterLeads(rawItems);
           if ((!apiStats || Object.keys(apiStats).length === 0) && rawItems.length > 0) {
             // Compute client fallback stats from unfiltered data
@@ -318,10 +344,22 @@ const Leads = ({ leadType: propLeadType, systemTitle: propSystemTitle }) => {
               activeLeads: rawItems.filter(l => (l.status || '').toUpperCase() === 'ACTIVE').length,
               completedLeads: rawItems.filter(l => (l.status || '').toUpperCase() === 'COMPLETED').length,
               rejectedLeads: rawItems.filter(l => (l.status || '').toUpperCase() === 'REJECTED').length,
-              pendingSettlementLeads: rawItems.filter(l => (l.settlementDetails?.settlementStatus || '').toUpperCase().includes('PENDING')).length,
-              settledLeads: rawItems.filter(l => (l.settlementDetails?.settlementStatus || l.status || '').toUpperCase() === 'SETTLED').length,
-              pendingSettlementAmount: rawItems.filter(l => (l.settlementDetails?.settlementStatus || '').toUpperCase().includes('PENDING')).reduce((sum, l) => sum + (l.settlementDetails?.netDisbursalAmount || l.financialDetails?.totalLoanAmount || 0), 0),
-              totalSettledAmount: rawItems.filter(l => (l.settlementDetails?.settlementStatus || '').toUpperCase() === 'SETTLED').reduce((sum, l) => sum + (l.settlementDetails?.netDisbursalAmount || l.financialDetails?.totalLoanAmount || 0), 0),
+              pendingSettlementLeads: rawItems.filter(l => {
+                const s = (l.settlementDetails?.settlementStatus || l.settlementStatus || l.status || '').toUpperCase();
+                return s === 'PENDING_BRANCH_PAYMENT' || s.includes('PENDING');
+              }).length,
+              settledLeads: rawItems.filter(l => {
+                const s = (l.settlementDetails?.settlementStatus || l.settlementStatus || l.status || '').toUpperCase();
+                return s === 'SETTLED_BY_BRANCH' || s === 'SETTLED';
+              }).length,
+              pendingSettlementAmount: rawItems.filter(l => {
+                const s = (l.settlementDetails?.settlementStatus || l.settlementStatus || l.status || '').toUpperCase();
+                return s === 'PENDING_BRANCH_PAYMENT' || s.includes('PENDING');
+              }).reduce((sum, l) => sum + (l.settlementDetails?.netDisbursalAmount || l.financialDetails?.totalLoanAmount || 0), 0),
+              totalSettledAmount: rawItems.filter(l => {
+                const s = (l.settlementDetails?.settlementStatus || l.settlementStatus || l.status || '').toUpperCase();
+                return s === 'SETTLED_BY_BRANCH' || s === 'SETTLED';
+              }).reduce((sum, l) => sum + (l.settlementDetails?.netDisbursalAmount || l.financialDetails?.totalLoanAmount || 0), 0),
               totalBusinessVolume: rawItems.reduce((acc, l) => acc + (l.financialDetails?.totalLoanAmount || l.productDetails?.productPrice || 0), 0),
             });
           }
@@ -691,8 +729,8 @@ const Leads = ({ leadType: propLeadType, systemTitle: propSystemTitle }) => {
               </div>
 
               <div
-                onClick={() => handleStatusCardClick("SETTLED")}
-                className={`bg-white rounded-2xl p-4 border shadow-xs flex flex-col items-center justify-center cursor-pointer transition-all hover:shadow-md ${selectedStatus === "SETTLED" ? "border-teal-500 ring-2 ring-teal-500/20 bg-teal-50/30" : "border-gray-100 hover:border-teal-200"}`}
+                onClick={() => handleStatusCardClick("SETTLED_BY_BRANCH")}
+                className={`bg-white rounded-2xl p-4 border shadow-xs flex flex-col items-center justify-center cursor-pointer transition-all hover:shadow-md ${selectedStatus === "SETTLED_BY_BRANCH" || selectedStatus === "SETTLED" ? "border-teal-500 ring-2 ring-teal-500/20 bg-teal-50/30" : "border-gray-100 hover:border-teal-200"}`}
               >
                 <span className="text-2xl font-black text-teal-600 leading-none mb-1">
                   {loading && stats.totalLeads === 0 ? <Loader2 size={20} className="animate-spin text-teal-500/50" /> : (stats.settledLeads ?? 0)}
@@ -793,20 +831,20 @@ const Leads = ({ leadType: propLeadType, systemTitle: propSystemTitle }) => {
                   <>
                     <option value="PENDING_APPROVAL">Pending Approval</option>
                     <option value="APPROVED">Approved</option>
-                    <option value="ACTIVE">Active</option>
+                    <option value="ACTIVE">Active Loans</option>
                     <option value="COMPLETED">Completed</option>
                     <option value="REJECTED">Rejected</option>
                   </>
                 ) : isMerchantSystem ? (
                   <>
                     <option value="PENDING_BRANCH_PAYMENT">Pending Settlement</option>
-                    <option value="SETTLED">Settled</option>
-                    <option value="APPROVED">Approved</option>
-                    <option value="ACTIVE">Active</option>
+                    <option value="SETTLED_BY_BRANCH">Settled Leads</option>
+                    <option value="APPROVED">Approved Leads</option>
+                    <option value="ACTIVE">Active Loans</option>
                   </>
                 ) : (
                   <>
-                    <option value="ACTIVE">Active</option>
+                    <option value="ACTIVE">Active Loans</option>
                     <option value="COMPLETED">Completed</option>
                     <option value="REJECTED">Rejected</option>
                   </>

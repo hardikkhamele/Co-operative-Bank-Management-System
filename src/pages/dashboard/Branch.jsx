@@ -1067,8 +1067,8 @@ const Branch = () => {
                 </div>
               ) : (
                 <div className="w-full flex justify-between">
-                  <button onClick={() => setCreateStep(1)} className="px-6 py-2 rounded-full border border-gray-300 text-gray-700 font-semibold hover:bg-gray-50 transition-colors text-sm flex items-center gap-2">
-                    <ArrowLeft size={16} /> Back
+                  <button onClick={() => setCreateStep(1)} className="group px-6 py-2 rounded-full border border-gray-300 text-gray-700 font-semibold hover:bg-gray-50 transition-all text-sm flex items-center gap-2 active:scale-[0.98]">
+                    <ArrowLeft size={16} className="transition-transform duration-200 group-hover:-translate-x-0.5" /> Back
                   </button>
                   <div className="flex gap-3">
                     <button onClick={() => setIsCreateModalOpen(false)} className="px-6 py-2 rounded-full border border-gray-300 text-gray-700 font-semibold hover:bg-gray-50 transition-colors text-sm">Cancel</button>

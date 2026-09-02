@@ -581,7 +581,7 @@ const Inventory = () => {
 
   return (
     <div className="space-y-6 max-w-[1600px] mx-auto pb-12">
-      {/* Header with Standard Breadcrumbs and Back Button */}
+      {/* Header with Standard Breadcrumbs */}
       <PageHeader
         title="Inventory"
         breadcrumbs={[
@@ -589,8 +589,7 @@ const Inventory = () => {
           { label: 'CRM' },
           { label: 'Inventory' }
         ]}
-        showBack={true}
-        backUrl="/dashboard"
+        showBack={false}
       />
 
       {/* Top 3 Navigation Tabs (Matching exact design) */}

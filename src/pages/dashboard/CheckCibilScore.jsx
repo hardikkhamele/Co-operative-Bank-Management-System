@@ -540,7 +540,7 @@ const CheckCibilScore = () => {
 
   return (
     <div className="space-y-6 max-w-[1600px] mx-auto pb-10">
-      {/* Unified Page Header with Standard Back Button */}
+      {/* Unified Page Header with Standard Back Button (Detail View Only) */}
       <PageHeader
         title="CIBIL & Credit Score Verification"
         breadcrumbs={[
@@ -548,7 +548,7 @@ const CheckCibilScore = () => {
           { label: 'Verification' },
           { label: 'CIBIL Score & Report' },
         ]}
-        showBack={true}
+        showBack={mainView === 'detail'}
         onBack={handleHeaderBack}
       />
 

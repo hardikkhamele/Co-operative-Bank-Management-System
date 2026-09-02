@@ -41,6 +41,7 @@ const KycVerification = () => {
 
   // History State with Server Pagination & Filters (API 4.5)
   const [historyList, setHistoryList] = useState([]);
+  const [backendStats, setBackendStats] = useState(null);
   const [historyPagination, setHistoryPagination] = useState({ total: 0, page: 1, limit: 10, totalPages: 1 });
   const [historyLoading, setHistoryLoading] = useState(false);
   const [historySearch, setHistorySearch] = useState('');
@@ -79,6 +80,9 @@ const KycVerification = () => {
       if (res && res.data) {
         const items = res.data.items || (Array.isArray(res.data) ? res.data : []);
         setHistoryList(items);
+        if (res.data.stats) {
+          setBackendStats(res.data.stats);
+        }
         if (res.data.pagination) {
           setHistoryPagination(res.data.pagination);
         } else {
@@ -407,17 +411,13 @@ const KycVerification = () => {
     }
   };
 
-  // Compute Metrics
-  const totalVerifications = historyPagination.total || historyList.length;
-  const verifiedCount = historyList.filter(
-    (h) => (h.status || '').toUpperCase() === 'VERIFIED' || (h.status || '').toUpperCase() === 'SUCCESS' || (h.personalDetails && (h.status || '').toUpperCase() !== 'FAILED')
-  ).length;
-  const aadhaarVerificationsCount = historyList.filter(
-    (h) => (h.documentType || '').toUpperCase() === 'AADHAAR' || h.personalDetails?.aadhaarNumber
-  ).length;
-  const panVerificationsCount = historyList.filter(
-    (h) => (h.documentType || '').toUpperCase() === 'PAN' || h.personalDetails?.panNumber
-  ).length;
+  // Metrics strictly taken from API response data.stats:
+  // { totalKyc: 19, verified: 6, failed: 2, aadhaarVerified: 5, panVerified: 1 }
+  const totalVerifications = backendStats?.totalKyc ?? 0;
+  const verifiedCount = backendStats?.verified ?? 0;
+  const failedCount = backendStats?.failed ?? 0;
+  const aadhaarVerificationsCount = backendStats?.aadhaarVerified ?? 0;
+  const panVerificationsCount = backendStats?.panVerified ?? 0;
 
   return (
     <div className="w-full h-full flex flex-col">
@@ -433,71 +433,120 @@ const KycVerification = () => {
             ]}
           />
 
-          {/* Stats Summary Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Stats Summary Cards (Matching Backend Keys: totalKyc, verified, failed, aadhaarVerified, panVerified) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
             {/* Total Verifications Done */}
-            <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-xs flex items-center justify-between">
+            <div 
+              onClick={() => {
+                setActiveTab('history');
+                setHistoryDocFilter('ALL');
+                setHistoryStatusFilter('ALL');
+              }}
+              className="bg-white p-4.5 rounded-2xl border border-gray-100 hover:border-blue-200 hover:shadow-sm transition-all cursor-pointer shadow-xs flex items-center justify-between group"
+            >
               <div>
-                <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1">
-                  Total Verifications Done
+                <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block mb-1 group-hover:text-[#225091] transition-colors">
+                  Total KYC Requests
                 </span>
                 <div className="flex items-baseline gap-2">
                   <span className="text-2xl font-bold text-gray-900">{totalVerifications}</span>
-                  <span className="text-xs font-medium text-gray-400">sessions</span>
+                  <span className="text-[11px] font-medium text-gray-400">total</span>
                 </div>
               </div>
-              <div className="w-12 h-12 rounded-xl bg-blue-50 text-[#225091] flex items-center justify-center shrink-0">
-                <FileCheck size={24} />
+              <div className="w-11 h-11 rounded-xl bg-blue-50 group-hover:bg-[#225091] group-hover:text-white text-[#225091] flex items-center justify-center shrink-0 transition-colors">
+                <FileCheck size={22} />
               </div>
             </div>
 
             {/* Verified Successfully */}
-            <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-xs flex items-center justify-between">
+            <div 
+              onClick={() => {
+                setActiveTab('history');
+                setHistoryStatusFilter('VERIFIED');
+              }}
+              className="bg-white p-4.5 rounded-2xl border border-gray-100 hover:border-emerald-200 hover:shadow-sm transition-all cursor-pointer shadow-xs flex items-center justify-between group"
+            >
               <div>
-                <span className="text-xs font-semibold text-emerald-700 uppercase tracking-wider block mb-1">
-                  Verified Successfully
+                <span className="text-[11px] font-bold text-emerald-700 uppercase tracking-wider block mb-1">
+                  Verified
                 </span>
                 <div className="flex items-baseline gap-2">
                   <span className="text-2xl font-bold text-emerald-700">{verifiedCount}</span>
-                  <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
+                  <span className="text-[11px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
                     {totalVerifications > 0 ? `${Math.round((verifiedCount / totalVerifications) * 100)}%` : '0%'}
                   </span>
                 </div>
               </div>
-              <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
-                <CheckCircle2 size={24} />
+              <div className="w-11 h-11 rounded-xl bg-emerald-50 group-hover:bg-emerald-600 group-hover:text-white text-emerald-600 flex items-center justify-center shrink-0 transition-colors">
+                <CheckCircle2 size={22} />
+              </div>
+            </div>
+
+            {/* Failed Verifications */}
+            <div 
+              onClick={() => {
+                setActiveTab('history');
+                setHistoryStatusFilter('FAILED');
+              }}
+              className="bg-white p-4.5 rounded-2xl border border-gray-100 hover:border-rose-200 hover:shadow-sm transition-all cursor-pointer shadow-xs flex items-center justify-between group"
+            >
+              <div>
+                <span className="text-[11px] font-bold text-rose-700 uppercase tracking-wider block mb-1">
+                  Failed / Rejected
+                </span>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-2xl font-bold text-rose-700">{failedCount}</span>
+                  <span className="text-[11px] font-semibold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full">
+                    {totalVerifications > 0 ? `${Math.round((failedCount / totalVerifications) * 100)}%` : '0%'}
+                  </span>
+                </div>
+              </div>
+              <div className="w-11 h-11 rounded-xl bg-rose-50 group-hover:bg-rose-600 group-hover:text-white text-rose-600 flex items-center justify-center shrink-0 transition-colors">
+                <XCircle size={22} />
               </div>
             </div>
 
             {/* Aadhaar Verifications */}
-            <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-xs flex items-center justify-between">
+            <div 
+              onClick={() => {
+                setActiveTab('history');
+                setHistoryDocFilter('AADHAAR');
+              }}
+              className="bg-white p-4.5 rounded-2xl border border-gray-100 hover:border-cyan-200 hover:shadow-sm transition-all cursor-pointer shadow-xs flex items-center justify-between group"
+            >
               <div>
-                <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1">
-                  Aadhaar Verifications
+                <span className="text-[11px] font-bold text-cyan-800 uppercase tracking-wider block mb-1">
+                  Aadhaar Verified
                 </span>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-2xl font-bold text-[#225091]">{aadhaarVerificationsCount}</span>
-                  <span className="text-xs font-medium text-gray-400">done</span>
+                  <span className="text-2xl font-bold text-cyan-800">{aadhaarVerificationsCount}</span>
+                  <span className="text-[11px] font-medium text-gray-400">UIDAI</span>
                 </div>
               </div>
-              <div className="w-12 h-12 rounded-xl bg-cyan-50 text-cyan-700 flex items-center justify-center shrink-0">
-                <CreditCard size={24} />
+              <div className="w-11 h-11 rounded-xl bg-cyan-50 group-hover:bg-cyan-700 group-hover:text-white text-cyan-700 flex items-center justify-center shrink-0 transition-colors">
+                <CreditCard size={22} />
               </div>
             </div>
 
             {/* PAN Verifications */}
-            <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-xs flex items-center justify-between">
+            <div 
+              onClick={() => {
+                setActiveTab('history');
+                setHistoryDocFilter('PAN');
+              }}
+              className="bg-white p-4.5 rounded-2xl border border-gray-100 hover:border-indigo-200 hover:shadow-sm transition-all cursor-pointer shadow-xs flex items-center justify-between group"
+            >
               <div>
-                <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1">
-                  PAN Verifications
+                <span className="text-[11px] font-bold text-indigo-800 uppercase tracking-wider block mb-1">
+                  PAN Verified
                 </span>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-2xl font-bold text-[#225091]">{panVerificationsCount}</span>
-                  <span className="text-xs font-medium text-gray-400">done</span>
+                  <span className="text-2xl font-bold text-indigo-800">{panVerificationsCount}</span>
+                  <span className="text-[11px] font-medium text-gray-400">ITD</span>
                 </div>
               </div>
-              <div className="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-700 flex items-center justify-center shrink-0">
-                <FileText size={24} />
+              <div className="w-11 h-11 rounded-xl bg-indigo-50 group-hover:bg-indigo-700 group-hover:text-white text-indigo-700 flex items-center justify-center shrink-0 transition-colors">
+                <FileText size={22} />
               </div>
             </div>
           </div>
@@ -1017,6 +1066,11 @@ const KycVerification = () => {
                                 {isVerified ? <CheckCircle size={11} /> : isFailed ? <XCircle size={11} /> : <Clock size={11} />}
                                 {status}
                               </span>
+                              {isFailed && item.lastError && (
+                                <p className="text-[10px] text-rose-600 font-medium mt-0.5 max-w-[170px] truncate" title={item.lastError}>
+                                  {item.lastError}
+                                </p>
+                              )}
                             </td>
 
                             {/* Date */}

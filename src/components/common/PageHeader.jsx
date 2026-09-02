@@ -38,11 +38,24 @@ export const PageHeader = ({
 
   return (
     <div className={`bg-white rounded-xl shadow-sm border border-gray-100 p-6 shrink-0 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 ${className}`}>
-      {/* Left: Title & Breadcrumbs */}
+      {/* Left: Title with inline back button & Breadcrumbs */}
       <div>
-        <h1 className="text-[22px] font-bold text-[#225091] mb-2 leading-tight">
-          {title}
-        </h1>
+        <div className="flex items-center gap-3 mb-1.5">
+          {showBack && (
+            <button
+              type="button"
+              onClick={handleBack}
+              aria-label="Go back"
+              title="Go back"
+              className="group w-8 h-8 rounded-full border border-gray-200/90 bg-white hover:border-[#225091]/40 hover:bg-[#225091]/5 text-gray-600 hover:text-[#225091] active:scale-95 transition-all duration-200 shadow-2xs flex items-center justify-center shrink-0 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#225091]/20"
+            >
+              <ArrowLeft size={16} className="transition-transform duration-200 group-hover:-translate-x-0.5 text-gray-600 group-hover:text-[#225091]" />
+            </button>
+          )}
+          <h1 className="text-[22px] font-bold text-[#225091] leading-tight">
+            {title}
+          </h1>
+        </div>
 
         {breadcrumbs && breadcrumbs.length > 0 && (
           <div className="flex items-center text-[13px] font-medium text-gray-500 flex-wrap gap-y-1">
@@ -70,20 +83,12 @@ export const PageHeader = ({
         )}
       </div>
 
-      {/* Right: Actions & Back Button */}
-      <div className="flex flex-wrap items-center gap-3 self-start sm:self-center">
-        {showBack && (
-          <button
-            type="button"
-            onClick={handleBack}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-full border border-gray-200 text-gray-700 hover:text-[#225091] hover:bg-gray-50 font-semibold text-xs transition-all shadow-sm cursor-pointer"
-          >
-            <ArrowLeft size={14} />
-            <span>Back</span>
-          </button>
-        )}
-        {children}
-      </div>
+      {/* Right: Actions */}
+      {children && (
+        <div className="flex flex-wrap items-center gap-3 self-start sm:self-center">
+          {children}
+        </div>
+      )}
     </div>
   );
 };
