@@ -965,7 +965,7 @@ const Leads = ({ leadType: propLeadType, systemTitle: propSystemTitle }) => {
                     <th className="py-3.5 px-4 font-semibold">Status</th>
                   </>
                 )}
-                <th className="py-3.5 px-4 font-semibold text-center">Actions</th>
+                <th className="py-3.5 px-4 font-semibold text-center min-w-[210px] whitespace-nowrap">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 text-xs">
@@ -1125,7 +1125,7 @@ const Leads = ({ leadType: propLeadType, systemTitle: propSystemTitle }) => {
                                 <button
                                   type="button"
                                   onClick={() => { setPreviewImage(cust.livePhoto); setPreviewTitle(`${custName} - Live Photo`); }}
-                                  className="w-7 h-7 rounded-lg overflow-hidden border border-emerald-300 hover:scale-110 transition-transform cursor-pointer shadow-2xs relative group"
+                                  className="w-8 h-8 rounded-lg overflow-hidden border border-emerald-300 hover:border-emerald-500 hover:scale-105 transition-all cursor-pointer shadow-2xs relative group shrink-0"
                                   title="View Live Selfie Photo"
                                 >
                                   <img src={cust.livePhoto} alt="Live" className="w-full h-full object-cover" />
@@ -1135,7 +1135,7 @@ const Leads = ({ leadType: propLeadType, systemTitle: propSystemTitle }) => {
                                 <button
                                   type="button"
                                   onClick={() => { setPreviewImage(cust.panImage); setPreviewTitle(`${custName} - PAN Card Image`); }}
-                                  className="px-1.5 py-1 rounded bg-blue-50 text-blue-700 border border-blue-200 text-[10px] font-bold hover:bg-blue-100 transition-colors cursor-pointer"
+                                  className="h-8 px-2 rounded-lg bg-blue-50 text-blue-700 border border-blue-200/80 hover:bg-blue-100 text-[11px] font-bold hover:scale-105 transition-all cursor-pointer inline-flex items-center justify-center shadow-2xs"
                                   title="View PAN Card Image"
                                 >
                                   PAN
@@ -1145,7 +1145,7 @@ const Leads = ({ leadType: propLeadType, systemTitle: propSystemTitle }) => {
                                 <button
                                   type="button"
                                   onClick={() => { setPreviewImage(cust.aadhaarImage); setPreviewTitle(`${custName} - Aadhaar Card Image`); }}
-                                  className="px-1.5 py-1 rounded bg-cyan-50 text-cyan-700 border border-cyan-200 text-[10px] font-bold hover:bg-cyan-100 transition-colors cursor-pointer"
+                                  className="h-8 px-2 rounded-lg bg-cyan-50 text-cyan-700 border border-cyan-200/80 hover:bg-cyan-100 text-[11px] font-bold hover:scale-105 transition-all cursor-pointer inline-flex items-center justify-center shadow-2xs"
                                   title="View Aadhaar Card Image"
                                 >
                                   UID
@@ -1244,26 +1244,28 @@ const Leads = ({ leadType: propLeadType, systemTitle: propSystemTitle }) => {
                       )}
 
                       {/* Actions strictly based on APIs */}
-                      <td className="py-3.5 px-4 text-center">
-                        <div className="flex justify-center items-center gap-1.5 flex-wrap">
+                      <td className="py-3.5 px-4 text-center whitespace-nowrap">
+                        <div className="flex justify-center items-center gap-1.5">
                           {/* 1B & 1C. Approve / Reject Actions for Customer Leads */}
                           {isCustomerSystem && isPendingApproval && (
                             <>
                               <button
                                 type="button"
                                 onClick={() => { setLeadToApprove(lead); setApproveRemarks(""); setIsApproveModalOpen(true); }}
-                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 transition-all cursor-pointer shadow-2xs"
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100/80 border border-emerald-200/80 hover:border-emerald-300 shadow-2xs hover:shadow-xs active:scale-95 transition-all cursor-pointer"
                                 title="Manually Approve Loan Application"
                               >
-                                <CheckCircle2 size={13} /> Approve
+                                <CheckCircle2 size={13} className="text-emerald-600" />
+                                <span>Approve</span>
                               </button>
                               <button
                                 type="button"
                                 onClick={() => { setLeadToReject(lead); setRejectReason(""); setIsRejectModalOpen(true); }}
-                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-300 transition-all cursor-pointer shadow-2xs"
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100/80 border border-rose-200/80 hover:border-rose-300 shadow-2xs hover:shadow-xs active:scale-95 transition-all cursor-pointer"
                                 title="Reject Loan Application"
                               >
-                                <XCircle size={13} /> Reject
+                                <XCircle size={13} className="text-rose-600" />
+                                <span>Reject</span>
                               </button>
                             </>
                           )}
@@ -1273,10 +1275,11 @@ const Leads = ({ leadType: propLeadType, systemTitle: propSystemTitle }) => {
                             <button
                               type="button"
                               onClick={() => { setLeadToSettle(lead); setSettleTxnRef(""); setSettleRemarks(""); setIsSettleModalOpen(true); }}
-                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-300 transition-all cursor-pointer shadow-2xs"
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-purple-700 bg-purple-50 hover:bg-purple-100/80 border border-purple-200/80 hover:border-purple-300 shadow-2xs hover:shadow-xs active:scale-95 transition-all cursor-pointer"
                               title="Execute Next-Day Merchant Settlement"
                             >
-                              <IndianRupee size={13} /> Settle Disbursal
+                              <IndianRupee size={13} className="text-purple-600" />
+                              <span>Settle Disbursal</span>
                             </button>
                           )}
 
@@ -1284,10 +1287,11 @@ const Leads = ({ leadType: propLeadType, systemTitle: propSystemTitle }) => {
                           <button
                             type="button"
                             onClick={() => setQuickDetailLead(lead)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-[#225091] bg-[#EAF2FB] hover:bg-[#d8e8f8] border border-[#225091]/15 transition-all shadow-2xs cursor-pointer"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-[#225091] bg-[#EAF2FB] hover:bg-[#d8e8f8] border border-[#225091]/15 hover:border-[#225091]/30 shadow-2xs hover:shadow-xs active:scale-95 transition-all cursor-pointer"
                             title="Inspect Details"
                           >
-                            <Eye size={13} /> View
+                            <Eye size={13} className="text-[#225091]" />
+                            <span>View</span>
                           </button>
                         </div>
                       </td>

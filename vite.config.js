@@ -14,9 +14,17 @@ export default defineConfig(({ mode }) => {
         '/api': {
           target: proxyTarget,
           changeOrigin: true,
+          secure: false,
           configure: (proxy) => {
-            proxy.on('proxyReq', (proxyReq) => {
+            proxy.on('proxyReq', (proxyReq, req) => {
               proxyReq.removeHeader('origin');
+              // Strip oversized localhost cookie headers to prevent HTTP header overflow
+              if (req.headers && req.headers.cookie && req.headers.cookie.length > 2048) {
+                proxyReq.removeHeader('cookie');
+              }
+            });
+            proxy.on('error', (err) => {
+              console.warn('Vite proxy warning:', err.message);
             });
           }
         }

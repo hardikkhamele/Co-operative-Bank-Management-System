@@ -1,369 +1,579 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   MapPin, 
   ShieldCheck, 
   AlertTriangle, 
-  UserCheck, 
-  Users, 
   RefreshCw, 
   Search, 
   ExternalLink, 
   CheckCircle2, 
   Clock, 
-  Navigation, 
   Map as MapIcon, 
   List, 
-  AlertOctagon,
-  Building2,
-  Smartphone,
-  Check,
-  XCircle,
-  X
+  Building2, 
+  Smartphone, 
+  Check, 
+  X,
+  Copy,
+  Navigation,
+  MapPinOff,
+  Info,
+  AlertCircle
 } from 'lucide-react';
 import PageHeader from '../../components/common/PageHeader';
 import geoTaggingService from '../../api/geoTaggingService';
-import { getCurrentPosition } from '../../utils/geolocation';
+import { employeeService } from '../../api/employeeService';
+import { branchService } from '../../api/branchService';
 import { toast } from 'react-toastify';
 
+// Haversine formula to compute distance in meters
+const calculateDistanceInMeters = (lat1, lon1, lat2, lon2) => {
+  if (!lat1 || !lon1 || !lat2 || !lon2) return 0;
+  const R = 6371e3;
+  const φ1 = (lat1 * Math.PI) / 180;
+  const φ2 = (lat2 * Math.PI) / 180;
+  const Δφ = ((lat2 - lat1) * Math.PI) / 180;
+  const Δλ = ((lon2 - lon1) * Math.PI) / 180;
+
+  const a =
+    Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+    Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+  return Math.round(R * c);
+};
+
+// Helper to strictly verify if latitude and longitude are valid, non-zero coordinates
+const hasValidCoordinates = (lat, lng) => {
+  if (lat === null || lat === undefined || lng === null || lng === undefined) return false;
+  const nLat = Number(lat);
+  const nLng = Number(lng);
+  if (isNaN(nLat) || isNaN(nLng)) return false;
+  if (nLat === 0 && nLng === 0) return false;
+  return true;
+};
+
 const GeoTagging = () => {
-  const [activeTab, setActiveTab] = useState('ALL'); // ALL, IN_BRANCH, OUT_OF_GEOFENCE
+  const [activeStatus, setActiveStatus] = useState('ALL'); // ALL, IN_BRANCH, OUT_OF_GEOFENCE, GPS_INACTIVE
+  const [selectedBranchFilter, setSelectedBranchFilter] = useState('ALL'); // 'ALL' or branchName
   const [viewMode, setViewMode] = useState('MAP'); // MAP, TABLE
   const [records, setRecords] = useState([]);
-  const [stats, setStats] = useState(null);
+  const [branches, setBranches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRecord, setSelectedRecord] = useState(null);
-  const [isPunchModalOpen, setIsPunchModalOpen] = useState(false);
-  const [capturingGps, setCapturingGps] = useState(false);
-  const [punchData, setPunchData] = useState({
-    employeeName: '',
-    employeeId: 'EMP-750',
-    designation: 'Loan Officer',
-    branchName: 'Shivaji Nagar Main Branch',
-    branchLat: 18.520400,
-    branchLng: 73.856700,
-    punchLat: 18.520440,
-    punchLng: 73.856730,
-    punchAddress: '',
-    remarks: ''
-  });
+  const [fetchingLiveLocation, setFetchingLiveLocation] = useState(false);
+  const [zeroGpsModalRecord, setZeroGpsModalRecord] = useState(null);
+  const [showMapAnyway, setShowMapAnyway] = useState(false);
+  const locationCache = useRef(new Map());
+
+  // Handle employee selection with instant cache lookup and direct popup trigger
+  const handleSelectRecord = async (record, shouldOpenModal = true) => {
+    setSelectedRecord(record);
+    setShowMapAnyway(false);
+    const empId = record.employeeId || record.userId || record.id;
+    if (!empId) return;
+
+    // 1. Instant cache check (0ms response, zero flicker)
+    if (locationCache.current.has(empId)) {
+      const cached = locationCache.current.get(empId);
+      const merged = { ...record, ...cached };
+      setSelectedRecord(merged);
+      const hasCoords = hasValidCoordinates(merged.punchLat, merged.punchLng);
+      if (!hasCoords && shouldOpenModal) {
+        setZeroGpsModalRecord(merged);
+      }
+      return;
+    }
+
+    setFetchingLiveLocation(true);
+    try {
+      const liveLoc = await geoTaggingService.getEmployeeLocation(empId);
+      const rawLat = liveLoc?.latitude !== undefined ? liveLoc.latitude : liveLoc?.coordinates?.[1];
+      const rawLng = liveLoc?.longitude !== undefined ? liveLoc.longitude : liveLoc?.coordinates?.[0];
+      const valid = hasValidCoordinates(rawLat, rawLng);
+
+      let dist = null;
+      let isInside = false;
+      let status = 'GPS_INACTIVE';
+
+      if (valid) {
+        const lat = Number(rawLat);
+        const lng = Number(rawLng);
+        const branchLat = Number(record.branchLat || 21.1458);
+        const branchLng = Number(record.branchLng || 79.0882);
+        dist = calculateDistanceInMeters(branchLat, branchLng, lat, lng);
+        isInside = dist <= 100;
+        status = isInside ? 'IN_BRANCH' : 'OUT_OF_GEOFENCE';
+
+        const cacheData = {
+          punchLat: lat,
+          punchLng: lng,
+          punchAddress: liveLoc.address || record.punchAddress,
+          lastUpdatedAt: liveLoc.lastUpdatedAt || null,
+          distanceMeters: dist,
+          geofenceStatus: status,
+          isZeroCoords: false,
+          isLiveGps: Boolean(liveLoc.lastUpdatedAt),
+        };
+
+        locationCache.current.set(empId, cacheData);
+        const updated = { ...record, ...cacheData };
+        setSelectedRecord(updated);
+        setRecords(prev => prev.map(r => (r.id === record.id ? updated : r)));
+      } else {
+        // No coordinates received -> strictly GPS_INACTIVE
+        const cacheData = {
+          punchLat: 0,
+          punchLng: 0,
+          punchAddress: liveLoc?.address || record.punchAddress,
+          lastUpdatedAt: liveLoc?.lastUpdatedAt || null,
+          distanceMeters: null,
+          geofenceStatus: 'GPS_INACTIVE',
+          isZeroCoords: true,
+          isLiveGps: false,
+        };
+
+        locationCache.current.set(empId, cacheData);
+        const updated = { ...record, ...cacheData };
+        setSelectedRecord(updated);
+        setRecords(prev => prev.map(r => (r.id === record.id ? updated : r)));
+
+        if (shouldOpenModal) {
+          setZeroGpsModalRecord(updated);
+        }
+      }
+    } catch (err) {
+      console.warn('Failed to fetch live employee GPS:', err);
+    } finally {
+      setFetchingLiveLocation(false);
+    }
+  };
+
+  // Fetch real bank branches
+  const fetchBranchesList = async () => {
+    try {
+      const res = await branchService.list({ limit: 100 });
+      const branchList = Array.isArray(res?.data)
+        ? res.data
+        : res?.data?.items || res?.data?.branches || res?.branches || [];
+      const formatted = branchList.map(b => ({
+        id: b.id || b._id,
+        name: b.name || 'Branch',
+        code: b.code || '',
+        lat: Number(b.latitude || b.lat || (b.address && b.address.latitude) || 21.1458),
+        lng: Number(b.longitude || b.lng || (b.address && b.address.longitude) || 79.0882),
+        address: b.address ? (typeof b.address === 'string' ? b.address : `${b.address.line1 || ''}, ${b.address.city || ''}, ${b.address.state || ''}`) : `${b.city || ''}, ${b.state || ''}`
+      }));
+      setBranches(formatted);
+    } catch (err) {
+      console.warn('Could not fetch branches for GeoTagging:', err);
+    }
+  };
 
   const fetchData = async () => {
     setLoading(true);
+    locationCache.current.clear();
     try {
-      const [statsData, recordsData] = await Promise.all([
-        geoTaggingService.getStats(),
-        geoTaggingService.getRecords()
-      ]);
-      setStats(statsData);
-      setRecords(recordsData);
-      if (recordsData.length > 0 && !selectedRecord) {
-        setSelectedRecord(recordsData[0]);
+      let recordsData = await geoTaggingService.getRecords();
+
+      // If no geotag records returned, dynamically load real bank employees
+      if (!recordsData || recordsData.length === 0) {
+        const empRes = await employeeService.list({ limit: 50, includeBranchManagers: true });
+        const empList = Array.isArray(empRes?.data)
+          ? empRes.data
+          : empRes?.data?.items || empRes?.data?.employees || [];
+
+        recordsData = empList.map((emp, idx) => {
+          const bLat = Number(emp.branch?.latitude || 21.1458);
+          const bLng = Number(emp.branch?.longitude || 79.0882);
+          const bName = emp.branch?.name || 'Main Branch';
+          const bAddr = emp.branch?.address || emp.officeAddress || `${bName}, ${emp.state || 'Maharashtra'}`;
+
+          return {
+            id: emp.id || `EMP-GEO-${idx}`,
+            employeeId: emp.id || emp.employeeId,
+            employeeCode: emp.employeeCode || emp.employeeId || '',
+            employeeName: emp.fullName || `${emp.firstName || ''} ${emp.lastName || ''}`.trim() || 'Employee',
+            phone: emp.phoneNumber || emp.personalDetails?.phoneNumber || '',
+            designation: emp.designation || emp.role?.name || 'Staff',
+            department: emp.department || 'Operations',
+            branchName: bName,
+            branchLat: bLat,
+            branchLng: bLng,
+            branchAddress: bAddr,
+            punchInTime: emp.updatedAt || emp.createdAt || new Date().toISOString(),
+            punchOutTime: null,
+            punchLat: 0,
+            punchLng: 0,
+            punchAddress: emp.officeAddress || `${bName} Premises`,
+            distanceMeters: null,
+            geofenceStatus: 'GPS_INACTIVE',
+            isZeroCoords: true,
+            isLiveGps: false
+          };
+        });
+
+        // Resolve live locations in parallel so Inside / Out of Geofence / No Signal are 100% accurate
+        const resolvedRecords = await Promise.all(
+          recordsData.map(async (item) => {
+            const empId = item.employeeId || item.id;
+            try {
+              const liveLoc = await geoTaggingService.getEmployeeLocation(empId);
+              if (liveLoc && (liveLoc.latitude !== undefined || (liveLoc.coordinates && liveLoc.coordinates.length === 2))) {
+                const rawLat = liveLoc.latitude !== undefined ? liveLoc.latitude : liveLoc.coordinates[1];
+                const rawLng = liveLoc.longitude !== undefined ? liveLoc.longitude : liveLoc.coordinates[0];
+                const lat = Number(rawLat);
+                const lng = Number(rawLng);
+
+                const isZero = (lat === 0 && lng === 0) || isNaN(lat) || isNaN(lng);
+                if (!isZero) {
+                  const dist = calculateDistanceInMeters(item.branchLat, item.branchLng, lat, lng);
+                  const isInside = dist <= 100;
+                  const cacheItem = {
+                    punchLat: lat,
+                    punchLng: lng,
+                    punchAddress: liveLoc.address || item.punchAddress,
+                    lastUpdatedAt: liveLoc.lastUpdatedAt || null,
+                    distanceMeters: dist,
+                    geofenceStatus: isInside ? 'IN_BRANCH' : 'OUT_OF_GEOFENCE',
+                    isZeroCoords: false,
+                    isLiveGps: Boolean(liveLoc.lastUpdatedAt)
+                  };
+                  locationCache.current.set(empId, cacheItem);
+                  return { ...item, ...cacheItem };
+                } else {
+                  const cacheItem = {
+                    punchLat: 0,
+                    punchLng: 0,
+                    punchAddress: liveLoc.address || item.punchAddress,
+                    lastUpdatedAt: liveLoc.lastUpdatedAt || null,
+                    distanceMeters: null,
+                    geofenceStatus: 'GPS_INACTIVE',
+                    isZeroCoords: true,
+                    isLiveGps: false
+                  };
+                  locationCache.current.set(empId, cacheItem);
+                  return { ...item, ...cacheItem };
+                }
+              }
+            } catch {
+              // default remains inactive
+            }
+            return item;
+          })
+        );
+        recordsData = resolvedRecords;
       }
-    } catch {
-      toast.error('Failed to load employee attendance geolocation data');
+
+      setRecords(recordsData);
+      if (recordsData.length > 0) {
+        handleSelectRecord(recordsData[0], false);
+      } else {
+        setSelectedRecord(null);
+      }
+    } catch (err) {
+      console.error('Failed to load employee attendance geolocation data:', err);
+      setRecords([]);
+      setSelectedRecord(null);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
+    fetchBranchesList();
     fetchData();
   }, []);
 
-  const handleCaptureCurrentLocation = async () => {
-    setCapturingGps(true);
-    try {
-      const pos = await getCurrentPosition();
-      setPunchData(prev => ({
-        ...prev,
-        punchLat: pos.latitude,
-        punchLng: pos.longitude,
-        punchAddress: pos.address || `Current Location (${pos.latitude}, ${pos.longitude})`
-      }));
-      toast.success('Live GPS coordinates captured!');
-    } catch {
-      toast.error('Could not access device GPS');
-    } finally {
-      setCapturingGps(false);
-    }
-  };
 
-  const handleAuditGeofence = async (recordId, newStatus) => {
-    try {
-      await geoTaggingService.updateGeofenceAudit(recordId, { status: newStatus });
-      toast.success(`Attendance geofence status updated to ${newStatus.replace('_', ' ')}`);
-      setRecords(prev => prev.map(r => r.id === recordId ? { ...r, geofenceStatus: newStatus, riskLevel: newStatus === 'IN_BRANCH' ? 'LOW' : r.riskLevel } : r));
-      if (selectedRecord?.id === recordId) {
-        setSelectedRecord(prev => ({ ...prev, geofenceStatus: newStatus, riskLevel: newStatus === 'IN_BRANCH' ? 'LOW' : prev.riskLevel }));
-      }
-    } catch {
-      toast.error('Failed to update geofence status');
-    }
-  };
 
-  const filteredRecords = records.filter(item => {
-    // Filter by Tab
-    if (activeTab === 'IN_BRANCH' && item.geofenceStatus !== 'IN_BRANCH') return false;
-    if (activeTab === 'OUT_OF_GEOFENCE' && item.geofenceStatus !== 'OUT_OF_GEOFENCE') return false;
-
-    // Filter by Search
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
+  // Filter records by Branch first, then by Status & Search
+  const branchScopedRecords = useMemo(() => {
+    if (selectedBranchFilter === 'ALL') return records;
+    return records.filter(item => {
       return (
-        item.employeeName?.toLowerCase().includes(q) ||
-        item.employeeId?.toLowerCase().includes(q) ||
-        item.branchName?.toLowerCase().includes(q) ||
-        item.punchAddress?.toLowerCase().includes(q) ||
-        item.designation?.toLowerCase().includes(q)
+        item.branchName === selectedBranchFilter ||
+        item.branchId === selectedBranchFilter ||
+        (item.branch && (item.branch.id === selectedBranchFilter || item.branch.name === selectedBranchFilter))
       );
+    });
+  }, [records, selectedBranchFilter]);
+
+  const filteredRecords = useMemo(() => {
+    return branchScopedRecords.filter(item => {
+      const isZero = item.isZeroCoords || (item.punchLat === 0 && item.punchLng === 0) || item.geofenceStatus === 'GPS_INACTIVE' || item.distanceMeters === null;
+
+      // Status Filter
+      if (activeStatus === 'IN_BRANCH') {
+        if (isZero) return false;
+        if (item.geofenceStatus !== 'IN_BRANCH' || item.distanceMeters > 100) return false;
+      }
+      if (activeStatus === 'OUT_OF_GEOFENCE') {
+        if (isZero) return false;
+        if (item.geofenceStatus !== 'OUT_OF_GEOFENCE' && item.distanceMeters <= 100) return false;
+      }
+      if (activeStatus === 'GPS_INACTIVE') {
+        if (!isZero) return false;
+      }
+
+      // Search Query
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        return (
+          item.employeeName?.toLowerCase().includes(q) ||
+          item.employeeId?.toLowerCase().includes(q) ||
+          item.branchName?.toLowerCase().includes(q) ||
+          item.punchAddress?.toLowerCase().includes(q) ||
+          item.designation?.toLowerCase().includes(q)
+        );
+      }
+      return true;
+    });
+  }, [branchScopedRecords, activeStatus, searchQuery]);
+
+  // Keep selected record in sync
+  useEffect(() => {
+    if (filteredRecords.length > 0) {
+      const exists = filteredRecords.some(r => r.id === selectedRecord?.id);
+      if (!exists) {
+        setSelectedRecord(filteredRecords[0]);
+      }
+    } else {
+      setSelectedRecord(null);
     }
-    return true;
-  });
+  }, [filteredRecords, selectedRecord]);
+
+  const googleMapsKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || 'AIzaSyDc5r82MahA9rhAXROP0kv7rf0ZzUKOFR4';
+
+  const inBranchCount = branchScopedRecords.filter(r => {
+    const isZero = r.isZeroCoords || (r.punchLat === 0 && r.punchLng === 0) || r.geofenceStatus === 'GPS_INACTIVE' || r.distanceMeters === null;
+    return !isZero && r.geofenceStatus === 'IN_BRANCH' && r.distanceMeters <= 100;
+  }).length;
+
+  const outOfGeofenceCount = branchScopedRecords.filter(r => {
+    const isZero = r.isZeroCoords || (r.punchLat === 0 && r.punchLng === 0) || r.geofenceStatus === 'GPS_INACTIVE' || r.distanceMeters === null;
+    return !isZero && (r.geofenceStatus === 'OUT_OF_GEOFENCE' || r.distanceMeters > 100);
+  }).length;
+
+  const noSignalCount = branchScopedRecords.filter(r => {
+    const isZero = r.isZeroCoords || (r.punchLat === 0 && r.punchLng === 0) || r.geofenceStatus === 'GPS_INACTIVE' || r.distanceMeters === null;
+    return isZero;
+  }).length;
 
   return (
-    <div className="space-y-6 pb-12">
-      {/* Page Header */}
+    <div className="space-y-5 pb-10 w-full animate-in fade-in duration-200">
+      {/* 1. Header with minimal essential actions */}
       <PageHeader
-        title="Employee Attendance & Geo-Location Tracker"
-        subtitle="Monitor bank employee punch-in/out GPS coordinates, branch geofences & remote check-in audits"
+        title="Geo Tagging"
+        breadcrumbs={[
+          { label: 'Dashboard', to: '/dashboard' },
+          { label: 'Geo Tagging' }
+        ]}
       >
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={fetchData}
             disabled={loading}
-            className="flex items-center gap-2 px-3.5 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 active:scale-95 transition-all shadow-xs cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 active:scale-95 transition-all shadow-2xs cursor-pointer"
+            title="Refresh GPS Data"
           >
-            <RefreshCw size={16} className={loading ? 'animate-spin text-[#225091]' : ''} />
+            <RefreshCw size={14} className={loading ? 'animate-spin text-[#225091]' : ''} />
             <span className="hidden sm:inline">Refresh</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setIsPunchModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-[#225091] hover:bg-[#1b4177] active:scale-95 rounded-xl transition-all shadow-sm cursor-pointer"
-          >
-            <MapPin size={16} />
-            <span>Record GPS Check-In</span>
           </button>
         </div>
       </PageHeader>
 
-      {/* Top 4 Performance & Risk Metric Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
-        <div className="bg-white p-5 rounded-2xl border border-gray-200/80 shadow-xs flex items-center justify-between">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Present Today</p>
-            <h3 className="text-2xl font-extrabold text-gray-900 mt-1">{stats?.presentToday || 42} <span className="text-xs text-gray-400 font-normal">/ {stats?.totalEmployees || 48} staff</span></h3>
-            <p className="text-xs text-emerald-600 font-medium flex items-center gap-1 mt-1">
-              <span className="inline-block w-2 h-2 rounded-full bg-emerald-500"></span>
-              {stats?.onTimeRate || '92.8%'} On-Time Punch Rate
-            </p>
-          </div>
-          <div className="w-12 h-12 rounded-2xl bg-blue-50 text-[#225091] flex items-center justify-center shrink-0 border border-blue-100">
-            <Users size={24} />
-          </div>
-        </div>
-
-        <div className="bg-white p-5 rounded-2xl border border-gray-200/80 shadow-xs flex items-center justify-between">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">In-Branch Punches</p>
-            <h3 className="text-2xl font-extrabold text-emerald-600 mt-1">{stats?.inBranchPunches || 36}</h3>
-            <p className="text-xs text-emerald-600 font-medium flex items-center gap-1 mt-1">
-              <CheckCircle2 size={12} />
-              Within 100m Branch Geofence
-            </p>
-          </div>
-          <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-100">
-            <ShieldCheck size={24} />
-          </div>
-        </div>
-
-        <div className="bg-white p-5 rounded-2xl border border-amber-200/80 bg-amber-50/20 shadow-xs flex items-center justify-between">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-amber-800">Out of Geofence</p>
-            <h3 className="text-2xl font-extrabold text-amber-600 mt-1">{stats?.outOfGeofencePunches || 6}</h3>
-            <p className="text-xs text-amber-700 font-medium flex items-center gap-1 mt-1">
-              <AlertTriangle size={12} />
-              Field Visits / Remote Check-in
-            </p>
-          </div>
-          <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0 border border-amber-200">
-            <Navigation size={24} />
-          </div>
-        </div>
-
-        <div className="bg-white p-5 rounded-2xl border border-gray-200/80 shadow-xs flex items-center justify-between">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Absent / Not Checked In</p>
-            <h3 className="text-2xl font-extrabold text-gray-700 mt-1">{stats?.absentToday || 6}</h3>
-            <p className="text-xs text-gray-500 font-medium flex items-center gap-1 mt-1">
-              <Clock size={12} />
-              Awaiting punch or on leave
-            </p>
-          </div>
-          <div className="w-12 h-12 rounded-2xl bg-gray-100 text-gray-600 flex items-center justify-center shrink-0 border border-gray-200">
-            <XCircle size={24} />
-          </div>
-        </div>
-      </div>
-
-      {/* Control Bar: Tabs, Search & View Switcher */}
-      <div className="bg-white p-3 sm:p-4 rounded-2xl border border-gray-200 shadow-xs flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-        {/* Filter Category Pills */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 lg:pb-0 scrollbar-none">
-          {[
-            { id: 'ALL', label: 'All Check-Ins', count: records.length },
-            { id: 'IN_BRANCH', label: 'In-Branch (On-Site)', count: records.filter(r => r.geofenceStatus === 'IN_BRANCH').length },
-            { id: 'OUT_OF_GEOFENCE', label: 'Out of Geofence (Remote)', count: records.filter(r => r.geofenceStatus === 'OUT_OF_GEOFENCE').length, isAmber: true }
-          ].map(tab => (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all whitespace-nowrap cursor-pointer ${
-                activeTab === tab.id
-                  ? tab.isAmber
-                    ? 'bg-amber-600 text-white shadow-xs'
-                    : 'bg-[#225091] text-white shadow-xs'
-                  : tab.isAmber
-                    ? 'bg-amber-50 text-amber-800 hover:bg-amber-100 border border-amber-200'
-                    : 'bg-gray-100/70 hover:bg-gray-200 text-gray-700'
-              }`}
+      {/* 2. Minimal Filter & Search Bar */}
+      <div className="bg-white p-3 rounded-2xl border border-gray-200/80 shadow-2xs flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
+        {/* Left: Branch Filter & Status Filter Tabs */}
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Branch Filter Dropdown */}
+          <div className="relative min-w-[170px]">
+            <Building2 size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#225091] pointer-events-none" />
+            <select
+              value={selectedBranchFilter}
+              onChange={(e) => setSelectedBranchFilter(e.target.value)}
+              className="w-full pl-8 pr-7 py-1.5 bg-gray-50 hover:bg-gray-100/80 focus:bg-white border border-gray-200 rounded-xl text-xs font-bold text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] cursor-pointer shadow-2xs transition-all"
             >
-              <span>{tab.label}</span>
-              <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
-                activeTab === tab.id
-                  ? 'bg-white/20 text-white'
-                  : 'bg-gray-200/80 text-gray-600'
-              }`}>
-                {tab.count}
-              </span>
-            </button>
-          ))}
+              <option value="ALL">All Branches ({records.length})</option>
+              {branches.map(b => {
+                const count = records.filter(r => r.branchName === b.name || r.branchId === b.id).length;
+                return (
+                  <option key={b.id || b.name} value={b.name}>
+                    {b.name} {count > 0 ? `(${count})` : ''}
+                  </option>
+                );
+              })}
+            </select>
+          </div>
+
+          {/* Status Filter Tabs */}
+          <div className="flex items-center gap-1.5 flex-1 sm:flex-initial">
+            {[
+              { id: 'ALL', label: 'All', count: branchScopedRecords.length, activeClass: 'bg-[#225091] text-white shadow-2xs' },
+              { id: 'IN_BRANCH', label: 'Inside', count: inBranchCount, activeClass: 'bg-emerald-600 text-white shadow-2xs' },
+              { id: 'OUT_OF_GEOFENCE', label: 'Out of Geofence', count: outOfGeofenceCount, activeClass: 'bg-amber-600 text-white shadow-2xs' },
+              { id: 'GPS_INACTIVE', label: 'No Signal', count: noSignalCount, activeClass: 'bg-slate-700 text-white shadow-2xs' }
+            ].map(tab => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveStatus(tab.id)}
+                className={`inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  activeStatus === tab.id
+                    ? tab.activeClass
+                    : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                }`}
+              >
+                <span>{tab.label}</span>
+                <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-extrabold ${
+                  activeStatus === tab.id ? 'bg-white/20 text-white' : 'bg-gray-200 text-gray-700'
+                }`}>
+                  {tab.count}
+                </span>
+              </button>
+            ))}
+          </div>
         </div>
 
-        {/* Right side: Search & View Switcher */}
-        <div className="flex items-center gap-3">
-          <div className="relative flex-1 sm:w-64">
-            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+        {/* Search & View Switcher */}
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <div className="relative flex-1 sm:w-56">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
             <input
               type="text"
-              placeholder="Search employee, ID, branch..."
+              placeholder="Search employee or branch..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all"
+              className="w-full pl-8 pr-7 py-1.5 bg-gray-50 hover:bg-gray-100/70 focus:bg-white border border-gray-200 rounded-xl text-xs text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all"
             />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                <X size={12} />
+              </button>
+            )}
           </div>
 
           <div className="flex items-center bg-gray-100 p-1 rounded-xl border border-gray-200 shrink-0">
             <button
               type="button"
               onClick={() => setViewMode('MAP')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                viewMode === 'MAP'
-                  ? 'bg-white text-[#225091] shadow-xs'
-                  : 'text-gray-600 hover:text-gray-900'
+              className={`p-1.5 rounded-lg transition-all cursor-pointer ${
+                viewMode === 'MAP' ? 'bg-white text-[#225091] shadow-2xs' : 'text-gray-500 hover:text-gray-900'
               }`}
+              title="Map View"
             >
               <MapIcon size={14} />
-              <span>Map View</span>
             </button>
             <button
               type="button"
               onClick={() => setViewMode('TABLE')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                viewMode === 'TABLE'
-                  ? 'bg-white text-[#225091] shadow-xs'
-                  : 'text-gray-600 hover:text-gray-900'
+              className={`p-1.5 rounded-lg transition-all cursor-pointer ${
+                viewMode === 'TABLE' ? 'bg-white text-[#225091] shadow-2xs' : 'text-gray-500 hover:text-gray-900'
               }`}
+              title="Table Log View"
             >
               <List size={14} />
-              <span>Table Log</span>
             </button>
           </div>
         </div>
       </div>
 
-      {/* Main Content Area */}
+      {/* 3. Main Streamlined Content View */}
       {viewMode === 'MAP' ? (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          {/* Left Column: Interactive Employee List (4 cols) */}
-          <div className="lg:col-span-4 space-y-3 max-h-[720px] overflow-y-auto pr-1">
-            <div className="flex items-center justify-between px-1">
-              <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
-                Employees Checked-In ({filteredRecords.length})
-              </span>
-            </div>
-
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+          {/* Left: Clean Staff List (5 cols) */}
+          <div className="lg:col-span-5 space-y-2.5 h-[640px] overflow-y-auto pr-1.5 scrollbar-thin">
             {filteredRecords.length === 0 ? (
-              <div className="bg-white rounded-2xl border border-gray-200 p-8 text-center">
-                <MapPin size={36} className="mx-auto text-gray-300 mb-2" />
-                <p className="text-sm font-bold text-gray-700">No employee check-ins found</p>
-                <p className="text-xs text-gray-500 mt-1">Try selecting a different filter or search term.</p>
+              <div className="bg-white rounded-2xl border border-gray-200/80 p-8 text-center shadow-2xs">
+                <MapPinOff size={32} className="mx-auto text-gray-300 mb-2" />
+                <p className="text-xs font-bold text-gray-700">No staff found</p>
+                <p className="text-[11px] text-gray-400 mt-1">Try changing the branch or filter status</p>
               </div>
             ) : (
               filteredRecords.map(item => {
                 const isSelected = selectedRecord?.id === item.id;
-                const isOutOfGeofence = item.geofenceStatus === 'OUT_OF_GEOFENCE';
+                const hasCoords = hasValidCoordinates(item.punchLat, item.punchLng);
+                const isZero = !hasCoords || item.isZeroCoords || item.geofenceStatus === 'GPS_INACTIVE';
+                const isInside = hasCoords && !isZero && item.geofenceStatus === 'IN_BRANCH' && item.distanceMeters !== null && item.distanceMeters <= 100;
 
                 return (
                   <div
                     key={item.id}
-                    onClick={() => setSelectedRecord(item)}
-                    className={`p-4 rounded-2xl border transition-all cursor-pointer ${
+                    onClick={() => handleSelectRecord(item, true)}
+                    className={`p-3.5 rounded-2xl border transition-all cursor-pointer ${
                       isSelected
-                        ? isOutOfGeofence
-                          ? 'border-amber-500 bg-amber-50/40 ring-2 ring-amber-500/20 shadow-sm'
-                          : 'border-[#225091] bg-blue-50/40 ring-2 ring-[#225091]/20 shadow-sm'
-                        : isOutOfGeofence
-                          ? 'border-amber-200 bg-white hover:border-amber-300 shadow-2xs'
-                          : 'border-gray-200 bg-white hover:border-gray-300 shadow-2xs'
+                        ? isZero
+                          ? 'border-amber-400 bg-amber-50/40 shadow-xs border-l-4 border-l-amber-500'
+                          : isInside
+                            ? 'border-[#225091] bg-blue-50/40 shadow-xs border-l-4 border-l-[#225091]'
+                            : 'border-amber-500 bg-amber-50/40 shadow-xs border-l-4 border-l-amber-600'
+                        : 'border-gray-200/90 bg-white hover:border-gray-300 hover:shadow-2xs'
                     }`}
                   >
-                    <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-full bg-blue-100 text-[#225091] flex items-center justify-center font-bold text-xs shrink-0">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shrink-0 relative ${
+                          isZero
+                            ? 'bg-slate-100 text-slate-700'
+                            : isInside
+                              ? 'bg-blue-100 text-[#225091]'
+                              : 'bg-amber-100 text-amber-800'
+                        }`}>
                           {item.employeeName.charAt(0)}
+                          <span className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white ${
+                            isZero
+                              ? 'bg-slate-400'
+                              : isInside
+                                ? 'bg-emerald-500'
+                                : 'bg-amber-500'
+                          }`} />
                         </div>
                         <div>
-                          <h4 className="text-sm font-bold text-gray-900 leading-tight">{item.employeeName}</h4>
-                          <span className="text-[11px] text-gray-500 font-medium">{item.employeeId} • {item.designation}</span>
+                          <div className="flex items-center gap-1.5">
+                            <h4 className="text-xs font-bold text-gray-900">{item.employeeName}</h4>
+                            {item.isLiveGps && (
+                              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" title="Live Mobile GPS Ping" />
+                            )}
+                          </div>
+                          <p className="text-[11px] text-gray-500">{item.designation || 'Staff'}</p>
                         </div>
                       </div>
 
                       <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold shrink-0 ${
-                        item.geofenceStatus === 'IN_BRANCH'
-                          ? 'bg-emerald-100 text-emerald-700'
-                          : 'bg-amber-100 text-amber-800'
+                        isZero
+                          ? 'bg-slate-100 text-slate-700 border border-slate-200/80'
+                          : isInside
+                            ? 'bg-emerald-100 text-emerald-800'
+                            : 'bg-amber-100 text-amber-900'
                       }`}>
-                        {item.geofenceStatus === 'IN_BRANCH' ? 'In Branch' : 'Out of Geofence'}
+                        {isZero ? 'No Signal' : isInside ? 'In Branch' : 'Out of Geofence'}
                       </span>
                     </div>
 
-                    <div className="mt-2.5 text-xs text-gray-600 flex items-start gap-1.5">
-                      <Building2 size={13} className="shrink-0 text-gray-400 mt-0.5" />
-                      <p className="line-clamp-1">{item.branchName}</p>
-                    </div>
-
-                    <div className="mt-1 text-xs text-gray-600 flex items-start gap-1.5">
-                      <MapPin size={13} className="shrink-0 text-gray-400 mt-0.5" />
-                      <p className="line-clamp-1">{item.punchAddress}</p>
-                    </div>
-
-                    <div className="mt-3 pt-2.5 border-t border-gray-100 flex items-center justify-between text-[11px]">
-                      <span className="text-gray-500 font-medium flex items-center gap-1">
-                        <Clock size={12} />
-                        {new Date(item.punchInTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    <div className="mt-2.5 pt-2 border-t border-gray-100 flex items-center justify-between text-[11px] text-gray-500">
+                      <span className="truncate max-w-[170px] flex items-center gap-1 font-medium text-gray-600">
+                        <Building2 size={12} className="text-gray-400 shrink-0" />
+                        {item.branchName}
                       </span>
                       <span className={`font-bold ${
-                        item.distanceMeters > 500
-                          ? 'text-red-600 font-extrabold'
-                          : item.distanceMeters > 100
-                            ? 'text-amber-600'
-                            : 'text-emerald-600'
+                        isZero
+                          ? 'text-gray-400 font-medium'
+                          : isInside
+                            ? 'text-emerald-700'
+                            : 'text-amber-700'
                       }`}>
-                        {item.distanceMeters}m from branch
+                        {isZero
+                          ? 'No GPS Signal'
+                          : item.distanceMeters > 1000
+                            ? `${(item.distanceMeters / 1000).toFixed(1)} km`
+                            : `${item.distanceMeters} m`}
                       </span>
                     </div>
                   </div>
@@ -372,387 +582,357 @@ const GeoTagging = () => {
             )}
           </div>
 
-          {/* Right Column: Live Map & Inspector (8 cols) */}
-          <div className="lg:col-span-8 space-y-4">
-            <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-xs relative">
-              <div className="p-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
-                <div className="flex items-center gap-2">
-                  <Navigation size={18} className="text-[#225091]" />
-                  <span className="text-sm font-bold text-gray-900">
-                    {selectedRecord ? `${selectedRecord.employeeName} — Punch-In Location Map` : 'Branch Staff Geolocation Map'}
-                  </span>
-                </div>
-                {selectedRecord && (
-                  <a
-                    href={`https://www.google.com/maps?q=${selectedRecord.punchLat},${selectedRecord.punchLng}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex items-center gap-1.5 text-xs font-semibold text-[#225091] hover:underline"
-                  >
-                    <span>Open in Google Maps</span>
-                    <ExternalLink size={13} />
-                  </a>
-                )}
-              </div>
-
-              {/* Embedded Live Map Display */}
+          {/* Right: Google Map & Presence Audit Card (7 cols) */}
+          <div className="lg:col-span-7 space-y-3 sticky top-4">
+            <div className="bg-white rounded-2xl border border-gray-200/80 overflow-hidden shadow-2xs">
+              {/* Google Maps View or Zero GPS Visual State */}
               <div className="relative w-full h-[400px] bg-slate-100">
-                {selectedRecord ? (
-                  <iframe
-                    title="Live Location Map"
-                    width="100%"
-                    height="100%"
-                    frameBorder="0"
-                    scrolling="no"
-                    marginHeight="0"
-                    marginWidth="0"
-                    src={`https://www.openstreetmap.org/export/embed.html?bbox=${selectedRecord.punchLng - 0.015}%2C${selectedRecord.punchLat - 0.01}%2C${selectedRecord.punchLng + 0.015}%2C${selectedRecord.punchLat + 0.01}&layer=mapnik&marker=${selectedRecord.punchLat}%2C${selectedRecord.punchLng}`}
-                    className="w-full h-full border-0"
-                  />
+                {fetchingLiveLocation && (
+                  <div className="absolute top-3 right-3 bg-white/95 backdrop-blur-xs px-3 py-1.5 rounded-full shadow-sm flex items-center gap-1.5 text-[11px] font-bold text-[#225091] z-10 animate-pulse border border-blue-100">
+                    <RefreshCw size={12} className="animate-spin text-[#225091]" />
+                    <span>Syncing Live GPS...</span>
+                  </div>
+                )}
+                {selectedRecord && (selectedRecord.isZeroCoords || (selectedRecord.punchLat === 0 && selectedRecord.punchLng === 0)) && !showMapAnyway ? (
+                  /* Professional Zero-GPS Location Inactive UI Overlay */
+                  <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center bg-gradient-to-b from-slate-50 via-slate-100/40 to-slate-100 relative overflow-hidden">
+                    {/* Animated Radar Pulse Rings */}
+                    <div className="relative mb-3 flex items-center justify-center">
+                      <div className="w-20 h-20 rounded-full bg-slate-300/30 animate-ping absolute" />
+                      <div className="w-16 h-16 rounded-full bg-slate-200/80 border border-slate-300 flex items-center justify-center text-slate-600 shadow-sm relative z-10">
+                        <MapPinOff size={28} className="text-slate-600" />
+                      </div>
+                    </div>
+
+                    <h4 className="text-sm font-bold text-gray-900 mb-1">
+                      No Location Data Available (0, 0)
+                    </h4>
+                    <p className="text-xs text-gray-500 max-w-sm mb-4 leading-relaxed">
+                      There is no live GPS coordinate data available for <span className="font-semibold text-gray-800">{selectedRecord.employeeName}</span> today.
+                    </p>
+
+                    <div className="bg-white/95 backdrop-blur-xs px-4 py-2.5 rounded-xl border border-gray-200/90 shadow-2xs text-xs space-y-1.5 mb-4 text-left max-w-sm w-full">
+                      <div className="flex items-center justify-between text-gray-600">
+                        <span className="font-medium shrink-0">Registered Address:</span>
+                        <span className="font-bold text-gray-800 truncate ml-2">{selectedRecord.punchAddress || 'Rameshwari road, nagpur'}</span>
+                      </div>
+                      <div className="flex items-center justify-between text-gray-600">
+                        <span className="font-medium shrink-0">Assigned Branch:</span>
+                        <span className="font-semibold text-[#225091]">{selectedRecord.branchName}</span>
+                      </div>
+                      <div className="flex items-center justify-between text-gray-600">
+                        <span className="font-medium shrink-0">GPS Signal:</span>
+                        <span className="font-bold text-slate-600">No Data Transmitted</span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setShowMapAnyway(true)}
+                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white bg-[#225091] hover:bg-[#183e70] transition-colors shadow-2xs cursor-pointer"
+                      >
+                        <MapIcon size={13} />
+                        <span>Check on Map</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setZeroGpsModalRecord(selectedRecord)}
+                        className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-gray-700 bg-white hover:bg-gray-100 transition-colors border border-gray-200 shadow-2xs cursor-pointer"
+                      >
+                        <Info size={13} />
+                        <span>View Details</span>
+                      </button>
+                    </div>
+                  </div>
+                ) : selectedRecord ? (
+                  <div className="relative w-full h-full">
+                    {showMapAnyway && (selectedRecord.isZeroCoords || (selectedRecord.punchLat === 0 && selectedRecord.punchLng === 0)) && (
+                      <div className="absolute top-3 left-3 bg-[#225091] text-white px-3 py-1.5 rounded-full shadow-md z-10 flex items-center gap-1.5 text-[11px] font-bold backdrop-blur-xs">
+                        <MapPin size={12} className="text-amber-400" />
+                        <span>Registered Address: {selectedRecord.punchAddress || 'Rameshwari road, nagpur'}</span>
+                        <button
+                          type="button"
+                          onClick={() => setShowMapAnyway(false)}
+                          className="ml-1.5 text-white/80 hover:text-white cursor-pointer"
+                          title="Show Radar State"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    )}
+                    <iframe
+                      key={`${selectedRecord.id}-${selectedRecord.punchLat}-${selectedRecord.punchLng}-${showMapAnyway}`}
+                      title="Google Maps Location"
+                      width="100%"
+                      height="100%"
+                      loading="lazy"
+                      allowFullScreen
+                      referrerPolicy="no-referrer-when-downgrade"
+                      src={`https://www.google.com/maps/embed/v1/place?key=${googleMapsKey}&q=${
+                        (selectedRecord.punchLat && selectedRecord.punchLng && !(selectedRecord.punchLat === 0 && selectedRecord.punchLng === 0))
+                          ? `${selectedRecord.punchLat},${selectedRecord.punchLng}`
+                          : encodeURIComponent(selectedRecord.punchAddress || selectedRecord.branchAddress || selectedRecord.branchName || 'Nagpur, Maharashtra')
+                      }&zoom=16`}
+                      className="w-full h-full border-0"
+                    />
+                  </div>
                 ) : (
                   <div className="w-full h-full flex flex-col items-center justify-center text-gray-400">
-                    <MapPin size={48} className="mb-2 opacity-50" />
-                    <p className="text-sm font-semibold">Select an employee to inspect punch coordinates</p>
+                    <MapPin size={40} className="mb-2 opacity-40" />
+                    <p className="text-xs font-semibold">Select an employee to view location</p>
                   </div>
                 )}
-
-                {/* Floating Map Legend */}
-                <div className="absolute top-3 right-3 bg-white/95 backdrop-blur-xs p-2.5 rounded-xl border border-gray-200 shadow-md text-[11px] space-y-1.5">
-                  <div className="font-bold text-gray-800 text-xs mb-1">Geofence Legend</div>
-                  <div className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-                    <span className="text-gray-700">Inside Branch (&lt;100m)</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
-                    <span className="text-gray-700">Remote Check-In (&gt;100m)</span>
-                  </div>
-                </div>
               </div>
 
-              {/* Selected Pin Deep Audit Box */}
-              {selectedRecord && (
-                <div className="p-5 bg-white border-t border-gray-100">
-                  <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
-                    {/* Left details (8 cols) */}
-                    <div className="md:col-span-8 space-y-4">
-                      {/* Distance Offset Risk Gauge */}
-                      <div className={`p-4 rounded-xl border ${
-                        selectedRecord.geofenceStatus === 'IN_BRANCH'
-                          ? 'bg-emerald-50/60 border-emerald-200'
-                          : 'bg-amber-50/60 border-amber-200'
-                      }`}>
-                        <div className="flex items-center gap-2.5">
-                          {selectedRecord.geofenceStatus === 'IN_BRANCH' ? (
-                            <ShieldCheck className="text-emerald-600 shrink-0" size={22} />
-                          ) : (
-                            <AlertTriangle className="text-amber-600 shrink-0" size={22} />
-                          )}
-                          <div>
-                            <p className={`text-xs font-bold uppercase tracking-wider ${
-                              selectedRecord.geofenceStatus === 'IN_BRANCH' ? 'text-emerald-800' : 'text-amber-800'
-                            }`}>
-                              {selectedRecord.geofenceStatus === 'IN_BRANCH' ? 'Geofence Validated (In-Office Punch)' : 'Remote / Out of Geofence Check-In'}
-                            </p>
-                            <p className="text-xs text-gray-700 mt-0.5">
-                              Distance from Branch: <strong className="font-bold">{selectedRecord.distanceMeters} meters</strong> ({selectedRecord.geofenceStatus === 'IN_BRANCH' ? 'Within 100m authorized perimeter' : 'Exceeds branch perimeter threshold'}).
-                            </p>
-                          </div>
+              {/* Enhanced Presence Audit Bar */}
+              {selectedRecord && (() => {
+                const hasCoords = hasValidCoordinates(selectedRecord.punchLat, selectedRecord.punchLng);
+                const isZero = !hasCoords || selectedRecord.isZeroCoords || selectedRecord.geofenceStatus === 'GPS_INACTIVE';
+                const isInside = hasCoords && !isZero && selectedRecord.geofenceStatus === 'IN_BRANCH' && selectedRecord.distanceMeters !== null && selectedRecord.distanceMeters <= 100;
+
+                return (
+                  <div className="p-4 bg-white border-t border-gray-100 space-y-3 text-xs">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5">
+                      <div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-bold text-gray-900 text-sm">{selectedRecord.employeeName}</span>
+                          <span className="text-[11px] font-medium text-gray-500 bg-gray-100 px-2 py-0.5 rounded-md">
+                            {selectedRecord.designation || 'Staff'}
+                          </span>
+                          <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold ${
+                            isZero
+                              ? 'bg-slate-100 text-slate-700 border border-slate-200'
+                              : isInside
+                                ? 'bg-emerald-100 text-emerald-800'
+                                : 'bg-amber-100 text-amber-900'
+                          }`}>
+                            {isZero
+                              ? 'GPS INACTIVE (NO DATA)'
+                              : isInside
+                                ? 'VERIFIED PRESENT (<100m)'
+                                : `${selectedRecord.distanceMeters > 1000 ? `${(selectedRecord.distanceMeters / 1000).toFixed(1)} km` : `${selectedRecord.distanceMeters}m`} OUTSIDE`}
+                          </span>
                         </div>
+                        <p className="text-gray-500 text-[11px] mt-1">
+                          <span className="font-semibold text-gray-700">{selectedRecord.branchName}</span> • {selectedRecord.punchAddress || 'Rameshwari road, nagpur'}
+                        </p>
                       </div>
 
-                      {/* Side by Side Declared Branch vs Check-In GPS */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div className="p-3 bg-gray-50 rounded-xl border border-gray-200">
-                          <p className="text-[11px] font-bold text-gray-500 uppercase flex items-center gap-1">
-                            <Building2 size={12} /> Assigned Branch Office
-                          </p>
-                          <p className="text-xs text-gray-800 font-bold mt-1">{selectedRecord.branchName}</p>
-                          <p className="text-xs text-gray-600 font-medium leading-snug">{selectedRecord.branchAddress}</p>
-                          <p className="text-[10px] text-gray-500 font-mono mt-2">GPS: {selectedRecord.branchLat}, {selectedRecord.branchLng}</p>
-                        </div>
+                      <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto">
+                        {isZero && (
+                          <button
+                            type="button"
+                            onClick={() => setZeroGpsModalRecord(selectedRecord)}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-[#225091] bg-blue-50 hover:bg-blue-100 transition-colors border border-blue-200/60 shadow-2xs cursor-pointer"
+                          >
+                            <Info size={12} />
+                            <span>No Data Pop-up</span>
+                          </button>
+                        )}
 
-                        <div className="p-3 bg-blue-50/50 rounded-xl border border-blue-200">
-                          <p className="text-[11px] font-bold text-[#225091] uppercase flex items-center gap-1">
-                            <MapPin size={12} /> Actual Punch-In Location
-                          </p>
-                          <p className="text-xs text-gray-800 font-bold mt-1">Checked In via Mobile App</p>
-                          <p className="text-xs text-gray-600 font-medium leading-snug">{selectedRecord.punchAddress}</p>
-                          <p className="text-[10px] text-[#225091] font-mono mt-2">GPS: {selectedRecord.punchLat}, {selectedRecord.punchLng}</p>
-                        </div>
+                        <a
+                          href={
+                            isZero
+                              ? `https://www.google.com/maps?q=${encodeURIComponent(selectedRecord.punchAddress || selectedRecord.branchName)}`
+                              : `https://www.google.com/maps?q=${selectedRecord.punchLat},${selectedRecord.punchLng}`
+                          }
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-white bg-[#225091] hover:bg-[#183e70] transition-colors shadow-2xs cursor-pointer"
+                        >
+                          <span>Google Maps</span>
+                          <ExternalLink size={12} />
+                        </a>
                       </div>
                     </div>
 
-                    {/* Right side Device & Decision Actions (4 cols) */}
-                    <div className="md:col-span-4 flex flex-col justify-between space-y-4">
-                      <div className="p-3.5 bg-gray-50 rounded-xl border border-gray-200 space-y-2 text-xs">
-                        <p className="font-bold text-gray-800 uppercase tracking-wider text-[11px]">Audit Metadata</p>
-                        <p className="text-gray-600 flex items-center gap-1.5">
-                          <Clock size={13} className="text-gray-400" />
-                          <span>Punch Time: <strong>{new Date(selectedRecord.punchInTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</strong></span>
-                        </p>
-                        <p className="text-gray-600 flex items-center gap-1.5">
-                          <Smartphone size={13} className="text-gray-400" />
-                          <span className="truncate">{selectedRecord.deviceInfo}</span>
-                        </p>
-                        <p className="pt-1 text-gray-700 italic border-t border-gray-200/80">"{selectedRecord.remarks}"</p>
+                    {/* Geofence Status Meter */}
+                    <div className="pt-2.5 border-t border-gray-100 flex items-center justify-between text-[11px]">
+                      <div className="flex items-center gap-1.5 text-gray-500">
+                        <ShieldCheck size={13} className={isInside ? 'text-emerald-600' : 'text-gray-400'} />
+                        <span>
+                          {isZero
+                            ? 'Perimeter Status: No live GPS coordinates received from device'
+                            : isInside
+                              ? 'Perimeter Status: Inside 100m authorized branch zone'
+                              : `Perimeter Status: ${selectedRecord.distanceMeters > 1000 ? `${(selectedRecord.distanceMeters / 1000).toFixed(1)} km` : `${selectedRecord.distanceMeters}m`} away from branch anchor`}
+                        </span>
                       </div>
 
-                      {/* Manager Audit Actions */}
-                      <div className="space-y-2">
-                        <button
-                          type="button"
-                          onClick={() => handleAuditGeofence(selectedRecord.id, 'IN_BRANCH')}
-                          className="w-full py-2 px-3 bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer"
-                        >
-                          <Check size={15} />
-                          <span>Mark as Valid Check-In</span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleAuditGeofence(selectedRecord.id, 'OUT_OF_GEOFENCE')}
-                          className="w-full py-2 px-3 bg-white hover:bg-amber-50 active:scale-98 text-amber-700 border border-amber-300 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-                        >
-                          <AlertTriangle size={14} />
-                          <span>Flag Out-of-Geofence</span>
-                        </button>
-                      </div>
+                      {selectedRecord.lastUpdatedAt && (
+                        <span className="text-[10px] text-gray-400 font-medium flex items-center gap-1 shrink-0">
+                          <Clock size={11} className="text-gray-400" />
+                          <span>Pinged: {new Date(selectedRecord.lastUpdatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                        </span>
+                      )}
                     </div>
                   </div>
-                </div>
-              )}
+                );
+              })()}
             </div>
           </div>
         </div>
       ) : (
-        /* Table Audit View */
-        <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-xs">
+        /* Minimal Table View */
+        <div className="bg-white rounded-2xl border border-gray-200/80 overflow-hidden shadow-2xs">
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
+            <table className="w-full text-left border-collapse min-w-[700px]">
               <thead>
                 <tr className="bg-gray-50/80 border-b border-gray-200 text-[11px] font-bold uppercase tracking-wider text-gray-500">
-                  <th className="py-3.5 px-4">Employee</th>
-                  <th className="py-3.5 px-4">Assigned Branch</th>
-                  <th className="py-3.5 px-4">Punch-In Time</th>
-                  <th className="py-3.5 px-4">Punch Address</th>
-                  <th className="py-3.5 px-4">Branch Offset</th>
-                  <th className="py-3.5 px-4">Geofence Status</th>
-                  <th className="py-3.5 px-4 text-right">Actions</th>
+                  <th className="py-3 px-4">Staff</th>
+                  <th className="py-3 px-4">Branch</th>
+                  <th className="py-3 px-4">Punch Time</th>
+                  <th className="py-3 px-4">Distance</th>
+                  <th className="py-3 px-4">Status</th>
+                  <th className="py-3 px-4 text-center">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 text-xs">
-                {filteredRecords.map((item) => (
-                  <tr key={item.id} className="hover:bg-gray-50/60 transition-colors">
-                    <td className="py-3.5 px-4">
-                      <div className="font-bold text-gray-900">{item.employeeName}</div>
-                      <div className="text-[11px] text-gray-500">{item.employeeId} • {item.designation}</div>
-                    </td>
-                    <td className="py-3.5 px-4 font-medium text-gray-700">
-                      {item.branchName}
-                    </td>
-                    <td className="py-3.5 px-4 text-gray-600 font-medium">
-                      {new Date(item.punchInTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </td>
-                    <td className="py-3.5 px-4 max-w-xs truncate text-gray-700">
-                      {item.punchAddress}
-                    </td>
-                    <td className="py-3.5 px-4">
-                      <span className={`font-bold ${
-                        item.distanceMeters > 500
-                          ? 'text-red-600 font-extrabold'
-                          : item.distanceMeters > 100
-                            ? 'text-amber-600'
-                            : 'text-emerald-600'
-                      }`}>
-                        {item.distanceMeters}m
-                      </span>
-                    </td>
-                    <td className="py-3.5 px-4">
-                      <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${
-                        item.geofenceStatus === 'IN_BRANCH'
-                          ? 'bg-emerald-100 text-emerald-700'
-                          : 'bg-amber-100 text-amber-800'
-                      }`}>
-                        {item.geofenceStatus === 'IN_BRANCH' ? 'In Branch' : 'Out of Geofence'}
-                      </span>
-                    </td>
-                    <td className="py-3.5 px-4 text-right">
-                      <div className="flex items-center justify-end gap-2">
+                {filteredRecords.map((item) => {
+                  const hasCoords = hasValidCoordinates(item.punchLat, item.punchLng);
+                  const isZero = !hasCoords || item.isZeroCoords || item.geofenceStatus === 'GPS_INACTIVE';
+                  const isInside = hasCoords && !isZero && item.geofenceStatus === 'IN_BRANCH' && item.distanceMeters !== null && item.distanceMeters <= 100;
+
+                  return (
+                    <tr key={item.id} className="hover:bg-gray-50/50 transition-colors">
+                      <td className="py-3 px-4 font-bold text-gray-900">{item.employeeName}</td>
+                      <td className="py-3 px-4 text-gray-700">{item.branchName}</td>
+                      <td className="py-3 px-4 text-gray-500">
+                        {item.punchInTime ? new Date(item.punchInTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—'}
+                      </td>
+                      <td className="py-3 px-4 font-semibold text-gray-800">
+                        {isZero ? (
+                          <span className="text-gray-400 font-medium">No Signal</span>
+                        ) : item.distanceMeters > 1000 ? (
+                          `${(item.distanceMeters / 1000).toFixed(1)} km`
+                        ) : (
+                          `${item.distanceMeters} m`
+                        )}
+                      </td>
+                      <td className="py-3 px-4">
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                          isZero
+                            ? 'bg-slate-100 text-slate-700 border border-slate-200/80'
+                            : isInside
+                              ? 'bg-emerald-100 text-emerald-800'
+                              : 'bg-amber-100 text-amber-900'
+                        }`}>
+                          {isZero ? 'No Signal' : isInside ? 'In Branch' : 'Out of Geofence'}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 text-center">
                         <button
                           type="button"
                           onClick={() => {
-                            setSelectedRecord(item);
+                            handleSelectRecord(item, true);
                             setViewMode('MAP');
                           }}
-                          className="px-2.5 py-1 rounded-lg text-xs font-semibold text-[#225091] bg-blue-50 hover:bg-blue-100 transition-colors"
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-[#225091] bg-blue-50 hover:bg-blue-100 transition-colors"
                         >
-                          View Map
+                          <MapIcon size={12} />
+                          <span>Map</span>
                         </button>
-                        <a
-                          href={`https://www.google.com/maps?q=${item.punchLat},${item.punchLng}`}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="p-1 rounded-lg text-gray-500 hover:text-[#225091] transition-colors"
-                          title="Open Google Maps"
-                        >
-                          <ExternalLink size={14} />
-                        </a>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
         </div>
       )}
 
-      {/* Modal: Record / Simulate GPS Check-In */}
-      {isPunchModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-gray-100 space-y-5">
-            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-blue-50 text-[#225091] flex items-center justify-center">
-                  <MapPin size={18} />
+      {/* 4. Professional Zero GPS / Location Inactive Pop-up Modal */}
+      {zeroGpsModalRecord && (
+        <div className="fixed inset-0 bg-black/45 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-5 border border-amber-100 animate-in zoom-in-95 duration-200">
+            {/* Modal Header */}
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-600 flex items-center justify-center shrink-0">
+                  <MapPinOff size={24} className="animate-pulse" />
                 </div>
-                <h3 className="text-base font-bold text-gray-900">Record Employee GPS Check-In</h3>
+                <div>
+                  <h3 className="text-base font-bold text-gray-900">
+                    No Location Data Available
+                  </h3>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-100 text-amber-900 uppercase tracking-wide">
+                      No Data (0, 0)
+                    </span>
+                    <span className="text-[11px] text-gray-500">No Mobile Ping</span>
+                  </div>
+                </div>
               </div>
               <button
                 type="button"
-                onClick={() => setIsPunchModalOpen(false)}
-                className="p-1 text-gray-400 hover:text-gray-700 rounded-lg"
+                onClick={() => setZeroGpsModalRecord(null)}
+                className="p-1.5 rounded-xl text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer"
               >
                 <X size={18} />
               </button>
             </div>
 
-            <div className="space-y-4 text-xs sm:text-sm">
-              <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">Employee Name & ID</label>
-                <input
-                  type="text"
-                  placeholder="e.g. Ramesh Kulkarni (EMP-755)"
-                  value={punchData.employeeName}
-                  onChange={(e) => setPunchData(prev => ({ ...prev, employeeName: e.target.value }))}
-                  className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#225091]"
-                />
+            {/* Modal Body / Information Card */}
+            <div className="bg-amber-50/70 rounded-2xl p-4 border border-amber-200/70 space-y-2 text-xs">
+              <div className="flex items-center justify-between">
+                <span className="text-gray-500 font-semibold">Staff Member:</span>
+                <span className="font-bold text-gray-900">{zeroGpsModalRecord.employeeName}</span>
               </div>
-
-              <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">Assigned Branch</label>
-                <select
-                  value={punchData.branchName}
-                  onChange={(e) => setPunchData(prev => ({ ...prev, branchName: e.target.value }))}
-                  className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#225091]"
-                >
-                  <option value="Shivaji Nagar Main Branch">Shivaji Nagar Main Branch</option>
-                  <option value="Kothrud Sub-Branch">Kothrud Sub-Branch</option>
-                  <option value="Swargate Branch">Swargate Branch</option>
-                  <option value="Hadapsar Branch">Hadapsar Branch</option>
-                </select>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-500 font-semibold">Designation:</span>
+                <span className="font-semibold text-gray-800">{zeroGpsModalRecord.designation || 'Staff'}</span>
               </div>
-
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="text-xs font-bold text-gray-700">Punch Coordinates (Lat, Lng)</label>
-                  <button
-                    type="button"
-                    onClick={handleCaptureCurrentLocation}
-                    disabled={capturingGps}
-                    className="text-xs font-bold text-[#225091] hover:underline flex items-center gap-1 cursor-pointer"
-                  >
-                    <Navigation size={12} />
-                    <span>{capturingGps ? 'Capturing...' : 'Use My Current GPS'}</span>
-                  </button>
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <input
-                    type="number"
-                    step="0.000001"
-                    placeholder="Latitude"
-                    value={punchData.punchLat}
-                    onChange={(e) => setPunchData(prev => ({ ...prev, punchLat: parseFloat(e.target.value) }))}
-                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-gray-800"
-                  />
-                  <input
-                    type="number"
-                    step="0.000001"
-                    placeholder="Longitude"
-                    value={punchData.punchLng}
-                    onChange={(e) => setPunchData(prev => ({ ...prev, punchLng: parseFloat(e.target.value) }))}
-                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-gray-800"
-                  />
-                </div>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-500 font-semibold">Assigned Branch:</span>
+                <span className="font-bold text-[#225091]">{zeroGpsModalRecord.branchName}</span>
               </div>
-
-              <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">Punch Address Location</label>
-                <input
-                  type="text"
-                  placeholder="e.g. FC Road Branch Office, Pune"
-                  value={punchData.punchAddress}
-                  onChange={(e) => setPunchData(prev => ({ ...prev, punchAddress: e.target.value }))}
-                  className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-gray-800"
-                />
+              <div className="flex items-center justify-between">
+                <span className="text-gray-500 font-semibold">GPS Status:</span>
+                <span className="font-bold text-amber-700">No Data Available</span>
               </div>
-
-              <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">Audit Notes / Shift Remarks</label>
-                <textarea
-                  rows={2}
-                  placeholder="e.g. Morning check-in on time."
-                  value={punchData.remarks}
-                  onChange={(e) => setPunchData(prev => ({ ...prev, remarks: e.target.value }))}
-                  className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-gray-800"
-                />
+              <div className="pt-2 border-t border-amber-200/60 flex items-start justify-between gap-3">
+                <span className="text-gray-500 font-semibold shrink-0">Registered Address:</span>
+                <span className="font-medium text-gray-800 text-right truncate">
+                  {zeroGpsModalRecord.punchAddress || zeroGpsModalRecord.branchAddress || 'Rameshwari road, nagpur'}
+                </span>
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-3 pt-3 border-t border-gray-100">
-              <button
-                type="button"
-                onClick={() => setIsPunchModalOpen(false)}
-                className="px-4 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-100 rounded-xl transition-all"
-              >
-                Cancel
-              </button>
+            <p className="text-xs text-gray-500 leading-relaxed">
+              There is no live geolocation data available for this staff member. The employee has not logged in or transmitted mobile GPS coordinates today.
+            </p>
+
+            {/* Modal Action Buttons */}
+            <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-gray-100">
               <button
                 type="button"
                 onClick={() => {
-                  if (!punchData.employeeName) {
-                    toast.error('Please enter employee name');
-                    return;
-                  }
-                  const newEntry = {
-                    id: `ATT-GEO-${Date.now().toString().slice(-4)}`,
-                    employeeId: `EMP-${Math.floor(700 + Math.random() * 90)}`,
-                    employeeName: punchData.employeeName,
-                    designation: punchData.designation,
-                    department: 'Branch Staff',
-                    branchName: punchData.branchName,
-                    branchLat: punchData.branchLat,
-                    branchLng: punchData.branchLng,
-                    branchAddress: `${punchData.branchName}, Pune`,
-                    punchInTime: new Date().toISOString(),
-                    punchOutTime: null,
-                    punchLat: punchData.punchLat,
-                    punchLng: punchData.punchLng,
-                    punchAddress: punchData.punchAddress || 'Captured via Device GPS',
-                    distanceMeters: 14,
-                    geofenceStatus: 'IN_BRANCH',
-                    riskLevel: 'LOW',
-                    deviceInfo: 'Web GPS Portal',
-                    remarks: punchData.remarks || 'Standard on-time punch-in.'
-                  };
-                  setRecords(prev => [newEntry, ...prev]);
-                  setSelectedRecord(newEntry);
-                  setIsPunchModalOpen(false);
-                  toast.success('Employee attendance GPS check-in recorded successfully!');
+                  setZeroGpsModalRecord(null);
+                  setShowMapAnyway(true);
+                  setViewMode('MAP');
                 }}
-                className="px-4 py-2 text-xs font-bold text-white bg-[#225091] hover:bg-[#1b4177] active:scale-95 rounded-xl shadow-xs transition-all"
+                className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-[#225091] hover:bg-[#183e70] transition-colors shadow-2xs cursor-pointer"
               >
-                Save GPS Check-In
+                <MapIcon size={13} />
+                <span>Check on Map</span>
+              </button>
+              <a
+                href={`https://www.google.com/maps?q=${encodeURIComponent(zeroGpsModalRecord.punchAddress || zeroGpsModalRecord.branchAddress || zeroGpsModalRecord.branchName)}`}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold text-gray-700 bg-gray-100 hover:bg-gray-200 transition-colors cursor-pointer"
+              >
+                <span>External Maps</span>
+                <ExternalLink size={12} />
+              </a>
+              <button
+                type="button"
+                onClick={() => setZeroGpsModalRecord(null)}
+                className="px-3.5 py-2.5 rounded-xl text-xs font-semibold text-gray-500 hover:text-gray-800 transition-colors cursor-pointer"
+              >
+                Close
               </button>
             </div>
           </div>

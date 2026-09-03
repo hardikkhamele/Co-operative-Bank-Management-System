@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { 
   Download, CheckCircle2, User, Calendar, Users, MapPin, CreditCard, 
@@ -54,6 +54,14 @@ const KycVerification = () => {
   const [historyPage, setHistoryPage] = useState(1);
   const historyPerPage = 10;
 
+  // Filter out failed records so they are never visible in the table
+  const visibleHistoryList = useMemo(() => {
+    return historyList.filter(item => {
+      const st = (item.status || '').toUpperCase();
+      return st !== 'FAILED' && st !== 'REJECTED';
+    });
+  }, [historyList]);
+
   // Load History from API 4.5: GET /v1/society/kyc-verification/history
   const fetchHistory = useCallback(async (pageNo = historyPage) => {
     setHistoryLoading(true);
@@ -79,18 +87,26 @@ const KycVerification = () => {
       const res = await kycService.getKycHistory(params);
       if (res && res.data) {
         const items = res.data.items || (Array.isArray(res.data) ? res.data : []);
-        setHistoryList(items);
+        // Strictly filter out failed records so failed data is never visible in the table
+        const visibleItems = items.filter(item => {
+          const st = (item.status || '').toUpperCase();
+          return st !== 'FAILED' && st !== 'REJECTED';
+        });
+        setHistoryList(visibleItems);
         if (res.data.stats) {
           setBackendStats(res.data.stats);
         }
         if (res.data.pagination) {
-          setHistoryPagination(res.data.pagination);
+          setHistoryPagination({
+            ...res.data.pagination,
+            total: visibleItems.length,
+          });
         } else {
           setHistoryPagination({
-            total: items.length,
+            total: visibleItems.length,
             page: pageNo,
             limit: historyPerPage,
-            totalPages: Math.ceil(items.length / historyPerPage) || 1,
+            totalPages: Math.ceil(visibleItems.length / historyPerPage) || 1,
           });
         }
       }
@@ -433,8 +449,8 @@ const KycVerification = () => {
             ]}
           />
 
-          {/* Stats Summary Cards (Matching Backend Keys: totalKyc, verified, failed, aadhaarVerified, panVerified) */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
+          {/* Stats Summary Cards (Matching Backend Keys: totalKyc, verified, aadhaarVerified, panVerified) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
             {/* Total Verifications Done */}
             <div 
               onClick={() => {
@@ -479,30 +495,6 @@ const KycVerification = () => {
               </div>
               <div className="w-11 h-11 rounded-xl bg-emerald-50 group-hover:bg-emerald-600 group-hover:text-white text-emerald-600 flex items-center justify-center shrink-0 transition-colors">
                 <CheckCircle2 size={22} />
-              </div>
-            </div>
-
-            {/* Failed Verifications */}
-            <div 
-              onClick={() => {
-                setActiveTab('history');
-                setHistoryStatusFilter('FAILED');
-              }}
-              className="bg-white p-4.5 rounded-2xl border border-gray-100 hover:border-rose-200 hover:shadow-sm transition-all cursor-pointer shadow-xs flex items-center justify-between group"
-            >
-              <div>
-                <span className="text-[11px] font-bold text-rose-700 uppercase tracking-wider block mb-1">
-                  Failed / Rejected
-                </span>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-2xl font-bold text-rose-700">{failedCount}</span>
-                  <span className="text-[11px] font-semibold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full">
-                    {totalVerifications > 0 ? `${Math.round((failedCount / totalVerifications) * 100)}%` : '0%'}
-                  </span>
-                </div>
-              </div>
-              <div className="w-11 h-11 rounded-xl bg-rose-50 group-hover:bg-rose-600 group-hover:text-white text-rose-600 flex items-center justify-center shrink-0 transition-colors">
-                <XCircle size={22} />
               </div>
             </div>
 
@@ -866,7 +858,6 @@ const KycVerification = () => {
                     <option value="ALL">All Statuses</option>
                     <option value="VERIFIED">Verified</option>
                     <option value="INITIATED">Initiated</option>
-                    <option value="FAILED">Failed</option>
                     <option value="EXPIRED">Expired</option>
                   </select>
 
@@ -967,7 +958,7 @@ const KycVerification = () => {
                           <span>Loading verification history...</span>
                         </td>
                       </tr>
-                    ) : historyList.length === 0 ? (
+                    ) : visibleHistoryList.length === 0 ? (
                       <tr>
                         <td colSpan={7} className="py-12 text-center">
                           <div className="w-12 h-12 rounded-full bg-gray-100 text-gray-400 flex items-center justify-center mx-auto mb-3">
@@ -991,7 +982,7 @@ const KycVerification = () => {
                         </td>
                       </tr>
                     ) : (
-                      historyList.map((item, idx) => {
+                      visibleHistoryList.map((item, idx) => {
                         const ref = item.refid || 'N/A';
                         const doc = (item.documentType || (item.personalDetails?.aadhaarNumber ? 'AADHAAR' : 'PAN')).toUpperCase();
                         const name = item.personalDetails?.fullName || item.personalDetails?.name || item.name || 'N/A';

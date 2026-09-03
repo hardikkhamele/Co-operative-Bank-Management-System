@@ -351,13 +351,15 @@ const Branch = () => {
       setCreateSubmitting(false);
     }
   };
-  
-  const handleOpenEdit = async (branch) => {
+
+  const handleOpenEdit = async (branch, initialStep = 1) => {
     try {
       let branchData = branch;
       try {
-        const res = await branchService.getById(branch.id);
+        const res = await branchService.getById(branch.id || branch._id);
         if (res && res.success && res.data) {
+          branchData = res.data;
+        } else if (res && res.data) {
           branchData = res.data;
         }
       } catch (err) {
@@ -367,7 +369,7 @@ const Branch = () => {
       // Try fetching manager profile
       let mgrProfile = null;
       try {
-        const mgrRes = await branchService.getManagerProfile(branch.id);
+        const mgrRes = await branchService.getManagerProfile(branch.id || branch._id);
         if (mgrRes && mgrRes.success && mgrRes.data) {
           mgrProfile = mgrRes.data;
         }
@@ -375,15 +377,15 @@ const Branch = () => {
         console.warn("Could not fetch manager profile for branch", err);
       }
 
-      // Extract manager info from all possible representations
       const rawMgr = mgrProfile || branchData.manager || branchData.branchManager || branchData.managerUser || branch.branchManager || branch.manager || {};
-      
+      const rawUser = rawMgr.user || {};
+
       const mgrFullName = 
         rawMgr.fullName || 
         rawMgr.name || 
         rawMgr.personalDetails?.fullName || 
-        rawMgr.user?.fullName || 
-        rawMgr.user?.name || 
+        rawUser.fullName || 
+        rawUser.name || 
         branchData.managerName || 
         branch.managerName || 
         '';
@@ -391,7 +393,7 @@ const Branch = () => {
       const mgrEmail = 
         rawMgr.email || 
         rawMgr.personalDetails?.email || 
-        rawMgr.user?.email || 
+        rawUser.email || 
         branchData.managerEmail || 
         branch.managerEmail || 
         '';
@@ -400,7 +402,8 @@ const Branch = () => {
         rawMgr.phoneNumber || 
         rawMgr.phone || 
         rawMgr.personalDetails?.phoneNumber || 
-        rawMgr.user?.phoneNumber || 
+        rawUser.phoneNumber || 
+        rawUser.phone || 
         branchData.managerPhone || 
         branchData.managerPhoneNumber || 
         branch.managerPhone || 
@@ -420,6 +423,7 @@ const Branch = () => {
 
       const normalized = {
         ...branchData,
+        id: branchData.id || branchData._id || branch.id || branch._id,
         name: branchData.name || '',
         code: branchData.code || '',
         email: branchData.email || '',
@@ -443,7 +447,7 @@ const Branch = () => {
       };
 
       setSelectedBranch(normalized);
-      setEditStep(1);
+      setEditStep(initialStep);
       setIsEditModalOpen(true);
     } catch (err) {
       console.error("Failed to open edit modal", err);
@@ -826,13 +830,13 @@ const Branch = () => {
                             </div>
                           </Link>
                         ) : (
-                          <Link
-                            to={`/managers/edit/${bId}`}
-                            state={{ branch }}
-                            className="text-xs text-blue-600 hover:underline font-semibold cursor-pointer"
+                          <button
+                            type="button"
+                            onClick={() => handleOpenEdit(branch, 2)}
+                            className="text-xs text-[#225091] hover:underline font-semibold cursor-pointer"
                           >
                             + Assign Manager
-                          </Link>
+                          </button>
                         );
                       })()}
                     </td>

@@ -23,7 +23,7 @@ import { transferReceiptService } from "../../api/transferReceiptService";
 import useBranchStore from "../../store/branchStore";
 import PageHeader from "../../components/common/PageHeader";
 import { Skeleton, SkeletonTableRow } from "../../components/common/Skeleton";
-import { isBankOwner } from "../../utils/roleUtils";
+import { isBankOwner, canApproveReceipts } from "../../utils/roleUtils";
 import ReceiptImageUpload from "../../components/common/ReceiptImageUpload";
 
 const GL_HEAD_OPTIONS = [
@@ -144,7 +144,8 @@ const Transfer = () => {
 
   const authRole = useAuthStore((state) => state.role);
   const authUser = useAuthStore((state) => state.user);
-  const canApprove = isBankOwner(authRole, authUser);
+  const permissions = useAuthStore((state) => state.permissions) || [];
+  const canApprove = canApproveReceipts(authRole, authUser, permissions);
 
   // Form State for Create
   const todayISO = new Date().toISOString().split("T")[0];

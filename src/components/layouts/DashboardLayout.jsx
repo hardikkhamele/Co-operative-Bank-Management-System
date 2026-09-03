@@ -105,7 +105,7 @@ const DashboardLayout = () => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const { hasPermission, hasAnyPermission } = usePermission();
+  const { hasPermission, hasAnyPermission, isReceiptManager } = usePermission();
   
   // Hidden / Show More Routes
   const hiddenRoutes = [
@@ -359,7 +359,7 @@ const DashboardLayout = () => {
 
           {/* Receipt Management */}
           <SidebarGroup title="Receipt Management">
-            {hasPermission('receipt.view') && (
+            {(hasPermission('receipt.view') || isReceiptManager) && (
               <>
                 <NavLink to="/credit" className={(props) => subNavLinkClass(props, '/credit')}>
                   <ArrowDownRight size={18} /> Credit Receipt

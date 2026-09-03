@@ -42,13 +42,69 @@ export const isBankOwner = (role, user) => {
 };
 
 /**
- * Determines if the current user has permission to approve or reject financial receipts.
- * Strictly restricted to Bank Owner / Super Admin.
+ * Evaluates whether the currently authenticated user is a Bank Receipt Manager.
+ * 
+ * Supports:
+ * - "Bank Receipt Manager"
+ * - "BANK_RECEIPT_MANAGER"
+ * - "Receipt Manager"
  * 
  * @param {object|string} role 
  * @param {object} user 
  * @returns {boolean}
  */
-export const canApproveReceipts = (role, user) => {
-  return isBankOwner(role, user);
+export const isReceiptManager = (role, user) => {
+  const roleName = (
+    role?.name ||
+    role?.code ||
+    (typeof role === "string" ? role : "") ||
+    user?.role?.name ||
+    user?.role?.code ||
+    (typeof user?.role === "string" ? user?.role : "") ||
+    user?.designation ||
+    ""
+  ).toUpperCase().trim();
+
+  if (!roleName) return false;
+
+  return (
+    roleName.includes("RECEIPT MANAGER") ||
+    roleName.includes("RECEIPT_MANAGER") ||
+    roleName.includes("BANK RECEIPT") ||
+    roleName.includes("BANK_RECEIPT")
+  );
+};
+
+/**
+ * Determines if the current user has permission to approve or reject financial receipts.
+ * Authorized for:
+ * 1. Bank Owner / Super Admin
+ * 2. Bank Receipt Manager
+ * 3. Users with explicit 'receipt.approve', 'receipt.reject', or 'receipt.manage' permissions
+ * 
+ * @param {object|string} role 
+ * @param {object} user 
+ * @param {Array} permissions
+ * @returns {boolean}
+ */
+export const canApproveReceipts = (role, user, permissions = []) => {
+  if (isBankOwner(role, user)) return true;
+  if (isReceiptManager(role, user)) return true;
+
+  if (Array.isArray(permissions) && permissions.length > 0) {
+    const hasPerm = permissions.some((p) => {
+      const key = (typeof p === 'string' ? p : p?.key || '').toLowerCase();
+      return (
+        key === 'receipt.approve' ||
+        key === 'receipt.reject' ||
+        key === 'receipt.manage' ||
+        key === 'receipt.*' ||
+        key === '*' ||
+        key === 'all'
+      );
+    });
+    if (hasPerm) return true;
+  }
+
+  return false;
 };
