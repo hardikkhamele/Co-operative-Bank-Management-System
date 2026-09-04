@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import AuthLayout from '../../components/layouts/AuthLayout';
 import useAuthStore from '../../store/authStore';
 import loginIllustration from '../../assets/images/login.png';
 import { authService } from '../../api/authService';
-import { Building2, Users, AlertCircle, Eye, EyeOff, Landmark } from 'lucide-react';
+import { AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { validateEmail, validatePassword } from '../../utils/validation';
 
 const BankLogin = () => {
@@ -48,9 +48,17 @@ const BankLogin = () => {
         password: formData.password
       });
       
-      if (response.success && response.data) {
-        login(response.data); // pass full payload to Zustand
-        navigate('/bank/dashboard');
+      if (response && (response.success || response.data)) {
+        const loginPayload = {
+          ...(response.data || {}),
+          ...response,
+          role: response.role || response.data?.role || response.user?.role || response.data?.user?.role || null,
+          user: response.data?.user || response.user || null,
+          tokens: response.data?.tokens || response.tokens || null,
+          permissions: response.permissions || response.data?.permissions || response.user?.permissions || response.data?.user?.permissions || []
+        };
+        login(loginPayload); // pass full payload to Zustand
+        navigate('/dashboard');
       }
     } catch (err) {
       if (err.response?.data?.details && err.response.data.details.length > 0) {

@@ -1,14 +1,33 @@
 import { useMemo, useCallback } from 'react';
 import useAuthStore from '../store/authStore';
-import { isReceiptManager, canApproveReceipts as checkCanApproveReceipts } from '../utils/roleUtils';
+import { 
+  isReceiptManager, 
+  isBankOwner, 
+  canApproveReceipts as checkCanApproveReceipts,
+  canApproveMerchantOnboarding
+} from '../utils/roleUtils';
 
 /**
  * Custom hook to check user permissions and roles
  */
 export const usePermission = () => {
-  const permissions = useAuthStore((state) => state.permissions) || [];
+  const storePermissions = useAuthStore((state) => state.permissions);
   const role = useAuthStore((state) => state.role);
   const user = useAuthStore((state) => state.user);
+
+  // Fallback to user.permissions or role.permissions if store permissions are empty
+  const permissions = useMemo(() => {
+    if (Array.isArray(storePermissions) && storePermissions.length > 0) {
+      return storePermissions;
+    }
+    if (Array.isArray(user?.permissions) && user.permissions.length > 0) {
+      return user.permissions;
+    }
+    if (Array.isArray(role?.permissions) && role.permissions.length > 0) {
+      return role.permissions;
+    }
+    return [];
+  }, [storePermissions, user, role]);
 
   // Check if user is a Bank Receipt Manager
   const isReceiptMgr = useMemo(() => {
@@ -20,41 +39,80 @@ export const usePermission = () => {
     return checkCanApproveReceipts(role, user, permissions);
   }, [role, user, permissions]);
 
-  // Check if user is Super Admin, Bank Owner, Branch Manager or Admin with full access
+  // Check if user can approve/reject merchant onboarding (Bank Owner, Society Admin, Branch Manager)
+  const canApproveMerchant = useMemo(() => {
+    return canApproveMerchantOnboarding(role, user, permissions);
+  }, [role, user, permissions]);
+
+  // Check if user is Super Admin, Bank Owner, or Full Admin with unrestricted system access
   const isSuperAdmin = useMemo(() => {
+    // 1. Explicit wildcard permissions grant super admin access
+    if (Array.isArray(permissions) && (permissions.includes('*') || permissions.includes('all'))) {
+      return true;
+    }
+
+    // 2. Bank Owner / Super Admin via roleUtils
+    if (isBankOwner(role, user)) {
+      return true;
+    }
+
     const rawRole =
       role?.code ||
       role?.name ||
-      role ||
+      (typeof role === 'string' ? role : '') ||
       user?.role?.code ||
       user?.role?.name ||
-      user?.role ||
+      (typeof user?.role === 'string' ? user?.role : '') ||
+      user?.designation ||
       '';
-    const roleCode = (typeof rawRole === 'string' ? rawRole : '').toUpperCase().replace(/\s+/g, '_');
-    const userRole = (typeof user?.role === 'string' ? user.role : '').toUpperCase();
+    const roleUpper = rawRole.toUpperCase().replace(/\s+/g, '_').trim();
+
+    // Strictly match authorized administrative titles only
     return (
-      roleCode === 'SUPER_ADMIN' ||
-      roleCode === 'ADMIN' ||
-      roleCode.includes('BANK_OWNER') ||
-      roleCode.includes('OWNER') ||
-      roleCode.includes('BRANCH_MANAGER') ||
-      roleCode.includes('MANAGER') ||
-      userRole.includes('SUPER_ADMIN') ||
-      userRole.includes('ADMIN') ||
-      userRole.includes('OWNER') ||
-      userRole.includes('MANAGER') ||
-      permissions.includes('*') ||
-      permissions.includes('all')
+      roleUpper === 'SUPER_ADMIN' ||
+      roleUpper === 'ADMIN' ||
+      roleUpper === 'SYSTEM_ADMIN' ||
+      roleUpper === 'BRANCH_MANAGER'
     );
   }, [role, user, permissions]);
 
-  // Set of normalized permissions for fast lookup
+  // Comprehensive set of normalized permissions for fast lookup
   const permissionSet = useMemo(() => {
-    return new Set(
-      Array.isArray(permissions)
-        ? permissions.map((p) => (typeof p === 'string' ? p.toLowerCase() : p?.key?.toLowerCase() || ''))
-        : []
-    );
+    const set = new Set();
+    if (!Array.isArray(permissions)) return set;
+
+    permissions.forEach((p) => {
+      if (!p) return;
+      if (typeof p === 'string') {
+        const lower = p.toLowerCase().trim();
+        set.add(lower);
+        set.add(lower.replace(/[:_]/g, '.'));
+        set.add(lower.replace(/[:.]/g, '_'));
+      } else if (typeof p === 'object') {
+        ['key', 'name', 'code', 'permission', 'slug'].forEach((field) => {
+          if (typeof p[field] === 'string') {
+            const val = p[field].toLowerCase().trim();
+            set.add(val);
+            set.add(val.replace(/[:_]/g, '.'));
+            set.add(val.replace(/[:.]/g, '_'));
+          }
+        });
+        if (p.module && p.action) {
+          const modAct = `${p.module}.${p.action}`.toLowerCase();
+          set.add(modAct);
+          set.add(modAct.replace(/[:.]/g, '_'));
+        }
+        if (p.module && Array.isArray(p.actions)) {
+          p.actions.forEach((act) => {
+            const modAct = `${p.module}.${act}`.toLowerCase();
+            set.add(modAct);
+            set.add(modAct.replace(/[:.]/g, '_'));
+          });
+        }
+      }
+    });
+
+    return set;
   }, [permissions]);
 
   /**
@@ -67,18 +125,28 @@ export const usePermission = () => {
       if (!permissionKey) return true; // If no permission required, allow access
       if (isSuperAdmin) return true;
 
-      const normalizedKey = permissionKey.toLowerCase();
+      const key = permissionKey.toLowerCase().trim();
+      const dotKey = key.replace(/[:_]/g, '.');
+      const underscoreKey = key.replace(/[:.]/g, '_');
 
       // Bank Receipt Manager has full access to all receipt actions
-      if (isReceiptMgr && (normalizedKey.startsWith('receipt.') || normalizedKey.includes('receipt'))) {
+      if (isReceiptMgr && (dotKey.startsWith('receipt.') || dotKey.includes('receipt'))) {
         return true;
       }
 
-      if (permissionSet.has(normalizedKey)) return true;
+      if (permissionSet.has(key) || permissionSet.has(dotKey) || permissionSet.has(underscoreKey)) {
+        return true;
+      }
 
       // Check for wildcard match like 'receipt.*'
-      const [moduleName] = normalizedKey.split('.');
-      if (permissionSet.has(`${moduleName}.*`)) return true;
+      const moduleName = dotKey.split('.')[0];
+      if (
+        permissionSet.has(`${moduleName}.*`) ||
+        permissionSet.has(`${moduleName}:*`) ||
+        permissionSet.has(`${moduleName}_*`)
+      ) {
+        return true;
+      }
 
       return false;
     },
@@ -113,6 +181,23 @@ export const usePermission = () => {
     [isSuperAdmin, hasPermission]
   );
 
+  /**
+   * Resolves the primary landing route according to user role and permissions
+   * @returns {string}
+   */
+  const getDefaultRoute = useCallback(() => {
+    if (hasPermission('dashboard.view')) return '/dashboard';
+    if (isReceiptMgr || hasPermission('receipt.view')) return '/credit';
+    if (hasPermission('branch.view')) return '/branch';
+    if (hasPermission('employee.view')) return '/employees';
+    if (hasPermission('lead.view')) return '/leads';
+    if (hasPermission('cibil.view') || hasPermission('kyc.view')) return '/kyc';
+    if (hasPermission('cash_payment.view')) return '/cash-payment';
+    if (hasPermission('cards_credit.view')) return '/cards-credit';
+    if (hasPermission('geotagging.view') || hasPermission('geo_tagging.view')) return '/geo-tagging';
+    return '/profile';
+  }, [hasPermission, isReceiptMgr]);
+
   return {
     permissions,
     role,
@@ -120,9 +205,11 @@ export const usePermission = () => {
     isSuperAdmin,
     isReceiptManager: isReceiptMgr,
     canApproveReceipts: canApprove,
+    canApproveMerchant,
     hasPermission,
     hasAnyPermission,
     hasAllPermissions,
+    getDefaultRoute,
   };
 };
 

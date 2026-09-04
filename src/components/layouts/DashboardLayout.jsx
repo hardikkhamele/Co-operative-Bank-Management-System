@@ -1,6 +1,6 @@
 import React, { useState, useEffect, createContext, useContext, Children, isValidElement, Fragment, useCallback } from 'react';
 import { NavLink, Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, MapPin, IdCard, UserPlus, List, ClipboardList, Store, Box, ArrowDownRight, ArrowUpRight, ArrowRightLeft, RefreshCcw, UserCheck, UserCog, Tag, ChevronDown, Bell, User, LogOut, CreditCard, MoreHorizontal, Headphones, FileText, BarChart2, TrendingUp, CalendarDays, CalendarCheck, Banknote, Smartphone, MessageCircle, Fingerprint, ArrowLeft, ArrowRight, Menu, X, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { LayoutDashboard, MapPin, IdCard, UserPlus, List, ClipboardList, Store, Box, ArrowDownRight, ArrowUpRight, ArrowRightLeft, RefreshCcw, UserCheck, UserCog, Tag, ChevronDown, Bell, User, LogOut, CreditCard, MoreHorizontal, Headphones, FileText, BarChart2, BarChart3, TrendingUp, CalendarDays, CalendarCheck, Banknote, Smartphone, MessageCircle, Fingerprint, ArrowLeft, ArrowRight, Menu, X, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
 import useLoadingStore from '../../store/loadingStore';
 import useBranchStore from '../../store/branchStore';
@@ -32,11 +32,6 @@ const SidebarGroup = ({ title, children }) => {
   // Filter out any false/null/undefined children and unpack any Fragment
   const validChildren = flattenChildren(children).filter(Boolean);
 
-  // If no children permitted/visible, do not render this sidebar group at all
-  if (validChildren.length === 0) {
-    return null;
-  }
-
   // Check if current route matches any child NavLink
   const hasActiveChild = validChildren.some(child => {
     if (!isValidElement(child)) return false;
@@ -51,6 +46,11 @@ const SidebarGroup = ({ title, children }) => {
       setOpenGroup(title);
     }
   }, [location.pathname, hasActiveChild, title, setOpenGroup]);
+
+  // If no children permitted/visible, do not render this sidebar group at all
+  if (validChildren.length === 0) {
+    return null;
+  }
 
   const isOpen = openGroup === title;
 
@@ -105,8 +105,20 @@ const DashboardLayout = () => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const { hasPermission, hasAnyPermission, isReceiptManager } = usePermission();
+  const { hasPermission, hasAnyPermission, isReceiptManager, getDefaultRoute } = usePermission();
   
+  // If user visits / or /dashboard but does not have dashboard.view permission, redirect to their primary permitted route
+  useEffect(() => {
+    if (location.pathname === '/' || location.pathname === '/dashboard') {
+      if (!hasPermission('dashboard.view')) {
+        const target = getDefaultRoute();
+        if (target && target !== '/dashboard' && target !== location.pathname) {
+          navigate(target, { replace: true });
+        }
+      }
+    }
+  }, [location.pathname, hasPermission, getDefaultRoute, navigate]);
+
   // Hidden / Show More Routes
   const hiddenRoutes = [
     '/upi-autopay',
@@ -164,10 +176,11 @@ const DashboardLayout = () => {
   const { globalBranchId, setGlobalBranchId, branchOptions, fetchBranches } = useBranchStore();
 
   useEffect(() => {
-    fetchBranches();
+    fetchBranches(true);
   }, [fetchBranches]);
 
   const handleLogout = () => {
+    useBranchStore.getState().resetBranchStore();
     if (logout) logout();
     navigate('/login');
   };
@@ -395,11 +408,22 @@ const DashboardLayout = () => {
             )}
           </SidebarGroup>
 
+          {/* Reports & Analytics */}
+          <SidebarGroup title="Reports & Analytics">
+            {hasAnyPermission(['report.view', 'report.export']) && (
+              <NavLink to="/reports" className={(props) => subNavLinkClass(props, '/reports')}>
+                <BarChart3 size={18} /> Reports & Analytics
+              </NavLink>
+            )}
+          </SidebarGroup>
+
           {/* Geo Tagging */}
           <SidebarGroup title="Geo Tagging">
-            <NavLink to="/geo-tagging" className={subNavLinkClass}>
-              <MapPin size={18} /> Geo Tagging
-            </NavLink>
+            {hasAnyPermission(['geotagging.view', 'geo_tagging.view', 'geo.view', 'tracking.view']) && (
+              <NavLink to="/geo-tagging" className={subNavLinkClass}>
+                <MapPin size={18} /> Geo Tagging
+              </NavLink>
+            )}
           </SidebarGroup>
 
           {showMore && (

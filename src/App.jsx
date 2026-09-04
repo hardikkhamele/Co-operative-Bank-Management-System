@@ -98,6 +98,10 @@ const CardsAndCredit = lazy(() => import('./pages/dashboard/CardsAndCredit'));
 const ChoosePaymentMethod = lazy(() => import('./pages/dashboard/ChoosePaymentMethod'));
 const PaymentSuccessful = lazy(() => import('./pages/dashboard/PaymentSuccessful'));
 
+// Reports & Analytics Module
+const ReportsHub = lazy(() => import('./pages/dashboard/ReportsHub'));
+const ReportViewer = lazy(() => import('./pages/dashboard/ReportViewer'));
+
 // Geo Tagging & Audit
 const GeoTagging = lazy(() => import('./pages/dashboard/GeoTagging'));
 
@@ -279,6 +283,12 @@ function App() {
                 <Route path="cards-credit/payment/success" element={<PaymentSuccessful />} />
               </Route>
 
+              {/* Reports & Analytics */}
+              <Route element={<PermissionRoute anyOf={['report.view', 'report.export']} />}>
+                <Route path="reports" element={<ReportsHub />} />
+                <Route path="reports/:reportType" element={<ReportViewer />} />
+              </Route>
+
               {/* Roles & Permissions */}
               <Route element={<PermissionRoute anyOf={['role.view', 'roles_permissions.view', 'role.create']} />}>
                 <Route path="roles-permissions" element={<RolesAndPermissions />} />
@@ -309,8 +319,10 @@ function App() {
               </Route>
 
               {/* Geo Tagging & Audit */}
-              <Route path="geo-tagging" element={<GeoTagging />} />
-              <Route path="jio-tagging" element={<Navigate to="/geo-tagging" replace />} />
+              <Route element={<PermissionRoute anyOf={['geotagging.view', 'geo_tagging.view', 'geo.view', 'tracking.view']} />}>
+                <Route path="geo-tagging" element={<GeoTagging />} />
+                <Route path="jio-tagging" element={<Navigate to="/geo-tagging" replace />} />
+              </Route>
               
               {/* Coming Soon Features */}
               <Route path="upi-autopay" element={<ComingSoon featureName="UPI Autopay" />} />

@@ -48,9 +48,44 @@ const Login = () => {
         password: formData.password
       });
       
-      if (response.success && response.data) {
-        login(response.data);
-        navigate('/dashboard');
+      if (response && (response.success || response.data)) {
+        // Ensure root-level 'role' and data-level 'role' are merged so { id: null, name: 'Bank Owner' } is never missed
+        const loginPayload = {
+          ...(response.data || {}),
+          ...response,
+          role: response.role || response.data?.role || response.user?.role || response.data?.user?.role || null,
+          user: response.data?.user || response.user || null,
+          tokens: response.data?.tokens || response.tokens || null,
+          permissions: response.permissions || response.data?.permissions || response.user?.permissions || response.data?.user?.permissions || []
+        };
+        login(loginPayload);
+
+        // Smart landing navigation based on user role and permissions
+        const rawRole = (
+          loginPayload.role?.name ||
+          loginPayload.role?.code ||
+          (typeof loginPayload.role === 'string' ? loginPayload.role : '') ||
+          loginPayload.user?.role?.name ||
+          ''
+        ).toUpperCase();
+
+        const isReceiptMgr = (
+          rawRole.includes('RECEIPT MANAGER') ||
+          rawRole.includes('RECEIPT_MANAGER') ||
+          rawRole.includes('BANK RECEIPT')
+        );
+
+        const perms = loginPayload.permissions || [];
+        const hasDashboardPerm = Array.isArray(perms) && perms.some(p => {
+          const k = (typeof p === 'string' ? p : p?.key || '').toLowerCase();
+          return k === 'dashboard.view' || k === 'all' || k === '*';
+        });
+
+        if (isReceiptMgr && !hasDashboardPerm) {
+          navigate('/credit');
+        } else {
+          navigate('/dashboard');
+        }
       }
     } catch (err) {
       if (err.response?.data?.details && err.response.data.details.length > 0) {

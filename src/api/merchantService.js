@@ -111,5 +111,83 @@ export const merchantService = {
   permanentDelete: async (id) => {
     const response = await axiosInstance.delete(`/v1/society/merchants/${id}/permanent`);
     return response.data;
+  },
+
+  // 9. Approve Merchant Onboarding (Branch Owner / Manager)
+  approve: async (id) => {
+    const payload = { merchantId: id };
+    // Try PATCH /v1/society/merchants/:id/approve -> POST -> PUT -> /v1/society/merchants/approve
+    try {
+      const response = await axiosInstance.patch(`/v1/society/merchants/${id}/approve`, payload);
+      return response.data;
+    } catch (err) {
+      if (err.response?.status === 404 || err.response?.status === 405) {
+        try {
+          const postRes = await axiosInstance.post(`/v1/society/merchants/${id}/approve`, payload);
+          return postRes.data;
+        } catch (postErr) {
+          if (postErr.response?.status === 404 || postErr.response?.status === 405) {
+            try {
+              const putRes = await axiosInstance.put(`/v1/society/merchants/${id}/approve`, payload);
+              return putRes.data;
+            } catch (putErr) {
+              if (putErr.response?.status === 404) {
+                // Fallback to /v1/society/merchants/approve
+                const rootPost = await axiosInstance.post('/v1/society/merchants/approve', payload);
+                return rootPost.data;
+              }
+              throw putErr;
+            }
+          }
+          throw postErr;
+        }
+      }
+      throw err;
+    }
+  },
+
+  approveMerchant: async (id) => {
+    return merchantService.approve(id);
+  },
+
+  // 10. Reject Merchant Onboarding (Branch Owner / Manager)
+  reject: async (id, reason) => {
+    const payload = { 
+      merchantId: id,
+      reason: typeof reason === 'string' ? reason.trim() : ''
+    };
+
+    // Try PATCH /v1/society/merchants/:id/reject -> POST -> PUT -> /v1/society/merchants/reject
+    try {
+      const response = await axiosInstance.patch(`/v1/society/merchants/${id}/reject`, payload);
+      return response.data;
+    } catch (err) {
+      if (err.response?.status === 404 || err.response?.status === 405) {
+        try {
+          const postRes = await axiosInstance.post(`/v1/society/merchants/${id}/reject`, payload);
+          return postRes.data;
+        } catch (postErr) {
+          if (postErr.response?.status === 404 || postErr.response?.status === 405) {
+            try {
+              const putRes = await axiosInstance.put(`/v1/society/merchants/${id}/reject`, payload);
+              return putRes.data;
+            } catch (putErr) {
+              if (putErr.response?.status === 404) {
+                // Fallback to /v1/society/merchants/reject
+                const rootPost = await axiosInstance.post('/v1/society/merchants/reject', payload);
+                return rootPost.data;
+              }
+              throw putErr;
+            }
+          }
+          throw postErr;
+        }
+      }
+      throw err;
+    }
+  },
+
+  rejectMerchant: async (id, reason) => {
+    return merchantService.reject(id, reason);
   }
 };

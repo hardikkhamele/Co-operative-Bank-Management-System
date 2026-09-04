@@ -1,15 +1,19 @@
-import React, { useRef, useState, useEffect, useMemo } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useRef, useState, useEffect, useMemo, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import { 
-  ChevronRight, ChevronLeft, Search, Eye, Edit, Trash2, X, SlidersHorizontal, 
+  ChevronRight, ChevronLeft, Search, Eye, Edit, Trash2, X, 
   ChevronDown, Download, Table, FileSpreadsheet, FileText, Loader2, 
-  Store, Users, UserCheck, UserX, ShieldAlert, Archive, RotateCcw,
-  CheckCircle2, AlertTriangle, Building2, MapPin
+  Store, UserCheck, Archive, RotateCcw,
+  CheckCircle2, AlertTriangle, Clock, XCircle, AlertCircle,
+  Mail, Phone, Building2, MapPin
 } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { merchantService } from '../../api/merchantService';
 import { branchService } from '../../api/branchService';
 import useBranchStore from '../../store/branchStore';
+import useAuthStore from '../../store/authStore';
+import usePermission from '../../hooks/usePermission';
+import { canApproveMerchantOnboarding, isBankOwner } from '../../utils/roleUtils';
 import PageHeader from '../../components/common/PageHeader';
 import SearchableSelect from '../../components/common/SearchableSelect';
 import { Skeleton } from '../../components/common/Skeleton';
@@ -55,7 +59,6 @@ const INDIAN_STATES_WITH_CITIES = {
 const ALL_INDIAN_STATES = Object.keys(INDIAN_STATES_WITH_CITIES).sort((a, b) => a.localeCompare(b));
 
 const Merchants = () => {
-  const navigate = useNavigate();
   const tableRef = useRef(null);
   
   // Data State
@@ -79,10 +82,25 @@ const Merchants = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('');
+  const [selectedApprovalStatus, setSelectedApprovalStatus] = useState('');
   const [selectedBranchId, setSelectedBranchId] = useState('');
   const [selectedState, setSelectedState] = useState('');
   const [selectedCity, setSelectedCity] = useState('');
   const [includeDeleted, setIncludeDeleted] = useState(false);
+
+  // Permissions & Roles Access Control: Bank Owner, Society Admin, Branch Manager
+  const authRole = useAuthStore((state) => state.role);
+  const authUser = useAuthStore((state) => state.user);
+  const authPermissions = useAuthStore((state) => state.permissions);
+  const { canApproveMerchant: hookCanApprove } = usePermission();
+
+  const canApproveMerchant = useMemo(() => {
+    return (
+      canApproveMerchantOnboarding(authRole, authUser, authPermissions || []) ||
+      isBankOwner(authRole, authUser) ||
+      hookCanApprove
+    );
+  }, [authRole, authUser, authPermissions, hookCanApprove]);
 
   const { globalBranchId, branchOptions, fetchBranches } = useBranchStore();
   
@@ -112,6 +130,16 @@ const Merchants = () => {
   const [merchantToRestore, setMerchantToRestore] = useState(null);
   const [isPermanentModalOpen, setIsPermanentModalOpen] = useState(false);
   const [merchantToPermanent, setMerchantToPermanent] = useState(null);
+
+  // Approval / Rejection Workflow Modals
+  const [isApproveModalOpen, setIsApproveModalOpen] = useState(false);
+  const [merchantToApprove, setMerchantToApprove] = useState(null);
+  const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
+  const [merchantToReject, setMerchantToReject] = useState(null);
+  const [rejectionReason, setRejectionReason] = useState('');
+  const [rejectReasonError, setRejectReasonError] = useState('');
+  const [viewReasonModal, setViewReasonModal] = useState({ open: false, merchant: null });
+
   const [actionLoading, setActionLoading] = useState(false);
 
   // Load branches & locations
@@ -178,7 +206,7 @@ const Merchants = () => {
   }, [searchTerm]);
 
   // Fetch Merchants
-  const fetchMerchants = async (pageNo = page) => {
+  const fetchMerchants = useCallback(async (pageNo = page) => {
     setLoading(true);
     try {
       const params = { page: pageNo, limit };
@@ -189,35 +217,54 @@ const Merchants = () => {
         params.status = selectedStatus;
       }
       
-      if (includeDeleted || selectedStatus === 'DELETED') {
+      // Approval Status filter
+      if (selectedApprovalStatus && selectedApprovalStatus !== 'ALL') {
+        params.approvalStatus = selectedApprovalStatus;
+      }
+
+      if (includeDeleted || selectedStatus === 'DELETED' || activeStatCard === 'DELETED') {
         params.isDeleted = true;
-      } else {
-        params.isDeleted = false;
+        params.status = 'DELETED';
       }
       
-      if (selectedBranchId) params.branchId = selectedBranchId;
-      if (selectedState) params.state = selectedState;
-      if (selectedCity) params.city = selectedCity;
+      if (selectedBranchId && selectedBranchId !== 'ALL') params.branchId = selectedBranchId;
+      if (selectedState && selectedState !== 'ALL') params.state = selectedState;
+      if (selectedCity && selectedCity !== 'ALL') params.city = selectedCity;
 
       const response = await merchantService.list(params);
-      if (response && (response.success || response.data)) {
+      if (response && (response.success || response.data || Array.isArray(response))) {
         const payload = response.data || response;
-        const rawList = payload.items || payload.merchants || payload.data || (Array.isArray(payload) ? payload : []);
+        const rawList = 
+          (Array.isArray(payload) ? payload : null) ||
+          payload.items || 
+          payload.merchants || 
+          payload.data || 
+          payload.merchantList ||
+          (Array.isArray(response) ? response : null) || 
+          [];
         setMerchants(Array.isArray(rawList) ? rawList : []);
 
-        if (payload.stats) {
-          setStats(payload.stats);
-        } else if (response.stats) {
-          setStats(response.stats);
+        const statsObj = payload.stats || response.stats || payload.data?.stats;
+        if (statsObj) {
+          setStats(statsObj);
         }
 
-        const metaObj = payload.meta || payload.pagination || response.meta || { 
-          page: pageNo, 
-          limit, 
-          totalRecords: Array.isArray(rawList) ? rawList.length : 0, 
-          totalPages: Math.ceil((Array.isArray(rawList) ? rawList.length : 0) / limit) || 1,
-          hasNextPage: false,
-          hasPrevPage: pageNo > 1
+        const rawMeta = payload.meta || payload.pagination || response.meta || payload.data?.meta;
+        const total = Number(
+          rawMeta?.totalRecords ?? 
+          rawMeta?.total ?? 
+          payload.totalRecords ?? 
+          payload.total ?? 
+          payload.count ?? 
+          (Array.isArray(rawList) ? rawList.length : 0)
+        );
+        const metaObj = { 
+          page: Number(rawMeta?.page || payload.page || pageNo), 
+          limit: Number(rawMeta?.limit || payload.limit || limit), 
+          totalRecords: total, 
+          totalPages: Number(rawMeta?.totalPages || payload.totalPages || Math.ceil(total / limit) || 1),
+          hasNextPage: Boolean(rawMeta?.hasNextPage),
+          hasPrevPage: Boolean(rawMeta?.hasPrevPage || pageNo > 1)
         };
         setMeta(metaObj);
       } else {
@@ -231,11 +278,11 @@ const Merchants = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, debouncedSearch, selectedStatus, selectedApprovalStatus, includeDeleted, activeStatCard, selectedBranchId, selectedState, selectedCity]);
 
   useEffect(() => {
     fetchMerchants(page);
-  }, [page, debouncedSearch, selectedStatus, selectedBranchId, selectedState, selectedCity, includeDeleted]);
+  }, [fetchMerchants, page]);
 
   const handlePageChange = (newPage) => {
     const totalPages = meta.totalPages || 1;
@@ -248,6 +295,7 @@ const Merchants = () => {
     setSearchTerm('');
     setDebouncedSearch('');
     setSelectedStatus('');
+    setSelectedApprovalStatus('');
     setSelectedBranchId(globalBranchId || '');
     setSelectedState('');
     setSelectedCity('');
@@ -256,9 +304,50 @@ const Merchants = () => {
     setPage(1);
   };
 
-  const hasActiveFilters = Boolean(debouncedSearch.trim()) || Boolean(selectedStatus) || Boolean(selectedBranchId && selectedBranchId !== globalBranchId) || Boolean(selectedState) || Boolean(selectedCity) || includeDeleted || activeStatCard !== 'ALL';
+  const hasActiveFilters = Boolean(debouncedSearch.trim()) || Boolean(selectedStatus) || Boolean(selectedApprovalStatus) || Boolean(selectedBranchId && selectedBranchId !== globalBranchId) || Boolean(selectedState) || Boolean(selectedCity) || includeDeleted || activeStatCard !== 'ALL';
 
-  // Lifecycle Action Handlers
+  // Lifecycle & Approval Action Handlers
+  const handleApproveMerchant = async () => {
+    if (!merchantToApprove) return;
+    const targetId = merchantToApprove.id || merchantToApprove._id || merchantToApprove.merchantId;
+    setActionLoading(true);
+    try {
+      const res = await merchantService.approve(targetId);
+      toast.success(res?.message || `Merchant "${merchantToApprove.shopName || 'Partner'}" approved successfully!`);
+      setIsApproveModalOpen(false);
+      setMerchantToApprove(null);
+      fetchMerchants(page);
+    } catch (err) {
+      console.error('Approve error:', err);
+      toast.error(err.response?.data?.message || 'Failed to approve merchant onboarding.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleRejectMerchant = async () => {
+    if (!merchantToReject) return;
+    if (!rejectionReason.trim()) {
+      setRejectReasonError('Please provide a reason for rejecting this merchant onboarding.');
+      return;
+    }
+    const targetId = merchantToReject.id || merchantToReject._id || merchantToReject.merchantId;
+    setActionLoading(true);
+    try {
+      const res = await merchantService.reject(targetId, rejectionReason.trim());
+      toast.success(res?.message || `Merchant "${merchantToReject.shopName || 'Partner'}" onboarding rejected.`);
+      setIsRejectModalOpen(false);
+      setMerchantToReject(null);
+      setRejectionReason('');
+      setRejectReasonError('');
+      fetchMerchants(page);
+    } catch (err) {
+      console.error('Reject error:', err);
+      toast.error(err.response?.data?.message || 'Failed to reject merchant onboarding.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
   const handleSoftDelete = async () => {
     if (!merchantToDelete) return;
     setActionLoading(true);
@@ -566,9 +655,9 @@ const Merchants = () => {
           </div>
         </div>
 
-        {/* Bottom Inline Filter Controls: Status -> Branch -> State -> City */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 pt-2 border-t border-gray-100">
-          {/* 1. Status Filter */}
+        {/* Bottom Inline Filter Controls: Status -> Approval -> Branch -> State -> City */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 pt-2 border-t border-gray-100">
+          {/* 1. Account Status Filter */}
           <div className="relative">
             <select
               value={selectedStatus}
@@ -586,17 +675,35 @@ const Merchants = () => {
               }}
               className="w-full pl-3 pr-8 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-xs font-medium text-gray-700 shadow-2xs appearance-none cursor-pointer"
             >
-              <option value="">All Statuses (Active & Inactive)</option>
-              <option value="ACTIVE">Active Merchants</option>
-              <option value="INACTIVE">Inactive Merchants</option>
-              <option value="BLOCKED">Blocked Merchants</option>
+              <option value="">All Account Statuses</option>
+              <option value="ACTIVE">Active</option>
+              <option value="INACTIVE">Inactive</option>
+              <option value="BLOCKED">Blocked</option>
               <option value="DELETED">Soft-Deleted</option>
-              <option value="ALL">All (Including Deleted)</option>
+              <option value="ALL">All (Inc. Deleted)</option>
             </select>
             <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
           </div>
 
-          {/* 2. Branch Filter */}
+          {/* 2. Onboarding Approval Status Filter */}
+          <div className="relative">
+            <select
+              value={selectedApprovalStatus}
+              onChange={(e) => {
+                setSelectedApprovalStatus(e.target.value);
+                setPage(1);
+              }}
+              className="w-full pl-3 pr-8 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-xs font-medium text-gray-700 shadow-2xs appearance-none cursor-pointer"
+            >
+              <option value="">All Approvals</option>
+              <option value="PENDING">Pending Approval</option>
+              <option value="APPROVED">Approved</option>
+              <option value="REJECTED">Rejected</option>
+            </select>
+            <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+          </div>
+
+          {/* 3. Branch Filter */}
           <div className="relative">
             <select
               value={selectedBranchId}
@@ -616,7 +723,7 @@ const Merchants = () => {
             <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
           </div>
 
-          {/* 3. State / Region Filter */}
+          {/* 4. State / Region Filter */}
           <div>
             <SearchableSelect
               value={selectedState}
@@ -665,6 +772,14 @@ const Merchants = () => {
                 <span className="bg-blue-50 text-[#225091] border border-blue-200 px-2.5 py-0.5 rounded-md text-[11px] font-semibold flex items-center gap-1.5 shadow-2xs">
                   Status: {selectedStatus}
                   <button onClick={() => { setSelectedStatus(''); setPage(1); }} className="hover:text-red-500 cursor-pointer">
+                    <X size={12} />
+                  </button>
+                </span>
+              )}
+              {selectedApprovalStatus && (
+                <span className="bg-amber-50 text-amber-800 border border-amber-200 px-2.5 py-0.5 rounded-md text-[11px] font-semibold flex items-center gap-1.5 shadow-2xs">
+                  Approval: {selectedApprovalStatus === 'PENDING' ? 'Pending Approval' : selectedApprovalStatus}
+                  <button onClick={() => { setSelectedApprovalStatus(''); setPage(1); }} className="hover:text-red-500 cursor-pointer">
                     <X size={12} />
                   </button>
                 </span>
@@ -723,40 +838,58 @@ const Merchants = () => {
       {/* Table Card */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
         <div className="overflow-x-auto">
-          <table ref={tableRef} className="w-full text-left border-collapse min-w-[900px]">
+          <table ref={tableRef} className="w-full text-left border-collapse min-w-[1100px]">
             <thead className="bg-[#F8FAFC] text-gray-600 text-xs uppercase tracking-wider font-semibold border-b border-gray-200/80">
               <tr>
-                <th className="py-3.5 px-5 font-semibold">Sr.No.</th>
-                <th className="py-3.5 px-5 font-semibold">Shop Name</th>
-                <th className="py-3.5 px-5 font-semibold">Owner Name</th>
-                <th className="py-3.5 px-5 font-semibold">Email</th>
-                <th className="py-3.5 px-5 font-semibold">Phone Number</th>
-                <th className="py-3.5 px-5 font-semibold">Branch</th>
-                <th className="py-3.5 px-5 font-semibold">Status</th>
-                <th className="py-3.5 px-5 font-semibold text-center">Action</th>
+                <th className="py-3.5 px-4 font-semibold text-center w-14">#</th>
+                <th className="py-3.5 px-5 font-semibold min-w-[230px]">Shop / Business</th>
+                <th className="py-3.5 px-5 font-semibold min-w-[180px]">Owner Name</th>
+                <th className="py-3.5 px-5 font-semibold min-w-[200px]">Contact Info</th>
+                <th className="py-3.5 px-5 font-semibold min-w-[190px]">Branch & Location</th>
+                <th className="py-3.5 px-5 font-semibold text-center min-w-[130px]">Approval</th>
+                <th className="py-3.5 px-5 font-semibold text-center min-w-[110px]">Status</th>
+                <th className="py-3.5 px-5 font-semibold text-center min-w-[220px]">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {loading ? (
                 Array.from({ length: 8 }).map((_, rIdx) => (
                   <tr key={rIdx} className="animate-pulse">
-                    <td className="py-4 px-5"><Skeleton className="h-4 w-6 rounded" /></td>
+                    <td className="py-4 px-4 text-center"><Skeleton className="h-4 w-6 mx-auto rounded" /></td>
                     <td className="py-4 px-5">
-                      <div className="flex items-center gap-2.5">
-                        <Skeleton className="w-7 h-7 rounded-lg shrink-0" />
-                        <Skeleton className="h-4 w-32 rounded" />
+                      <div className="flex items-center gap-3">
+                        <Skeleton className="w-9 h-9 rounded-xl shrink-0" />
+                        <div className="space-y-1.5 flex-1">
+                          <Skeleton className="h-4 w-32 rounded" />
+                          <Skeleton className="h-3 w-20 rounded" />
+                        </div>
                       </div>
                     </td>
-                    <td className="py-4 px-5"><Skeleton className="h-4 w-28 rounded" /></td>
-                    <td className="py-4 px-5"><Skeleton className="h-3.5 w-36 rounded" /></td>
-                    <td className="py-4 px-5"><Skeleton className="h-3.5 w-24 rounded" /></td>
-                    <td className="py-4 px-5"><Skeleton className="h-3.5 w-24 rounded" /></td>
-                    <td className="py-4 px-5"><Skeleton className="h-6 w-16 rounded-full" /></td>
+                    <td className="py-4 px-5">
+                      <div className="space-y-1.5">
+                        <Skeleton className="h-4 w-28 rounded" />
+                        <Skeleton className="h-3 w-16 rounded" />
+                      </div>
+                    </td>
+                    <td className="py-4 px-5">
+                      <div className="space-y-1.5">
+                        <Skeleton className="h-3.5 w-28 rounded" />
+                        <Skeleton className="h-3.5 w-36 rounded" />
+                      </div>
+                    </td>
+                    <td className="py-4 px-5">
+                      <div className="space-y-1.5">
+                        <Skeleton className="h-3.5 w-28 rounded" />
+                        <Skeleton className="h-3 w-20 rounded" />
+                      </div>
+                    </td>
+                    <td className="py-4 px-5 text-center"><Skeleton className="h-6 w-20 mx-auto rounded-full" /></td>
+                    <td className="py-4 px-5 text-center"><Skeleton className="h-6 w-16 mx-auto rounded-full" /></td>
                     <td className="py-4 px-5">
                       <div className="flex items-center justify-center gap-1.5">
-                        <Skeleton className="h-6 w-14 rounded-lg" />
-                        <Skeleton className="h-6 w-14 rounded-lg" />
-                        <Skeleton className="h-6 w-16 rounded-lg" />
+                        <Skeleton className="h-7 w-14 rounded-lg" />
+                        <Skeleton className="h-7 w-16 rounded-lg" />
+                        <Skeleton className="h-7 w-14 rounded-lg" />
                       </div>
                     </td>
                   </tr>
@@ -765,6 +898,24 @@ const Merchants = () => {
                 merchants.map((row, idx) => {
                   const srNo = (meta.page - 1) * (meta.limit || 10) + idx + 1;
                   const rowId = row.id || row._id || row.merchantId;
+                  
+                  // Shop & Business Name
+                  const shopName = row.shopName || row.businessName || row.name || row.merchantName || row.tradeName || '—';
+                  const gstin = row.gstinNumber || row.gstNumber || row.gstin || row.gst || '';
+                  const category = row.category || row.businessCategory || row.shopCategory || '';
+                  
+                  // Owner Info
+                  const ownerName = row.ownerName || row.shopOwnerName || row.fullName || row.owner?.fullName || row.owner?.name || row.user?.fullName || row.user?.name || row.contactPerson || row.name || '—';
+                  const email = row.email || row.businessEmail || row.ownerEmail || row.owner?.email || row.user?.email || row.contactEmail || '';
+                  const phone = row.phoneNumber || row.phone || row.mobileNumber || row.mobile || row.owner?.phoneNumber || row.owner?.phone || row.user?.phoneNumber || row.user?.phone || '';
+                  
+                  // Branch & Location
+                  const branchName = row.branchName || row.branch?.name || row.branch?.branchName || row.branchId?.name || (typeof row.branch === 'string' ? row.branch : null) || '—';
+                  const city = row.city || row.address?.city || row.branch?.city || row.branchCity || '';
+                  const state = row.state || row.address?.state || row.branch?.state || row.branchState || '';
+                  const locationStr = [city, state].filter(Boolean).join(', ');
+
+                  // Soft Deleted Evaluation
                   const isDeleted = Boolean(
                     row.isDeleted === true ||
                     row.deleted === true ||
@@ -773,60 +924,190 @@ const Merchants = () => {
                     activeStatCard === 'DELETED' ||
                     selectedStatus === 'DELETED'
                   );
-                  const statusStr = (row.status || (isDeleted ? 'DELETED' : 'ACTIVE')).toUpperCase();
+                  const statusStr = (
+                    row.status || 
+                    (row.isActive === true ? 'ACTIVE' : (row.isActive === false ? 'INACTIVE' : (isDeleted ? 'DELETED' : 'ACTIVE')))
+                  ).toUpperCase();
+
+                  // Approval Status Evaluation
+                  const approvalStatusUpper = (
+                    row.approvalStatus || 
+                    row.approval_status ||
+                    (row.rejectionReason ? 'REJECTED' : (row.isApproved === true ? 'APPROVED' : 'PENDING'))
+                  ).toUpperCase();
 
                   return (
                     <tr key={rowId || idx} className="hover:bg-slate-50/70 transition-colors group">
-                      <td className="py-3.5 px-5 text-[13px] text-gray-500 font-medium">{row.srNo || srNo}</td>
+                      {/* 1. Sr. No. */}
+                      <td className="py-3.5 px-4 text-[13px] text-gray-500 font-medium text-center">{row.srNo || srNo}</td>
+                      
+                      {/* 2. Shop / Business */}
                       <td className="py-3.5 px-5">
-                        <div className="flex items-center gap-2.5">
-                          <div className="w-8 h-8 rounded-xl bg-blue-50 text-[#225091] flex items-center justify-center font-bold text-xs shrink-0 border border-blue-100 shadow-2xs">
-                            <Store size={16} />
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-xl bg-blue-50 text-[#225091] flex items-center justify-center font-bold text-xs shrink-0 border border-blue-100 shadow-2xs">
+                            <Store size={18} />
                           </div>
-                          <div>
-                            <span className="text-sm font-semibold text-gray-900 block">{row.shopName || row.name || '—'}</span>
-                            {row.gstinNumber && <span className="text-[11px] text-gray-400 font-mono">GST: {row.gstinNumber}</span>}
+                          <div className="min-w-0">
+                            <span className="text-[13.5px] font-bold text-gray-900 block truncate" title={shopName}>
+                              {shopName}
+                            </span>
+                            <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                              {gstin ? (
+                                <span className="text-[10px] text-gray-600 font-mono bg-gray-100 px-1.5 py-0.5 rounded border border-gray-200/60" title={`GSTIN: ${gstin}`}>
+                                  GST: {gstin}
+                                </span>
+                              ) : null}
+                              {category ? (
+                                <span className="text-[10px] text-blue-700 bg-blue-50/70 font-semibold px-1.5 py-0.5 rounded border border-blue-100">
+                                  {category}
+                                </span>
+                              ) : null}
+                            </div>
                           </div>
                         </div>
                       </td>
-                      <td className="py-3.5 px-5 text-sm font-semibold text-gray-800">{row.ownerName || row.shopOwnerName || '—'}</td>
-                      <td className="py-3.5 px-5 text-xs text-gray-600">{row.email || '—'}</td>
-                      <td className="py-3.5 px-5 text-xs text-gray-600 font-medium">{row.phoneNumber || row.phone || '—'}</td>
-                      <td className="py-3.5 px-5 text-xs font-semibold text-gray-700">{row.branchName || row.branch?.name || '—'}</td>
+
+                      {/* 3. Owner Name */}
                       <td className="py-3.5 px-5">
+                        <span className="text-[13px] font-semibold text-gray-800 block">{ownerName}</span>
+                        {row.panNumber || row.aadhaarNumber ? (
+                          <span className="text-[11px] text-gray-400 font-mono block mt-0.5">
+                            {row.panNumber ? `PAN: ${row.panNumber}` : `UID: ****${String(row.aadhaarNumber).slice(-4)}`}
+                          </span>
+                        ) : null}
+                      </td>
+
+                      {/* 4. Contact Info */}
+                      <td className="py-3.5 px-5">
+                        <div className="flex flex-col gap-1 text-xs">
+                          {phone ? (
+                            <a href={`tel:${phone}`} className="text-gray-700 font-semibold flex items-center gap-1.5 hover:text-[#225091] transition-colors">
+                              <Phone size={11} className="text-gray-400 shrink-0" />
+                              <span>{phone}</span>
+                            </a>
+                          ) : (
+                            <span className="text-gray-400 flex items-center gap-1.5"><Phone size={11} className="text-gray-300" /> —</span>
+                          )}
+                          {email ? (
+                            <a href={`mailto:${email}`} className="text-gray-500 flex items-center gap-1.5 hover:text-[#225091] transition-colors truncate max-w-[190px]" title={email}>
+                              <Mail size={11} className="text-gray-400 shrink-0" />
+                              <span className="truncate">{email}</span>
+                            </a>
+                          ) : null}
+                        </div>
+                      </td>
+
+                      {/* 5. Branch & Location */}
+                      <td className="py-3.5 px-5">
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-xs font-bold text-gray-800 flex items-center gap-1.5">
+                            <Building2 size={13} className="text-[#225091] shrink-0" />
+                            <span>{branchName}</span>
+                          </span>
+                          {locationStr ? (
+                            <span className="text-[11px] text-gray-500 flex items-center gap-1 ml-4" title={locationStr}>
+                              <MapPin size={11} className="text-gray-400 shrink-0" />
+                              <span className="truncate max-w-[160px]">{locationStr}</span>
+                            </span>
+                          ) : null}
+                        </div>
+                      </td>
+                      
+                      {/* 6. Approval Status */}
+                      <td className="py-3.5 px-5 text-center whitespace-nowrap">
+                        {approvalStatusUpper === 'APPROVED' ? (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/80 shadow-2xs">
+                            <CheckCircle2 size={13} /> Approved
+                          </span>
+                        ) : approvalStatusUpper === 'REJECTED' ? (
+                          <button
+                            type="button"
+                            onClick={() => setViewReasonModal({ open: true, merchant: row })}
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 transition-colors cursor-pointer shadow-2xs"
+                            title="Click to view rejection reason"
+                          >
+                            <XCircle size={13} /> Rejected
+                          </button>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200/80 shadow-2xs">
+                            <Clock size={13} className="animate-pulse" /> Pending
+                          </span>
+                        )}
+                      </td>
+
+                      {/* 7. Account Status */}
+                      <td className="py-3.5 px-5 text-center whitespace-nowrap">
                         {isDeleted ? (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200/60 uppercase tracking-wide">
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200/60 uppercase tracking-wider">
                             Deleted
                           </span>
                         ) : statusStr === 'ACTIVE' ? (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/60 uppercase tracking-wide">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/60 uppercase tracking-wider">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
                             Active
                           </span>
                         ) : statusStr === 'BLOCKED' ? (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-orange-50 text-orange-700 border border-orange-200/60 uppercase tracking-wide">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-orange-50 text-orange-700 border border-orange-200/60 uppercase tracking-wider">
+                            <span className="w-1.5 h-1.5 rounded-full bg-orange-500"></span>
                             Blocked
                           </span>
                         ) : (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-gray-100 text-gray-700 border border-gray-200 uppercase tracking-wide">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-gray-100 text-gray-700 border border-gray-200 uppercase tracking-wider">
+                            <span className="w-1.5 h-1.5 rounded-full bg-gray-400"></span>
                             Inactive
                           </span>
                         )}
                       </td>
+                      
+                      {/* 8. Action */}
                       <td className="py-3.5 px-5">
-                        <div className="flex items-center justify-center gap-1.5">
+                        <div className="flex items-center justify-center gap-1.5 whitespace-nowrap">
                           <Link 
                             to={`/merchant/${rowId}/view`} 
-                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-[#225091] bg-blue-50 hover:bg-blue-100 border border-[#225091]/15 transition-all shadow-2xs" 
-                            title="View Merchant"
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-[#225091] bg-blue-50 hover:bg-blue-100 border border-[#225091]/15 transition-all shadow-2xs" 
+                            title="View Merchant Profile"
                           >
                             <Eye size={13} /> View
                           </Link>
 
                           {!isDeleted ? (
                             <>
+                              {/* Quick Approve / Reject for Authorized Bank Owner, Society Admin, Branch Manager */}
+                              {canApproveMerchant && (
+                                <>
+                                  {approvalStatusUpper !== 'APPROVED' && (
+                                    <button 
+                                      onClick={() => {
+                                        setMerchantToApprove(row);
+                                        setIsApproveModalOpen(true);
+                                      }} 
+                                      className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 border border-emerald-600 transition-all shadow-2xs cursor-pointer" 
+                                      title={approvalStatusUpper === 'REJECTED' ? "Re-Approve Merchant Onboarding" : "Approve Merchant Onboarding"}
+                                    >
+                                      <CheckCircle2 size={13} /> {approvalStatusUpper === 'REJECTED' ? 'Re-Approve' : 'Approve'}
+                                    </button>
+                                  )}
+
+                                  {approvalStatusUpper !== 'REJECTED' && (
+                                    <button 
+                                      onClick={() => {
+                                        setMerchantToReject(row);
+                                        setRejectionReason('');
+                                        setRejectReasonError('');
+                                        setIsRejectModalOpen(true);
+                                      }} 
+                                      className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 transition-all shadow-2xs cursor-pointer" 
+                                      title="Reject Merchant Onboarding"
+                                    >
+                                      <XCircle size={13} /> Reject
+                                    </button>
+                                  )}
+                                </>
+                              )}
+
                               <Link 
                                 to={`/merchant/${rowId}/edit`} 
-                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200/60 transition-all shadow-2xs" 
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200/60 transition-all shadow-2xs" 
                                 title="Edit Merchant"
                               >
                                 <Edit size={13} /> Edit
@@ -836,10 +1117,10 @@ const Merchants = () => {
                                   setMerchantToDelete(row);
                                   setIsDeleteModalOpen(true);
                                 }} 
-                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200/60 transition-all shadow-2xs cursor-pointer" 
-                                title="Soft Delete Merchant"
+                                className="inline-flex items-center gap-1 p-1.5 rounded-lg text-xs font-semibold text-rose-600 hover:text-rose-700 hover:bg-rose-50 border border-transparent hover:border-rose-200 transition-all shadow-2xs cursor-pointer" 
+                                title="Delete Merchant"
                               >
-                                <Trash2 size={13} /> Delete
+                                <Trash2 size={14} />
                               </button>
                             </>
                           ) : (
@@ -849,7 +1130,7 @@ const Merchants = () => {
                                   setMerchantToRestore(row);
                                   setIsRestoreModalOpen(true);
                                 }} 
-                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/60 transition-all shadow-2xs cursor-pointer" 
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/60 transition-all shadow-2xs cursor-pointer" 
                                 title="Restore Merchant Account"
                               >
                                 <RotateCcw size={13} /> Restore
@@ -859,7 +1140,7 @@ const Merchants = () => {
                                   setMerchantToPermanent(row);
                                   setIsPermanentModalOpen(true);
                                 }} 
-                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-red-800 bg-red-100 hover:bg-red-200 border border-red-300 transition-all shadow-2xs cursor-pointer" 
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-red-800 bg-red-100 hover:bg-red-200 border border-red-300 transition-all shadow-2xs cursor-pointer" 
                                 title="Permanent Hard Delete"
                               >
                                 <AlertTriangle size={13} /> Hard Delete
@@ -875,11 +1156,23 @@ const Merchants = () => {
                 <tr>
                   <td colSpan="8" className="py-16 text-center">
                     <div className="flex flex-col items-center justify-center">
-                      <div className="w-10 h-10 bg-gray-50 rounded-full flex items-center justify-center mb-2">
-                        <Search size={20} className="text-gray-300" />
+                      <div className="w-12 h-12 bg-blue-50 text-[#225091] rounded-2xl flex items-center justify-center mb-3 border border-blue-100 shadow-2xs">
+                        <Store size={24} />
                       </div>
-                      <p className="text-sm font-semibold text-gray-800">No merchants found</p>
-                      <p className="text-xs text-gray-400 mt-0.5">Try adjusting your search query or filters</p>
+                      <p className="text-base font-bold text-gray-900">No merchants found</p>
+                      <p className="text-xs text-gray-500 mt-1 max-w-sm">
+                        {debouncedSearch || selectedBranchId || selectedStatus || selectedApprovalStatus
+                          ? "No merchant leads match your currently applied search or filter criteria."
+                          : "No merchant partners have been onboarded yet."}
+                      </p>
+                      {(debouncedSearch || selectedBranchId || selectedStatus || selectedApprovalStatus) && (
+                        <button
+                          onClick={handleResetFilters}
+                          className="mt-4 px-4 py-2 bg-[#225091] text-white rounded-xl text-xs font-semibold hover:bg-[#183f72] transition-colors shadow-2xs cursor-pointer"
+                        >
+                          Clear All Filters
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -1012,6 +1305,170 @@ const Merchants = () => {
               >
                 {actionLoading ? <Loader2 size={15} className="animate-spin" /> : null}
                 {actionLoading ? 'Hard Deleting...' : 'Permanent Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 4. Approve Merchant Onboarding Modal */}
+      {isApproveModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 transition-opacity animate-in fade-in">
+          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl p-6 text-center animate-in zoom-in-95 duration-200">
+            <div className="w-14 h-14 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto mb-4 border border-emerald-100 shadow-sm">
+              <CheckCircle2 size={28} />
+            </div>
+            <h3 className="text-lg font-bold text-gray-900 mb-2">Approve Merchant Onboarding</h3>
+            <p className="text-xs text-gray-600 mb-5 leading-relaxed">
+              Are you sure you want to approve onboarding for <strong className="text-gray-900 font-bold">{merchantToApprove?.shopName || 'this merchant'}</strong>?
+            </p>
+            <div className="bg-emerald-50/70 border border-emerald-100 rounded-xl p-3.5 mb-6 text-left text-xs text-emerald-900 space-y-1.5">
+              <p className="font-semibold flex items-center gap-1.5 text-emerald-800">
+                <CheckCircle2 size={14} className="shrink-0" />
+                This action will:
+              </p>
+              <ul className="list-disc list-inside text-[11px] text-emerald-700 space-y-0.5 ml-1">
+                <li>Update approval status to <strong>APPROVED</strong></li>
+                <li>Set account profile status to <strong>ACTIVE</strong></li>
+                <li>Enable linked merchant user account for login access</li>
+              </ul>
+            </div>
+            <div className="flex gap-3">
+              <button 
+                disabled={actionLoading}
+                onClick={() => {
+                  setIsApproveModalOpen(false);
+                  setMerchantToApprove(null);
+                }} 
+                className="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-700 font-semibold hover:bg-gray-50 transition-colors text-xs cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button 
+                disabled={actionLoading}
+                onClick={handleApproveMerchant} 
+                className="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold transition-colors text-xs flex items-center justify-center gap-2 shadow-sm cursor-pointer"
+              >
+                {actionLoading ? <Loader2 size={15} className="animate-spin" /> : null}
+                {actionLoading ? 'Approving...' : 'Confirm & Approve'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 5. Reject Merchant Onboarding Modal */}
+      {isRejectModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 transition-opacity animate-in fade-in">
+          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl p-6 animate-in zoom-in-95 duration-200 text-left">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-11 h-11 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0 border border-rose-100">
+                <XCircle size={22} />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-gray-900">Reject Merchant Onboarding</h3>
+                <p className="text-xs text-gray-500 truncate max-w-[280px]">
+                  {merchantToReject?.shopName || 'Merchant Partner'}
+                </p>
+              </div>
+            </div>
+
+            <p className="text-xs text-gray-600 mb-4 leading-relaxed">
+              Rejecting this onboarding lead will mark the profile as <strong>INACTIVE</strong> and record the rejection reason.
+            </p>
+
+            <div className="space-y-1.5 mb-5">
+              <label className="text-xs font-bold text-gray-700 flex items-center justify-between">
+                <span>Rejection Reason <span className="text-rose-500">*</span></span>
+                <span className="text-[11px] text-gray-400 font-normal">{rejectionReason.length} chars</span>
+              </label>
+              <textarea
+                rows={3}
+                value={rejectionReason}
+                onChange={(e) => {
+                  setRejectionReason(e.target.value);
+                  if (rejectReasonError) setRejectReasonError('');
+                }}
+                placeholder="e.g. Incomplete GST and business proof verification."
+                className={`w-full p-3 rounded-xl border text-xs text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 transition-all resize-none ${
+                  rejectReasonError 
+                    ? 'border-rose-300 focus:ring-rose-500/20 focus:border-rose-500 bg-rose-50/20' 
+                    : 'border-gray-200 focus:ring-[#225091]/20 focus:border-[#225091] bg-gray-50/50 focus:bg-white'
+                }`}
+              />
+              {rejectReasonError && (
+                <p className="text-[11px] text-rose-600 font-medium flex items-center gap-1 mt-1">
+                  <AlertCircle size={12} /> {rejectReasonError}
+                </p>
+              )}
+            </div>
+
+            <div className="flex gap-3">
+              <button 
+                disabled={actionLoading}
+                onClick={() => {
+                  setIsRejectModalOpen(false);
+                  setMerchantToReject(null);
+                  setRejectionReason('');
+                  setRejectReasonError('');
+                }} 
+                className="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-700 font-semibold hover:bg-gray-50 transition-colors text-xs cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button 
+                disabled={actionLoading}
+                onClick={handleRejectMerchant} 
+                className="flex-1 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold transition-colors text-xs flex items-center justify-center gap-2 shadow-sm cursor-pointer"
+              >
+                {actionLoading ? <Loader2 size={15} className="animate-spin" /> : null}
+                {actionLoading ? 'Rejecting...' : 'Confirm Rejection'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 6. View Rejection Reason Modal */}
+      {viewReasonModal.open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 transition-opacity animate-in fade-in">
+          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl p-6 animate-in zoom-in-95 duration-200 text-left">
+            <div className="flex items-center justify-between gap-3 mb-4 pb-3 border-b border-gray-100">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0 border border-rose-100">
+                  <AlertCircle size={18} />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-gray-900">Rejection Details</h3>
+                  <p className="text-[11px] text-gray-400">{viewReasonModal.merchant?.shopName}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setViewReasonModal({ open: false, merchant: null })}
+                className="text-gray-400 hover:text-gray-600 p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="space-y-3 mb-6">
+              <div className="bg-rose-50/60 border border-rose-100 rounded-xl p-3.5 text-xs text-rose-900 leading-relaxed font-medium">
+                {viewReasonModal.merchant?.rejectionReason || 'No detailed reason specified.'}
+              </div>
+
+              {viewReasonModal.merchant?.rejectedAt && (
+                <p className="text-[11px] text-gray-500">
+                  Rejected on: <strong className="text-gray-700 font-semibold">{new Date(viewReasonModal.merchant.rejectedAt).toLocaleString('en-IN')}</strong>
+                </p>
+              )}
+            </div>
+
+            <div className="flex justify-end">
+              <button
+                onClick={() => setViewReasonModal({ open: false, merchant: null })}
+                className="px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold text-xs transition-colors cursor-pointer"
+              >
+                Close
               </button>
             </div>
           </div>
