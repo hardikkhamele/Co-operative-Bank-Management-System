@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { 
   Plus, Edit2, Trash2, Download, Search, CheckCircle, 
   XCircle, Filter, ArrowRightLeft, Layers, ShieldCheck,
@@ -19,24 +19,44 @@ const SocietyInventorySPA = () => {
   const authUser = useAuthStore(state => state.user);
   
   const permissions = useInventoryPermissions();
-  const isBranchManager = !permissions.canManageCatalog; // For legacy backwards compatibility in this file. Will be replaced.
+  const isBranchManager = !permissions.canManageCatalog;
 
-  const [activeTab, setActiveTab] = useState(tab && tab !== 'overview' ? tab : 'master');
+  // Tab state initialized from URL param, falling back to localStorage or default
+  const savedTab = localStorage.getItem('inventory_last_tab');
+  const [activeTab, setActiveTab] = useState(() => tab && tab !== 'overview' ? tab : (savedTab || 'master'));
   const [activeSubTab, setActiveSubTab] = useState(subtab || 'categories');
 
   useEffect(() => {
-    if (tab && tab !== activeTab) setActiveTab(tab);
-    if (subtab && subtab !== activeSubTab) setActiveSubTab(subtab);
+    if (tab && tab !== activeTab) {
+      setActiveTab(tab);
+      localStorage.setItem('inventory_last_tab', tab);
+    }
+    if (subtab && subtab !== activeSubTab) {
+      setActiveSubTab(subtab);
+    }
   }, [tab, subtab]);
+
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // On initial mount if URL has no search params, attempt to restore from localStorage
+  useEffect(() => {
+    if (!tab) {
+      const initialTab = savedTab || 'master';
+      navigate(`/inventory/${initialTab}${window.location.search}`, { replace: true });
+    }
+  }, []);
 
   const handleTabChange = (newTab) => {
     setActiveTab(newTab);
-    navigate(`/inventory/${newTab}`);
+    localStorage.setItem('inventory_last_tab', newTab);
+    const searchString = searchParams.toString();
+    navigate(`/inventory/${newTab}${searchString ? `?${searchString}` : ''}`);
   };
 
   const handleSubTabChange = (newSubTab) => {
     setActiveSubTab(newSubTab);
-    navigate(`/inventory/${activeTab || 'master'}/${newSubTab}`);
+    const searchString = searchParams.toString();
+    navigate(`/inventory/${activeTab || 'master'}/${newSubTab}${searchString ? `?${searchString}` : ''}`);
   };
   
   const [statsData, setStatsData] = useState(null);
@@ -48,9 +68,41 @@ const SocietyInventorySPA = () => {
   const [selectedBranchId, setSelectedBranchId] = useState(permissions.isStaffScoped || permissions.roleLevel === 'BRANCH_OFFICER' || permissions.roleLevel === 'BRANCH_MANAGER' ? (authUser?.branchId || '') : '');
   const [masterData, setMasterData] = useState([]);
   const [catalogData, setCatalogData] = useState([]);
-  const [catalogCategoryId, setCatalogCategoryId] = useState('');
-  const [catalogIsConsumable, setCatalogIsConsumable] = useState('');
-  const [showInactiveVendors, setShowInactiveVendors] = useState(false);
+
+  // Helper to update a single param without losing others & persist in localStorage
+  const updateParam = useCallback((key, value) => {
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev);
+      if (value) { next.set(key, value); } else { next.delete(key); }
+      localStorage.setItem('inventory_last_search_params', next.toString());
+      return next;
+    }, { replace: true });
+  }, [setSearchParams]);
+
+  // Read filter values from URL (single source of truth)
+  const catalogCategoryId = searchParams.get('category') || '';
+  const catalogIsConsumable = searchParams.get('type') || '';
+  const setCatalogCategoryId = (v) => updateParam('category', v);
+  const setCatalogIsConsumable = (v) => updateParam('type', v);
+
+  // Vendors: show inactive toggle
+  const showInactiveVendors = searchParams.get('inactive') === 'true';
+  const setShowInactiveVendors = (v) => updateParam('inactive', v ? 'true' : '');
+
+  // Assets: location filter
+  const assetLocation = searchParams.get('location') || '';
+  const setAssetLocation = (v) => updateParam('location', v);
+
+  // Requisitions: workflow status filter
+  const reqStatus = searchParams.get('status') || '';
+  const setReqStatus = (v) => updateParam('status', v);
+
+  // Logs: transaction type & date
+  const logTxnType = searchParams.get('txnType') || '';
+  const setLogTxnType = (v) => updateParam('txnType', v);
+  const logDate = searchParams.get('date') || '';
+  const setLogDate = (v) => updateParam('date', v);
+
   const [assetsData, setAssetsData] = useState([]);
   const [transfersData, setTransfersData] = useState([]);
   const [logsData, setLogsData] = useState([]);
@@ -73,24 +125,40 @@ const SocietyInventorySPA = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
+
+  // searchQuery is driven from URL search param
+  const urlSearch = searchParams.get('search') || '';
+  const [searchQuery, setSearchQueryLocal] = useState(urlSearch);
+  const [debouncedSearch, setDebouncedSearch] = useState(urlSearch);
+
+  // Keep local search input synced if URL search changes (e.g. refresh or back/forward)
+  useEffect(() => {
+    setSearchQueryLocal(urlSearch);
+    setDebouncedSearch(urlSearch);
+  }, [urlSearch]);
+
+  // Wrapper: update local state + URL param together
+  const setSearchQuery = useCallback((val) => {
+    setSearchQueryLocal(val);
+    updateParam('search', val);
+  }, [updateParam]);
 
   // Fake state for Requisitions master-detail expansion
   const [expandedReq, setExpandedReq] = useState(null);
 
   useEffect(() => {
     const handler = setTimeout(() => {
-      setDebouncedSearch(searchQuery);
-      if (searchQuery !== debouncedSearch) setCurrentPage(1);
+      if (searchQuery !== urlSearch) {
+        updateParam('search', searchQuery);
+        setCurrentPage(1);
+      }
     }, 500);
     return () => clearTimeout(handler);
-  }, [searchQuery]);
+  }, [searchQuery, urlSearch, updateParam]);
 
+  // Reset page number on tab change WITHOUT wiping URL search parameters!
   useEffect(() => {
     setCurrentPage(1);
-    setSearchQuery('');
-    setDebouncedSearch('');
   }, [activeTab, activeSubTab]);
 
   useEffect(() => {
@@ -1219,6 +1287,50 @@ const SocietyInventorySPA = () => {
           </button>
         ))}
       </div>
+
+      {/* Active Filter Chips — covers entire inventory module */}
+      {(() => {
+        const chipClass = "inline-flex items-center gap-1 bg-[#e8edf5] text-[#225091] rounded-full px-3 py-1 text-xs font-medium";
+        const xClass = "ml-1 hover:text-red-500 transition-colors font-bold cursor-pointer";
+        const chips = [];
+
+        if (searchQuery) chips.push({ label: `Search: "${searchQuery}"`, onClear: () => setSearchQuery('') });
+        if (catalogCategoryId) chips.push({ label: `Category: ${catalogCategoryId}`, onClear: () => setCatalogCategoryId('') });
+        if (catalogIsConsumable) chips.push({ label: `Type: ${catalogIsConsumable === 'true' ? 'Consumable' : 'Non-Consumable'}`, onClear: () => setCatalogIsConsumable('') });
+        if (showInactiveVendors) chips.push({ label: 'Showing Inactive Vendors', onClear: () => setShowInactiveVendors(false) });
+        if (assetLocation) chips.push({ label: `Location: ${assetLocation === 'central' ? 'Central Warehouse' : assetLocation === 'branch' ? 'Branch Offices' : 'With Employees'}`, onClear: () => setAssetLocation('') });
+        if (reqStatus) chips.push({ label: `Status: ${reqStatus}`, onClear: () => setReqStatus('') });
+        if (logTxnType) chips.push({ label: `Txn Type: ${logTxnType}`, onClear: () => setLogTxnType('') });
+        if (logDate) chips.push({ label: `Date: ${logDate}`, onClear: () => setLogDate('') });
+
+        if (chips.length === 0) return null;
+
+        const clearAll = () => {
+          setSearchQuery(''); setCatalogCategoryId(''); setCatalogIsConsumable('');
+          setShowInactiveVendors(false); setAssetLocation(''); setReqStatus('');
+          setLogTxnType(''); setLogDate('');
+        };
+
+        return (
+          <div className="mt-3 flex flex-wrap items-center gap-2 px-1">
+            <span className="text-xs font-semibold text-gray-500 mr-1">Active Filters:</span>
+            {chips.map((chip, i) => (
+              <span key={i} className={chipClass}>
+                {chip.label}
+                <button onClick={chip.onClear} className={xClass}>×</button>
+              </span>
+            ))}
+            {chips.length > 1 && (
+              <button
+                onClick={clearAll}
+                className="text-xs text-red-500 hover:text-red-700 font-semibold ml-2 underline transition-colors cursor-pointer"
+              >
+                Clear All
+              </button>
+            )}
+          </div>
+        );
+      })()}
 
       {/* Main Content Area */}
       <div className="mt-3 w-full">
