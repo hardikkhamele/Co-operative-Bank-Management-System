@@ -17,6 +17,12 @@ export default defineConfig(({ mode }) => {
           configure: (proxy) => {
             proxy.on('proxyReq', (proxyReq) => {
               proxyReq.removeHeader('origin');
+              proxyReq.removeHeader('referer');
+            });
+            proxy.on('proxyRes', (proxyRes, req, res) => {
+              res.setHeader('Access-Control-Allow-Origin', '*');
+              res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+              res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With, content-type, Authorization');
             });
           }
         }

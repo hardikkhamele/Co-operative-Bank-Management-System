@@ -496,7 +496,7 @@ const DashboardLayout = () => {
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-y-auto bg-bg-page p-6 relative">
+        <main className="flex-1 overflow-y-auto bg-bg-page p-2 sm:p-3 relative">
           
           
           <GlobalLoader />
