@@ -59,7 +59,15 @@ export const PageHeader = ({
         </div>
 
         {breadcrumbs && breadcrumbs.length > 0 && (
-          <div className="flex items-center text-[13px] font-medium text-gray-500 flex-wrap gap-y-1">
+          <div className="flex items-center text-[13px] font-medium text-gray-500 flex-wrap gap-y-1 mt-1">
+            <button
+              onClick={handleBack}
+              className="group mr-2.5 flex items-center justify-center text-[#225091] hover:text-white hover:bg-[#225091] rounded-full transition-all duration-300 cursor-pointer shrink-0 overflow-hidden px-1.5 py-1.5"
+              type="button"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-arrow-left-circle shrink-0"><circle cx="12" cy="12" r="10"/><path d="M16 12H8"/><path d="m12 8-4 4 4 4"/></svg>
+              <span className="max-w-0 overflow-hidden whitespace-nowrap opacity-0 group-hover:max-w-[50px] group-hover:opacity-100 group-hover:ml-1.5 group-hover:mr-1 transition-all duration-300 ease-in-out font-medium text-[13px]">Back</span>
+            </button>
             {breadcrumbs.map((crumb, index) => {
               const isLast = index === breadcrumbs.length - 1;
               return (

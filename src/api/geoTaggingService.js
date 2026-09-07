@@ -4,7 +4,6 @@ import axiosInstance from './axiosConfig';
  * Geo Tagging & Employee Attendance Location Service
  * Dedicated to tracking Bank Branch Employees & Field Agents' punch-in/out GPS coordinates.
  */
-let locationEndpointUnsupported = false;
 
 export const geoTaggingService = {
   // Get Employee Attendance Geolocation statistics
@@ -26,7 +25,7 @@ export const geoTaggingService = {
     }
   },
 
-  // Get Employee Attendance GPS records with search & filters
+  // Get Employee Attendance GPS records with search & filters (Legacy)
   getRecords: async (params = {}) => {
     try {
       const response = await axiosInstance.get('/v1/society/attendance/geotag', { params });
@@ -41,6 +40,43 @@ export const geoTaggingService = {
     }
   },
 
+  // Get all employees with their latest locations
+  getEmployeesLocations: async (params = {}) => {
+    try {
+      const response = await axiosInstance.get('/v1/society/employees/locations', { params });
+      return response.data?.data || response.data || [];
+    } catch (err) {
+      if (err.response?.status === 404) {
+        try {
+          const aliasResponse = await axiosInstance.get('/v1/society/employees/location', { params });
+          return aliasResponse.data?.data || aliasResponse.data || [];
+        } catch (err2) {
+          return [];
+        }
+      }
+      return [];
+    }
+  },
+
+  // Get Single Employee Location Coordinates (Captured by mobile app)
+  getEmployeeLocation: async (employeeId) => {
+    if (!employeeId) return null;
+    try {
+      const response = await axiosInstance.get(`/v1/society/employees/${employeeId}/location`);
+      return response.data?.data || response.data;
+    } catch (err) {
+      if (err.response?.status === 404) {
+        try {
+          const aliasResponse = await axiosInstance.get(`/v1/society/employees/location/${employeeId}`);
+          return aliasResponse.data?.data || aliasResponse.data;
+        } catch (err2) {
+          return null;
+        }
+      }
+      return null;
+    }
+  },
+
   // Manager Approval or Geofence Flagging
   updateGeofenceAudit: async (recordId, { status, notes }) => {
     try {
@@ -51,32 +87,6 @@ export const geoTaggingService = {
     }
   },
 
-  // Get Single Employee Location Coordinates (Captured by mobile app)
-  getEmployeeLocation: async (employeeId) => {
-    if (!employeeId || locationEndpointUnsupported) return null;
-    try {
-      try {
-        const response = await axiosInstance.get(`/v1/society/employees/${employeeId}/location`);
-        return response.data?.data || response.data;
-      } catch (err) {
-        if (err.response?.status === 404) {
-          try {
-            const aliasResponse = await axiosInstance.get(`/v1/society/employees/location/${employeeId}`);
-            return aliasResponse.data?.data || aliasResponse.data;
-          } catch (err2) {
-            if (err2.response?.status === 404) {
-              // Both endpoints 404 - mark unsupported to avoid spamming 50+ useless requests
-              locationEndpointUnsupported = true;
-            }
-            throw err2;
-          }
-        }
-        throw err;
-      }
-    } catch {
-      return null;
-    }
-  },
 
   // Record a simulated or manual employee punch
   recordPunch: async (payload) => {

@@ -75,10 +75,10 @@ const GeoTagging = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState(initialSearch);
   const [selectedRecord, setSelectedRecord] = useState(null);
-  const [fetchingLiveLocation, setFetchingLiveLocation] = useState(false);
   const [zeroGpsModalRecord, setZeroGpsModalRecord] = useState(null);
   const [showMapAnyway, setShowMapAnyway] = useState(false);
   const locationCache = useRef(new Map());
+  const selectedRecordIdRef = useRef(null);
 
   // Sync state changes to URL search params
   useEffect(() => {
@@ -116,6 +116,7 @@ const GeoTagging = () => {
   // Handle employee selection with instant cache lookup and direct popup trigger
   const handleSelectRecord = async (record, shouldOpenModal = true) => {
     setSelectedRecord(record);
+    selectedRecordIdRef.current = record?.id || null;
     setShowMapAnyway(false);
     const empId = record.employeeId || record.userId || record.id;
     if (!empId) return;
@@ -132,12 +133,18 @@ const GeoTagging = () => {
       return;
     }
 
-    setFetchingLiveLocation(true);
     try {
       const liveLoc = await geoTaggingService.getEmployeeLocation(empId);
-      const rawLat = liveLoc?.latitude !== undefined ? liveLoc.latitude : liveLoc?.coordinates?.[1];
-      const rawLng = liveLoc?.longitude !== undefined ? liveLoc.longitude : liveLoc?.coordinates?.[0];
-      const valid = hasValidCoordinates(rawLat, rawLng);
+      let rawLat = liveLoc?.latitude !== undefined ? liveLoc.latitude : liveLoc?.coordinates?.[1];
+      let rawLng = liveLoc?.longitude !== undefined ? liveLoc.longitude : liveLoc?.coordinates?.[0];
+      let valid = hasValidCoordinates(rawLat, rawLng);
+
+      // Fallback to the coordinates we already have from the list API if the specific location API returns 0,0
+      if (!valid && hasValidCoordinates(record.punchLat, record.punchLng)) {
+        rawLat = record.punchLat;
+        rawLng = record.punchLng;
+        valid = true;
+      }
 
       let dist = null;
       let isInside = false;
@@ -155,12 +162,12 @@ const GeoTagging = () => {
         const cacheData = {
           punchLat: lat,
           punchLng: lng,
-          punchAddress: liveLoc.address || record.punchAddress,
-          lastUpdatedAt: liveLoc.lastUpdatedAt || null,
+          punchAddress: liveLoc?.address || record.punchAddress,
+          lastUpdatedAt: liveLoc?.lastUpdatedAt || record.lastUpdatedAt || null,
           distanceMeters: dist,
           geofenceStatus: status,
           isZeroCoords: false,
-          isLiveGps: Boolean(liveLoc.lastUpdatedAt),
+          isLiveGps: Boolean(liveLoc?.lastUpdatedAt || record.isLiveGps),
         };
 
         locationCache.current.set(empId, cacheData);
@@ -168,7 +175,7 @@ const GeoTagging = () => {
         setSelectedRecord(updated);
         setRecords(prev => prev.map(r => (r.id === record.id ? updated : r)));
       } else {
-        // No coordinates received -> strictly GPS_INACTIVE
+        // Only mark inactive if BOTH live API and list API have no valid coordinates
         const cacheData = {
           punchLat: 0,
           punchLng: 0,
@@ -185,14 +192,12 @@ const GeoTagging = () => {
         setSelectedRecord(updated);
         setRecords(prev => prev.map(r => (r.id === record.id ? updated : r)));
 
-        if (shouldOpenModal) {
+        if (shouldOpenModal && updated.isZeroCoords) {
           setZeroGpsModalRecord(updated);
         }
       }
     } catch (err) {
       console.warn('Failed to fetch live employee GPS:', err);
-    } finally {
-      setFetchingLiveLocation(false);
     }
   };
 
@@ -233,84 +238,98 @@ const GeoTagging = () => {
     }
   };
 
-  const fetchData = async () => {
-    setLoading(true);
-    locationCache.current.clear();
+  const fetchData = async (isPolling = false) => {
+    if (!isPolling) {
+      setLoading(true);
+      locationCache.current.clear();
+    }
     try {
-      // 1. Fetch geotag records and employees in parallel
-      const [geotagRes, empRes] = await Promise.allSettled([
-        geoTaggingService.getRecords(),
-        employeeService.list({ limit: 50, includeBranchManagers: true })
-      ]);
-
-      let recordsData = geotagRes.status === 'fulfilled' && Array.isArray(geotagRes.value) && geotagRes.value.length > 0
-        ? geotagRes.value
-        : [];
-
-      // 2. If no dedicated geotag records, map employees to attendance records
-      if (recordsData.length === 0 && empRes.status === 'fulfilled') {
-        const empData = empRes.value;
-        const empList = Array.isArray(empData?.data)
-          ? empData.data
-          : empData?.data?.items || empData?.data?.employees || [];
-
-        recordsData = empList.map((emp, idx) => {
-          const bLat = Number(emp.branch?.latitude || emp.branch?.lat || 21.1458);
-          const bLng = Number(emp.branch?.longitude || emp.branch?.lng || 79.0882);
-          const bName = emp.branch?.name || emp.branch?.branchName || 'Main Branch';
-          const bAddr = emp.branch?.address || emp.officeAddress || `${bName}, ${emp.state || 'Maharashtra'}`;
-
-          // Check if employee record already includes location coordinates from punch / attendance
-          const rawLat = emp.punchLat ?? emp.currentLocation?.latitude ?? emp.location?.coordinates?.[1] ?? emp.latitude;
-          const rawLng = emp.punchLng ?? emp.currentLocation?.longitude ?? emp.location?.coordinates?.[0] ?? emp.longitude;
-          const valid = hasValidCoordinates(rawLat, rawLng);
-
-          let dist = null;
-          let isInside = false;
-          let status = 'GPS_INACTIVE';
-
-          if (valid) {
-            const lat = Number(rawLat);
-            const lng = Number(rawLng);
-            dist = calculateDistanceInMeters(bLat, bLng, lat, lng);
-            isInside = dist <= 100;
-            status = isInside ? 'IN_BRANCH' : 'OUT_OF_GEOFENCE';
-          }
-
-          return {
-            id: emp.id || emp._id || `EMP-GEO-${idx}`,
-            employeeId: emp.id || emp._id || emp.employeeId,
-            employeeCode: emp.employeeCode || emp.employeeId || '',
-            employeeName: emp.fullName || `${emp.firstName || ''} ${emp.lastName || ''}`.trim() || 'Employee',
-            phone: emp.phoneNumber || emp.personalDetails?.phoneNumber || '',
-            designation: emp.designation || emp.role?.name || 'Staff',
-            department: emp.department || 'Operations',
-            branchName: bName,
-            branchLat: bLat,
-            branchLng: bLng,
-            branchAddress: bAddr,
-            punchInTime: emp.updatedAt || emp.createdAt || new Date().toISOString(),
-            punchOutTime: null,
-            punchLat: valid ? Number(rawLat) : 0,
-            punchLng: valid ? Number(rawLng) : 0,
-            punchAddress: emp.punchAddress || emp.officeAddress || `${bName} Premises`,
-            distanceMeters: dist,
-            geofenceStatus: status,
-            isZeroCoords: !valid,
-            isLiveGps: Boolean(valid && (emp.currentLocation || emp.updatedAt))
-          };
-        });
+      // 1. Fetch employees with locations from the new dedicated API
+      const empData = await geoTaggingService.getEmployeesLocations({ limit: 50, includeBranchManagers: true });
+      const empList = Array.isArray(empData) ? empData : [];
+      // Fetch branch list from store to match coordinates since employee API omits branch lat/lng
+      let storeBranches = useBranchStore.getState().branchOptions || [];
+      
+      // If store is empty, fetch them directly so distance calculations are accurate
+      if (storeBranches.length === 0) {
+        try {
+          const res = await branchService.list({ limit: 100 });
+          storeBranches = Array.isArray(res?.data) ? res.data : res?.data?.items || res?.data?.branches || res?.branches || [];
+        } catch (e) {
+          console.warn("Could not fetch branch coordinates for distance mapping.");
+        }
       }
+
+      const recordsData = empList.map((emp, idx) => {
+        // Find the actual branch object from the global store to get its coordinates
+        const realBranch = storeBranches.find(b => (b.id || b._id) === emp.branch?.id) || {};
+        
+        const bLat = Number(emp.branch?.latitude || emp.branch?.lat || realBranch.latitude || realBranch.lat || (realBranch.address?.latitude) || 21.1458);
+        const bLng = Number(emp.branch?.longitude || emp.branch?.lng || realBranch.longitude || realBranch.lng || (realBranch.address?.longitude) || 79.0882);
+        const bName = emp.branch?.name || emp.branch?.branchName || realBranch.name || 'Main Branch';
+        const bAddr = emp.branch?.address || emp.officeAddress || realBranch.address || `${bName}, ${emp.state || 'Maharashtra'}`;
+
+        const rawLat = emp.location?.latitude ?? emp.location?.coordinates?.[1] ?? emp.punchLat ?? emp.latitude;
+        const rawLng = emp.location?.longitude ?? emp.location?.coordinates?.[0] ?? emp.punchLng ?? emp.longitude;
+        const valid = hasValidCoordinates(rawLat, rawLng);
+
+        let dist = null;
+        let isInside = false;
+        let status = 'GPS_INACTIVE';
+
+        if (valid) {
+          const lat = Number(rawLat);
+          const lng = Number(rawLng);
+          dist = calculateDistanceInMeters(bLat, bLng, lat, lng);
+          isInside = dist <= 100; // 100 meters geofence
+          status = isInside ? 'IN_BRANCH' : 'OUT_OF_GEOFENCE';
+        }
+
+        return {
+          id: emp.id || emp._id || `EMP-GEO-${idx}`,
+          employeeId: emp.id || emp._id || emp.employeeId,
+          employeeCode: emp.employeeCode || '',
+          employeeName: emp.fullName || `${emp.firstName || ''} ${emp.lastName || ''}`.trim() || 'Employee',
+          phone: emp.phoneNumber || '',
+          designation: emp.designation || 'Staff',
+          department: emp.department || 'Operations',
+          branchName: bName,
+          branchLat: bLat,
+          branchLng: bLng,
+          branchAddress: bAddr,
+          punchInTime: emp.location?.lastUpdatedAt || emp.updatedAt || new Date().toISOString(),
+          punchOutTime: null,
+          punchLat: valid ? Number(rawLat) : 0,
+          punchLng: valid ? Number(rawLng) : 0,
+          punchAddress: emp.location?.address || emp.punchAddress || `${bName} Premises`,
+          distanceMeters: dist,
+          geofenceStatus: status,
+          isZeroCoords: !valid,
+          isLiveGps: Boolean(valid && emp.location?.lastUpdatedAt)
+        };
+      });
 
       // 3. Immediately render records and clear loading spinner - 0 blocking lag!
       setRecords(recordsData);
       setLoading(false);
 
-      // 4. Select first employee and resolve their live location on-demand
+      // 4. Preserve currently selected employee or select first on-demand
       if (recordsData.length > 0) {
-        handleSelectRecord(recordsData[0], false);
+        if (selectedRecordIdRef.current) {
+          // If we already have a selected record, try to find it in the new data
+          const existingRecord = recordsData.find(r => r.id === selectedRecordIdRef.current);
+          if (existingRecord) {
+            // Re-select it to update any new background data without opening modals
+            handleSelectRecord(existingRecord, false);
+          } else {
+            handleSelectRecord(recordsData[0], false);
+          }
+        } else {
+          handleSelectRecord(recordsData[0], false);
+        }
       } else {
         setSelectedRecord(null);
+        selectedRecordIdRef.current = null;
       }
     } catch (err) {
       console.error('Failed to load employee attendance geolocation data:', err);
@@ -321,8 +340,22 @@ const GeoTagging = () => {
   };
 
   useEffect(() => {
-    fetchBranchesList();
-    fetchData();
+    let interval;
+    const initialize = async () => {
+      await fetchBranchesList();
+      await fetchData();
+      
+      // Poll API every 10 seconds for live employee tracking
+      interval = setInterval(() => {
+        fetchData(true);
+      }, 10000);
+    };
+    
+    initialize();
+    
+    return () => {
+      if (interval) clearInterval(interval);
+    };
   }, []);
 
 
@@ -377,9 +410,11 @@ const GeoTagging = () => {
       const exists = filteredRecords.some(r => r.id === selectedRecord?.id);
       if (!exists) {
         setSelectedRecord(filteredRecords[0]);
+        selectedRecordIdRef.current = filteredRecords[0]?.id || null;
       }
     } else {
       setSelectedRecord(null);
+      selectedRecordIdRef.current = null;
     }
   }, [filteredRecords, selectedRecord]);
 
@@ -628,12 +663,6 @@ const GeoTagging = () => {
             <div className="bg-white rounded-2xl border border-gray-200/80 overflow-hidden shadow-2xs">
               {/* Google Maps View or Zero GPS Visual State */}
               <div className="relative w-full h-[400px] bg-slate-100">
-                {fetchingLiveLocation && (
-                  <div className="absolute top-3 right-3 bg-white/95 backdrop-blur-xs px-3 py-1.5 rounded-full shadow-sm flex items-center gap-1.5 text-[11px] font-bold text-[#225091] z-10 animate-pulse border border-blue-100">
-                    <RefreshCw size={12} className="animate-spin text-[#225091]" />
-                    <span>Syncing Live GPS...</span>
-                  </div>
-                )}
                 {selectedRecord && (selectedRecord.isZeroCoords || (selectedRecord.punchLat === 0 && selectedRecord.punchLng === 0)) && !showMapAnyway ? (
                   /* Professional Zero-GPS Location Inactive UI Overlay */
                   <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center bg-gradient-to-b from-slate-50 via-slate-100/40 to-slate-100 relative overflow-hidden">
