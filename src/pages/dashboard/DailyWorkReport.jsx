@@ -485,6 +485,8 @@ const DailyWorkReport = () => {
           { label: "HR Management" },
           { label: "Daily Work Report" }
         ]}
+        showBack={false}
+        backUrl="/dashboard"
       >
         <button 
           onClick={() => setIsLogModalOpen(true)}
@@ -787,7 +789,7 @@ const DailyWorkReport = () => {
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col overflow-hidden">
 
         {/* Table View */}
-        <div className="overflow-x-auto min-h-[300px] relative">
+        <div className="overflow-x-auto min-h-[300px]">
           <table ref={tableRef} className="w-full min-w-[900px] text-left border-collapse">
             <thead className="bg-[#F8FAFC] text-gray-600 text-xs uppercase tracking-wider font-semibold border-b border-gray-200/80">
               <tr>

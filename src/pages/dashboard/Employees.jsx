@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { toast } from "react-toastify";
 import { Link, useNavigate } from "react-router-dom";
 import {
@@ -70,6 +70,7 @@ const INDIAN_STATES_WITH_CITIES = {
 
 const Employees = () => {
   const navigate = useNavigate();
+  const tableRef = useRef(null);
 
   // Data State
   const [employees, setEmployees] = useState([]);
@@ -501,6 +502,8 @@ const Employees = () => {
           { label: "HR Management" },
           { label: "Employees" }
         ]}
+        showBack={false}
+        backUrl="/dashboard"
       >
         <Link
           to="/employees/create"
@@ -508,7 +511,8 @@ const Employees = () => {
         >
           + Add Staff
         </Link>
-      </PageHeader>      {/* Top Stats Cards Grid (4 Cards: Total, Active, Managers, Soft-Deleted) */}
+      </PageHeader>
+      {/* Top Stats Cards Grid (4 Cards: Total, Active, Managers, Soft-Deleted) */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-3.5">
         {/* 1. Total Staff Card */}
         <div
@@ -855,7 +859,7 @@ const Employees = () => {
       {/* Main Employees Table */}
       <div className="bg-white rounded-xl shadow-xs border border-gray-100 overflow-hidden flex flex-col">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse min-w-[880px]">
+          <table ref={tableRef} className="w-full text-left border-collapse min-w-[880px]">
             <thead className="bg-[#F8FAFC] text-gray-600 text-xs uppercase tracking-wider font-semibold border-b border-gray-200/80">
               <tr>
                 <th className="py-3.5 px-5 font-semibold">Sr.No.</th>

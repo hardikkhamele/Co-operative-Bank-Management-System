@@ -704,6 +704,8 @@ const Debit = () => {
           { label: "Receipt Management" },
           { label: "Debit Receipt" }
         ]}
+        showBack={false}
+        backUrl="/dashboard"
       />
 
       {/* Stats Cards */}

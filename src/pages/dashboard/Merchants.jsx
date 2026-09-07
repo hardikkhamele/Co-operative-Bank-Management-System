@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect, useMemo, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { 
   ChevronRight, ChevronLeft, Search, Eye, Edit, Trash2, X, 
   ChevronDown, Download, Table, FileSpreadsheet, FileText, Loader2, 
@@ -60,6 +60,24 @@ const ALL_INDIAN_STATES = Object.keys(INDIAN_STATES_WITH_CITIES).sort((a, b) => 
 
 const Merchants = () => {
   const tableRef = useRef(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Read initial filter values from URL
+  const initialStatusParam = (searchParams.get('status') || searchParams.get('filter') || '').toUpperCase();
+  const initialApprovalStatus = (searchParams.get('approvalStatus') || '').toUpperCase();
+  const initialSearch = searchParams.get('search') || '';
+  const initialBranchId = searchParams.get('branchId') || '';
+  const initialState = searchParams.get('state') || '';
+  const initialCity = searchParams.get('city') || '';
+  const initialPage = parseInt(searchParams.get('page'), 10) || 1;
+
+  const initialStatCard = ['ACTIVE', 'DELETED', 'INACTIVE', 'BLOCKED'].includes(initialStatusParam)
+    ? initialStatusParam
+    : 'ALL';
+  const initialStatus = ['ACTIVE', 'DELETED', 'INACTIVE', 'BLOCKED'].includes(initialStatusParam)
+    ? initialStatusParam
+    : '';
+  const initialIncludeDeleted = initialStatusParam === 'DELETED';
   
   // Data State
   const [merchants, setMerchants] = useState([]);
@@ -76,17 +94,17 @@ const Merchants = () => {
   });
 
   // Active Stat Card Filter ('ALL' | 'ACTIVE' | 'INACTIVE' | 'BLOCKED' | 'DELETED')
-  const [activeStatCard, setActiveStatCard] = useState('ALL');
+  const [activeStatCard, setActiveStatCard] = useState(initialStatCard);
   
   // Search & Filter State
-  const [searchTerm, setSearchTerm] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
-  const [selectedStatus, setSelectedStatus] = useState('');
-  const [selectedApprovalStatus, setSelectedApprovalStatus] = useState('');
-  const [selectedBranchId, setSelectedBranchId] = useState('');
-  const [selectedState, setSelectedState] = useState('');
-  const [selectedCity, setSelectedCity] = useState('');
-  const [includeDeleted, setIncludeDeleted] = useState(false);
+  const [searchTerm, setSearchTerm] = useState(initialSearch);
+  const [debouncedSearch, setDebouncedSearch] = useState(initialSearch);
+  const [selectedStatus, setSelectedStatus] = useState(initialStatus);
+  const [selectedApprovalStatus, setSelectedApprovalStatus] = useState(initialApprovalStatus);
+  const [selectedBranchId, setSelectedBranchId] = useState(initialBranchId);
+  const [selectedState, setSelectedState] = useState(initialState);
+  const [selectedCity, setSelectedCity] = useState(initialCity);
+  const [includeDeleted, setIncludeDeleted] = useState(initialIncludeDeleted);
 
   // Permissions & Roles Access Control: Bank Owner, Society Admin, Branch Manager
   const authRole = useAuthStore((state) => state.role);
@@ -112,7 +130,7 @@ const Merchants = () => {
   });
 
   // Pagination State
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(initialPage);
   const limit = 10;
   const [meta, setMeta] = useState({
     page: 1,
@@ -153,6 +171,57 @@ const Merchants = () => {
     }
   }, [globalBranchId]);
 
+  // Sync filter states to URL search params
+  useEffect(() => {
+    const params = {};
+    if (selectedStatus && selectedStatus !== 'ALL') {
+      params.status = selectedStatus;
+    } else if (activeStatCard && activeStatCard !== 'ALL') {
+      params.status = activeStatCard;
+    }
+    if (selectedApprovalStatus && selectedApprovalStatus !== 'ALL') {
+      params.approvalStatus = selectedApprovalStatus;
+    }
+    if (debouncedSearch.trim()) params.search = debouncedSearch.trim();
+    if (selectedBranchId && selectedBranchId !== globalBranchId) params.branchId = selectedBranchId;
+    if (selectedState) params.state = selectedState;
+    if (selectedCity) params.city = selectedCity;
+    if (page > 1) params.page = page.toString();
+
+    setSearchParams(params, { replace: true });
+  }, [
+    activeStatCard,
+    selectedStatus,
+    selectedApprovalStatus,
+    debouncedSearch,
+    selectedBranchId,
+    globalBranchId,
+    selectedState,
+    selectedCity,
+    page,
+    setSearchParams,
+  ]);
+
+  // Sync URL changes from browser back/forward navigation
+  useEffect(() => {
+    const urlStatus = (searchParams.get('status') || searchParams.get('filter') || '').toUpperCase();
+    if (urlStatus === 'DELETED') {
+      setActiveStatCard(prev => prev !== 'DELETED' ? 'DELETED' : prev);
+      setSelectedStatus(prev => prev !== 'DELETED' ? 'DELETED' : prev);
+      setIncludeDeleted(true);
+    } else if (['ACTIVE', 'INACTIVE', 'BLOCKED'].includes(urlStatus)) {
+      setActiveStatCard(prev => prev !== urlStatus ? urlStatus : prev);
+      setSelectedStatus(prev => prev !== urlStatus ? urlStatus : prev);
+      setIncludeDeleted(false);
+    } else if (!urlStatus) {
+      setActiveStatCard(prev => prev !== 'ALL' ? 'ALL' : prev);
+      setSelectedStatus(prev => prev !== '' ? '' : prev);
+      setIncludeDeleted(false);
+    }
+    const urlApproval = (searchParams.get('approvalStatus') || '').toUpperCase();
+    setSelectedApprovalStatus(prev => prev !== urlApproval ? urlApproval : prev);
+  }, [searchParams]);
+
   useEffect(() => {
     const fetchLocations = async () => {
       try {
@@ -186,14 +255,12 @@ const Merchants = () => {
   // Cascading Available Cities for the Selected State
   const availableCities = useMemo(() => {
     if (!selectedState) {
-      return locationsData.cities && locationsData.cities.length > 0
-        ? locationsData.cities
-        : [];
+      return [];
     }
     const fromDictionary = INDIAN_STATES_WITH_CITIES[selectedState] || [];
     const fromApi = (locationsData.stateCitiesMap && locationsData.stateCitiesMap[selectedState]) || [];
     const combined = Array.from(new Set([...fromDictionary, ...fromApi])).sort((a, b) => a.localeCompare(b));
-    return combined.length > 0 ? combined : (locationsData.cities || []);
+    return combined;
   }, [selectedState, locationsData]);
 
   // Debounce search
@@ -475,6 +542,8 @@ const Merchants = () => {
           { label: "Partner Management" },
           { label: "Merchants" }
         ]}
+        showBack={false}
+        backUrl="/dashboard"
       />
 
       {/* Top Stat Overview Cards (Matching Employee module layout) */}
@@ -746,8 +815,8 @@ const Merchants = () => {
           <div>
             <SearchableSelect
               value={selectedCity}
-              disabled={Boolean(selectedState && availableCities.length === 0)}
-              disabledPlaceholder="No cities available"
+              disabled={!selectedState || availableCities.length === 0}
+              disabledPlaceholder={!selectedState ? "Select State first" : "No cities available"}
               onChange={(val) => {
                 setSelectedCity(val);
                 setPage(1);
@@ -756,7 +825,7 @@ const Merchants = () => {
                 { value: '', label: selectedState ? `All Cities in ${selectedState}` : 'All Cities' },
                 ...availableCities.map((ct) => ({ value: ct, label: ct }))
               ]}
-              placeholder={selectedState ? `All Cities in ${selectedState}` : 'All Cities'}
+              placeholder={selectedState ? `All Cities in ${selectedState}` : 'Select State first'}
               searchPlaceholder="Search city..."
               className="text-xs"
             />

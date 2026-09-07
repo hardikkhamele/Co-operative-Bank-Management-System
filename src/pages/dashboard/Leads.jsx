@@ -534,7 +534,22 @@ const Leads = ({ leadType: propLeadType, systemTitle: propSystemTitle }) => {
   };
 
   const tableRef = useRef(null);
+  const exportDropdownRef = useRef(null);
   const [isExportOpen, setIsExportOpen] = useState(false);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (exportDropdownRef.current && !exportDropdownRef.current.contains(event.target)) {
+        setIsExportOpen(false);
+      }
+    };
+    if (isExportOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isExportOpen]);
 
   const getSelectedDataFromTable = () => {
     if (!tableRef.current) return { headers: [], rows: [] };
@@ -558,10 +573,14 @@ const Leads = ({ leadType: propLeadType, systemTitle: propSystemTitle }) => {
 
   const exportToCSV = () => {
     const { headers, rows } = getSelectedDataFromTable();
+    if (!headers.length || !rows.length) {
+      toast.warning("No data available to export");
+      return;
+    }
     const csvContent = [
       headers.join(","),
       ...rows.map((row) =>
-        row.map((v) => '"' + v.replace(/"/g, '""') + '"').join(","),
+        row.map((v) => '"' + (v || "").replace(/"/g, '""') + '"').join(","),
       ),
     ].join("\n");
 
@@ -569,6 +588,57 @@ const Leads = ({ leadType: propLeadType, systemTitle: propSystemTitle }) => {
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
     link.download = `${resolvedTitle || 'Leads'}_Export.csv`;
+    link.click();
+    setIsExportOpen(false);
+  };
+
+  const exportToExcel = () => {
+    const { headers, rows } = getSelectedDataFromTable();
+    if (!headers.length || !rows.length) {
+      toast.warning("No data available to export");
+      return;
+    }
+    const tableHtml = `
+      <table border="1">
+        <thead>
+          <tr>${headers.map((h) => `<th>${h}</th>`).join("")}</tr>
+        </thead>
+        <tbody>
+          ${rows.map((row) => `<tr>${row.map((c) => `<td>${c}</td>`).join("")}</tr>`).join("")}
+        </tbody>
+      </table>
+    `;
+    const blob = new Blob([tableHtml], { type: "application/vnd.ms-excel" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `${resolvedTitle || 'Leads'}_Export.xls`;
+    link.click();
+    setIsExportOpen(false);
+  };
+
+  const exportToWord = () => {
+    const { headers, rows } = getSelectedDataFromTable();
+    if (!headers.length || !rows.length) {
+      toast.warning("No data available to export");
+      return;
+    }
+    const tableHtml = `
+      <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+      <head><meta charset='utf-8'><title>${resolvedTitle || 'Leads'} Export</title></head><body>
+      <table border="1">
+        <thead>
+          <tr>${headers.map((h) => `<th>${h}</th>`).join("")}</tr>
+        </thead>
+        <tbody>
+          ${rows.map((row) => `<tr>${row.map((c) => `<td>${c}</td>`).join("")}</tr>`).join("")}
+        </tbody>
+      </table>
+      </body></html>
+    `;
+    const blob = new Blob([tableHtml], { type: "application/msword" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `${resolvedTitle || 'Leads'}_Export.doc`;
     link.click();
     setIsExportOpen(false);
   };
@@ -592,7 +662,7 @@ const Leads = ({ leadType: propLeadType, systemTitle: propSystemTitle }) => {
             ...(resolvedTitle ? [{ label: resolvedTitle }] : [])
           ]}
           showBack={true}
-          backUrl="/leads"
+          backUrl={isCustomerSystem || isMerchantSystem ? "/leads" : "/dashboard"}
         />
       </div>
 
@@ -888,16 +958,48 @@ const Leads = ({ leadType: propLeadType, systemTitle: propSystemTitle }) => {
               </button>
             )}
 
-            {/* Export CSV Button */}
-            <button
-              type="button"
-              onClick={exportToCSV}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs font-semibold border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 shadow-2xs transition-colors cursor-pointer"
-              title="Export CSV"
-            >
-              <Download size={14} className="text-gray-500" />
-              <span>Export</span>
-            </button>
+            {/* Export Dropdown */}
+            <div className="relative" ref={exportDropdownRef}>
+              <button
+                type="button"
+                onClick={() => setIsExportOpen(!isExportOpen)}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs font-semibold border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 shadow-2xs transition-colors cursor-pointer"
+                title="Export Options"
+              >
+                <Download size={14} className="text-gray-500" />
+                <span>Export</span>
+                <ChevronDown size={13} className={`transition-transform duration-200 ${isExportOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {isExportOpen && (
+                <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-100 rounded-xl shadow-xl py-2 z-50 animate-in fade-in zoom-in-95 duration-150">
+                  <button
+                    type="button"
+                    onClick={exportToCSV}
+                    className="w-full px-4 py-2 text-left text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2 font-medium cursor-pointer"
+                  >
+                    <Table size={15} className="text-gray-500" />
+                    <span>Export to CSV</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={exportToExcel}
+                    className="w-full px-4 py-2 text-left text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2 font-medium cursor-pointer"
+                  >
+                    <FileSpreadsheet size={15} className="text-emerald-600" />
+                    <span>Export to Excel</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={exportToWord}
+                    className="w-full px-4 py-2 text-left text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2 font-medium border-t border-gray-100 mt-1 pt-1.5 cursor-pointer"
+                  >
+                    <FileText size={15} className="text-blue-600" />
+                    <span>Export to Word</span>
+                  </button>
+                </div>
+              )}
+            </div>
 
             {/* Reset Filters */}
             {(searchTerm || selectedStatus || dateFrom || dateTo) && (
@@ -1595,40 +1697,6 @@ const Leads = ({ leadType: propLeadType, systemTitle: propSystemTitle }) => {
         </div>
       )}
 
-      {/* KYC Photo Preview Modal */}
-      {previewImage && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in">
-          <div className="bg-white rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl animate-in zoom-in-95">
-            <div className="p-4 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
-              <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wider">{previewTitle || "KYC Document Preview"}</h4>
-              <button
-                onClick={() => setPreviewImage(null)}
-                className="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-100 cursor-pointer"
-              >
-                <X size={18} />
-              </button>
-            </div>
-            <div className="p-4 flex items-center justify-center max-h-[70vh] bg-black/5 overflow-auto">
-              <img
-                src={previewImage}
-                alt={previewTitle}
-                className="max-h-[60vh] w-auto object-contain rounded-lg shadow-sm"
-              />
-            </div>
-            <div className="p-3 bg-gray-50 border-t border-gray-100 flex justify-end">
-              <a
-                href={previewImage}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#225091] text-white text-xs font-bold hover:bg-[#163a6c] transition-colors"
-              >
-                <ExternalLink size={13} />
-                <span>Open Full Size</span>
-              </a>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Quick Lead Details Modal */}
       {quickDetailLead && (
@@ -1832,6 +1900,48 @@ const Leads = ({ leadType: propLeadType, systemTitle: propSystemTitle }) => {
               >
                 Close
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* KYC Photo Preview Modal with maximum z-index (sits on top of quickDetailLead and all other modals) */}
+      {previewImage && (
+        <div 
+          onClick={() => setPreviewImage(null)}
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 animate-in fade-in cursor-pointer"
+        >
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl animate-in zoom-in-95 cursor-default relative z-10"
+          >
+            <div className="p-4 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
+              <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wider">{previewTitle || "KYC Document Preview"}</h4>
+              <button
+                type="button"
+                onClick={() => setPreviewImage(null)}
+                className="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-100 cursor-pointer transition-colors"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <div className="p-4 flex items-center justify-center max-h-[70vh] bg-black/5 overflow-auto">
+              <img
+                src={previewImage}
+                alt={previewTitle || "KYC Document Preview"}
+                className="max-h-[60vh] w-auto object-contain rounded-lg shadow-sm"
+              />
+            </div>
+            <div className="p-3 bg-gray-50 border-t border-gray-100 flex justify-end">
+              <a
+                href={previewImage}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#225091] text-white text-xs font-bold hover:bg-[#163a6c] transition-colors shadow-xs"
+              >
+                <ExternalLink size={13} />
+                <span>Open Full Size</span>
+              </a>
             </div>
           </div>
         </div>

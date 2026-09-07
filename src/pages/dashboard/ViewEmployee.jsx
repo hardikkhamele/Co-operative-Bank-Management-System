@@ -4,8 +4,8 @@ import {
   ChevronRight, Calendar, Phone, Mail, Lock, MapPin, Clock, Check, 
   AlertCircle, Fingerprint, Map, Banknote, UserCircle, ThumbsUp, 
   ArrowLeftRight, ShieldCheck, Briefcase, Building2, Award, 
-  Loader2, BadgeCheck, X
-, ArrowLeft} from 'lucide-react';
+  Loader2, BadgeCheck, X, ArrowLeft, Eye, EyeOff
+} from 'lucide-react';
 import { employeeService } from '../../api/employeeService';
 import PageHeader from '../../components/common/PageHeader';
 import { deriveKpaGoals } from '../../utils/kpaConstants';
@@ -44,6 +44,7 @@ const ViewEmployee = () => {
   const [loading, setLoading] = useState(true);
   const [employee, setEmployee] = useState(null);
   const [errorMsg, setErrorMsg] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     const fetchEmployee = async () => {
@@ -242,7 +243,31 @@ const ViewEmployee = () => {
                 <InfoCard icon={Calendar} title="Date Of Birth" value={formatDate(personal.dob || personal.dateOfBirth || employee.dateOfBirth)} />
                 <InfoCard icon={Phone} title="Phone Number" value={personal.phoneNumber || employee.phoneNumber || '—'} />
                 <InfoCard icon={Mail} title="Email Address" value={personal.email || employee.email || '—'} />
-                <InfoCard icon={Lock} title="Password" value="••••••••" />
+                <div className="bg-[#fafafa] rounded-xl p-4 flex items-center justify-between gap-4 border border-gray-100/60 overflow-hidden">
+                  <div className="flex items-center gap-4 min-w-0">
+                    <div className="text-[#225091] shrink-0 bg-white p-2.5 rounded-lg shadow-2xs border border-gray-100">
+                      <Lock size={20} strokeWidth={2} />
+                    </div>
+                    <div className="flex flex-col min-w-0">
+                      <span className="text-[13px] text-gray-500 font-medium mb-0.5 truncate">Password</span>
+                      <span className="text-[14px] text-gray-800 font-semibold truncate font-mono">
+                        {personal.password || employee.password
+                          ? (showPassword ? (personal.password || employee.password) : '••••••••')
+                          : '••••••••'}
+                      </span>
+                    </div>
+                  </div>
+                  {(personal.password || employee.password) && (
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="text-gray-400 hover:text-[#225091] p-1.5 rounded-lg hover:bg-gray-100 transition-colors focus:outline-none cursor-pointer shrink-0"
+                      title={showPassword ? "Hide password" : "Show password"}
+                    >
+                      {showPassword ? <Eye size={18} /> : <EyeOff size={18} />}
+                    </button>
+                  )}
+                </div>
                 <InfoCard icon={MapPin} title="Residential Address" value={personal.address || employee.address || '—'} />
                 <InfoCard icon={Building2} title="Office Address" value={personal.officeAddress || employee.officeAddress || '—'} />
                 <InfoCard icon={Award} title="Blood Group" value={personal.bloodGroup || employee.bloodGroup || '—'} />

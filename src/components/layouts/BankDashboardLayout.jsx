@@ -63,45 +63,47 @@ const BankDashboardLayout = () => {
       
       {/* Sidebar */}
       <aside 
-        className={`fixed inset-y-0 left-0 z-50 bg-white border-r border-gray-200 flex flex-col h-full shrink-0 shadow-2xl lg:shadow-sm lg:static lg:z-20 transition-all duration-300 ease-in-out ${
+        className={`fixed inset-y-0 left-0 z-50 bg-white border-r border-gray-200 flex flex-col h-full shrink-0 shadow-2xl lg:shadow-sm lg:static lg:z-20 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] overflow-hidden ${
           isMobileOpen ? 'w-64 translate-x-0' : '-translate-x-full lg:translate-x-0'
         } ${
           isDesktopSidebarOpen
-            ? 'lg:w-64 lg:opacity-100 lg:visible'
-            : 'lg:w-0 lg:opacity-0 lg:invisible lg:border-none lg:p-0 lg:overflow-hidden'
+            ? 'lg:w-64 lg:opacity-100'
+            : 'lg:w-0 lg:opacity-0 lg:border-r-0'
         }`}
       >
-        <div className="p-5 border-b border-gray-100 flex items-center justify-between">
-          <h1 className="text-xl font-bold text-[#225091] whitespace-nowrap">Co-Op Bank</h1>
-          <button
-            type="button"
-            onClick={() => setIsMobileOpen(false)}
-            aria-label="Close sidebar"
-            className="lg:hidden p-1.5 rounded-lg text-gray-500 hover:text-gray-800 hover:bg-gray-100 transition-colors cursor-pointer"
-          >
-            <X size={20} />
-          </button>
-        </div>
-        <nav className="flex-1 overflow-y-auto py-4 space-y-1">
-          {bankNavItems.map((item) => (
-            <NavLink 
-              key={item.name} 
-              to={item.path} 
-              className={({ isActive }) => `flex items-center gap-3 px-6 py-3 text-[15px] font-medium transition-colors border-l-4 ${isActive ? 'border-[#225091] bg-[#225091]/10 text-[#225091]' : 'border-transparent text-gray-700 hover:bg-gray-100/50 hover:text-gray-900'}`}
+        <div className="w-64 h-full flex flex-col shrink-0">
+          <div className="p-5 border-b border-gray-100 flex items-center justify-between">
+            <h1 className="text-xl font-bold text-[#225091] whitespace-nowrap">Co-Op Bank</h1>
+            <button
+              type="button"
+              onClick={() => setIsMobileOpen(false)}
+              aria-label="Close sidebar"
+              className="lg:hidden p-1.5 rounded-lg text-gray-500 hover:text-gray-800 hover:bg-gray-100 transition-colors cursor-pointer"
             >
-              <item.icon size={20} className="shrink-0" />
-              <span>{item.name}</span>
-            </NavLink>
-          ))}
-        </nav>
-        <div className="p-4 border-t border-gray-100">
-          <div className="flex items-center gap-3 px-4 py-3 bg-gray-50 rounded-xl">
-            <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-[#225091] font-bold">
-              A
-            </div>
-            <div className="flex-1 overflow-hidden">
-              <p className="text-sm font-bold text-gray-900 truncate">Admin User</p>
-              <p className="text-xs text-gray-500 truncate">admin@cooperativebank.com</p>
+              <X size={20} />
+            </button>
+          </div>
+          <nav className="flex-1 overflow-y-auto py-4 space-y-1">
+            {bankNavItems.map((item) => (
+              <NavLink 
+                key={item.name} 
+                to={item.path} 
+                className={({ isActive }) => `flex items-center gap-3 px-6 py-3 text-[15px] font-medium transition-all duration-200 border-l-4 ${isActive ? 'border-[#225091] bg-[#225091]/10 text-[#225091]' : 'border-transparent text-gray-700 hover:bg-gray-100/50 hover:text-gray-900 hover:pl-7'}`}
+              >
+                <item.icon size={20} className="shrink-0" />
+                <span>{item.name}</span>
+              </NavLink>
+            ))}
+          </nav>
+          <div className="p-4 border-t border-gray-100">
+            <div className="flex items-center gap-3 px-4 py-3 bg-gray-50 rounded-xl">
+              <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-[#225091] font-bold">
+                A
+              </div>
+              <div className="flex-1 overflow-hidden">
+                <p className="text-sm font-bold text-gray-900 truncate">Admin User</p>
+                <p className="text-xs text-gray-500 truncate">admin@cooperativebank.com</p>
+              </div>
             </div>
           </div>
         </div>

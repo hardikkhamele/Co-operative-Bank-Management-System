@@ -80,14 +80,16 @@
 }
 
 /* Hide scrollbar for Chrome, Safari and Opera */
-*::-webkit-scrollbar {
-  display: none;
+*::-webkit-scrollbar,
+.table-scroll-viewport::-webkit-scrollbar {
+  display: none !important;
 }
 
 /* Hide scrollbar for IE, Edge and Firefox */
-* {
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
+*,
+.table-scroll-viewport {
+  -ms-overflow-style: none !important;  /* IE and Edge */
+  scrollbar-width: none !important;  /* Firefox */
 }
 
 /* Shimmer wave animation for skeleton screens */
@@ -122,5 +124,39 @@
   background-size: 200% 100%;
   animation: shimmer 1.75s ease-in-out infinite;
   will-change: background-position;
+}
+
+/* Sidebar Submodule & Accordion Transitions */
+.sidebar-accordion-grid {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 280ms cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: grid-template-rows;
+}
+
+.sidebar-accordion-grid.open {
+  grid-template-rows: 1fr;
+}
+
+.sidebar-accordion-content {
+  overflow: hidden;
+  min-height: 0;
+}
+
+.sidebar-accordion-inner {
+  transition: opacity 240ms cubic-bezier(0.4, 0, 0.2, 1), transform 240ms cubic-bezier(0.4, 0, 0.2, 1);
+  transform-origin: top;
+  will-change: opacity, transform;
+}
+
+.sidebar-accordion-grid:not(.open) .sidebar-accordion-inner {
+  opacity: 0;
+  transform: translateY(-6px);
+  pointer-events: none;
+}
+
+.sidebar-accordion-grid.open .sidebar-accordion-inner {
+  opacity: 1;
+  transform: translateY(0);
 }
 

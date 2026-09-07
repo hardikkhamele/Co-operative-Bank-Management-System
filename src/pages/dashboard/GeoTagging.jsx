@@ -24,7 +24,9 @@ import PageHeader from '../../components/common/PageHeader';
 import geoTaggingService from '../../api/geoTaggingService';
 import { employeeService } from '../../api/employeeService';
 import { branchService } from '../../api/branchService';
+import useBranchStore from '../../store/branchStore';
 import { toast } from 'react-toastify';
+import { useSearchParams } from 'react-router-dom';
 
 // Haversine formula to compute distance in meters
 const calculateDistanceInMeters = (lat1, lon1, lat2, lon2) => {
@@ -53,19 +55,63 @@ const hasValidCoordinates = (lat, lng) => {
   return true;
 };
 
+const VALID_STATUSES = ['ALL', 'IN_BRANCH', 'OUT_OF_GEOFENCE', 'GPS_INACTIVE'];
+
 const GeoTagging = () => {
-  const [activeStatus, setActiveStatus] = useState('ALL'); // ALL, IN_BRANCH, OUT_OF_GEOFENCE, GPS_INACTIVE
-  const [selectedBranchFilter, setSelectedBranchFilter] = useState('ALL'); // 'ALL' or branchName
-  const [viewMode, setViewMode] = useState('MAP'); // MAP, TABLE
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Read initial filter values from URL
+  const initialStatusParam = (searchParams.get('status') || searchParams.get('filter') || 'ALL').toUpperCase();
+  const initialStatus = VALID_STATUSES.includes(initialStatusParam) ? initialStatusParam : 'ALL';
+  const initialBranchFilter = searchParams.get('branch') || 'ALL';
+  const initialSearch = searchParams.get('search') || '';
+  const initialView = (searchParams.get('view') || 'MAP').toUpperCase();
+
+  const [activeStatus, setActiveStatus] = useState(initialStatus); // ALL, IN_BRANCH, OUT_OF_GEOFENCE, GPS_INACTIVE
+  const [selectedBranchFilter, setSelectedBranchFilter] = useState(initialBranchFilter); // 'ALL' or branchName
+  const [viewMode, setViewMode] = useState(initialView === 'TABLE' ? 'TABLE' : 'MAP'); // MAP, TABLE
   const [records, setRecords] = useState([]);
   const [branches, setBranches] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(initialSearch);
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [fetchingLiveLocation, setFetchingLiveLocation] = useState(false);
   const [zeroGpsModalRecord, setZeroGpsModalRecord] = useState(null);
   const [showMapAnyway, setShowMapAnyway] = useState(false);
   const locationCache = useRef(new Map());
+
+  // Sync state changes to URL search params
+  useEffect(() => {
+    const params = {};
+    if (activeStatus && activeStatus !== 'ALL') {
+      params.status = activeStatus;
+    }
+    if (selectedBranchFilter && selectedBranchFilter !== 'ALL') {
+      params.branch = selectedBranchFilter;
+    }
+    if (searchQuery.trim()) {
+      params.search = searchQuery.trim();
+    }
+    if (viewMode && viewMode !== 'MAP') {
+      params.view = viewMode.toLowerCase();
+    }
+
+    setSearchParams(params, { replace: true });
+  }, [activeStatus, selectedBranchFilter, searchQuery, viewMode, setSearchParams]);
+
+  // Sync URL changes from browser back/forward navigation
+  useEffect(() => {
+    const urlStatus = (searchParams.get('status') || searchParams.get('filter') || 'ALL').toUpperCase();
+    if (VALID_STATUSES.includes(urlStatus)) {
+      setActiveStatus(prev => prev !== urlStatus ? urlStatus : prev);
+    }
+    const urlBranch = searchParams.get('branch') || 'ALL';
+    setSelectedBranchFilter(prev => prev !== urlBranch ? urlBranch : prev);
+    const urlView = (searchParams.get('view') || 'MAP').toUpperCase();
+    if (urlView === 'TABLE' || urlView === 'MAP') {
+      setViewMode(prev => prev !== urlView ? urlView : prev);
+    }
+  }, [searchParams]);
 
   // Handle employee selection with instant cache lookup and direct popup trigger
   const handleSelectRecord = async (record, shouldOpenModal = true) => {
@@ -150,9 +196,25 @@ const GeoTagging = () => {
     }
   };
 
-  // Fetch real bank branches
+  // Fetch real bank branches with instant store cache lookup
   const fetchBranchesList = async () => {
     try {
+      // 1. Instant cache check from global branch store (0ms)
+      const storeBranches = useBranchStore.getState().branchOptions;
+      if (storeBranches && storeBranches.length > 0) {
+        const formatted = storeBranches.map(b => ({
+          id: b.id || b._id,
+          name: b.name || 'Branch',
+          code: b.code || '',
+          lat: Number(b.latitude || b.lat || (b.address && b.address.latitude) || 21.1458),
+          lng: Number(b.longitude || b.lng || (b.address && b.address.longitude) || 79.0882),
+          address: b.address ? (typeof b.address === 'string' ? b.address : `${b.address.line1 || ''}, ${b.address.city || ''}, ${b.address.state || ''}`) : `${b.city || ''}, ${b.state || ''}`
+        }));
+        setBranches(formatted);
+        return;
+      }
+
+      // 2. Fallback network fetch if store is not populated
       const res = await branchService.list({ limit: 100 });
       const branchList = Array.isArray(res?.data)
         ? res.data
@@ -175,24 +237,49 @@ const GeoTagging = () => {
     setLoading(true);
     locationCache.current.clear();
     try {
-      let recordsData = await geoTaggingService.getRecords();
+      // 1. Fetch geotag records and employees in parallel
+      const [geotagRes, empRes] = await Promise.allSettled([
+        geoTaggingService.getRecords(),
+        employeeService.list({ limit: 50, includeBranchManagers: true })
+      ]);
 
-      // If no geotag records returned, dynamically load real bank employees
-      if (!recordsData || recordsData.length === 0) {
-        const empRes = await employeeService.list({ limit: 50, includeBranchManagers: true });
-        const empList = Array.isArray(empRes?.data)
-          ? empRes.data
-          : empRes?.data?.items || empRes?.data?.employees || [];
+      let recordsData = geotagRes.status === 'fulfilled' && Array.isArray(geotagRes.value) && geotagRes.value.length > 0
+        ? geotagRes.value
+        : [];
+
+      // 2. If no dedicated geotag records, map employees to attendance records
+      if (recordsData.length === 0 && empRes.status === 'fulfilled') {
+        const empData = empRes.value;
+        const empList = Array.isArray(empData?.data)
+          ? empData.data
+          : empData?.data?.items || empData?.data?.employees || [];
 
         recordsData = empList.map((emp, idx) => {
-          const bLat = Number(emp.branch?.latitude || 21.1458);
-          const bLng = Number(emp.branch?.longitude || 79.0882);
-          const bName = emp.branch?.name || 'Main Branch';
+          const bLat = Number(emp.branch?.latitude || emp.branch?.lat || 21.1458);
+          const bLng = Number(emp.branch?.longitude || emp.branch?.lng || 79.0882);
+          const bName = emp.branch?.name || emp.branch?.branchName || 'Main Branch';
           const bAddr = emp.branch?.address || emp.officeAddress || `${bName}, ${emp.state || 'Maharashtra'}`;
 
+          // Check if employee record already includes location coordinates from punch / attendance
+          const rawLat = emp.punchLat ?? emp.currentLocation?.latitude ?? emp.location?.coordinates?.[1] ?? emp.latitude;
+          const rawLng = emp.punchLng ?? emp.currentLocation?.longitude ?? emp.location?.coordinates?.[0] ?? emp.longitude;
+          const valid = hasValidCoordinates(rawLat, rawLng);
+
+          let dist = null;
+          let isInside = false;
+          let status = 'GPS_INACTIVE';
+
+          if (valid) {
+            const lat = Number(rawLat);
+            const lng = Number(rawLng);
+            dist = calculateDistanceInMeters(bLat, bLng, lat, lng);
+            isInside = dist <= 100;
+            status = isInside ? 'IN_BRANCH' : 'OUT_OF_GEOFENCE';
+          }
+
           return {
-            id: emp.id || `EMP-GEO-${idx}`,
-            employeeId: emp.id || emp.employeeId,
+            id: emp.id || emp._id || `EMP-GEO-${idx}`,
+            employeeId: emp.id || emp._id || emp.employeeId,
             employeeCode: emp.employeeCode || emp.employeeId || '',
             employeeName: emp.fullName || `${emp.firstName || ''} ${emp.lastName || ''}`.trim() || 'Employee',
             phone: emp.phoneNumber || emp.personalDetails?.phoneNumber || '',
@@ -204,69 +291,22 @@ const GeoTagging = () => {
             branchAddress: bAddr,
             punchInTime: emp.updatedAt || emp.createdAt || new Date().toISOString(),
             punchOutTime: null,
-            punchLat: 0,
-            punchLng: 0,
-            punchAddress: emp.officeAddress || `${bName} Premises`,
-            distanceMeters: null,
-            geofenceStatus: 'GPS_INACTIVE',
-            isZeroCoords: true,
-            isLiveGps: false
+            punchLat: valid ? Number(rawLat) : 0,
+            punchLng: valid ? Number(rawLng) : 0,
+            punchAddress: emp.punchAddress || emp.officeAddress || `${bName} Premises`,
+            distanceMeters: dist,
+            geofenceStatus: status,
+            isZeroCoords: !valid,
+            isLiveGps: Boolean(valid && (emp.currentLocation || emp.updatedAt))
           };
         });
-
-        // Resolve live locations in parallel so Inside / Out of Geofence / No Signal are 100% accurate
-        const resolvedRecords = await Promise.all(
-          recordsData.map(async (item) => {
-            const empId = item.employeeId || item.id;
-            try {
-              const liveLoc = await geoTaggingService.getEmployeeLocation(empId);
-              if (liveLoc && (liveLoc.latitude !== undefined || (liveLoc.coordinates && liveLoc.coordinates.length === 2))) {
-                const rawLat = liveLoc.latitude !== undefined ? liveLoc.latitude : liveLoc.coordinates[1];
-                const rawLng = liveLoc.longitude !== undefined ? liveLoc.longitude : liveLoc.coordinates[0];
-                const lat = Number(rawLat);
-                const lng = Number(rawLng);
-
-                const isZero = (lat === 0 && lng === 0) || isNaN(lat) || isNaN(lng);
-                if (!isZero) {
-                  const dist = calculateDistanceInMeters(item.branchLat, item.branchLng, lat, lng);
-                  const isInside = dist <= 100;
-                  const cacheItem = {
-                    punchLat: lat,
-                    punchLng: lng,
-                    punchAddress: liveLoc.address || item.punchAddress,
-                    lastUpdatedAt: liveLoc.lastUpdatedAt || null,
-                    distanceMeters: dist,
-                    geofenceStatus: isInside ? 'IN_BRANCH' : 'OUT_OF_GEOFENCE',
-                    isZeroCoords: false,
-                    isLiveGps: Boolean(liveLoc.lastUpdatedAt)
-                  };
-                  locationCache.current.set(empId, cacheItem);
-                  return { ...item, ...cacheItem };
-                } else {
-                  const cacheItem = {
-                    punchLat: 0,
-                    punchLng: 0,
-                    punchAddress: liveLoc.address || item.punchAddress,
-                    lastUpdatedAt: liveLoc.lastUpdatedAt || null,
-                    distanceMeters: null,
-                    geofenceStatus: 'GPS_INACTIVE',
-                    isZeroCoords: true,
-                    isLiveGps: false
-                  };
-                  locationCache.current.set(empId, cacheItem);
-                  return { ...item, ...cacheItem };
-                }
-              }
-            } catch {
-              // default remains inactive
-            }
-            return item;
-          })
-        );
-        recordsData = resolvedRecords;
       }
 
+      // 3. Immediately render records and clear loading spinner - 0 blocking lag!
       setRecords(recordsData);
+      setLoading(false);
+
+      // 4. Select first employee and resolve their live location on-demand
       if (recordsData.length > 0) {
         handleSelectRecord(recordsData[0], false);
       } else {
@@ -276,7 +316,6 @@ const GeoTagging = () => {
       console.error('Failed to load employee attendance geolocation data:', err);
       setRecords([]);
       setSelectedRecord(null);
-    } finally {
       setLoading(false);
     }
   };
@@ -344,7 +383,7 @@ const GeoTagging = () => {
     }
   }, [filteredRecords, selectedRecord]);
 
-  const googleMapsKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || 'AIzaSyDc5r82MahA9rhAXROP0kv7rf0ZzUKOFR4';
+  const googleMapsKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
 
   const inBranchCount = branchScopedRecords.filter(r => {
     const isZero = r.isZeroCoords || (r.punchLat === 0 && r.punchLng === 0) || r.geofenceStatus === 'GPS_INACTIVE' || r.distanceMeters === null;
@@ -370,6 +409,8 @@ const GeoTagging = () => {
           { label: 'Dashboard', to: '/dashboard' },
           { label: 'Geo Tagging' }
         ]}
+        showBack={false}
+        backUrl="/dashboard"
       >
         <div className="flex items-center gap-2">
           <button
@@ -669,11 +710,19 @@ const GeoTagging = () => {
                       loading="lazy"
                       allowFullScreen
                       referrerPolicy="no-referrer-when-downgrade"
-                      src={`https://www.google.com/maps/embed/v1/place?key=${googleMapsKey}&q=${
-                        (selectedRecord.punchLat && selectedRecord.punchLng && !(selectedRecord.punchLat === 0 && selectedRecord.punchLng === 0))
-                          ? `${selectedRecord.punchLat},${selectedRecord.punchLng}`
-                          : encodeURIComponent(selectedRecord.punchAddress || selectedRecord.branchAddress || selectedRecord.branchName || 'Nagpur, Maharashtra')
-                      }&zoom=16`}
+                      src={
+                        googleMapsKey
+                          ? `https://www.google.com/maps/embed/v1/place?key=${googleMapsKey}&q=${
+                              (selectedRecord.punchLat && selectedRecord.punchLng && !(selectedRecord.punchLat === 0 && selectedRecord.punchLng === 0))
+                                ? `${selectedRecord.punchLat},${selectedRecord.punchLng}`
+                                : encodeURIComponent(selectedRecord.punchAddress || selectedRecord.branchAddress || selectedRecord.branchName || 'Nagpur, Maharashtra')
+                            }&zoom=16`
+                          : `https://maps.google.com/maps?q=${
+                              (selectedRecord.punchLat && selectedRecord.punchLng && !(selectedRecord.punchLat === 0 && selectedRecord.punchLng === 0))
+                                ? `${selectedRecord.punchLat},${selectedRecord.punchLng}`
+                                : encodeURIComponent(selectedRecord.punchAddress || selectedRecord.branchAddress || selectedRecord.branchName || 'Nagpur, Maharashtra')
+                            }&z=16&output=embed`
+                      }
                       className="w-full h-full border-0"
                     />
                   </div>

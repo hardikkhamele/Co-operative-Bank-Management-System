@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { toast } from 'react-toastify';
 import { 
   Search, 
@@ -66,6 +66,7 @@ const INDIAN_STATES_WITH_CITIES = {
 const ALL_INDIAN_STATES = Object.keys(INDIAN_STATES_WITH_CITIES).sort((a, b) => a.localeCompare(b));
 
 const Branch = () => {
+  const tableRef = useRef(null);
   const [branches, setBranches] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -127,15 +128,16 @@ const Branch = () => {
 
   // Helper to get cities for any state (combining dictionary and API)
   const getCitiesForState = (stateName) => {
-    if (!stateName) return locationsData.cities || [];
+    if (!stateName) return [];
     const fromDictionary = INDIAN_STATES_WITH_CITIES[stateName] || [];
     const fromApi = (locationsData.stateCitiesMap && locationsData.stateCitiesMap[stateName]) || [];
     const combined = Array.from(new Set([...fromDictionary, ...fromApi])).sort((a, b) => a.localeCompare(b));
-    return combined.length > 0 ? combined : (locationsData.cities || []);
+    return combined;
   };
 
   // Cascading Available Cities for the Selected State Filter
   const availableCities = useMemo(() => {
+    if (!selectedState) return [];
     return getCitiesForState(selectedState);
   }, [selectedState, locationsData]);
   
@@ -145,6 +147,7 @@ const Branch = () => {
   const [createSubmitting, setCreateSubmitting] = useState(false);
   const [editSubmitting, setEditSubmitting] = useState(false);
   const [showManagerPassword, setShowManagerPassword] = useState(false);
+  const [showEditManagerPassword, setShowEditManagerPassword] = useState(false);
   const [createForm, setCreateForm] = useState({
     branch: { name: '', code: '', email: '', phoneNumber: '', state: '', cardStock: 0, verificationCredits: 0, addressLine1: '', city: '', pincode: '' },
     manager: { fullName: '', email: '', phoneNumber: '', password: '', employeeCode: '' }
@@ -240,13 +243,16 @@ const Branch = () => {
       return;
     }
 
-    if (createForm.branch.phoneNumber) {
-      const branchPhoneErr = validatePhone(createForm.branch.phoneNumber).error;
-      if (branchPhoneErr) {
-        toast.error(`Branch Phone: ${branchPhoneErr}`);
-        setCreateStep(1);
-        return;
-      }
+    if (!createForm.branch.phoneNumber) {
+      toast.error('Branch Phone: Phone number is required');
+      setCreateStep(1);
+      return;
+    }
+    const branchPhoneErr = validatePhone(createForm.branch.phoneNumber).error;
+    if (branchPhoneErr) {
+      toast.error(`Branch Phone: ${branchPhoneErr}`);
+      setCreateStep(1);
+      return;
     }
 
     if (createForm.branch.pincode) {
@@ -271,12 +277,14 @@ const Branch = () => {
       return;
     }
 
-    if (createForm.manager.phoneNumber) {
-      const mgrPhoneErr = validatePhone(createForm.manager.phoneNumber).error;
-      if (mgrPhoneErr) {
-        toast.error(`Manager Phone: ${mgrPhoneErr}`);
-        return;
-      }
+    if (!createForm.manager.phoneNumber) {
+      toast.error('Manager Phone: Phone number is required');
+      return;
+    }
+    const mgrPhoneErr = validatePhone(createForm.manager.phoneNumber).error;
+    if (mgrPhoneErr) {
+      toast.error(`Manager Phone: ${mgrPhoneErr}`);
+      return;
     }
 
     setCreateSubmitting(true);
@@ -308,7 +316,7 @@ const Branch = () => {
           email: createForm.manager.email,
           phoneNumber: createForm.manager.phoneNumber,
           password: createForm.manager.password,
-          employeeCode: createForm.manager.employeeCode,
+          ...(createForm.manager.employeeCode ? { employeeCode: createForm.manager.employeeCode } : {}),
           personalDetails: {
             fullName: createForm.manager.fullName,
             firstName: firstName,
@@ -457,6 +465,26 @@ const Branch = () => {
 
   const submitEditBranch = async () => {
     if (!selectedBranch) return;
+    if (!selectedBranch.phoneNumber) {
+      toast.error('Branch Phone: Phone number is required');
+      setEditStep(1);
+      return;
+    }
+    const editBranchPhoneErr = validatePhone(selectedBranch.phoneNumber).error;
+    if (editBranchPhoneErr) {
+      toast.error(`Branch Phone: ${editBranchPhoneErr}`);
+      setEditStep(1);
+      return;
+    }
+    if (selectedBranch.manager?.phoneNumber) {
+      const editMgrPhoneErr = validatePhone(selectedBranch.manager.phoneNumber).error;
+      if (editMgrPhoneErr) {
+        toast.error(`Manager Phone: ${editMgrPhoneErr}`);
+        setEditStep(2);
+        return;
+      }
+    }
+
     setEditSubmitting(true);
     try {
       // 1. Update Branch Details
@@ -488,7 +516,7 @@ const Branch = () => {
         lastName: lName,
         email: selectedBranch.manager?.email || '',
         phoneNumber: selectedBranch.manager?.phoneNumber || '',
-        employeeCode: selectedBranch.manager?.employeeCode || '',
+        ...(selectedBranch.manager?.employeeCode ? { employeeCode: selectedBranch.manager.employeeCode } : {}),
       };
       if (selectedBranch.manager?.password && selectedBranch.manager.password.trim() !== '') {
         managerPayload.password = selectedBranch.manager.password.trim();
@@ -555,6 +583,8 @@ const Branch = () => {
           { label: "Region & Branch Management" },
           { label: "Branch" }
         ]}
+        showBack={false}
+        backUrl="/dashboard"
       />
 
       {/* 5 Stats Overview Cards (Matching Employee module layout) */}
@@ -697,8 +727,8 @@ const Branch = () => {
           <div>
             <SearchableSelect
               value={selectedCity}
-              disabled={Boolean(selectedState && availableCities.length === 0)}
-              disabledPlaceholder="No cities available"
+              disabled={!selectedState || availableCities.length === 0}
+              disabledPlaceholder={!selectedState ? "Select State first" : "No cities available"}
               onChange={(val) => {
                 setSelectedCity(val);
                 setPage(1);
@@ -707,7 +737,7 @@ const Branch = () => {
                 { value: '', label: selectedState ? `All Cities in ${selectedState}` : 'All Cities' },
                 ...availableCities.map((ct) => ({ value: ct, label: ct }))
               ]}
-              placeholder={selectedState ? `All Cities in ${selectedState}` : 'All Cities'}
+              placeholder={selectedState ? `All Cities in ${selectedState}` : 'Select State first'}
               searchPlaceholder="Search city..."
               className="text-xs"
             />
@@ -757,7 +787,7 @@ const Branch = () => {
       {/* Table Card */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm whitespace-nowrap">
+          <table ref={tableRef} className="w-full text-left text-sm whitespace-nowrap">
             <thead className="bg-[#F8FAFC] text-gray-600 text-xs uppercase tracking-wider font-semibold border-b border-gray-200/80">
               <tr>
                 <th className="py-3.5 px-5 font-semibold">Sr.No.</th>
@@ -852,10 +882,10 @@ const Branch = () => {
                         <Link 
                           to={`/managers/view/${branch.id || branch._id}`}
                           state={{ branch }}
-                          className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold text-[#225091] bg-blue-50 hover:bg-blue-100 border border-blue-200/60 transition-all shadow-2xs cursor-pointer"
-                          title="View Manager HR Profile"
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-[#225091] bg-blue-50 hover:bg-blue-100 border border-blue-200/60 transition-all shadow-2xs cursor-pointer"
+                          title="View Manager Details"
                         >
-                          <Eye size={12} /> HR
+                          <Eye size={12} /> View
                         </Link>
                         <button 
                           onClick={() => handleOpenEdit(branch)}
@@ -941,7 +971,7 @@ const Branch = () => {
                       <input type="email" value={createForm.branch.email} onChange={e => handleCreateChange('branch', 'email', e.target.value)} placeholder="Branch Email" className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#225091] text-sm" />
                     </div>
                     <div>
-                      <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">Phone Number</label>
+                      <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">Phone Number *</label>
                       <input 
                         type="tel" 
                         value={createForm.branch.phoneNumber} 
@@ -1036,22 +1066,16 @@ const Branch = () => {
                       </button>
                     </div>
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">Phone Number</label>
-                      <input 
-                        type="tel" 
-                        value={createForm.manager.phoneNumber} 
-                        onChange={e => handleCreateChange('manager', 'phoneNumber', sanitizeDigits(e.target.value, 10))} 
-                        placeholder="10-digit Phone" 
-                        maxLength={10}
-                        className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#225091] text-sm" 
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">Employee Code</label>
-                      <input type="text" value={createForm.manager.employeeCode} onChange={e => handleCreateChange('manager', 'employeeCode', e.target.value)} placeholder="e.g. BM-001" className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#225091] text-sm" />
-                    </div>
+                  <div>
+                    <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">Phone Number *</label>
+                    <input 
+                      type="tel" 
+                      value={createForm.manager.phoneNumber} 
+                      onChange={e => handleCreateChange('manager', 'phoneNumber', sanitizeDigits(e.target.value, 10))} 
+                      placeholder="10-digit Phone" 
+                      maxLength={10}
+                      className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#225091] text-sm" 
+                    />
                   </div>
                 </div>
               )}
@@ -1123,8 +1147,15 @@ const Branch = () => {
                       <input type="email" value={selectedBranch.email || ''} onChange={(e) => setSelectedBranch({...selectedBranch, email: e.target.value})} className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#225091] text-sm" />
                     </div>
                     <div>
-                      <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">Phone Number</label>
-                      <input type="text" value={selectedBranch.phoneNumber || ''} onChange={(e) => setSelectedBranch({...selectedBranch, phoneNumber: e.target.value})} className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#225091] text-sm" />
+                      <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">Phone Number *</label>
+                      <input 
+                        type="tel" 
+                        maxLength={10}
+                        value={selectedBranch.phoneNumber || ''} 
+                        onChange={(e) => setSelectedBranch({...selectedBranch, phoneNumber: sanitizeDigits(e.target.value, 10)})} 
+                        placeholder="10-digit Phone"
+                        className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#225091] text-sm" 
+                      />
                     </div>
                   </div>
                   <div>
@@ -1220,43 +1251,41 @@ const Branch = () => {
                   </div>
                   <div>
                     <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">Temporary Password</label>
+                    <div className="relative">
+                      <input 
+                        type={showEditManagerPassword ? "text" : "password"} 
+                        minLength={8} 
+                        value={selectedBranch.manager?.password || ''} 
+                        placeholder="Leave blank to keep current (Min 8 characters)" 
+                        onChange={(e) => setSelectedBranch({
+                          ...selectedBranch, 
+                          manager: { ...(selectedBranch.manager || {}), password: e.target.value }
+                        })} 
+                        className="w-full pl-3 pr-10 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#225091] text-sm" 
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowEditManagerPassword(!showEditManagerPassword)}
+                        className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 focus:outline-none cursor-pointer"
+                        title={showEditManagerPassword ? "Hide password" : "Show password"}
+                      >
+                        {showEditManagerPassword ? <Eye size={16} /> : <EyeOff size={16} />}
+                      </button>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">Phone Number *</label>
                     <input 
-                      type="password" 
-                      minLength={8} 
-                      value={selectedBranch.manager?.password || ''} 
-                      placeholder="Leave blank to keep current (Min 8 characters)" 
+                      type="tel" 
+                      maxLength={10}
+                      value={selectedBranch.manager?.phoneNumber || ''} 
                       onChange={(e) => setSelectedBranch({
                         ...selectedBranch, 
-                        manager: { ...(selectedBranch.manager || {}), password: e.target.value }
+                        manager: { ...(selectedBranch.manager || {}), phoneNumber: sanitizeDigits(e.target.value, 10) }
                       })} 
+                      placeholder="10-digit Phone"
                       className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#225091] text-sm" 
                     />
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">Phone Number</label>
-                      <input 
-                        type="text" 
-                        value={selectedBranch.manager?.phoneNumber || ''} 
-                        onChange={(e) => setSelectedBranch({
-                          ...selectedBranch, 
-                          manager: { ...(selectedBranch.manager || {}), phoneNumber: e.target.value }
-                        })} 
-                        className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#225091] text-sm" 
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">Employee Code</label>
-                      <input 
-                        type="text" 
-                        value={selectedBranch.manager?.employeeCode || ''} 
-                        onChange={(e) => setSelectedBranch({
-                          ...selectedBranch, 
-                          manager: { ...(selectedBranch.manager || {}), employeeCode: e.target.value }
-                        })} 
-                        className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#225091] text-sm" 
-                      />
-                    </div>
                   </div>
                 </div>
               )}

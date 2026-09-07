@@ -121,14 +121,30 @@ const ImportantDates = () => {
           roleService.list({ limit: 100 }),
         ]);
 
-        if (branchRes.status === 'fulfilled' && branchRes.value?.success) {
-          setBranches(branchRes.value.data || []);
+        if (branchRes.status === 'fulfilled' && branchRes.value) {
+          const res = branchRes.value;
+          const raw = res.data;
+          const list = Array.isArray(res)
+            ? res
+            : Array.isArray(raw)
+            ? raw
+            : (raw?.branches || raw?.items || raw?.data || []);
+          setBranches(Array.isArray(list) ? list : []);
         }
-        if (roleRes.status === 'fulfilled' && roleRes.value?.success) {
-          setRoles(roleRes.value.data || []);
+        if (roleRes.status === 'fulfilled' && roleRes.value) {
+          const res = roleRes.value;
+          const raw = res.data;
+          const list = Array.isArray(res)
+            ? res
+            : Array.isArray(raw)
+            ? raw
+            : (raw?.roles || raw?.items || raw?.data || []);
+          setRoles(Array.isArray(list) ? list : []);
         }
       } catch (err) {
         console.error('Failed to load filter dropdowns:', err);
+        setBranches([]);
+        setRoles([]);
       }
     };
 
@@ -605,7 +621,7 @@ const ImportantDates = () => {
                   className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#225091] bg-white"
                 >
                   <option value="">All Branches</option>
-                  {branches.map((b) => (
+                  {Array.isArray(branches) && branches.map((b) => (
                     <option key={b.id || b._id} value={b.id || b._id}>
                       {b.branchName || b.name || `Branch #${b.id || b._id}`}
                     </option>
@@ -622,7 +638,7 @@ const ImportantDates = () => {
                   className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#225091] bg-white"
                 >
                   <option value="">All Designations</option>
-                  {roles.map((r) => (
+                  {Array.isArray(roles) && roles.map((r) => (
                     <option key={r.id || r._id || r.name} value={r.name || r.roleName}>
                       {r.name || r.roleName}
                     </option>

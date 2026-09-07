@@ -53,18 +53,29 @@ const SidebarGroup = ({ title, children }) => {
   }
 
   const isOpen = openGroup === title;
+  const groupId = `submenu-${title.toLowerCase().replace(/[^a-z0-9]/g, '-')}`;
 
   return (
     <div className="mb-1">
       <div 
         onClick={() => toggleGroup(title)}
-        className={`px-4.5 py-3 flex items-center justify-between cursor-pointer transition-all duration-200 border-l-4 ${
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            toggleGroup(title);
+          }
+        }}
+        aria-expanded={isOpen}
+        aria-controls={groupId}
+        className={`px-4.5 py-3 flex items-center justify-between cursor-pointer transition-all duration-200 border-l-4 select-none ${
           hasActiveChild
             ? isOpen 
               ? 'border-brand-primary bg-brand-light' 
               : 'border-brand-primary bg-brand-primary/10'
             : isOpen 
-              ? 'border-gray-200 bg-gray-50/60' 
+              ? 'border-gray-200 bg-gray-50/70' 
               : 'border-transparent hover:bg-brand-surface'
         }`}
       >
@@ -84,7 +95,7 @@ const SidebarGroup = ({ title, children }) => {
         </div>
         <ChevronDown 
           size={16} 
-          className={`transition-transform duration-200 ${
+          className={`transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${
             hasActiveChild 
               ? 'text-brand-primary' 
               : 'text-text-muted'
@@ -92,11 +103,16 @@ const SidebarGroup = ({ title, children }) => {
         />
       </div>
 
-      {isOpen && (
-        <div className="py-1 space-y-0.5 bg-brand-surface/50 animate-in fade-in slide-in-from-top-1 duration-150">
-          {validChildren}
+      <div 
+        id={groupId}
+        className={`sidebar-accordion-grid ${isOpen ? 'open' : ''}`}
+      >
+        <div className="sidebar-accordion-content">
+          <div className="sidebar-accordion-inner py-1 space-y-0.5 bg-brand-surface/50 border-y border-border-divider/20">
+            {validChildren}
+          </div>
         </div>
-      )}
+      </div>
     </div>
   );
 };
@@ -206,10 +222,10 @@ const DashboardLayout = () => {
       ? location.pathname === targetTo || location.pathname.startsWith(targetTo + '/')
       : false;
 
-    return `flex items-center gap-2.5 px-4.5 py-2.5 text-[13.5px] font-medium border-l-4 transition-colors ${
+    return `flex items-center gap-2.5 px-4.5 py-2.5 text-[13.5px] font-medium border-l-4 transition-all duration-200 ${
       isActive || isNestedActive
         ? 'border-brand-primary text-brand-primary bg-brand-light font-semibold'
-        : 'border-transparent text-text-muted hover:bg-brand-surface hover:text-brand-primary'
+        : 'border-transparent text-text-muted hover:bg-brand-surface hover:text-brand-primary hover:pl-5'
     }`;
   };
 
@@ -239,15 +255,16 @@ const DashboardLayout = () => {
 
       {/* Sidebar (Desktop Collapsible & Mobile Slide Drawer) */}
       <aside 
-        className={`fixed inset-y-0 left-0 z-50 bg-brand-sidebar border-r border-border-divider flex flex-col shadow-2xl lg:shadow-sm lg:static lg:z-10 transition-all duration-300 ease-in-out print:hidden shrink-0 ${
+        className={`fixed inset-y-0 left-0 z-50 bg-brand-sidebar border-r border-border-divider flex flex-col shadow-2xl lg:shadow-sm lg:static lg:z-10 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] overflow-hidden print:hidden shrink-0 ${
           isMobileMenuOpen ? 'w-[260px] translate-x-0' : '-translate-x-full lg:translate-x-0'
         } ${
           isDesktopSidebarOpen
-            ? 'lg:w-[236px] lg:opacity-100 lg:visible'
-            : 'lg:w-0 lg:opacity-0 lg:invisible lg:border-none lg:p-0 lg:overflow-hidden'
+            ? 'lg:w-[236px] lg:opacity-100'
+            : 'lg:w-0 lg:opacity-0 lg:border-r-0'
         }`}
       >
-        {/* Logo Area */}
+        <div className="w-[260px] lg:w-[236px] h-full flex flex-col shrink-0">
+          {/* Logo Area */}
         <div className="h-[76px] flex items-center justify-between px-4 border-b border-border-divider shrink-0 overflow-hidden">
           <div className="flex items-center gap-3">
             {/* Logo Icon Box */}
@@ -426,49 +443,51 @@ const DashboardLayout = () => {
             )}
           </SidebarGroup>
 
-          {showMore && (
-            <>
-              <SidebarGroup title="UPI Smart">
-                {hasAnyPermission(['upi_autopay.view', 'upi.view']) && (
-                  <NavLink to="/upi-autopay" className={subNavLinkClass}>
-                    <Smartphone size={18} /> UPI Autopay
-                  </NavLink>
-                )}
-              </SidebarGroup>
+          <div className={`sidebar-accordion-grid ${showMore ? 'open' : ''}`}>
+            <div className="sidebar-accordion-content">
+              <div className="sidebar-accordion-inner space-y-1">
+                <SidebarGroup title="UPI Smart">
+                  {hasAnyPermission(['upi_autopay.view', 'upi.view']) && (
+                    <NavLink to="/upi-autopay" className={subNavLinkClass}>
+                      <Smartphone size={18} /> UPI Autopay
+                    </NavLink>
+                  )}
+                </SidebarGroup>
 
-              <SidebarGroup title="WhatsApp Marketing">
-                {hasAnyPermission(['whatsapp_banking.view', 'whatsapp.view']) && (
-                  <NavLink to="/whatsapp-banking" className={subNavLinkClass}>
-                    <MessageCircle size={18} /> WhatsApp Banking
-                  </NavLink>
-                )}
-              </SidebarGroup>
+                <SidebarGroup title="WhatsApp Marketing">
+                  {hasAnyPermission(['whatsapp_banking.view', 'whatsapp.view']) && (
+                    <NavLink to="/whatsapp-banking" className={subNavLinkClass}>
+                      <MessageCircle size={18} /> WhatsApp Banking
+                    </NavLink>
+                  )}
+                </SidebarGroup>
 
-              <SidebarGroup title="Biomatrix Integration">
-                {hasPermission('biomatrix.view') && (
-                  <NavLink to="/biomatrix-integration" className={subNavLinkClass}>
-                    <Fingerprint size={18} /> Biomatrix Integration
-                  </NavLink>
-                )}
-              </SidebarGroup>
+                <SidebarGroup title="Biomatrix Integration">
+                  {hasPermission('biomatrix.view') && (
+                    <NavLink to="/biomatrix-integration" className={subNavLinkClass}>
+                      <Fingerprint size={18} /> Biomatrix Integration
+                    </NavLink>
+                  )}
+                </SidebarGroup>
 
-              <SidebarGroup title="Roles & Permissions">
-                {hasAnyPermission(['role.view', 'roles_permissions.view', 'role.create']) && (
-                  <NavLink to="/roles-permissions" className={subNavLinkClass}>
-                    <UserCog size={18} /> Roles & Permissions
-                  </NavLink>
-                )}
-              </SidebarGroup>
+                <SidebarGroup title="Roles & Permissions">
+                  {hasAnyPermission(['role.view', 'roles_permissions.view', 'role.create']) && (
+                    <NavLink to="/roles-permissions" className={subNavLinkClass}>
+                      <UserCog size={18} /> Roles & Permissions
+                    </NavLink>
+                  )}
+                </SidebarGroup>
 
-              <SidebarGroup title="Settings">
-                {hasAnyPermission(['help_support.view', 'settings.view']) && (
-                  <NavLink to="/settings/help" className={subNavLinkClass}>
-                    <Headphones size={18} /> Help & Support
-                  </NavLink>
-                )}
-              </SidebarGroup>
-            </>
-          )}
+                <SidebarGroup title="Settings">
+                  {hasAnyPermission(['help_support.view', 'settings.view']) && (
+                    <NavLink to="/settings/help" className={subNavLinkClass}>
+                      <Headphones size={18} /> Help & Support
+                    </NavLink>
+                  )}
+                </SidebarGroup>
+              </div>
+            </div>
+          </div>
           
           {hasShowMoreItems && (
             <div className="mb-4 mt-2">
@@ -502,6 +521,7 @@ const DashboardLayout = () => {
           )}
         </div>
       </SidebarAccordionContext.Provider>
+        </div>
       </aside>
 
       {/* Main Content */}

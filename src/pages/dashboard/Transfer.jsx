@@ -703,6 +703,8 @@ const Transfer = () => {
           { label: "Receipt Management" },
           { label: "Transfer Receipt" }
         ]}
+        showBack={false}
+        backUrl="/dashboard"
       />
 
       {/* Stats Cards */}
@@ -896,7 +898,7 @@ const Transfer = () => {
             disabled={!selectedState}
             className="px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-sm text-gray-700 min-w-[140px] disabled:bg-gray-100 disabled:text-gray-400"
           >
-            <option value="">All Cities</option>
+            <option value="">{selectedState ? "All Cities" : "Select State first"}</option>
             {availableCities.map((c) => (
               <option key={c} value={c}>
                 {c}

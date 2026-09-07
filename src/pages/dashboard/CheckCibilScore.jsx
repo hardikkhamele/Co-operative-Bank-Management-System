@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { 
   ShieldCheck, 
   Printer, 
@@ -49,9 +49,23 @@ import { Skeleton } from '../../components/common/Skeleton';
 
 const CheckCibilScore = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const historyTableRef = useRef(null);
+
+  // Read initial values from URL search params
+  const tabParam = (searchParams.get('tab') || searchParams.get('view') || '').toLowerCase();
+  const initialMainView = (tabParam === 'history' || tabParam === 'report-history' || tabParam === 'records')
+    ? 'history'
+    : 'check';
+  const initialSearch = searchParams.get('search') || '';
+  const initialStatus = searchParams.get('status') || '';
+  const initialStartDate = searchParams.get('startDate') || '';
+  const initialEndDate = searchParams.get('endDate') || '';
+  const initialPage = parseInt(searchParams.get('page') || '1', 10);
+  const initialReportId = searchParams.get('reportId') || searchParams.get('id') || null;
 
   // Main View: 'check' (Initiate / Live Result) or 'history' (Historical List)
-  const [mainView, setMainView] = useState('check');
+  const [mainView, setMainView] = useState(initialMainView);
 
   // Check Form & Live Result State
   const [step, setStep] = useState('form'); // 'form' | 'result'
@@ -70,26 +84,41 @@ const CheckCibilScore = () => {
   // History State
   const [historyList, setHistoryList] = useState([]);
   const [historyLoading, setHistoryLoading] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
-  const [page, setPage] = useState(1);
+  const [searchTerm, setSearchTerm] = useState(initialSearch);
+  const [debouncedSearch, setDebouncedSearch] = useState(initialSearch);
+  const [statusFilter, setStatusFilter] = useState(initialStatus);
+  const [startDate, setStartDate] = useState(initialStartDate);
+  const [endDate, setEndDate] = useState(initialEndDate);
+  const [page, setPage] = useState(isNaN(initialPage) || initialPage < 1 ? 1 : initialPage);
   const [limit] = useState(10);
   const [pagination, setPagination] = useState({
     total: 0,
-    page: 1,
+    page: isNaN(initialPage) || initialPage < 1 ? 1 : initialPage,
     limit: 10,
     totalPages: 1
   });
 
   // Detail Modal State
-  const [selectedReportId, setSelectedReportId] = useState(null);
-  const [detailModalOpen, setDetailModalOpen] = useState(false);
+  const [selectedReportId, setSelectedReportId] = useState(initialReportId);
+  const [detailModalOpen, setDetailModalOpen] = useState(Boolean(initialReportId));
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailReport, setDetailReport] = useState(null);
   const [detailTab, setDetailTab] = useState('overview');
+
+  // Helper to update URL search parameters cleanly
+  const updateUrl = (updates, replace = true) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      Object.entries(updates).forEach(([key, val]) => {
+        if (val === null || val === undefined || val === '') {
+          next.delete(key);
+        } else {
+          next.set(key, String(val));
+        }
+      });
+      return next;
+    }, { replace });
+  };
 
   // Restore saved form or result from session storage
   useEffect(() => {
@@ -110,10 +139,12 @@ const CheckCibilScore = () => {
 
   // Header Back Button Handler: Handles all states cleanly
   const handleHeaderBack = () => {
-    if (mainView === 'check' && step === 'result') {
+    if (detailModalOpen) {
+      handleCloseDetail();
+    } else if (mainView === 'check' && step === 'result') {
       handleReset();
     } else if (mainView === 'history') {
-      setMainView('check');
+      handleTabChange('check');
     } else {
       navigate('/dashboard');
     }
@@ -168,19 +199,77 @@ const CheckCibilScore = () => {
     }
   };
 
-  // Trigger fetch when on history view or filters change
+  // Handle tab change and sync to URL
+  const handleTabChange = (view) => {
+    setMainView(view);
+    if (view === 'history') {
+      updateUrl({
+        tab: 'history',
+        view: null,
+        page: page > 1 ? page : null,
+        search: debouncedSearch.trim() || null,
+        status: statusFilter || null,
+        startDate: startDate || null,
+        endDate: endDate || null
+      });
+      fetchHistory(page);
+    } else {
+      updateUrl({
+        tab: 'check',
+        view: null,
+        page: null,
+        search: null,
+        status: null,
+        startDate: null,
+        endDate: null,
+        reportId: null,
+        id: null
+      });
+    }
+  };
+
+  // Sync state from URL when browser Back/Forward navigation occurs
+  useEffect(() => {
+    const currentTab = (searchParams.get('tab') || searchParams.get('view') || '').toLowerCase();
+    const isHistory = currentTab === 'history' || currentTab === 'report-history' || currentTab === 'records';
+    const targetView = isHistory ? 'history' : 'check';
+    if (mainView !== targetView) {
+      setMainView(targetView);
+    }
+
+    const reportIdParam = searchParams.get('reportId') || searchParams.get('id');
+    if (reportIdParam && reportIdParam !== selectedReportId) {
+      handleOpenDetail(reportIdParam, false);
+    } else if (!reportIdParam && detailModalOpen) {
+      setDetailModalOpen(false);
+      setSelectedReportId(null);
+    }
+  }, [searchParams]);
+
+  // Trigger fetch and sync URL when on history view or filters change
   useEffect(() => {
     if (mainView === 'history') {
+      updateUrl({
+        tab: 'history',
+        page: page > 1 ? page : null,
+        search: debouncedSearch.trim() || null,
+        status: statusFilter || null,
+        startDate: startDate || null,
+        endDate: endDate || null
+      });
       fetchHistory(page);
     }
   }, [mainView, page, debouncedSearch, statusFilter, startDate, endDate]);
 
   // Load detail report by ID
-  const handleOpenDetail = async (id) => {
+  const handleOpenDetail = async (id, shouldUpdateUrl = true) => {
     setSelectedReportId(id);
     setDetailModalOpen(true);
     setDetailLoading(true);
     setDetailTab('overview');
+    if (shouldUpdateUrl) {
+      updateUrl({ reportId: id });
+    }
     try {
       const response = await verificationService.getReportById(id);
       if (response && (response.success || response.statusCode === 200)) {
@@ -195,6 +284,19 @@ const CheckCibilScore = () => {
       setDetailLoading(false);
     }
   };
+
+  const handleCloseDetail = () => {
+    setDetailModalOpen(false);
+    setSelectedReportId(null);
+    updateUrl({ reportId: null, id: null });
+  };
+
+  // Open initial report if specified in URL on mount
+  useEffect(() => {
+    if (initialReportId) {
+      handleOpenDetail(initialReportId, false);
+    }
+  }, []);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -312,6 +414,14 @@ const CheckCibilScore = () => {
     setStartDate('');
     setEndDate('');
     setPage(1);
+    updateUrl({
+      tab: 'history',
+      search: null,
+      status: null,
+      startDate: null,
+      endDate: null,
+      page: null,
+    });
   };
 
   // Safe and comprehensive parser for Bureau Response into structured visual data
@@ -548,7 +658,7 @@ const CheckCibilScore = () => {
           { label: 'Verification' },
           { label: 'CIBIL Score & Report' },
         ]}
-        showBack={mainView === 'detail'}
+        showBack={false}
         onBack={handleHeaderBack}
       />
 
@@ -556,7 +666,7 @@ const CheckCibilScore = () => {
       <div className="flex items-center justify-between gap-4 border-b border-gray-200 pb-2">
         <div className="flex items-center gap-2">
           <button
-            onClick={() => setMainView('check')}
+            onClick={() => handleTabChange('check')}
             className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs transition-all cursor-pointer shadow-2xs ${
               mainView === 'check'
                 ? 'bg-[#225091] text-white shadow-md'
@@ -567,10 +677,7 @@ const CheckCibilScore = () => {
             <span>Check Credit Score</span>
           </button>
           <button
-            onClick={() => {
-              setMainView('history');
-              fetchHistory(1);
-            }}
+            onClick={() => handleTabChange('history')}
             className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs transition-all cursor-pointer shadow-2xs ${
               mainView === 'history'
                 ? 'bg-[#225091] text-white shadow-md'
@@ -1201,7 +1308,7 @@ const CheckCibilScore = () => {
           {/* History Data Table */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
             <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse min-w-[900px]">
+              <table ref={historyTableRef} className="w-full text-left border-collapse min-w-[900px]">
                 <thead className="bg-[#F8FAFC] text-gray-600 text-xs uppercase tracking-wider font-semibold border-b border-gray-200/80">
                   <tr>
                     <th className="py-3.5 px-5 font-semibold">Sr.No.</th>
@@ -1357,7 +1464,7 @@ const CheckCibilScore = () => {
                   </a>
                 )}
                 <button
-                  onClick={() => setDetailModalOpen(false)}
+                  onClick={handleCloseDetail}
                   className="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-100 cursor-pointer"
                 >
                   <X size={18} />
@@ -1525,7 +1632,7 @@ const CheckCibilScore = () => {
             {/* Modal Footer */}
             <div className="px-6 py-3 border-t border-gray-100 bg-gray-50/70 flex justify-end">
               <button
-                onClick={() => setDetailModalOpen(false)}
+                onClick={handleCloseDetail}
                 className="px-4 py-2 rounded-xl border border-gray-200 text-gray-700 font-bold hover:bg-gray-100 text-xs cursor-pointer"
               >
                 Close
