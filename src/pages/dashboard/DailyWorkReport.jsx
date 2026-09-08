@@ -31,6 +31,8 @@ import { branchService } from '../../api/branchService';
 import { employeeService } from '../../api/employeeService';
 import { roleService } from '../../api/roleService';
 import PageHeader from '../../components/common/PageHeader';
+import TableWrapper from '../../components/common/TableWrapper';
+import StatsCard from '../../components/common/StatsCard';
 import useAuthStore from '../../store/authStore';
 import useBranchStore from '../../store/branchStore';
 import { Skeleton, SkeletonAvatar } from '../../components/common/Skeleton';
@@ -499,49 +501,30 @@ const DailyWorkReport = () => {
 
       {/* 4 Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Card 1: Total Reports */}
-        <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-2xs flex items-center justify-between">
-          <div>
-            <p className="text-[12px] font-bold text-gray-500 uppercase tracking-wider mb-1">Total Work Reports</p>
-            <h3 className="text-2xl font-black text-[#1b2559] tabular-nums">{totalReportsCount}</h3>
-          </div>
-          <div className="w-12 h-12 rounded-xl bg-blue-50 text-[#225091] border border-blue-100 flex items-center justify-center">
-            <FileText size={22} />
-          </div>
-        </div>
-
-        {/* Card 2: Total Achievement Amount */}
-        <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-2xs flex items-center justify-between">
-          <div>
-            <p className="text-[12px] font-bold text-gray-500 uppercase tracking-wider mb-1">Total Achieved Amount</p>
-            <h3 className="text-2xl font-black text-emerald-600 tabular-nums">{totalAmountDisplay}</h3>
-          </div>
-          <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center justify-center">
-            <IndianRupee size={22} />
-          </div>
-        </div>
-
-        {/* Card 3: Auto-Generated */}
-        <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-2xs flex items-center justify-between">
-          <div>
-            <p className="text-[12px] font-bold text-gray-500 uppercase tracking-wider mb-1">Auto-Generated</p>
-            <h3 className="text-2xl font-black text-amber-600 tabular-nums">{autoGenCount}</h3>
-          </div>
-          <div className="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 border border-amber-100 flex items-center justify-center">
-            <Zap size={22} />
-          </div>
-        </div>
-
-        {/* Card 4: Manual Count */}
-        <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-2xs flex items-center justify-between">
-          <div>
-            <p className="text-[12px] font-bold text-gray-500 uppercase tracking-wider mb-1">Manual Entries</p>
-            <h3 className="text-2xl font-black text-indigo-600 tabular-nums">{manualCount}</h3>
-          </div>
-          <div className="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 border border-indigo-100 flex items-center justify-center">
-            <Layers size={22} />
-          </div>
-        </div>
+        <StatsCard
+          color="blue"
+          label="Total Work Reports"
+          value={totalReportsCount}
+          icon={FileText}
+        />
+        <StatsCard
+          color="emerald"
+          label="Total Achieved Amount"
+          value={totalAmountDisplay}
+          icon={IndianRupee}
+        />
+        <StatsCard
+          color="amber"
+          label="Auto-Generated"
+          value={autoGenCount}
+          icon={Zap}
+        />
+        <StatsCard
+          color="purple"
+          label="Manual Entries"
+          value={manualCount}
+          icon={Layers}
+        />
       </div>
 
       {/* Filter Toolbar Card (Matching Merchant submodule inline standard) */}
@@ -789,39 +772,39 @@ const DailyWorkReport = () => {
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col overflow-hidden">
 
         {/* Table View */}
-        <div className="overflow-x-auto min-h-[300px]">
+        <TableWrapper minHeight="360px">
           <table ref={tableRef} className="w-full min-w-[900px] text-left border-collapse">
-            <thead className="bg-[#F8FAFC] text-gray-600 text-xs uppercase tracking-wider font-semibold border-b border-gray-200/80">
+            <thead className="bg-slate-50/80 border-b border-gray-200/80">
               <tr>
-                <th className="py-3.5 px-5 font-semibold text-center w-16">Sr.No.</th>
-                <th className="py-3.5 px-5 font-semibold">Employee Name</th>
-                <th className="py-3.5 px-5 font-semibold">Designation</th>
-                <th className="py-3.5 px-5 font-semibold">Branch</th>
-                <th className="py-3.5 px-5 font-semibold">Product / KPI Area</th>
-                <th className="py-3.5 px-5 font-semibold">Amount / Target</th>
-                <th className="py-3.5 px-5 font-semibold">Source</th>
-                <th className="py-3.5 px-5 font-semibold">Remarks</th>
-                <th className="py-3.5 px-5 font-semibold">Date</th>
+                <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap text-center w-16">Sr.No.</th>
+                <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">Employee Name</th>
+                <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">Designation</th>
+                <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">Branch</th>
+                <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">Product / KPI Area</th>
+                <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">Amount / Target</th>
+                <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">Source</th>
+                <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">Remarks</th>
+                <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">Date</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-gray-100 text-[13px]">
               {loading ? (
                 Array.from({ length: 6 }).map((_, rIdx) => (
                   <tr key={rIdx} className="animate-pulse">
-                    <td className="py-4 px-5 text-center"><Skeleton className="h-4 w-6 mx-auto rounded" /></td>
-                    <td className="py-4 px-5">
+                    <td className="py-3.5 px-4 text-center"><Skeleton className="h-4 w-6 mx-auto rounded" /></td>
+                    <td className="py-3.5 px-4">
                       <div className="flex items-center gap-3">
                         <Skeleton className="w-8 h-8 rounded-full" />
                         <Skeleton className="h-4 w-32 rounded" />
                       </div>
                     </td>
-                    <td className="py-4 px-5"><Skeleton className="h-4 w-24 rounded" /></td>
-                    <td className="py-4 px-5"><Skeleton className="h-4 w-20 rounded" /></td>
-                    <td className="py-4 px-5"><Skeleton className="h-6 w-28 rounded-full" /></td>
-                    <td className="py-4 px-5"><Skeleton className="h-4 w-24 rounded" /></td>
-                    <td className="py-4 px-5"><Skeleton className="h-5 w-20 rounded-md" /></td>
-                    <td className="py-4 px-5"><Skeleton className="h-4 w-36 rounded" /></td>
-                    <td className="py-4 px-5"><Skeleton className="h-4 w-20 rounded" /></td>
+                    <td className="py-3.5 px-4"><Skeleton className="h-4 w-24 rounded" /></td>
+                    <td className="py-3.5 px-4"><Skeleton className="h-4 w-20 rounded" /></td>
+                    <td className="py-3.5 px-4"><Skeleton className="h-6 w-28 rounded-full" /></td>
+                    <td className="py-3.5 px-4"><Skeleton className="h-4 w-24 rounded" /></td>
+                    <td className="py-3.5 px-4"><Skeleton className="h-5 w-20 rounded-md" /></td>
+                    <td className="py-3.5 px-4"><Skeleton className="h-4 w-36 rounded" /></td>
+                    <td className="py-3.5 px-4"><Skeleton className="h-4 w-20 rounded" /></td>
                   </tr>
                 ))
               ) : reports.length === 0 ? (
@@ -849,33 +832,33 @@ const DailyWorkReport = () => {
                   return (
                     <tr 
                       key={row.id || row._id || index} 
-                      className="hover:bg-slate-50/70 transition-colors"
+                      className="hover:bg-blue-50/25 transition-colors group"
                     >
-                      <td className="py-3.5 px-5 text-center text-[13px] text-gray-500 font-medium">{srNo}</td>
-                      <td className="py-3.5 px-5">
+                      <td className="py-3.5 px-4 text-center text-[13px] text-gray-500 font-medium whitespace-nowrap">{srNo}</td>
+                      <td className="py-3.5 px-4 whitespace-nowrap">
                         <div className="flex items-center gap-3">
                           <div className="w-8 h-8 rounded-full bg-blue-50 text-[#225091] border border-blue-100 flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
                             {initials}
                           </div>
                           <div>
-                            <span className="text-sm font-semibold text-gray-900 whitespace-nowrap block">{empName}</span>
+                            <span className="text-xs font-semibold text-gray-900 whitespace-nowrap block">{empName}</span>
                             {row.employeeCode && (
                               <span className="text-[10px] text-gray-400 font-mono">({row.employeeCode})</span>
                             )}
                           </div>
                         </div>
                       </td>
-                      <td className="py-3.5 px-5 text-xs text-gray-600 font-medium">{row.designation || '—'}</td>
-                      <td className="py-3.5 px-5 text-xs text-gray-600 font-medium">{row.branch || row.branchName || '—'}</td>
-                      <td className="py-3.5 px-5 text-xs text-gray-800 font-semibold whitespace-nowrap">
-                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-800 border border-slate-200">
+                      <td className="py-3.5 px-4 text-xs text-gray-600 font-medium whitespace-nowrap">{row.designation || '—'}</td>
+                      <td className="py-3.5 px-4 text-xs text-gray-600 font-medium whitespace-nowrap">{row.branch || row.branchName || '—'}</td>
+                      <td className="py-3.5 px-4 text-xs text-gray-800 font-semibold whitespace-nowrap">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-800 border border-slate-200">
                           {taskText}
                         </span>
                       </td>
-                      <td className="py-3.5 px-5 text-sm font-bold text-emerald-700 tabular-nums whitespace-nowrap">
+                      <td className="py-3.5 px-4 text-xs font-bold text-emerald-700 tabular-nums whitespace-nowrap">
                         {formatAmount(row)}
                       </td>
-                      <td className="py-3.5 px-5 whitespace-nowrap">
+                      <td className="py-3.5 px-4 whitespace-nowrap">
                         {isAuto ? (
                           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-amber-50 text-amber-800 border border-amber-200/60" title={`Auto Logged via ${sourceModule}`}>
                             <Zap size={11} className="text-amber-600" />
@@ -887,10 +870,10 @@ const DailyWorkReport = () => {
                           </span>
                         )}
                       </td>
-                      <td className="py-3.5 px-5 text-xs text-gray-500 max-w-xs truncate" title={remarkText}>
+                      <td className="py-3.5 px-4 text-xs text-gray-500 max-w-xs truncate" title={remarkText}>
                         {remarkText}
                       </td>
-                      <td className="py-3.5 px-5 text-xs text-gray-600 whitespace-nowrap">
+                      <td className="py-3.5 px-4 text-xs text-gray-600 whitespace-nowrap">
                         <div className="flex items-center gap-1.5">
                           <Clock size={12} className="text-gray-400" />
                           <span>{formatDate(row.date)}</span>
@@ -902,7 +885,7 @@ const DailyWorkReport = () => {
               )}
             </tbody>
           </table>
-        </div>
+        </TableWrapper>
 
         {/* Pagination Footer */}
         <div className="p-5 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-gray-500 font-medium">

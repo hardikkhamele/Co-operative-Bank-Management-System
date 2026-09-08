@@ -1,5 +1,5 @@
-import React, { useRef, useState, useEffect, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useRef, useState, useEffect, useMemo, useCallback } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { 
   ChevronRight, 
@@ -32,6 +32,8 @@ import { roleService } from '../../api/roleService';
 import PageHeader from '../../components/common/PageHeader';
 import useBranchStore from '../../store/branchStore';
 import { Skeleton, SkeletonAvatar } from '../../components/common/Skeleton';
+import TableWrapper from '../../components/common/TableWrapper';
+import StatsCard from '../../components/common/StatsCard';
 
 const INDIAN_STATES = [
   'Andhra Pradesh',
@@ -129,8 +131,23 @@ const INITIAL_UNIVERSAL_INCENTIVES = [
 ];
 
 const KPAReport = () => {
-  // Submodule view state: 'PERFORMANCE' | 'INCENTIVES'
-  const [activeSubmodule, setActiveSubmodule] = useState('PERFORMANCE');
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Submodule view state synced with URL query param '?tab=': 'PERFORMANCE' | 'INCENTIVES'
+  const tabQuery = (searchParams.get('tab') || '').toLowerCase();
+  const activeSubmodule = tabQuery === 'incentives' ? 'INCENTIVES' : 'PERFORMANCE';
+
+  const handleTabChange = useCallback((submodule) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (submodule === 'INCENTIVES') {
+        next.set('tab', 'incentives');
+      } else {
+        next.set('tab', 'performance');
+      }
+      return next;
+    });
+  }, [setSearchParams]);
 
   // Universal Product Incentives State
   const [incentivesList, setIncentivesList] = useState(INITIAL_UNIVERSAL_INCENTIVES);
@@ -228,6 +245,13 @@ const KPAReport = () => {
       setIncentivesLoading(false);
     }
   };
+
+  // Automatically fetch product incentives when switching to or loading with 'INCENTIVES' tab
+  useEffect(() => {
+    if (activeSubmodule === 'INCENTIVES') {
+      fetchProductIncentives();
+    }
+  }, [activeSubmodule]);
 
   // Save / Update Universal Product Incentive
   const handleSaveProductIncentive = async (e) => {
@@ -681,7 +705,7 @@ const KPAReport = () => {
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={() => setActiveSubmodule('PERFORMANCE')}
+            onClick={() => handleTabChange('PERFORMANCE')}
             className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               activeSubmodule === 'PERFORMANCE'
                 ? 'bg-[#225091] text-white shadow-xs'
@@ -694,10 +718,7 @@ const KPAReport = () => {
 
           <button
             type="button"
-            onClick={() => {
-              setActiveSubmodule('INCENTIVES');
-              fetchProductIncentives();
-            }}
+            onClick={() => handleTabChange('INCENTIVES')}
             className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               activeSubmodule === 'INCENTIVES'
                 ? 'bg-[#225091] text-white shadow-xs'
@@ -741,72 +762,35 @@ const KPAReport = () => {
           {/* Top Stats Overview Cards */}
           {(stats || loading) && (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {/* Total Employees */}
-              <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-xs flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Total Employees</p>
-                  {loading ? (
-                    <Skeleton className="h-7 w-16 mt-1 rounded" />
-                  ) : (
-                    <h3 className="text-2xl font-bold text-gray-900 mt-1">{stats?.totalEmployees ?? meta.totalRecords ?? 0}</h3>
-                  )}
-                </div>
-                <div className="w-12 h-12 rounded-xl bg-blue-50 text-[#225091] flex items-center justify-center">
-                  <Users size={24} />
-                </div>
-              </div>
-
-              {/* Total Target Amount */}
-              <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-xs flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Total Target</p>
-                  {loading ? (
-                    <Skeleton className="h-7 w-28 mt-1 rounded" />
-                  ) : (
-                    <h3 className="text-2xl font-bold text-gray-900 mt-1">
-                      {stats?.formattedTotalTargetAmount || (stats?.totalTargetAmount ? `₹${Number(stats.totalTargetAmount).toLocaleString('en-IN')}` : '₹0')}
-                    </h3>
-                  )}
-                </div>
-                <div className="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
-                  <Target size={24} />
-                </div>
-              </div>
-
-              {/* Total Achieved Amount */}
-              <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-xs flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Total Achieved</p>
-                  {loading ? (
-                    <Skeleton className="h-7 w-28 mt-1 rounded" />
-                  ) : (
-                    <h3 className="text-2xl font-bold text-emerald-600 mt-1">
-                      {stats?.formattedTotalAchievedAmount || (stats?.totalAchievedAmount ? `₹${Number(stats.totalAchievedAmount).toLocaleString('en-IN')}` : '₹0')}
-                    </h3>
-                  )}
-                </div>
-                <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                  <CheckCircle2 size={24} />
-                </div>
-              </div>
-
-              {/* Overall Percentage */}
-              <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-xs flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Achievement Rate</p>
-                  {loading ? (
-                    <Skeleton className="h-7 w-16 mt-1 rounded" />
-                  ) : (
-                    <div className="flex items-center gap-2 mt-1">
-                      <h3 className="text-2xl font-bold text-[#225091]">{stats?.overallPercentage ?? 0}%</h3>
-                      <span className="text-[11px] font-semibold text-gray-400">of target</span>
-                    </div>
-                  )}
-                </div>
-                <div className="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
-                  <TrendingUp size={24} />
-                </div>
-              </div>
+              <StatsCard
+                label="Total Employees"
+                value={stats?.totalEmployees ?? meta.totalRecords ?? 0}
+                icon={Users}
+                color="blue"
+                loading={loading}
+              />
+              <StatsCard
+                label="Total Target"
+                value={stats?.formattedTotalTargetAmount || (stats?.totalTargetAmount ? `₹${Number(stats.totalTargetAmount).toLocaleString('en-IN')}` : '₹0')}
+                icon={Target}
+                color="amber"
+                loading={loading}
+              />
+              <StatsCard
+                label="Total Achieved"
+                value={stats?.formattedTotalAchievedAmount || (stats?.totalAchievedAmount ? `₹${Number(stats.totalAchievedAmount).toLocaleString('en-IN')}` : '₹0')}
+                icon={CheckCircle2}
+                color="emerald"
+                loading={loading}
+              />
+              <StatsCard
+                label="Achievement Rate"
+                value={`${stats?.overallPercentage ?? 0}%`}
+                sublabel="of target"
+                icon={TrendingUp}
+                color="indigo"
+                loading={loading}
+              />
             </div>
           )}
 
@@ -1036,56 +1020,56 @@ const KPAReport = () => {
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col overflow-hidden">
 
             {/* Table View */}
-            <div className="overflow-x-auto min-h-[320px] relative">
-              <table ref={tableRef} className="w-full min-w-[900px]">
-                <thead className="bg-[#F8FAFC] text-gray-600 text-xs uppercase tracking-wider font-semibold border-b border-gray-200/80">
+            <TableWrapper minHeight="320px">
+              <table ref={tableRef} className="w-full min-w-[900px] text-left border-collapse">
+                <thead className="bg-slate-50/80 border-b border-gray-200/80">
                   <tr>
-                    <th className="py-3.5 px-5 font-semibold">Sr.No.</th>
-                    <th className="py-3.5 px-5 font-semibold text-left whitespace-nowrap">Employee Name</th>
-                    <th className="py-3.5 px-5 font-semibold text-left whitespace-nowrap">Designation</th>
-                    <th className="py-3.5 px-5 font-semibold text-left whitespace-nowrap">Branch</th>
-                    <th className="py-3.5 px-5 font-semibold text-left whitespace-nowrap">Phone Number</th>
-                    <th className="py-3.5 px-5 font-semibold text-left whitespace-nowrap">Email</th>
-                    <th className="py-3.5 px-5 font-semibold text-center whitespace-nowrap w-24">Action</th>
+                    <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider text-center w-16 select-none whitespace-nowrap">Sr.No.</th>
+                    <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider text-left select-none whitespace-nowrap">Employee Name</th>
+                    <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider text-left select-none whitespace-nowrap">Designation</th>
+                    <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider text-left select-none whitespace-nowrap">Branch</th>
+                    <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider text-left select-none whitespace-nowrap">Phone Number</th>
+                    <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider text-left select-none whitespace-nowrap">Email</th>
+                    <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider text-center select-none whitespace-nowrap w-24">Action</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                   {loading ? (
                     Array.from({ length: 6 }).map((_, rIdx) => (
                       <tr key={rIdx} className="animate-pulse">
-                        <td className="py-4 px-5">
-                          <Skeleton className="h-4 w-6 rounded" />
+                        <td className="py-3.5 px-4 text-center">
+                          <Skeleton className="h-4 w-6 mx-auto rounded" />
                         </td>
-                        <td className="py-4 px-5">
+                        <td className="py-3.5 px-4">
                           <div className="flex items-center gap-3">
                             <SkeletonAvatar size="w-8 h-8" rounded="rounded-full" />
                             <Skeleton className="h-4 w-32 rounded" />
                           </div>
                         </td>
-                        <td className="py-4 px-5">
+                        <td className="py-3.5 px-4">
                           <Skeleton className="h-4 w-28 rounded" />
                         </td>
-                        <td className="py-4 px-5">
+                        <td className="py-3.5 px-4">
                           <Skeleton className="h-4 w-24 rounded" />
                         </td>
-                        <td className="py-4 px-5">
+                        <td className="py-3.5 px-4">
                           <Skeleton className="h-4 w-24 rounded" />
                         </td>
-                        <td className="py-4 px-5">
+                        <td className="py-3.5 px-4">
                           <Skeleton className="h-4 w-36 rounded" />
                         </td>
-                        <td className="py-4 px-5 text-center">
+                        <td className="py-3.5 px-4 text-center">
                           <Skeleton className="h-7 w-16 mx-auto rounded-lg" />
                         </td>
                       </tr>
                     ))
                   ) : reports.length === 0 ? (
                     <tr>
-                      <td colSpan="7" className="py-16 text-center text-gray-500">
+                      <td colSpan="7" className="py-16 text-center text-slate-500">
                         <div className="flex flex-col items-center justify-center gap-2">
-                          <FileSpreadsheet className="text-gray-300 w-10 h-10 mb-1" />
-                          <span className="text-sm font-semibold text-gray-800">No KPA Reports Found</span>
-                          <span className="text-xs text-gray-400">Try adjusting your filters or search query</span>
+                          <FileSpreadsheet className="text-slate-300 w-10 h-10 mb-1" />
+                          <span className="text-sm font-semibold text-slate-800">No KPA Reports Found</span>
+                          <span className="text-xs text-slate-400">Try adjusting your filters or search query</span>
                         </div>
                       </td>
                     </tr>
@@ -1101,28 +1085,28 @@ const KPAReport = () => {
                       return (
                         <tr 
                           key={empId} 
-                          className="hover:bg-slate-50/70 transition-colors"
+                          className="hover:bg-blue-50/25 transition-colors group"
                         >
-                          <td className="py-3.5 px-5 text-[13px] text-gray-500 font-medium">{srNo}</td>
-                          <td className="py-3.5 px-5">
+                          <td className="py-3.5 px-4 text-[13px] text-slate-500 font-medium text-center">{srNo}</td>
+                          <td className="py-3.5 px-4">
                             <div className="flex items-center gap-3">
-                              <div className="w-8 h-8 rounded-full bg-blue-50 text-[#225091] border border-blue-100 flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
+                              <div className="w-8 h-8 rounded-full bg-blue-50 text-[#225091] border border-blue-100 flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
                                 {initials}
                               </div>
-                              <span className="text-sm font-semibold text-gray-900 whitespace-nowrap">{empName}</span>
+                              <span className="text-[13px] font-semibold text-slate-900 whitespace-nowrap">{empName}</span>
                             </div>
                           </td>
-                          <td className="py-3.5 px-5 text-xs text-gray-600 font-medium">
+                          <td className="py-3.5 px-4 text-[13px] text-slate-600 font-medium whitespace-nowrap">
                             <span className="max-w-[160px] truncate block">{row.designation || '—'}</span>
                           </td>
-                          <td className="py-3.5 px-5 text-xs text-gray-600 font-medium">{row.branch || row.branchName || '—'}</td>
-                          <td className="py-3.5 px-5 text-xs text-gray-600">{row.phoneNumber || row.phone || '—'}</td>
-                          <td className="py-3.5 px-5 text-xs text-gray-600">{row.email || '—'}</td>
-                          <td className="py-3.5 px-5 text-center">
+                          <td className="py-3.5 px-4 text-[13px] text-slate-600 font-medium whitespace-nowrap">{row.branch || row.branchName || '—'}</td>
+                          <td className="py-3.5 px-4 text-[13px] text-slate-600 whitespace-nowrap">{row.phoneNumber || row.phone || '—'}</td>
+                          <td className="py-3.5 px-4 text-[13px] text-slate-600 whitespace-nowrap">{row.email || '—'}</td>
+                          <td className="py-3.5 px-4 text-center whitespace-nowrap">
                             <div className="flex items-center justify-center">
                               <Link 
                                 to={`/kpa-report/view/${empId}`} 
-                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-[#225091] bg-[#EAF2FB] hover:bg-[#d8e8f8] border border-[#225091]/15 transition-all shadow-xs"
+                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-[#225091] bg-[#EAF2FB] hover:bg-[#d8e8f8] border border-[#225091]/15 transition-all shadow-2xs"
                                 title="View KPA Targets Detail"
                               >
                                 <Eye size={13} /> View
@@ -1135,7 +1119,7 @@ const KPAReport = () => {
                   )}
                 </tbody>
               </table>
-            </div>
+            </TableWrapper>
 
             {/* Pagination Footer */}
             <div className="p-6 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -1267,28 +1251,28 @@ const KPAReport = () => {
             </div>
 
             {/* Table */}
-            <div className="overflow-x-auto">
-              <table className="w-full text-left">
-                <thead className="bg-[#F8FAFC] text-gray-600 text-xs uppercase tracking-wider font-semibold border-b border-gray-200/80">
+            <TableWrapper minHeight="260px">
+              <table className="w-full text-left border-collapse min-w-[750px]">
+                <thead className="bg-slate-50/80 border-b border-gray-200/80">
                   <tr>
-                    <th className="py-3.5 px-5">Sr.</th>
-                    <th className="py-3.5 px-5">Product Name</th>
-                    <th className="py-3.5 px-5">Incentive Type</th>
-                    <th className="py-3.5 px-5">Configured Rate / Value</th>
-                    <th className="py-3.5 px-5">Applied Formula</th>
-                    <th className="py-3.5 px-5 text-center">Action</th>
+                    <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">Sr.</th>
+                    <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">Product Name</th>
+                    <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">Incentive Type</th>
+                    <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">Configured Rate / Value</th>
+                    <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">Applied Formula</th>
+                    <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap text-center">Action</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100 text-xs">
+                <tbody className="divide-y divide-gray-100">
                   {incentivesLoading ? (
                     Array.from({ length: 5 }).map((_, idx) => (
                       <tr key={idx} className="animate-pulse">
-                        <td className="py-4 px-5"><Skeleton className="h-4 w-6 rounded" /></td>
-                        <td className="py-4 px-5"><Skeleton className="h-4 w-36 rounded" /></td>
-                        <td className="py-4 px-5"><Skeleton className="h-4 w-28 rounded" /></td>
-                        <td className="py-4 px-5"><Skeleton className="h-4 w-24 rounded" /></td>
-                        <td className="py-4 px-5"><Skeleton className="h-4 w-44 rounded" /></td>
-                        <td className="py-4 px-5 text-center"><Skeleton className="h-7 w-20 mx-auto rounded-lg" /></td>
+                        <td className="py-3.5 px-4"><Skeleton className="h-4 w-6 rounded" /></td>
+                        <td className="py-3.5 px-4"><Skeleton className="h-4 w-36 rounded" /></td>
+                        <td className="py-3.5 px-4"><Skeleton className="h-4 w-28 rounded" /></td>
+                        <td className="py-3.5 px-4"><Skeleton className="h-4 w-24 rounded" /></td>
+                        <td className="py-3.5 px-4"><Skeleton className="h-4 w-44 rounded" /></td>
+                        <td className="py-3.5 px-4 text-center"><Skeleton className="h-7 w-20 mx-auto rounded-lg" /></td>
                       </tr>
                     ))
                   ) : (
@@ -1300,21 +1284,21 @@ const KPAReport = () => {
                         const isNone = item.incentiveType === 'NONE' || !item.incentiveType;
 
                         return (
-                          <tr key={item.product || index} className="hover:bg-slate-50/70 transition-colors">
-                            <td className="py-3.5 px-5 text-gray-400 font-medium">{index + 1}</td>
+                          <tr key={item.product || index} className="hover:bg-blue-50/25 transition-colors group">
+                            <td className="py-3.5 px-4 text-[13px] text-slate-400 font-medium whitespace-nowrap">{index + 1}</td>
                             
                             {/* Product Name */}
-                            <td className="py-3.5 px-5">
+                            <td className="py-3.5 px-4 whitespace-nowrap">
                               <div className="flex items-center gap-2.5">
                                 <div className="w-8 h-8 rounded-lg bg-blue-50 text-[#225091] border border-blue-100 flex items-center justify-center shrink-0">
                                   <Coins size={15} />
                                 </div>
-                                <span className="font-bold text-gray-900">{item.product}</span>
+                                <span className="text-[13px] font-bold text-slate-900">{item.product}</span>
                               </div>
                             </td>
 
                             {/* Incentive Type Badge */}
-                            <td className="py-3.5 px-5">
+                            <td className="py-3.5 px-4 whitespace-nowrap">
                               {isPercentage ? (
                                 <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-purple-50 text-purple-700 border border-purple-200">
                                   <Percent size={12} />
@@ -1333,25 +1317,25 @@ const KPAReport = () => {
                             </td>
 
                             {/* Configured Rate */}
-                            <td className="py-3.5 px-5 font-bold text-gray-900">
+                            <td className="py-3.5 px-4 text-[13px] font-bold text-slate-900 whitespace-nowrap">
                               {item.formattedIncentiveValue || (
                                 isPercentage ? `${item.incentiveValue}%` : isQuantity ? `₹${item.incentiveValue}` : '—'
                               )}
                             </td>
 
                             {/* Formula description */}
-                            <td className="py-3.5 px-5 text-gray-500">
+                            <td className="py-3.5 px-4 text-[13px] text-slate-500 whitespace-nowrap">
                               {isPercentage ? (
                                 <span>{item.incentiveValue}% of total sales amount achieved by employee</span>
                               ) : isQuantity ? (
                                 <span>₹{item.incentiveValue} credited per count/unit achieved</span>
                               ) : (
-                                <span className="text-gray-400 italic">No automated incentive calculation</span>
+                                <span className="text-slate-400 italic">No automated incentive calculation</span>
                               )}
                             </td>
 
                             {/* Action Button */}
-                            <td className="py-3.5 px-5 text-center">
+                            <td className="py-3.5 px-4 text-center whitespace-nowrap">
                               <button
                                 type="button"
                                 onClick={() => handleOpenEditIncentive(item)}
@@ -1367,7 +1351,7 @@ const KPAReport = () => {
                   )}
                 </tbody>
               </table>
-            </div>
+            </TableWrapper>
           </div>
         </div>
       )}

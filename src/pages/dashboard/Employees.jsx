@@ -29,6 +29,8 @@ import useBranchStore from "../../store/branchStore";
 import PageHeader from "../../components/common/PageHeader";
 import SearchableSelect from "../../components/common/SearchableSelect";
 import { Skeleton, SkeletonAvatar } from "../../components/common/Skeleton";
+import TableWrapper from "../../components/common/TableWrapper";
+import StatsCard from "../../components/common/StatsCard";
 
 // Comprehensive Indian States and Prominent Cities Map
 const INDIAN_STATES_WITH_CITIES = {
@@ -514,8 +516,12 @@ const Employees = () => {
       </PageHeader>
       {/* Top Stats Cards Grid (4 Cards: Total, Active, Managers, Soft-Deleted) */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-3.5">
-        {/* 1. Total Staff Card */}
-        <div
+        <StatsCard
+          label="Total Staff"
+          value={overviewStats.total}
+          icon={Users}
+          color="blue"
+          isActive={activeStatCard === "ALL" && !selectedStatus && !selectedRoleId}
           onClick={() => {
             setActiveStatCard("ALL");
             setSelectedStatus("");
@@ -523,27 +529,13 @@ const Employees = () => {
             setIncludeDeleted(false);
             setPage(1);
           }}
-          className={`bg-white rounded-xl p-4 border shadow-xs flex flex-col justify-between cursor-pointer transition-all hover:shadow-md ${
-            activeStatCard === "ALL" && !selectedStatus && !selectedRoleId
-              ? "border-[#225091] ring-2 ring-[#225091]/15 bg-blue-50/20 shadow-sm"
-              : "border-gray-100 hover:border-gray-200"
-          }`}
-        >
-          <div className="flex items-center justify-between w-full mb-2">
-            <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">
-              Total Staff
-            </span>
-            <div className="w-7 h-7 rounded-lg bg-blue-50 text-[#225091] flex items-center justify-center shrink-0">
-              <Users size={16} />
-            </div>
-          </div>
-          <div className="text-[26px] font-extrabold text-gray-900 leading-none">
-            {overviewStats.total}
-          </div>
-        </div>
-
-        {/* 2. Active Staff Card */}
-        <div
+        />
+        <StatsCard
+          label="Active Staff"
+          value={overviewStats.active}
+          icon={UserCheck}
+          color="emerald"
+          isActive={activeStatCard === "ACTIVE"}
           onClick={() => {
             if (activeStatCard === "ACTIVE") {
               setActiveStatCard("ALL");
@@ -555,27 +547,13 @@ const Employees = () => {
             }
             setPage(1);
           }}
-          className={`bg-white rounded-xl p-4 border shadow-xs flex flex-col justify-between cursor-pointer transition-all hover:shadow-md ${
-            activeStatCard === "ACTIVE"
-              ? "border-emerald-500 ring-2 ring-emerald-500/15 bg-emerald-50/20 shadow-sm"
-              : "border-gray-100 hover:border-gray-200"
-          }`}
-        >
-          <div className="flex items-center justify-between w-full mb-2">
-            <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">
-              Active Staff
-            </span>
-            <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
-              <UserCheck size={16} />
-            </div>
-          </div>
-          <div className="text-[26px] font-extrabold text-gray-900 leading-none">
-            {overviewStats.active}
-          </div>
-        </div>
-
-        {/* 3. Branch Managers Card */}
-        <div
+        />
+        <StatsCard
+          label="Branch Managers"
+          value={overviewStats.managers}
+          icon={UserCog}
+          color="purple"
+          isActive={activeStatCard === "MANAGERS"}
           onClick={() => {
             if (activeStatCard === "MANAGERS") {
               setActiveStatCard("ALL");
@@ -586,27 +564,13 @@ const Employees = () => {
             }
             setPage(1);
           }}
-          className={`bg-white rounded-xl p-4 border shadow-xs flex flex-col justify-between cursor-pointer transition-all hover:shadow-md ${
-            activeStatCard === "MANAGERS"
-              ? "border-purple-500 ring-2 ring-purple-500/15 bg-purple-50/20 shadow-sm"
-              : "border-gray-100 hover:border-gray-200"
-          }`}
-        >
-          <div className="flex items-center justify-between w-full mb-2">
-            <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">
-              Branch Managers
-            </span>
-            <div className="w-7 h-7 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
-              <UserCog size={16} />
-            </div>
-          </div>
-          <div className="text-[26px] font-extrabold text-gray-900 leading-none">
-            {overviewStats.managers}
-          </div>
-        </div>
-
-        {/* 4. Soft-Deleted / Archived Staff Card */}
-        <div
+        />
+        <StatsCard
+          label="Soft-Deleted"
+          value={overviewStats.softDeleted}
+          icon={Archive}
+          color="rose"
+          isActive={activeStatCard === "DELETED" || selectedStatus === "DELETED"}
           onClick={() => {
             if (activeStatCard === "DELETED") {
               setActiveStatCard("ALL");
@@ -619,24 +583,7 @@ const Employees = () => {
             }
             setPage(1);
           }}
-          className={`bg-white rounded-xl p-4 border shadow-xs flex flex-col justify-between cursor-pointer transition-all hover:shadow-md ${
-            activeStatCard === "DELETED" || selectedStatus === "DELETED"
-              ? "border-rose-500 ring-2 ring-rose-500/15 bg-rose-50/20 shadow-sm"
-              : "border-gray-100 hover:border-gray-200"
-          }`}
-        >
-          <div className="flex items-center justify-between w-full mb-2">
-            <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">
-              Soft-Deleted
-            </span>
-            <div className="w-7 h-7 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
-              <Archive size={16} />
-            </div>
-          </div>
-          <div className="text-[26px] font-extrabold text-gray-900 leading-none">
-            {overviewStats.softDeleted}
-          </div>
-        </div>
+        />
       </div>
 
       {/* Filter Toolbar Card */}
@@ -857,21 +804,21 @@ const Employees = () => {
       )}
 
       {/* Main Employees Table */}
-      <div className="bg-white rounded-xl shadow-xs border border-gray-100 overflow-hidden flex flex-col">
-        <div className="overflow-x-auto">
+      <div className="bg-white rounded-2xl shadow-2xs border border-gray-200/80 overflow-hidden flex flex-col">
+        <TableWrapper minHeight="360px">
           <table ref={tableRef} className="w-full text-left border-collapse min-w-[880px]">
-            <thead className="bg-[#F8FAFC] text-gray-600 text-xs uppercase tracking-wider font-semibold border-b border-gray-200/80">
+            <thead className="bg-slate-50/80 border-b border-gray-200/80">
               <tr>
-                <th className="py-3.5 px-5 font-semibold">Sr.No.</th>
-                <th className="py-3.5 px-5 font-semibold">Employee</th>
-                <th className="py-3.5 px-5 font-semibold">Emp Code</th>
-                <th className="py-3.5 px-5 font-semibold">Designation / Role</th>
-                <th className="py-3.5 px-5 font-semibold">Branch, State & City</th>
-                <th className="py-3.5 px-5 font-semibold">Status</th>
-                <th className="py-3.5 px-5 font-semibold text-center">Actions</th>
+                <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap text-center w-16">Sr.No.</th>
+                <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">Employee</th>
+                <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">Emp Code</th>
+                <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">Designation / Role</th>
+                <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">Branch, State & City</th>
+                <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">Status</th>
+                <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap text-center">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100 text-sm">
+            <tbody className="divide-y divide-gray-100">
               {loading && employees.length === 0 ? (
                 Array.from({ length: 6 }).map((_, rIdx) => (
                   <tr key={rIdx} className="animate-pulse">
@@ -1110,7 +1057,7 @@ const Employees = () => {
               )}
             </tbody>
           </table>
-        </div>
+        </TableWrapper>
 
         {/* Pagination Footer */}
         {!loading && employees.length > 0 && (

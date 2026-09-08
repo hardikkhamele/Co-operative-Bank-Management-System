@@ -26,6 +26,8 @@ import useBranchStore from '../../store/branchStore';
 import PageHeader from '../../components/common/PageHeader';
 import SearchableSelect from '../../components/common/SearchableSelect';
 import { Skeleton, SkeletonTableRow } from '../../components/common/Skeleton';
+import TableWrapper from '../../components/common/TableWrapper';
+import StatsCard from '../../components/common/StatsCard';
 
 // Comprehensive Indian States and Prominent Cities Map
 const INDIAN_STATES_WITH_CITIES = {
@@ -415,55 +417,36 @@ const CashPayment = () => {
         backUrl="/dashboard"
       />
 
-      {/* 2. Top Stats Overview (4 Centered KPI Cards Matching Employee Standard) */}
+      {/* 2. Top Stats Overview (4 Centered KPI Cards) */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Card 1: Total Staff Handlers */}
-        <div className="bg-white rounded-xl p-4.5 border border-gray-100 shadow-xs flex flex-col items-center justify-center transition-all hover:shadow-md">
-          <div className="flex items-center gap-2 text-[#225091] mb-1">
-            <span className="text-[26px] font-bold leading-none font-heading">
-              {meta.totalRecords || items.length}
-            </span>
-          </div>
-          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider text-center">
-            STAFF HANDLERS
-          </span>
-        </div>
-
-        {/* Card 2: Total Cash Collected */}
-        <div className="bg-white rounded-xl p-4.5 border border-gray-100 shadow-xs flex flex-col items-center justify-center transition-all hover:shadow-md">
-          <div className="flex items-center gap-1 text-gray-900 mb-1">
-            <span className="text-[24px] font-bold leading-none font-heading">
-              {stats.formattedTotalCashCollection || `₹${formatCurrency(stats.totalCashCollection)}`}
-            </span>
-          </div>
-          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider text-center">
-            TOTAL CASH COLLECTED
-          </span>
-        </div>
-
-        {/* Card 3: Total Cash Submitted */}
-        <div className="bg-white rounded-xl p-4.5 border border-gray-100 shadow-xs flex flex-col items-center justify-center transition-all hover:shadow-md">
-          <div className="flex items-center gap-1 text-emerald-600 mb-1">
-            <span className="text-[24px] font-bold leading-none font-heading">
-              {stats.formattedTotalCashSubmitted || `₹${formatCurrency(stats.totalCashSubmitted)}`}
-            </span>
-          </div>
-          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider text-center">
-            TOTAL CASH SUBMITTED
-          </span>
-        </div>
-
-        {/* Card 4: Total Pending Cash */}
-        <div className="bg-white rounded-xl p-4.5 border border-gray-100 shadow-xs flex flex-col items-center justify-center transition-all hover:shadow-md">
-          <div className="flex items-center gap-1 text-amber-600 mb-1">
-            <span className="text-[24px] font-bold leading-none font-heading">
-              {stats.formattedTotalCashPending || `₹${formatCurrency(stats.totalCashPending)}`}
-            </span>
-          </div>
-          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider text-center">
-            TOTAL PENDING CASH
-          </span>
-        </div>
+        <StatsCard
+          layout="centered"
+          label="Staff Handlers"
+          value={meta.totalRecords || items.length}
+          color="blue"
+          loading={loading}
+        />
+        <StatsCard
+          layout="centered"
+          label="Total Cash Collected"
+          value={stats.formattedTotalCashCollection || `₹${formatCurrency(stats.totalCashCollection)}`}
+          color="cyan"
+          loading={loading}
+        />
+        <StatsCard
+          layout="centered"
+          label="Total Cash Submitted"
+          value={stats.formattedTotalCashSubmitted || `₹${formatCurrency(stats.totalCashSubmitted)}`}
+          color="emerald"
+          loading={loading}
+        />
+        <StatsCard
+          layout="centered"
+          label="Total Pending Cash"
+          value={stats.formattedTotalCashPending || `₹${formatCurrency(stats.totalCashPending)}`}
+          color="amber"
+          loading={loading}
+        />
       </div>
 
       {/* 3. Filter Toolbar Card (Matching Employee Filter Standards) */}
@@ -661,48 +644,48 @@ const CashPayment = () => {
 
       {/* 4. Table Card */}
       <div className="bg-white rounded-2xl border border-gray-200/80 shadow-2xs overflow-hidden">
-        <div className="overflow-x-auto">
+        <TableWrapper minHeight="360px">
           <table ref={tableRef} className="w-full text-left border-collapse min-w-[900px]">
-            <thead>
-              <tr className="border-b border-gray-100 bg-gray-50/50">
-                <th className="py-4 px-4 text-[12px] font-bold text-gray-500 uppercase tracking-wider text-center w-16">
+            <thead className="bg-slate-50/80 border-b border-gray-200/80">
+              <tr>
+                <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider text-center w-16 select-none whitespace-nowrap">
                   Sr.No.
                 </th>
-                <th className="py-4 px-4 text-[12px] font-bold text-gray-500 uppercase tracking-wider">
+                <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">
                   Staff Member
                 </th>
-                <th className="py-4 px-4 text-[12px] font-bold text-gray-500 uppercase tracking-wider">
+                <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">
                   Branch & Location
                 </th>
-                <th className="py-4 px-4 text-[12px] font-bold text-gray-500 uppercase tracking-wider">
+                <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">
                   Designation
                 </th>
-                <th className="py-4 px-4 text-[12px] font-bold text-gray-500 uppercase tracking-wider text-right">
+                <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap text-right">
                   Collected
                 </th>
-                <th className="py-4 px-4 text-[12px] font-bold text-gray-500 uppercase tracking-wider text-right">
+                <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap text-right">
                   Submitted
                 </th>
-                <th className="py-4 px-4 text-[12px] font-bold text-gray-500 uppercase tracking-wider text-right">
+                <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap text-right">
                   Pending
                 </th>
-                <th className="py-4 px-4 text-[12px] font-bold text-gray-500 uppercase tracking-wider text-center w-36">
+                <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap text-center w-36">
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100 text-sm">
+            <tbody className="divide-y divide-gray-100">
               {loading ? (
                 Array.from({ length: 5 }).map((_, idx) => (
                   <SkeletonTableRow key={idx} columns={8} />
                 ))
               ) : items.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="py-12 text-center text-gray-400">
+                  <td colSpan={8} className="py-12 text-center text-slate-400">
                     <div className="flex flex-col items-center justify-center gap-2">
-                      <Coins size={36} className="text-gray-300 stroke-[1.5]" />
-                      <span className="text-sm font-medium text-gray-500">No cash payment records found</span>
-                      <span className="text-xs text-gray-400">Try adjusting your search or location filters</span>
+                      <Coins size={36} className="text-slate-300 stroke-[1.5]" />
+                      <span className="text-sm font-medium text-slate-500">No cash payment records found</span>
+                      <span className="text-xs text-slate-400">Try adjusting your search or location filters</span>
                     </div>
                   </td>
                 </tr>
@@ -714,26 +697,26 @@ const CashPayment = () => {
                   const pending = Number(item.totalCashPending) || 0;
 
                   return (
-                    <tr key={empId || idx} className="hover:bg-blue-50/30 transition-colors group">
+                    <tr key={empId || idx} className="hover:bg-blue-50/25 transition-colors group">
                       {/* Sr No */}
-                      <td className="py-3.5 px-4 text-center font-medium text-gray-500 text-xs">
+                      <td className="py-3.5 px-4 text-center font-medium text-slate-500 text-[13px] whitespace-nowrap">
                         {(page - 1) * limit + idx + 1}
                       </td>
 
                       {/* Staff Member */}
-                      <td className="py-3.5 px-4">
+                      <td className="py-3.5 px-4 whitespace-nowrap">
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-blue-50 text-[#225091] font-bold text-xs flex items-center justify-center uppercase shrink-0 border border-blue-100">
+                          <div className="w-8 h-8 rounded-full bg-blue-50 text-[#225091] font-bold text-xs flex items-center justify-center uppercase shrink-0 border border-blue-100 shadow-2xs">
                             {(item.employeeName || item.name || 'S').slice(0, 2)}
                           </div>
                           <div>
                             <Link 
                               to={`/cash-payment/${empId}`}
-                              className="font-bold text-gray-800 text-xs hover:text-[#225091] transition-colors line-clamp-1"
+                              className="font-semibold text-slate-900 text-[13px] hover:text-[#225091] transition-colors line-clamp-1"
                             >
                               {item.employeeName || item.name || 'Unknown Staff'}
                             </Link>
-                            <span className="text-[11px] text-gray-400 block">
+                            <span className="text-xs text-slate-400 block mt-0.5">
                               {item.phoneNumber || item.email || empId}
                             </span>
                           </div>
@@ -741,15 +724,15 @@ const CashPayment = () => {
                       </td>
 
                       {/* Branch & Location */}
-                      <td className="py-3.5 px-4">
+                      <td className="py-3.5 px-4 whitespace-nowrap">
                         <div className="flex flex-col">
-                          <span className="font-semibold text-gray-700 text-xs flex items-center gap-1">
-                            <Building2 size={12} className="text-gray-400 shrink-0" />
+                          <span className="font-semibold text-slate-700 text-[13px] flex items-center gap-1">
+                            <Building2 size={12} className="text-slate-400 shrink-0" />
                             {item.branchName || 'Main Branch'}
                           </span>
                           {(item.city || item.state) && (
-                            <span className="text-[11px] text-gray-400 flex items-center gap-1 mt-0.5">
-                              <MapPin size={11} className="text-gray-400 shrink-0" />
+                            <span className="text-xs text-slate-400 flex items-center gap-1 mt-0.5">
+                              <MapPin size={11} className="text-slate-400 shrink-0" />
                               {[item.city, item.state].filter(Boolean).join(', ')}
                             </span>
                           )}
@@ -757,24 +740,24 @@ const CashPayment = () => {
                       </td>
 
                       {/* Designation */}
-                      <td className="py-3.5 px-4">
-                        <span className="inline-block px-2.5 py-0.5 bg-gray-100 text-gray-700 rounded-md text-[11px] font-semibold">
+                      <td className="py-3.5 px-4 whitespace-nowrap">
+                        <span className="inline-block px-2.5 py-0.5 bg-slate-100 text-slate-700 rounded-md text-[11.5px] font-semibold">
                           {item.designation || 'Staff Member'}
                         </span>
                       </td>
 
                       {/* Cash Collected */}
-                      <td className="py-3.5 px-4 text-right font-bold text-gray-800 text-xs">
+                      <td className="py-3.5 px-4 text-right font-bold text-slate-800 text-[13px] whitespace-nowrap">
                         ₹{formatCurrency(collected)}
                       </td>
 
                       {/* Cash Submitted */}
-                      <td className="py-3.5 px-4 text-right font-bold text-emerald-600 text-xs">
+                      <td className="py-3.5 px-4 text-right font-bold text-emerald-600 text-[13px] whitespace-nowrap">
                         ₹{formatCurrency(submitted)}
                       </td>
 
                       {/* Pending Cash */}
-                      <td className="py-3.5 px-4 text-right">
+                      <td className="py-3.5 px-4 text-right whitespace-nowrap">
                         <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-bold ${
                           pending > 0 
                             ? 'bg-amber-50 text-amber-700 border border-amber-200' 
@@ -785,12 +768,12 @@ const CashPayment = () => {
                       </td>
 
                       {/* Actions */}
-                      <td className="py-3.5 px-4 text-center">
+                      <td className="py-3.5 px-4 text-center whitespace-nowrap">
                         <div className="flex items-center justify-center gap-1.5">
                           {/* View Details */}
                           <Link
                             to={`/cash-payment/${empId}`}
-                            className="p-1.5 rounded-lg text-gray-500 hover:text-[#225091] hover:bg-blue-50 transition-colors"
+                            className="p-1.5 rounded-lg text-slate-500 hover:text-[#225091] hover:bg-blue-50 transition-colors"
                             title="View Staff Ledger & Payment History"
                           >
                             <Eye size={15} />
@@ -813,7 +796,7 @@ const CashPayment = () => {
               )}
             </tbody>
           </table>
-        </div>
+        </TableWrapper>
 
         {/* 5. Pagination Bar */}
         <div className="p-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs">

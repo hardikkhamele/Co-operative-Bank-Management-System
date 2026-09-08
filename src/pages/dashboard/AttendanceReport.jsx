@@ -29,6 +29,8 @@ import {
 } from 'lucide-react';
 import { toast } from 'react-toastify';
 import PageHeader from '../../components/common/PageHeader';
+import TableWrapper from '../../components/common/TableWrapper';
+import StatsCard from '../../components/common/StatsCard';
 import SearchableSelect from '../../components/common/SearchableSelect';
 import { branchService } from '../../api/branchService';
 import { attendanceService } from '../../api/attendanceService';
@@ -798,45 +800,54 @@ const AttendanceReport = () => {
 
         {/* KPI 8-Grid Cards */}
         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
-          <div className="p-3 bg-emerald-50/70 border border-emerald-100 rounded-xl text-center">
-            <span className="text-[11px] font-bold text-emerald-700 block uppercase tracking-wider">Present</span>
-            <span className="text-xl font-extrabold text-emerald-800 mt-0.5 block">{monthlyReport.present ?? 22}</span>
-          </div>
-
-          <div className="p-3 bg-rose-50/70 border border-rose-100 rounded-xl text-center">
-            <span className="text-[11px] font-bold text-rose-700 block uppercase tracking-wider">Absent</span>
-            <span className="text-xl font-extrabold text-rose-800 mt-0.5 block">{monthlyReport.absent ?? 2}</span>
-          </div>
-
-          <div className="p-3 bg-amber-50/70 border border-amber-100 rounded-xl text-center">
-            <span className="text-[11px] font-bold text-amber-700 block uppercase tracking-wider">Half Day</span>
-            <span className="text-xl font-extrabold text-amber-800 mt-0.5 block">{monthlyReport.halfDay ?? 1}</span>
-          </div>
-
-          <div className="p-3 bg-blue-50/70 border border-blue-100 rounded-xl text-center">
-            <span className="text-[11px] font-bold text-[#225091] block uppercase tracking-wider">Leave</span>
-            <span className="text-xl font-extrabold text-[#225091] mt-0.5 block">{monthlyReport.leave ?? 2}</span>
-          </div>
-
-          <div className="p-3 bg-orange-50/70 border border-orange-100 rounded-xl text-center">
-            <span className="text-[11px] font-bold text-orange-700 block uppercase tracking-wider">Late Present</span>
-            <span className="text-xl font-extrabold text-orange-800 mt-0.5 block">{monthlyReport.latePresent ?? 3}</span>
-          </div>
-
-          <div className="p-3 bg-purple-50/70 border border-purple-100 rounded-xl text-center">
-            <span className="text-[11px] font-bold text-purple-700 block uppercase tracking-wider">Early Leave</span>
-            <span className="text-xl font-extrabold text-purple-800 mt-0.5 block">{monthlyReport.earlyLeave ?? 1}</span>
-          </div>
-
-          <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-center">
-            <span className="text-[11px] font-bold text-slate-700 block uppercase tracking-wider">Late Fine</span>
-            <span className="text-xl font-extrabold text-slate-900 mt-0.5 block">₹{monthlyReport.lateFine ?? 0}</span>
-          </div>
-
-          <div className="p-3 bg-indigo-50/70 border border-indigo-100 rounded-xl text-center">
-            <span className="text-[11px] font-bold text-indigo-700 block uppercase tracking-wider">Overtime</span>
-            <span className="text-sm font-extrabold text-indigo-900 mt-1.5 block">{monthlyReport.overtime ?? '04:30 hrs'}</span>
-          </div>
+          <StatsCard
+            layout="centered"
+            color="emerald"
+            label="Present"
+            value={monthlyReport.present ?? 22}
+          />
+          <StatsCard
+            layout="centered"
+            color="rose"
+            label="Absent"
+            value={monthlyReport.absent ?? 2}
+          />
+          <StatsCard
+            layout="centered"
+            color="amber"
+            label="Half Day"
+            value={monthlyReport.halfDay ?? 1}
+          />
+          <StatsCard
+            layout="centered"
+            color="blue"
+            label="Leave"
+            value={monthlyReport.leave ?? 2}
+          />
+          <StatsCard
+            layout="centered"
+            color="amber"
+            label="Late Present"
+            value={monthlyReport.latePresent ?? 3}
+          />
+          <StatsCard
+            layout="centered"
+            color="purple"
+            label="Early Leave"
+            value={monthlyReport.earlyLeave ?? 1}
+          />
+          <StatsCard
+            layout="centered"
+            color="gray"
+            label="Late Fine"
+            value={`₹${monthlyReport.lateFine ?? 0}`}
+          />
+          <StatsCard
+            layout="centered"
+            color="indigo"
+            label="Overtime"
+            value={monthlyReport.overtime ?? '04:30 hrs'}
+          />
         </div>
       </div>
 
@@ -1116,19 +1127,19 @@ const AttendanceReport = () => {
 
         {/* Table Content */}
         <div className="border border-gray-100 rounded-2xl overflow-hidden shadow-2xs">
-          <div className="overflow-x-auto">
+          <TableWrapper minHeight="360px">
             {/* TAB 1: DAILY LOGS (Section 1.2) */}
             {activeTab === 'daily' && (
               <table ref={tableRef} className="w-full text-left text-xs border-collapse min-w-[800px]">
-                <thead className="bg-[#F8FAFC] text-gray-500 uppercase tracking-wider font-semibold border-b border-gray-200/80">
+                <thead className="bg-slate-50/80 border-b border-gray-200/80">
                   <tr>
-                    <th className="py-3.5 px-4 text-center w-14">SR.NO.</th>
-                    <th className="py-3.5 px-5">EMPLOYEE</th>
-                    <th className="py-3.5 px-5">DESIGNATION</th>
-                    <th className="py-3.5 px-5">CHECK-IN</th>
-                    <th className="py-3.5 px-5">CHECK-OUT</th>
-                    <th className="py-3.5 px-5">WORKING HRS</th>
-                    <th className="py-3.5 px-5 text-center">STATUS</th>
+                    <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap text-center w-14">SR.NO.</th>
+                    <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">EMPLOYEE</th>
+                    <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">DESIGNATION</th>
+                    <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">CHECK-IN</th>
+                    <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">CHECK-OUT</th>
+                    <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">WORKING HRS</th>
+                    <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap text-center">STATUS</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 font-medium">
@@ -1451,7 +1462,7 @@ const AttendanceReport = () => {
                 </tbody>
               </table>
             )}
-          </div>
+          </TableWrapper>
 
           {/* Table Footer with Pagination */}
           <div className="px-5 py-3.5 bg-white border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-gray-500">

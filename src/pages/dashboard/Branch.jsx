@@ -24,6 +24,8 @@ import { branchService } from '../../api/branchService';
 import PageHeader from '../../components/common/PageHeader';
 import SearchableSelect from '../../components/common/SearchableSelect';
 import { Skeleton, SkeletonTable } from '../../components/common/Skeleton';
+import TableWrapper from '../../components/common/TableWrapper';
+import StatsCard from '../../components/common/StatsCard';
 import { validateEmail, validatePhone, validatePassword, validatePincode, sanitizeDigits, preventInvalidNumberKeys } from '../../utils/validation';
 
 const INDIAN_STATES_WITH_CITIES = {
@@ -587,72 +589,38 @@ const Branch = () => {
         backUrl="/dashboard"
       />
 
-      {/* 5 Stats Overview Cards (Matching Employee module layout) */}
+      {/* 5 Stats Overview Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
-        {/* Card 1: Total Branches */}
-        <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-xs flex flex-col items-center justify-center transition-all hover:shadow-md">
-          <div className="flex items-center gap-2 text-[#225091] mb-1">
-            <Building2 size={18} />
-            <span className="text-[24px] font-bold leading-none tabular-nums">
-              {stats?.totalBranches ?? branches.length}
-            </span>
-          </div>
-          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider text-center">
-            Total Branches
-          </span>
-        </div>
-
-        {/* Card 2: Available Card Stock */}
-        <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-xs flex flex-col items-center justify-center transition-all hover:shadow-md">
-          <div className="flex items-center gap-2 text-emerald-600 mb-1">
-            <CreditCard size={18} />
-            <span className="text-[24px] font-bold leading-none tabular-nums">
-              {stats?.availableCardStock !== undefined ? stats.availableCardStock.toLocaleString('en-IN') : 0}
-            </span>
-          </div>
-          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider text-center">
-            Available Card Stock
-          </span>
-        </div>
-
-        {/* Card 3: Verification Credits */}
-        <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-xs flex flex-col items-center justify-center transition-all hover:shadow-md">
-          <div className="flex items-center gap-2 text-amber-600 mb-1">
-            <ShieldCheck size={18} />
-            <span className="text-[24px] font-bold leading-none tabular-nums">
-              {stats?.availableVerificationCredits !== undefined ? stats.availableVerificationCredits.toLocaleString('en-IN') : 0}
-            </span>
-          </div>
-          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider text-center">
-            Verification Credits
-          </span>
-        </div>
-
-        {/* Card 4: Total Employees */}
-        <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-xs flex flex-col items-center justify-center transition-all hover:shadow-md">
-          <div className="flex items-center gap-2 text-indigo-600 mb-1">
-            <Users size={18} />
-            <span className="text-[24px] font-bold leading-none tabular-nums">
-              {stats?.totalEmployees !== undefined ? stats.totalEmployees.toLocaleString('en-IN') : 0}
-            </span>
-          </div>
-          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider text-center">
-            Total Staff
-          </span>
-        </div>
-
-        {/* Card 5: Total Merchants */}
-        <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-xs flex flex-col items-center justify-center transition-all hover:shadow-md">
-          <div className="flex items-center gap-2 text-purple-600 mb-1">
-            <Store size={18} />
-            <span className="text-[24px] font-bold leading-none tabular-nums">
-              {stats?.totalMerchants !== undefined ? stats.totalMerchants.toLocaleString('en-IN') : 0}
-            </span>
-          </div>
-          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider text-center">
-            Total Merchants
-          </span>
-        </div>
+        <StatsCard
+          layout="centered"
+          label="Total Branches"
+          value={stats?.totalBranches ?? branches.length}
+          color="blue"
+        />
+        <StatsCard
+          layout="centered"
+          label="Available Card Stock"
+          value={stats?.availableCardStock !== undefined ? stats.availableCardStock.toLocaleString('en-IN') : 0}
+          color="emerald"
+        />
+        <StatsCard
+          layout="centered"
+          label="Verification Credits"
+          value={stats?.availableVerificationCredits !== undefined ? stats.availableVerificationCredits.toLocaleString('en-IN') : 0}
+          color="amber"
+        />
+        <StatsCard
+          layout="centered"
+          label="Total Staff"
+          value={stats?.totalEmployees !== undefined ? stats.totalEmployees.toLocaleString('en-IN') : 0}
+          color="indigo"
+        />
+        <StatsCard
+          layout="centered"
+          label="Total Merchants"
+          value={stats?.totalMerchants !== undefined ? stats.totalMerchants.toLocaleString('en-IN') : 0}
+          color="purple"
+        />
       </div>
 
       {/* Filter Toolbar Card (Matching Employee module standard) */}
@@ -785,20 +753,20 @@ const Branch = () => {
       </div>
 
       {/* Table Card */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table ref={tableRef} className="w-full text-left text-sm whitespace-nowrap">
-            <thead className="bg-[#F8FAFC] text-gray-600 text-xs uppercase tracking-wider font-semibold border-b border-gray-200/80">
+      <div className="bg-white rounded-2xl shadow-2xs border border-gray-200/80 overflow-hidden">
+        <TableWrapper minHeight="360px">
+          <table ref={tableRef} className="w-full text-left border-collapse min-w-[900px]">
+            <thead className="bg-slate-50/80 border-b border-gray-200/80">
               <tr>
-                <th className="py-3.5 px-5 font-semibold">Sr.No.</th>
-                <th className="py-3.5 px-5 font-semibold">Branch Name</th>
-                <th className="py-3.5 px-5 font-semibold">Branch Code</th>
-                <th className="py-3.5 px-5 font-semibold">State/UT</th>
-                <th className="py-3.5 px-5 font-semibold">Branch Manager</th>
-                <th className="py-3.5 px-5 font-semibold">EMI Card Available</th>
-                <th className="py-3.5 px-5 font-semibold">Verification Credit</th>
-                <th className="py-3.5 px-5 font-semibold">Status</th>
-                <th className="py-3.5 px-5 font-semibold text-center">Action</th>
+                <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap text-center w-16">Sr.No.</th>
+                <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">Branch Name</th>
+                <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">Branch Code</th>
+                <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">State/UT</th>
+                <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">Branch Manager</th>
+                <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">EMI Card Available</th>
+                <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">Verification Credit</th>
+                <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">Status</th>
+                <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap text-center">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -908,7 +876,7 @@ const Branch = () => {
               )}
             </tbody>
           </table>
-        </div>
+        </TableWrapper>
         
         {/* Pagination */}
         {!loading && Array.isArray(branches) && branches.length > 0 && (

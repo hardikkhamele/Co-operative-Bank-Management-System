@@ -17,6 +17,8 @@ import { canApproveMerchantOnboarding, isBankOwner } from '../../utils/roleUtils
 import PageHeader from '../../components/common/PageHeader';
 import SearchableSelect from '../../components/common/SearchableSelect';
 import { Skeleton } from '../../components/common/Skeleton';
+import TableWrapper from '../../components/common/TableWrapper';
+import StatsCard from '../../components/common/StatsCard';
 
 // Comprehensive Indian States and Prominent Cities Map for fallback
 const INDIAN_STATES_WITH_CITIES = {
@@ -546,82 +548,47 @@ const Merchants = () => {
         backUrl="/dashboard"
       />
 
-      {/* Top Stat Overview Cards (Matching Employee module layout) */}
+      {/* Top Stat Overview Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
-        {/* Card 1: Total Merchants */}
-        <div
+        <StatsCard
+          layout="centered"
+          label="Total Merchants"
+          value={stats.totalMerchants}
+          color="blue"
+          isActive={activeStatCard === 'ALL' && !selectedStatus && !includeDeleted}
           onClick={() => {
             setActiveStatCard('ALL');
             setSelectedStatus('');
             setIncludeDeleted(false);
             setPage(1);
           }}
-          className={`bg-white rounded-xl p-4 border shadow-xs flex flex-col items-center justify-center cursor-pointer transition-all hover:shadow-md ${
-            activeStatCard === 'ALL' && !selectedStatus && !includeDeleted
-              ? 'border-[#225091] ring-2 ring-[#225091]/10 bg-blue-50/20'
-              : 'border-gray-100 hover:border-gray-200'
-          }`}
-        >
-          <div className="flex items-center gap-2 text-[#225091] mb-1">
-            <Store size={18} />
-            <span className="text-[24px] font-bold leading-none tabular-nums">
-              {stats.totalMerchants}
-            </span>
-          </div>
-          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider text-center">
-            Total Merchants
-          </span>
-        </div>
-
-        {/* Card 2: Active Merchants */}
-        <div
+        />
+        <StatsCard
+          layout="centered"
+          label="Active Merchants"
+          value={stats.activeMerchants}
+          color="emerald"
+          isActive={activeStatCard === 'ACTIVE' || selectedStatus === 'ACTIVE'}
           onClick={() => {
             setActiveStatCard('ACTIVE');
             setSelectedStatus('ACTIVE');
             setIncludeDeleted(false);
             setPage(1);
           }}
-          className={`bg-white rounded-xl p-4 border shadow-xs flex flex-col items-center justify-center cursor-pointer transition-all hover:shadow-md ${
-            activeStatCard === 'ACTIVE' || selectedStatus === 'ACTIVE'
-              ? 'border-emerald-500 ring-2 ring-emerald-500/10 bg-emerald-50/20'
-              : 'border-gray-100 hover:border-gray-200'
-          }`}
-        >
-          <div className="flex items-center gap-2 text-emerald-600 mb-1">
-            <UserCheck size={18} />
-            <span className="text-[24px] font-bold leading-none tabular-nums">
-              {stats.activeMerchants}
-            </span>
-          </div>
-          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider text-center">
-            Active Merchants
-          </span>
-        </div>
-
-        {/* Card 3: Soft-Deleted Merchants */}
-        <div
+        />
+        <StatsCard
+          layout="centered"
+          label="Soft-Deleted"
+          value={stats.deletedMerchants}
+          color="rose"
+          isActive={activeStatCard === 'DELETED' || selectedStatus === 'DELETED' || includeDeleted}
           onClick={() => {
             setActiveStatCard('DELETED');
             setSelectedStatus('DELETED');
             setIncludeDeleted(true);
             setPage(1);
           }}
-          className={`bg-white rounded-xl p-4 border shadow-xs flex flex-col items-center justify-center cursor-pointer transition-all hover:shadow-md ${
-            activeStatCard === 'DELETED' || selectedStatus === 'DELETED' || includeDeleted
-              ? 'border-rose-500 ring-2 ring-rose-500/10 bg-rose-50/20'
-              : 'border-gray-100 hover:border-gray-200'
-          }`}
-        >
-          <div className="flex items-center gap-2 text-rose-600 mb-1">
-            <Archive size={18} />
-            <span className="text-[24px] font-bold leading-none tabular-nums">
-              {stats.deletedMerchants}
-            </span>
-          </div>
-          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider text-center">
-            Soft-Deleted
-          </span>
-        </div>
+        />
       </div>
 
       {/* Filter Toolbar Card (Matching Employee & Branch standard) */}
@@ -905,19 +872,19 @@ const Merchants = () => {
       </div>
 
       {/* Table Card */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
-        <div className="overflow-x-auto">
+      <div className="bg-white rounded-2xl shadow-2xs border border-gray-200/80 overflow-hidden flex flex-col">
+        <TableWrapper minHeight="360px">
           <table ref={tableRef} className="w-full text-left border-collapse min-w-[1100px]">
-            <thead className="bg-[#F8FAFC] text-gray-600 text-xs uppercase tracking-wider font-semibold border-b border-gray-200/80">
+            <thead className="bg-slate-50/80 border-b border-gray-200/80">
               <tr>
-                <th className="py-3.5 px-4 font-semibold text-center w-14">#</th>
-                <th className="py-3.5 px-5 font-semibold min-w-[230px]">Shop / Business</th>
-                <th className="py-3.5 px-5 font-semibold min-w-[180px]">Owner Name</th>
-                <th className="py-3.5 px-5 font-semibold min-w-[200px]">Contact Info</th>
-                <th className="py-3.5 px-5 font-semibold min-w-[190px]">Branch & Location</th>
-                <th className="py-3.5 px-5 font-semibold text-center min-w-[130px]">Approval</th>
-                <th className="py-3.5 px-5 font-semibold text-center min-w-[110px]">Status</th>
-                <th className="py-3.5 px-5 font-semibold text-center min-w-[220px]">Actions</th>
+                <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap text-center w-14">#</th>
+                <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap min-w-[230px]">Shop / Business</th>
+                <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap min-w-[180px]">Owner Name</th>
+                <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap min-w-[200px]">Contact Info</th>
+                <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap min-w-[190px]">Branch & Location</th>
+                <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap text-center min-w-[130px]">Approval</th>
+                <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap text-center min-w-[110px]">Status</th>
+                <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap text-center min-w-[220px]">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -1248,7 +1215,7 @@ const Merchants = () => {
               )}
             </tbody>
           </table>
-        </div>
+        </TableWrapper>
         
         {/* Pagination Footer */}
         {!loading && merchants && merchants.length > 0 && (

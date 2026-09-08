@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { roleService } from "../../api/roleService";
 import PageHeader from "../../components/common/PageHeader";
+import TableWrapper from "../../components/common/TableWrapper";
 
 const RolesAndPermissions = () => {
   const navigate = useNavigate();
@@ -184,19 +185,19 @@ const RolesAndPermissions = () => {
 
       {/* 3. Table */}
       <div className="bg-white rounded-xl shadow-xs border border-slate-200/90 overflow-hidden flex flex-col">
-        <div className="overflow-x-auto">
+        <TableWrapper minHeight="360px">
           <table className="w-full text-left border-collapse min-w-[750px]">
-            <thead>
-              <tr className="bg-slate-50 border-b border-slate-200 text-[11px] uppercase tracking-wider text-slate-500 font-semibold">
-                <th className="py-3 px-4 text-center w-14">#</th>
-                <th className="py-3 px-4">Role Title</th>
-                <th className="py-3 px-4">Description</th>
-                <th className="py-3 px-4 text-center">Permissions</th>
-                <th className="py-3 px-4">Status</th>
-                <th className="py-3 px-4 text-right pr-6 w-32">Actions</th>
+            <thead className="bg-slate-50/80 border-b border-gray-200/80">
+              <tr>
+                <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap text-center w-14">#</th>
+                <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">Role Title</th>
+                <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">Description</th>
+                <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap text-center">Permissions</th>
+                <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">Status</th>
+                <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap text-right pr-6 w-32">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 text-xs">
+            <tbody className="divide-y divide-slate-100 text-[13px]">
               {loading && roles.length === 0 ? (
                 <tr>
                   <td colSpan="6" className="py-16 text-center text-slate-500">
@@ -237,12 +238,12 @@ const RolesAndPermissions = () => {
                   return (
                     <tr
                       key={roleId || index}
-                      className="hover:bg-slate-50/80 transition-colors group"
+                      className="hover:bg-blue-50/25 transition-colors group"
                     >
-                      <td className="py-3 px-4 text-center text-slate-400 font-medium">
+                      <td className="py-3.5 px-4 text-center text-slate-400 font-medium text-xs whitespace-nowrap">
                         {(page - 1) * 10 + index + 1}
                       </td>
-                      <td className="py-3 px-4">
+                      <td className="py-3.5 px-4 whitespace-nowrap">
                         <div className="flex items-center gap-2.5">
                           <div className="w-7 h-7 rounded-lg bg-blue-50 text-[#225091] flex items-center justify-center border border-blue-100 shrink-0">
                             <Lock size={13} />
@@ -253,19 +254,19 @@ const RolesAndPermissions = () => {
                         </div>
                       </td>
                       <td
-                        className="py-3 px-4 text-xs text-slate-600 max-w-xs truncate font-normal"
+                        className="py-3.5 px-4 text-xs text-slate-600 max-w-xs truncate font-normal"
                         title={row.description}
                       >
                         {row.description || "—"}
                       </td>
-                      <td className="py-3 px-4 text-center">
+                      <td className="py-3.5 px-4 text-center whitespace-nowrap">
                         <span className="inline-block bg-slate-100 text-slate-700 border border-slate-200 px-2.5 py-0.5 rounded-full text-[11px] font-semibold">
                           {permissionsCount} Granted
                         </span>
                       </td>
-                      <td className="py-3 px-4">
+                      <td className="py-3.5 px-4 whitespace-nowrap">
                         <span
-                          className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium border ${
+                          className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium border ${
                             isActive
                               ? "bg-emerald-50 text-emerald-700 border-emerald-200"
                               : "bg-rose-50 text-rose-700 border-rose-200"
@@ -279,7 +280,7 @@ const RolesAndPermissions = () => {
                           {row.status || "ACTIVE"}
                         </span>
                       </td>
-                      <td className="py-3 px-4 text-right pr-6">
+                      <td className="py-3.5 px-4 text-right pr-6 whitespace-nowrap">
                         <div className="flex items-center justify-end">
                           <button
                             onClick={() => handleView(roleId)}
@@ -296,7 +297,7 @@ const RolesAndPermissions = () => {
               )}
             </tbody>
           </table>
-        </div>
+        </TableWrapper>
 
         {/* Footer Pagination */}
         {!loading && roles.length > 0 && (

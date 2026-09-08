@@ -47,6 +47,8 @@ import { toast } from 'react-toastify';
 import cardCreditService from '../../api/cardCreditService';
 import branchService from '../../api/branchService';
 import PageHeader from '../../components/common/PageHeader';
+import TableWrapper from '../../components/common/TableWrapper';
+import StatsCard from '../../components/common/StatsCard';
 
 const HistoryIcon = ({ type, action }) => {
   const normAction = (action || '').toUpperCase();
@@ -723,29 +725,20 @@ const CardsAndCredit = () => {
 
       {/* 2. Primary 2 Stats Cards (Available EMI Cards & Verification Credits) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="bg-white rounded-xl p-4.5 border border-gray-100 shadow-xs flex flex-col items-center justify-center transition-all hover:shadow-md">
-          <div className="flex items-center gap-2 text-[#225091] mb-1">
-            <CreditCard size={20} />
-            <span className="text-[28px] font-bold leading-none font-heading">
-              {dashboardLoading ? '...' : (walletMetrics?.emiCards?.available || 0).toLocaleString()}
-            </span>
-          </div>
-          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider text-center">
-            AVAILABLE EMI CARDS
-          </span>
-        </div>
-
-        <div className="bg-white rounded-xl p-4.5 border border-gray-100 shadow-xs flex flex-col items-center justify-center transition-all hover:shadow-md">
-          <div className="flex items-center gap-2 text-emerald-600 mb-1">
-            <ShieldCheck size={20} />
-            <span className="text-[28px] font-bold leading-none font-heading">
-              {dashboardLoading ? '...' : (walletMetrics?.verificationCredits?.available || 0).toLocaleString()}
-            </span>
-          </div>
-          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider text-center">
-            AVAILABLE VERIFICATION CREDITS
-          </span>
-        </div>
+        <StatsCard
+          layout="centered"
+          color="blue"
+          label="AVAILABLE EMI CARDS"
+          value={dashboardLoading ? '...' : (walletMetrics?.emiCards?.available || 0).toLocaleString()}
+          icon={CreditCard}
+        />
+        <StatsCard
+          layout="centered"
+          color="emerald"
+          label="AVAILABLE VERIFICATION CREDITS"
+          value={dashboardLoading ? '...' : (walletMetrics?.verificationCredits?.available || 0).toLocaleString()}
+          icon={ShieldCheck}
+        />
       </div>
 
       {/* 3. Navigation Tabs for Views */}
@@ -990,21 +983,21 @@ const CardsAndCredit = () => {
           </div>
 
           {/* Table */}
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead className="bg-[#F8FAFC] text-gray-600 text-xs uppercase tracking-wider font-semibold border-b border-gray-200/80">
+          <TableWrapper minHeight="360px">
+            <table className="w-full text-left border-collapse min-w-[900px]">
+              <thead className="bg-slate-50/80 border-b border-gray-200/80">
                 <tr>
-                  <th className="py-3.5 px-5 font-semibold">Order ID</th>
-                  <th className="py-3.5 px-5 font-semibold">Type / Units</th>
-                  <th className="py-3.5 px-5 font-semibold">Subtotal</th>
-                  <th className="py-3.5 px-5 font-semibold">GST (18%)</th>
-                  <th className="py-3.5 px-5 font-semibold">Total Amount</th>
-                  <th className="py-3.5 px-5 font-semibold">Status</th>
-                  <th className="py-3.5 px-5 font-semibold">Date</th>
-                  <th className="py-3.5 px-5 font-semibold text-right">Actions</th>
+                  <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">Order ID</th>
+                  <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">Type / Units</th>
+                  <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">Subtotal</th>
+                  <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">GST (18%)</th>
+                  <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">Total Amount</th>
+                  <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">Status</th>
+                  <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">Date</th>
+                  <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100 text-sm">
+              <tbody className="divide-y divide-gray-100 text-[13px]">
                 {historyLoading ? (
                   <tr>
                     <td colSpan={8} className="py-12 text-center text-gray-400">
@@ -1022,11 +1015,11 @@ const CardsAndCredit = () => {
                   purchaseHistoryList.map((po, idx) => {
                     const status = (po.paymentStatus || 'PENDING').toUpperCase();
                     return (
-                      <tr key={po.id || po._id || idx} className="hover:bg-slate-50/70 transition-colors">
-                        <td className="py-3.5 px-5 font-mono font-medium text-gray-900 text-xs">
+                      <tr key={po.id || po._id || idx} className="hover:bg-blue-50/25 transition-colors group">
+                        <td className="py-3.5 px-4 font-mono font-medium text-gray-900 text-xs whitespace-nowrap">
                           {po.orderId || po.id}
                         </td>
-                        <td className="py-3.5 px-5">
+                        <td className="py-3.5 px-4 whitespace-nowrap">
                           <div className="font-semibold text-gray-900 text-xs">
                             {po.purchaseType || 'PURCHASE'}
                           </div>
@@ -1036,17 +1029,17 @@ const CardsAndCredit = () => {
                             {po.verificationQuantity > 0 && `${po.verificationQuantity} Credits`}
                           </div>
                         </td>
-                        <td className="py-3.5 px-5 text-sm font-semibold text-gray-800 tabular-nums">
+                        <td className="py-3.5 px-4 text-xs font-semibold text-gray-800 tabular-nums whitespace-nowrap">
                           ₹{(po.subtotal || 0).toLocaleString()}
                         </td>
-                        <td className="py-3.5 px-5 text-xs text-gray-500 tabular-nums">
+                        <td className="py-3.5 px-4 text-xs text-gray-500 tabular-nums whitespace-nowrap">
                           ₹{((po.cgst || 0) + (po.sgst || 0)).toLocaleString()}
                         </td>
-                        <td className="py-3.5 px-5 font-bold text-gray-900 text-sm tabular-nums">
+                        <td className="py-3.5 px-4 font-bold text-gray-900 text-xs tabular-nums whitespace-nowrap">
                           ₹{(po.total || po.totalAmount || 0).toLocaleString()}
                         </td>
-                        <td className="py-3.5 px-5">
-                          <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[12px] font-semibold border uppercase tracking-wide ${
+                        <td className="py-3.5 px-4 whitespace-nowrap">
+                          <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold border uppercase tracking-wide ${
                             status === 'SUCCESS' 
                               ? 'bg-emerald-50 text-emerald-700 border-emerald-200/60' 
                               : status === 'PENDING'
@@ -1059,13 +1052,13 @@ const CardsAndCredit = () => {
                             {status}
                           </span>
                         </td>
-                        <td className="py-3.5 px-5 text-xs text-gray-500">
+                        <td className="py-3.5 px-4 text-xs text-gray-500 whitespace-nowrap">
                           {po.createdAt ? new Date(po.createdAt).toLocaleDateString('en-GB') : '-'}
                         </td>
-                        <td className="py-3.5 px-5 text-right">
+                        <td className="py-3.5 px-4 text-right whitespace-nowrap">
                           <button
                             onClick={() => setSelectedOrderDetails(po)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-[#225091] bg-[#EAF2FB] hover:bg-[#d8e8f8] border border-[#225091]/15 transition-all shadow-xs"
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-[#225091] bg-[#EAF2FB] hover:bg-[#d8e8f8] border border-[#225091]/15 transition-all shadow-2xs cursor-pointer"
                           >
                             <Eye size={13} /> View Invoice
                           </button>
@@ -1076,7 +1069,7 @@ const CardsAndCredit = () => {
                 )}
               </tbody>
             </table>
-          </div>
+          </TableWrapper>
 
           {/* Pagination */}
           <div className="flex items-center justify-between pt-4 mt-6 border-t border-gray-100">
@@ -1135,20 +1128,20 @@ const CardsAndCredit = () => {
           </div>
 
           {/* Table */}
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead className="bg-[#F8FAFC] text-gray-600 text-xs uppercase tracking-wider font-semibold border-b border-gray-200/80">
+          <TableWrapper minHeight="360px">
+            <table className="w-full text-left border-collapse min-w-[850px]">
+              <thead className="bg-slate-50/80 border-b border-gray-200/80">
                 <tr>
-                  <th className="py-3.5 px-5 font-semibold">Branch</th>
-                  <th className="py-3.5 px-5 font-semibold">EMI Cards</th>
-                  <th className="py-3.5 px-5 font-semibold">Verification Credits</th>
-                  <th className="py-3.5 px-5 font-semibold">Branch Balance (After)</th>
-                  <th className="py-3.5 px-5 font-semibold">Remarks</th>
-                  <th className="py-3.5 px-5 font-semibold">Allocated By</th>
-                  <th className="py-3.5 px-5 font-semibold">Date</th>
+                  <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">Branch</th>
+                  <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">EMI Cards</th>
+                  <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">Verification Credits</th>
+                  <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">Branch Balance (After)</th>
+                  <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">Remarks</th>
+                  <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">Allocated By</th>
+                  <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">Date</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100 text-sm">
+              <tbody className="divide-y divide-gray-100 text-[13px]">
                 {historyLoading ? (
                   <tr>
                     <td colSpan={7} className="py-12 text-center text-gray-400">
@@ -1164,9 +1157,9 @@ const CardsAndCredit = () => {
                   </tr>
                 ) : (
                   transferHistoryList.map((tr, idx) => (
-                    <tr key={tr.id || tr._id || idx} className="hover:bg-slate-50/70 transition-colors">
-                      <td className="py-3.5 px-5">
-                        <div className="font-semibold text-gray-900 text-sm">
+                    <tr key={tr.id || tr._id || idx} className="hover:bg-blue-50/25 transition-colors group">
+                      <td className="py-3.5 px-4 whitespace-nowrap">
+                        <div className="font-semibold text-gray-900 text-xs">
                           {tr.branch?.name || tr.branch || 'Branch'}
                         </div>
                         {tr.branch?.code && (
@@ -1175,23 +1168,23 @@ const CardsAndCredit = () => {
                           </div>
                         )}
                       </td>
-                      <td className="py-3.5 px-5 font-bold text-blue-600 tabular-nums text-sm">
+                      <td className="py-3.5 px-4 font-bold text-blue-600 tabular-nums text-xs whitespace-nowrap">
                         +{tr.emiQuantity || 0}
                       </td>
-                      <td className="py-3.5 px-5 font-bold text-emerald-600 tabular-nums text-sm">
+                      <td className="py-3.5 px-4 font-bold text-emerald-600 tabular-nums text-xs whitespace-nowrap">
                         +{tr.verificationQuantity || 0}
                       </td>
-                      <td className="py-3.5 px-5 text-xs text-gray-600">
+                      <td className="py-3.5 px-4 text-xs text-gray-600 whitespace-nowrap">
                         <div>EMI: {tr.balanceAfter?.availableEmiCards ?? '-'}</div>
                         <div>Credits: {tr.balanceAfter?.availableVerificationCredits ?? '-'}</div>
                       </td>
-                      <td className="py-3.5 px-5 text-xs text-gray-500 max-w-[200px] truncate">
+                      <td className="py-3.5 px-4 text-xs text-gray-500 max-w-[200px] truncate">
                         {tr.remarks || '-'}
                       </td>
-                      <td className="py-3.5 px-5 text-xs text-gray-600 font-medium">
+                      <td className="py-3.5 px-4 text-xs text-gray-600 font-medium whitespace-nowrap">
                         {tr.createdBy?.fullName || tr.createdBy?.email || 'Bank Admin'}
                       </td>
-                      <td className="py-3.5 px-5 text-xs text-gray-500">
+                      <td className="py-3.5 px-4 text-xs text-gray-500 whitespace-nowrap">
                         {tr.createdAt ? new Date(tr.createdAt).toLocaleDateString('en-GB') : '-'}
                       </td>
                     </tr>
@@ -1199,7 +1192,7 @@ const CardsAndCredit = () => {
                 )}
               </tbody>
             </table>
-          </div>
+          </TableWrapper>
 
           {/* Pagination */}
           <div className="flex items-center justify-between pt-4 mt-6 border-t border-gray-100">

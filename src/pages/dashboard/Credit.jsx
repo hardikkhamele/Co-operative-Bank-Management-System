@@ -26,6 +26,8 @@ import PageHeader from "../../components/common/PageHeader";
 import { Skeleton, SkeletonTableRow } from "../../components/common/Skeleton";
 import { isBankOwner, canApproveReceipts } from "../../utils/roleUtils";
 import ReceiptImageUpload from "../../components/common/ReceiptImageUpload";
+import TableWrapper from "../../components/common/TableWrapper";
+import StatsCard from "../../components/common/StatsCard";
 
 const GL_HEAD_OPTIONS = [
   { code: "410105", name: "Loan" },
@@ -812,65 +814,50 @@ const Credit = () => {
       {/* Stats Cards */}
       {stats && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <div
+          <StatsCard
+            layout="centered"
+            label="Total Receipts"
+            value={stats.totalReceipts || 0}
+            color="blue"
+            isActive={!selectedStatus}
             onClick={() => {
               setSelectedStatus("");
               setPage(1);
             }}
-            className={`bg-white rounded-xl p-4 border shadow-sm flex flex-col items-center justify-center cursor-pointer transition-all hover:shadow-md ${!selectedStatus ? "border-[#225091]" : "border-gray-100"}`}
-          >
-            <span className="text-[28px] font-bold text-[#225091] leading-none mb-1">
-              {stats.totalReceipts || 0}
-            </span>
-            <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
-              Total Receipts
-            </span>
-          </div>
-
-          <div
+          />
+          <StatsCard
+            layout="centered"
+            label="Approved Receipts"
+            value={stats.approvedReceipts || 0}
+            color="emerald"
+            isActive={selectedStatus === "APPROVED"}
             onClick={() => {
               setSelectedStatus("APPROVED");
               setPage(1);
             }}
-            className={`bg-white rounded-xl p-4 border shadow-sm flex flex-col items-center justify-center cursor-pointer transition-all hover:shadow-md ${selectedStatus === "APPROVED" ? "border-emerald-500" : "border-gray-100"}`}
-          >
-            <span className="text-[28px] font-bold text-emerald-500 leading-none mb-1">
-              {stats.approvedReceipts || 0}
-            </span>
-            <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
-              Approved Receipts
-            </span>
-          </div>
-
-          <div
+          />
+          <StatsCard
+            layout="centered"
+            label="Pending Receipts"
+            value={stats.pendingReceipts || 0}
+            color="amber"
+            isActive={selectedStatus === "PENDING"}
             onClick={() => {
               setSelectedStatus("PENDING");
               setPage(1);
             }}
-            className={`bg-white rounded-xl p-4 border shadow-sm flex flex-col items-center justify-center cursor-pointer transition-all hover:shadow-md ${selectedStatus === "PENDING" ? "border-amber-500" : "border-gray-100"}`}
-          >
-            <span className="text-[28px] font-bold text-amber-500 leading-none mb-1">
-              {stats.pendingReceipts || 0}
-            </span>
-            <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
-              Pending Receipts
-            </span>
-          </div>
-
-          <div
+          />
+          <StatsCard
+            layout="centered"
+            label="Rejected Receipts"
+            value={stats.rejectedReceipts || 0}
+            color="rose"
+            isActive={selectedStatus === "REJECTED"}
             onClick={() => {
               setSelectedStatus("REJECTED");
               setPage(1);
             }}
-            className={`bg-white rounded-xl p-4 border shadow-sm flex flex-col items-center justify-center cursor-pointer transition-all hover:shadow-md ${selectedStatus === "REJECTED" ? "border-red-500" : "border-gray-100"}`}
-          >
-            <span className="text-[28px] font-bold text-red-500 leading-none mb-1">
-              {stats.rejectedReceipts || 0}
-            </span>
-            <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
-              Rejected Receipts
-            </span>
-          </div>
+          />
         </div>
       )}
 
@@ -1060,31 +1047,31 @@ const Credit = () => {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="overflow-x-auto custom-scrollbar">
+      <div className="bg-white rounded-2xl border border-gray-200/80 shadow-2xs overflow-hidden">
+        <TableWrapper minHeight="360px">
           <table
             ref={tableRef}
-            className="w-full text-left text-sm whitespace-nowrap"
+            className="w-full text-left border-collapse min-w-[1000px]"
           >
-            <thead className="bg-[#F8FAFC] text-gray-600 text-xs uppercase tracking-wider font-semibold border-b border-gray-200/80">
+            <thead className="bg-slate-50/80 border-b border-gray-200/80">
               <tr>
-                <th className="py-3.5 px-5 font-semibold">Sr.No.</th>
-                <th className="py-3.5 px-5 font-semibold">Receipt No</th>
-                <th className="py-3.5 px-5 font-semibold">Name</th>
-                <th className="py-3.5 px-5 font-semibold">GL Head</th>
-                <th className="py-3.5 px-5 font-semibold">GL Head Name</th>
-                <th className="py-3.5 px-5 font-semibold">Account No</th>
-                <th className="py-3.5 px-5 font-semibold">Amount</th>
-                <th className="py-3.5 px-5 font-semibold">Date & Time</th>
-                <th className="py-3.5 px-5 font-semibold">Status</th>
-                <th className="py-3.5 px-5 font-semibold">Branch Name</th>
-                <th className="py-3.5 px-5 font-semibold">City</th>
-                <th className="py-3.5 px-5 font-semibold">State</th>
+                <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap text-center w-16">Sr.No.</th>
+                <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">Receipt No</th>
+                <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">Name</th>
+                <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">GL Head</th>
+                <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">GL Head Name</th>
+                <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">Account No</th>
+                <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">Amount</th>
+                <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">Date & Time</th>
+                <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">Status</th>
+                <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">Branch Name</th>
+                <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">City</th>
+                <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">State</th>
                 {canApprove && (
-                  <th className="py-3.5 px-5 font-semibold text-center">Approve / Reject</th>
+                  <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap text-center">Approve / Reject</th>
                 )}
-                <th className="py-3.5 px-5 font-semibold">Image</th>
-                <th className="py-3.5 px-5 font-semibold text-center">Action</th>
+                <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">Image</th>
+                <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap text-center">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -1298,7 +1285,7 @@ const Credit = () => {
               )}
             </tbody>
           </table>
-        </div>
+        </TableWrapper>
 
         {/* Pagination */}
         <div className="px-6 py-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">

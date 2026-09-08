@@ -36,6 +36,8 @@ import {
 } from "lucide-react";
 import { leadService } from "../../api/leadService";
 import PageHeader from "../../components/common/PageHeader";
+import TableWrapper from "../../components/common/TableWrapper";
+import StatsCard from "../../components/common/StatsCard";
 
 const getStatusBadge = (status) => {
   const normalized = (status || "").toUpperCase();
@@ -672,93 +674,60 @@ const Leads = ({ leadType: propLeadType, systemTitle: propSystemTitle }) => {
           {isCustomerSystem ? (
             /* 1A. Customer System Stats */
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3.5">
-              <div
+              <StatsCard
+                layout="centered"
+                label="Total Leads"
+                value={stats.totalLeads ?? 0}
+                color="blue"
+                loading={loading && stats.totalLeads === 0}
+                isActive={!selectedStatus}
                 onClick={() => handleStatusCardClick("")}
-                className={`bg-white rounded-2xl p-4 border shadow-xs flex flex-col items-center justify-center cursor-pointer transition-all hover:shadow-md ${!selectedStatus ? "border-[#225091] ring-2 ring-[#225091]/20 bg-blue-50/20" : "border-gray-100 hover:border-gray-200"}`}
-              >
-                <span className="text-2xl font-black text-[#225091] leading-none mb-1">
-                  {loading && stats.totalLeads === 0 ? <Loader2 size={20} className="animate-spin text-[#225091]/50" /> : (stats.totalLeads ?? 0)}
-                </span>
-                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider text-center">
-                  Total Leads
-                </span>
-              </div>
-
-              <div
+              />
+              <StatsCard
+                layout="centered"
+                label="Pending Approval"
+                value={stats.pendingLeads ?? 0}
+                color="amber"
+                loading={loading && stats.totalLeads === 0}
+                isActive={selectedStatus === "PENDING_APPROVAL"}
                 onClick={() => handleStatusCardClick("PENDING_APPROVAL")}
-                className={`bg-white rounded-2xl p-4 border shadow-xs flex flex-col items-center justify-center cursor-pointer transition-all hover:shadow-md ${selectedStatus === "PENDING_APPROVAL" ? "border-amber-500 ring-2 ring-amber-500/20 bg-amber-50/30" : "border-gray-100 hover:border-amber-200"}`}
-              >
-                <span className="text-2xl font-black text-amber-600 leading-none mb-1">
-                  {loading && stats.totalLeads === 0 ? <Loader2 size={20} className="animate-spin text-amber-500/50" /> : (stats.pendingLeads ?? 0)}
-                </span>
-                <span className="text-[10px] font-bold text-amber-700 uppercase tracking-wider text-center">
-                  Pending Approval
-                </span>
-                {selectedStatus === "PENDING_APPROVAL" && (
-                  <span className="text-[9px] text-amber-600 font-semibold mt-0.5">Active Filter (click to clear)</span>
-                )}
-              </div>
-
-              <div
+              />
+              <StatsCard
+                layout="centered"
+                label="Approved"
+                value={stats.approvedLeads ?? 0}
+                color="emerald"
+                loading={loading && stats.totalLeads === 0}
+                isActive={selectedStatus === "APPROVED"}
                 onClick={() => handleStatusCardClick("APPROVED")}
-                className={`bg-white rounded-2xl p-4 border shadow-xs flex flex-col items-center justify-center cursor-pointer transition-all hover:shadow-md ${selectedStatus === "APPROVED" ? "border-emerald-500 ring-2 ring-emerald-500/20 bg-emerald-50/30" : "border-gray-100 hover:border-emerald-200"}`}
-              >
-                <span className="text-2xl font-black text-emerald-600 leading-none mb-1">
-                  {loading && stats.totalLeads === 0 ? <Loader2 size={20} className="animate-spin text-emerald-500/50" /> : (stats.approvedLeads ?? 0)}
-                </span>
-                <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider text-center">
-                  Approved
-                </span>
-                {selectedStatus === "APPROVED" && (
-                  <span className="text-[9px] text-emerald-600 font-semibold mt-0.5">Active Filter (click to clear)</span>
-                )}
-              </div>
-
-              <div
+              />
+              <StatsCard
+                layout="centered"
+                label="Active"
+                value={stats.activeLeads ?? 0}
+                color="cyan"
+                loading={loading && stats.totalLeads === 0}
+                isActive={selectedStatus === "ACTIVE"}
                 onClick={() => handleStatusCardClick("ACTIVE")}
-                className={`bg-white rounded-2xl p-4 border shadow-xs flex flex-col items-center justify-center cursor-pointer transition-all hover:shadow-md ${selectedStatus === "ACTIVE" ? "border-cyan-500 ring-2 ring-cyan-500/20 bg-cyan-50/30" : "border-gray-100 hover:border-cyan-200"}`}
-              >
-                <span className="text-2xl font-black text-cyan-600 leading-none mb-1">
-                  {loading && stats.totalLeads === 0 ? <Loader2 size={20} className="animate-spin text-cyan-500/50" /> : (stats.activeLeads ?? 0)}
-                </span>
-                <span className="text-[10px] font-bold text-cyan-700 uppercase tracking-wider text-center">
-                  Active
-                </span>
-                {selectedStatus === "ACTIVE" && (
-                  <span className="text-[9px] text-cyan-600 font-semibold mt-0.5">Active Filter (click to clear)</span>
-                )}
-              </div>
-
-              <div
+              />
+              <StatsCard
+                layout="centered"
+                label="Completed"
+                value={stats.completedLeads ?? 0}
+                color="indigo"
+                loading={loading && stats.totalLeads === 0}
+                isActive={selectedStatus === "COMPLETED"}
                 onClick={() => handleStatusCardClick("COMPLETED")}
-                className={`bg-white rounded-2xl p-4 border shadow-xs flex flex-col items-center justify-center cursor-pointer transition-all hover:shadow-md ${selectedStatus === "COMPLETED" ? "border-indigo-500 ring-2 ring-indigo-500/20 bg-indigo-50/30" : "border-gray-100 hover:border-indigo-200"}`}
-              >
-                <span className="text-2xl font-black text-indigo-600 leading-none mb-1">
-                  {loading && stats.totalLeads === 0 ? <Loader2 size={20} className="animate-spin text-indigo-500/50" /> : (stats.completedLeads ?? 0)}
-                </span>
-                <span className="text-[10px] font-bold text-indigo-700 uppercase tracking-wider text-center">
-                  Completed
-                </span>
-                {selectedStatus === "COMPLETED" && (
-                  <span className="text-[9px] text-indigo-600 font-semibold mt-0.5">Active Filter (click to clear)</span>
-                )}
-              </div>
-
-              <div
+              />
+              <StatsCard
+                layout="centered"
+                label="Rejected"
+                value={stats.rejectedLeads ?? 0}
+                color="rose"
+                loading={loading && stats.totalLeads === 0}
+                isActive={selectedStatus === "REJECTED"}
                 onClick={() => handleStatusCardClick("REJECTED")}
-                className={`bg-white rounded-2xl p-4 border shadow-xs flex flex-col items-center justify-center cursor-pointer transition-all hover:shadow-md ${selectedStatus === "REJECTED" ? "border-rose-500 ring-2 ring-rose-500/20 bg-rose-50/30" : "border-gray-100 hover:border-rose-200"}`}
-              >
-                <span className="text-2xl font-black text-rose-600 leading-none mb-1">
-                  {loading && stats.totalLeads === 0 ? <Loader2 size={20} className="animate-spin text-rose-500/50" /> : (stats.rejectedLeads ?? 0)}
-                </span>
-                <span className="text-[10px] font-bold text-rose-700 uppercase tracking-wider text-center">
-                  Rejected
-                </span>
-                {selectedStatus === "REJECTED" && (
-                  <span className="text-[9px] text-rose-600 font-semibold mt-0.5">Active Filter (click to clear)</span>
-                )}
-              </div>
-
+              />
               <div className="bg-gradient-to-tr from-[#1b58a6] to-[#2563eb] rounded-2xl p-4 shadow-sm flex flex-col items-center justify-center text-white">
                 <span className="text-xl font-black leading-none mb-1">
                   {loading && stats.totalLeads === 0 ? <Loader2 size={18} className="animate-spin text-white/70" /> : `₹${Number(stats.totalBusinessVolume || 0).toLocaleString('en-IN')}`}
@@ -771,72 +740,53 @@ const Leads = ({ leadType: propLeadType, systemTitle: propSystemTitle }) => {
           ) : isMerchantSystem ? (
             /* 2A. Merchant System Stats */
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5">
-              <div
+              <StatsCard
+                layout="centered"
+                label="Total Leads"
+                value={stats.totalLeads ?? 0}
+                color="purple"
+                loading={loading && stats.totalLeads === 0}
+                isActive={!selectedStatus}
                 onClick={() => handleStatusCardClick("")}
-                className={`bg-white rounded-2xl p-4 border shadow-xs flex flex-col items-center justify-center cursor-pointer transition-all hover:shadow-md ${!selectedStatus ? "border-[#7c3aed] ring-2 ring-[#7c3aed]/20 bg-purple-50/20" : "border-gray-100 hover:border-purple-200"}`}
-              >
-                <span className="text-2xl font-black text-[#7c3aed] leading-none mb-1">
-                  {loading && stats.totalLeads === 0 ? <Loader2 size={20} className="animate-spin text-[#7c3aed]/50" /> : (stats.totalLeads ?? 0)}
-                </span>
-                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider text-center">
-                  Total Leads
-                </span>
-              </div>
-
-              <div
+              />
+              <StatsCard
+                layout="centered"
+                label="Pending Settlement"
+                value={stats.pendingSettlementLeads ?? 0}
+                sublabel={`₹${Number(stats.pendingSettlementAmount || 0).toLocaleString('en-IN')}`}
+                color="amber"
+                loading={loading && stats.totalLeads === 0}
+                isActive={selectedStatus === "PENDING_BRANCH_PAYMENT"}
                 onClick={() => handleStatusCardClick("PENDING_BRANCH_PAYMENT")}
-                className={`bg-white rounded-2xl p-4 border shadow-xs flex flex-col items-center justify-center cursor-pointer transition-all hover:shadow-md ${selectedStatus === "PENDING_BRANCH_PAYMENT" ? "border-orange-500 ring-2 ring-orange-500/20 bg-orange-50/30" : "border-gray-100 hover:border-orange-200"}`}
-              >
-                <span className="text-2xl font-black text-orange-600 leading-none mb-1">
-                  {loading && stats.totalLeads === 0 ? <Loader2 size={20} className="animate-spin text-orange-500/50" /> : (stats.pendingSettlementLeads ?? 0)}
-                </span>
-                <span className="text-[10px] font-bold text-orange-700 uppercase tracking-wider text-center">
-                  Pending Settlement
-                </span>
-                <span className="text-[10px] text-orange-500 font-semibold mt-0.5">
-                  ₹{Number(stats.pendingSettlementAmount || 0).toLocaleString('en-IN')}
-                </span>
-              </div>
-
-              <div
+              />
+              <StatsCard
+                layout="centered"
+                label="Settled Leads"
+                value={stats.settledLeads ?? 0}
+                sublabel={`₹${Number(stats.totalSettledAmount || 0).toLocaleString('en-IN')}`}
+                color="teal"
+                loading={loading && stats.totalLeads === 0}
+                isActive={selectedStatus === "SETTLED_BY_BRANCH" || selectedStatus === "SETTLED"}
                 onClick={() => handleStatusCardClick("SETTLED_BY_BRANCH")}
-                className={`bg-white rounded-2xl p-4 border shadow-xs flex flex-col items-center justify-center cursor-pointer transition-all hover:shadow-md ${selectedStatus === "SETTLED_BY_BRANCH" || selectedStatus === "SETTLED" ? "border-teal-500 ring-2 ring-teal-500/20 bg-teal-50/30" : "border-gray-100 hover:border-teal-200"}`}
-              >
-                <span className="text-2xl font-black text-teal-600 leading-none mb-1">
-                  {loading && stats.totalLeads === 0 ? <Loader2 size={20} className="animate-spin text-teal-500/50" /> : (stats.settledLeads ?? 0)}
-                </span>
-                <span className="text-[10px] font-bold text-teal-700 uppercase tracking-wider text-center">
-                  Settled Leads
-                </span>
-                <span className="text-[10px] text-teal-600 font-semibold mt-0.5">
-                  ₹{Number(stats.totalSettledAmount || 0).toLocaleString('en-IN')}
-                </span>
-              </div>
-
-              <div
+              />
+              <StatsCard
+                layout="centered"
+                label="Approved"
+                value={stats.approvedLeads ?? 0}
+                color="emerald"
+                loading={loading && stats.totalLeads === 0}
+                isActive={selectedStatus === "APPROVED"}
                 onClick={() => handleStatusCardClick("APPROVED")}
-                className={`bg-white rounded-2xl p-4 border shadow-xs flex flex-col items-center justify-center cursor-pointer transition-all hover:shadow-md ${selectedStatus === "APPROVED" ? "border-emerald-500 ring-2 ring-emerald-500/20 bg-emerald-50/30" : "border-gray-100 hover:border-emerald-200"}`}
-              >
-                <span className="text-2xl font-black text-emerald-600 leading-none mb-1">
-                  {loading && stats.totalLeads === 0 ? <Loader2 size={20} className="animate-spin text-emerald-500/50" /> : (stats.approvedLeads ?? 0)}
-                </span>
-                <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider text-center">
-                  Approved
-                </span>
-              </div>
-
-              <div
+              />
+              <StatsCard
+                layout="centered"
+                label="Active"
+                value={stats.activeLeads ?? 0}
+                color="cyan"
+                loading={loading && stats.totalLeads === 0}
+                isActive={selectedStatus === "ACTIVE"}
                 onClick={() => handleStatusCardClick("ACTIVE")}
-                className={`bg-white rounded-2xl p-4 border shadow-xs flex flex-col items-center justify-center cursor-pointer transition-all hover:shadow-md ${selectedStatus === "ACTIVE" ? "border-cyan-500 ring-2 ring-cyan-500/20 bg-cyan-50/30" : "border-gray-100 hover:border-cyan-200"}`}
-              >
-                <span className="text-2xl font-black text-cyan-600 leading-none mb-1">
-                  {loading && stats.totalLeads === 0 ? <Loader2 size={20} className="animate-spin text-cyan-500/50" /> : (stats.activeLeads ?? 0)}
-                </span>
-                <span className="text-[10px] font-bold text-cyan-700 uppercase tracking-wider text-center">
-                  Active
-                </span>
-              </div>
-
+              />
               <div className="bg-gradient-to-tr from-[#6b21a8] to-[#9333ea] rounded-2xl p-4 shadow-sm flex flex-col items-center justify-center text-white">
                 <span className="text-xl font-black leading-none mb-1">
                   {loading && stats.totalLeads === 0 ? <Loader2 size={18} className="animate-spin text-white/70" /> : `₹${Number(stats.totalBusinessVolume || 0).toLocaleString('en-IN')}`}
@@ -1036,41 +986,41 @@ const Leads = ({ leadType: propLeadType, systemTitle: propSystemTitle }) => {
       </div>
 
       {/* Main Table Card */}
-      <div className="bg-white rounded-2xl shadow-xs border border-gray-100 overflow-hidden">
-        <div className="overflow-x-auto">
+      <div className="bg-white rounded-2xl shadow-2xs border border-gray-200/80 overflow-hidden">
+        <TableWrapper minHeight="360px">
           <table
             ref={tableRef}
             className="w-full text-left border-collapse min-w-[1000px]"
           >
-            <thead className="bg-[#F8FAFC] text-gray-600 text-xs uppercase tracking-wider font-semibold border-b border-gray-200/80">
+            <thead className="bg-slate-50/80 border-b border-gray-200/80">
               <tr>
-                <th className="py-3.5 px-4 font-semibold">Sr.No.</th>
-                <th className="py-3.5 px-4 font-semibold">Application / Loan ID</th>
-                <th className="py-3.5 px-4 font-semibold">Customer & Contact</th>
+                <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap text-center w-16">Sr.No.</th>
+                <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">Application / Loan ID</th>
+                <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">Customer & Contact</th>
                 {isMerchantSystem ? (
                   <>
-                    <th className="py-3.5 px-4 font-semibold">Merchant / Store</th>
-                    <th className="py-3.5 px-4 font-semibold">Product & Price</th>
-                    <th className="py-3.5 px-4 font-semibold">Loan Amount</th>
-                    <th className="py-3.5 px-4 font-semibold">Settlement Status</th>
+                    <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">Merchant / Store</th>
+                    <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">Product & Price</th>
+                    <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">Loan Amount</th>
+                    <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">Settlement Status</th>
                   </>
                 ) : isCustomerSystem ? (
                   <>
-                    <th className="py-3.5 px-4 font-semibold">Product & IMEI</th>
-                    <th className="py-3.5 px-4 font-semibold">Financials & EMI</th>
-                    <th className="py-3.5 px-4 font-semibold">KYC Photos</th>
-                    <th className="py-3.5 px-4 font-semibold">Status</th>
+                    <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">Product & IMEI</th>
+                    <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">Financials & EMI</th>
+                    <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">KYC Photos</th>
+                    <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">Status</th>
                   </>
                 ) : (
                   <>
-                    <th className="py-3.5 px-4 font-semibold">Phone Number</th>
-                    <th className="py-3.5 px-4 font-semibold">Status</th>
+                    <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">Phone Number</th>
+                    <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">Status</th>
                   </>
                 )}
-                <th className="py-3.5 px-4 font-semibold text-center min-w-[210px] whitespace-nowrap">Actions</th>
+                <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap text-center min-w-[210px]">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100 text-xs">
+            <tbody className="divide-y divide-gray-100">
               {loading ? (
                 <tr>
                   <td colSpan={isCustomerSystem || isMerchantSystem ? "8" : "5"} className="py-16 text-center text-gray-500">
@@ -1417,7 +1367,7 @@ const Leads = ({ leadType: propLeadType, systemTitle: propSystemTitle }) => {
               )}
             </tbody>
           </table>
-        </div>
+        </TableWrapper>
 
         {/* Integrated Pagination Bar */}
         {!loading && meta.totalRecords > 0 && (

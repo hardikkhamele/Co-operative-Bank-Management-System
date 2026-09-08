@@ -43,6 +43,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'react-toastify';
 import PageHeader from '../../components/common/PageHeader';
+import TableWrapper from '../../components/common/TableWrapper';
 import { verificationService } from '../../api/verificationService';
 import { validatePAN, sanitizePAN } from '../../utils/validation';
 import { Skeleton } from '../../components/common/Skeleton';
@@ -1307,32 +1308,32 @@ const CheckCibilScore = () => {
 
           {/* History Data Table */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
-            <div className="overflow-x-auto">
+            <TableWrapper minHeight="360px">
               <table ref={historyTableRef} className="w-full text-left border-collapse min-w-[900px]">
-                <thead className="bg-[#F8FAFC] text-gray-600 text-xs uppercase tracking-wider font-semibold border-b border-gray-200/80">
+                <thead className="bg-slate-50/80 border-b border-gray-200/80">
                   <tr>
-                    <th className="py-3.5 px-5 font-semibold">Sr.No.</th>
-                    <th className="py-3.5 px-5 font-semibold">Applicant Name</th>
-                    <th className="py-3.5 px-5 font-semibold">PAN Card</th>
-                    <th className="py-3.5 px-5 font-semibold">Mobile</th>
-                    <th className="py-3.5 px-5 font-semibold">Status</th>
-                    <th className="py-3.5 px-5 font-semibold">Requested By</th>
-                    <th className="py-3.5 px-5 font-semibold">Checked On</th>
-                    <th className="py-3.5 px-5 font-semibold text-center">Action</th>
+                    <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap text-center w-16">Sr.No.</th>
+                    <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">Applicant Name</th>
+                    <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">PAN Card</th>
+                    <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">Mobile</th>
+                    <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">Status</th>
+                    <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">Requested By</th>
+                    <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">Checked On</th>
+                    <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap text-center">Action</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100">
+                <tbody className="divide-y divide-gray-100 text-[13px]">
                   {historyLoading ? (
                     Array.from({ length: 5 }).map((_, rIdx) => (
                       <tr key={rIdx} className="animate-pulse">
-                        <td className="py-4 px-5"><Skeleton className="h-4 w-6 rounded" /></td>
-                        <td className="py-4 px-5"><Skeleton className="h-4 w-32 rounded" /></td>
-                        <td className="py-4 px-5"><Skeleton className="h-4 w-24 rounded" /></td>
-                        <td className="py-4 px-5"><Skeleton className="h-3.5 w-24 rounded" /></td>
-                        <td className="py-4 px-5"><Skeleton className="h-6 w-16 rounded-full" /></td>
-                        <td className="py-4 px-5"><Skeleton className="h-3.5 w-28 rounded" /></td>
-                        <td className="py-4 px-5"><Skeleton className="h-3.5 w-20 rounded" /></td>
-                        <td className="py-4 px-5"><Skeleton className="h-6 w-16 rounded-lg mx-auto" /></td>
+                        <td className="py-3.5 px-4 text-center"><Skeleton className="h-4 w-6 mx-auto rounded" /></td>
+                        <td className="py-3.5 px-4"><Skeleton className="h-4 w-32 rounded" /></td>
+                        <td className="py-3.5 px-4"><Skeleton className="h-4 w-24 rounded" /></td>
+                        <td className="py-3.5 px-4"><Skeleton className="h-3.5 w-24 rounded" /></td>
+                        <td className="py-3.5 px-4"><Skeleton className="h-6 w-16 rounded-full" /></td>
+                        <td className="py-3.5 px-4"><Skeleton className="h-3.5 w-28 rounded" /></td>
+                        <td className="py-3.5 px-4"><Skeleton className="h-3.5 w-20 rounded" /></td>
+                        <td className="py-3.5 px-4"><Skeleton className="h-6 w-16 rounded-lg mx-auto" /></td>
                       </tr>
                     ))
                   ) : historyList && historyList.length > 0 ? (
@@ -1342,20 +1343,20 @@ const CheckCibilScore = () => {
                       const formattedDate = item.createdAt ? new Date(item.createdAt).toLocaleDateString('en-GB') : '—';
 
                       return (
-                        <tr key={reportId || idx} className="hover:bg-slate-50/70 transition-colors group">
-                          <td className="py-3.5 px-5 text-[13px] text-gray-500 font-medium">{srNo}</td>
-                          <td className="py-3.5 px-5">
-                            <span className="text-sm font-semibold text-gray-900 block">{item.fullName || '—'}</span>
+                        <tr key={reportId || idx} className="hover:bg-blue-50/25 transition-colors group">
+                          <td className="py-3.5 px-4 text-center font-bold text-gray-500 text-xs whitespace-nowrap">{srNo}</td>
+                          <td className="py-3.5 px-4 whitespace-nowrap">
+                            <span className="text-xs font-semibold text-gray-900 block">{item.fullName || '—'}</span>
                             {item.requestId && <span className="text-[10px] text-gray-400 font-mono">REQ: {item.requestId.slice(0, 12)}...</span>}
                           </td>
-                          <td className="py-3.5 px-5 font-mono font-bold text-xs text-gray-800 uppercase">{item.pan || '—'}</td>
-                          <td className="py-3.5 px-5 font-mono text-xs text-gray-600">{item.mobileNumber || item.mobile || '—'}</td>
-                          <td className="py-3.5 px-5">{getStatusBadge(item.status)}</td>
-                          <td className="py-3.5 px-5 text-xs text-gray-700 font-medium">
+                          <td className="py-3.5 px-4 font-mono font-bold text-xs text-gray-800 uppercase whitespace-nowrap">{item.pan || '—'}</td>
+                          <td className="py-3.5 px-4 font-mono text-xs text-gray-600 whitespace-nowrap">{item.mobileNumber || item.mobile || '—'}</td>
+                          <td className="py-3.5 px-4 whitespace-nowrap">{getStatusBadge(item.status)}</td>
+                          <td className="py-3.5 px-4 text-xs text-gray-700 font-medium whitespace-nowrap">
                             {item.requestedBy?.fullName || item.requestedBy?.email || 'System'}
                           </td>
-                          <td className="py-3.5 px-5 text-xs text-gray-500">{formattedDate}</td>
-                          <td className="py-3.5 px-5">
+                          <td className="py-3.5 px-4 text-xs text-gray-500 whitespace-nowrap">{formattedDate}</td>
+                          <td className="py-3.5 px-4 whitespace-nowrap">
                             <div className="flex items-center justify-center gap-1.5">
                               <button
                                 onClick={() => handleOpenDetail(reportId)}
@@ -1396,7 +1397,7 @@ const CheckCibilScore = () => {
                   )}
                 </tbody>
               </table>
-            </div>
+            </TableWrapper>
 
             {/* Pagination */}
             {!historyLoading && historyList && historyList.length > 0 && (
