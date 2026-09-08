@@ -626,10 +626,10 @@ const DashboardLayout = () => {
                 onClick={() => setIsProfileOpen(!isProfileOpen)}
                 className="flex items-center gap-2 bg-white/90 text-text-heading py-1.5 px-2 pr-3 rounded-full cursor-pointer hover:bg-white transition-colors shadow-sm"
               >
-                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gray-200 overflow-hidden border border-gray-100 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-full bg-gray-200 overflow-hidden border border-gray-100 flex items-center justify-center">
                   <img src={userAvatar} alt={userName} className="w-full h-full object-cover" />
                 </div>
-                <span className="text-xs sm:text-sm font-medium hidden xs:inline">{userName.split(' ')[0]}</span>
+                <span className="text-sm font-medium">{userName.split(' ')[0]}</span>
                 <ChevronDown size={14} className={`text-text-muted transition-transform ${isProfileOpen ? 'rotate-180' : ''}`} />
               </div>
 
@@ -657,7 +657,7 @@ const DashboardLayout = () => {
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-y-auto bg-bg-page p-3.5 sm:p-6 relative">
+        <main className="flex-1 overflow-y-auto bg-bg-page p-2 sm:p-3 relative">
           
           
           <GlobalLoader />

@@ -235,6 +235,13 @@ const Dashboard = () => {
       icon: <Users size={20} />,
       path: '/employees'
     },
+    {
+      title: 'Society Inventory',
+      value: 'View Status',
+      change: 'Active Systems',
+      icon: <Landmark size={20} />,
+      path: '/inventory'
+    }
   ];
 
   return (

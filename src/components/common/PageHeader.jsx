@@ -37,67 +37,55 @@ export const PageHeader = ({
   };
 
   return (
-    <div className={`bg-white rounded-xl shadow-sm border border-gray-100 p-6 shrink-0 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 ${className}`}>
-      {/* Left: Title with inline back button & Breadcrumbs */}
-      <div>
-        <div className="flex flex-wrap items-center gap-3 mb-1.5">
-          {showBack && (
-            <button
-              type="button"
-              onClick={handleBack}
-              aria-label="Go back"
-              title="Go back"
-              className="group inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl border border-gray-200/90 bg-white hover:border-[#225091]/40 hover:bg-[#225091]/5 text-gray-700 hover:text-[#225091] active:scale-95 transition-all duration-200 shadow-2xs font-semibold text-xs sm:text-sm shrink-0 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#225091]/20"
-            >
-              <ArrowLeft size={16} className="transition-transform duration-200 group-hover:-translate-x-0.5 text-[#225091]" />
-              <span>Back</span>
-            </button>
-          )}
-          <h1 className="text-[22px] font-bold text-[#225091] leading-tight">
+    <div className={`bg-white rounded-xl shadow-sm border border-gray-100 px-4 py-2 shrink-0 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 ${className}`}>
+      {/* Left: Back Button, Title & Breadcrumbs */}
+      <div className="flex items-start gap-3">
+        {showBack && (
+          <button
+            type="button"
+            onClick={handleBack}
+            className="mt-1 p-1.5 rounded-full hover:bg-gray-100 text-gray-600 transition-colors cursor-pointer shrink-0"
+            title="Go Back"
+          >
+            <ArrowLeft size={20} />
+          </button>
+        )}
+        <div>
+          <h1 className="text-[20px] font-bold text-[#225091] mb-1.5 leading-tight">
             {title}
           </h1>
+  
+          {breadcrumbs && breadcrumbs.length > 0 && (
+            <div className="flex items-center text-[13px] font-medium text-gray-500 flex-wrap gap-y-1">
+              {breadcrumbs.map((crumb, index) => {
+                const isLast = index === breadcrumbs.length - 1;
+                return (
+                  <React.Fragment key={crumb.label || index}>
+                    {crumb.to && !isLast ? (
+                      <Link
+                        to={crumb.to}
+                        className="hover:text-gray-800 transition-colors cursor-pointer"
+                      >
+                        {crumb.label}
+                      </Link>
+                    ) : (
+                      <span className={isLast ? "text-[#225091]" : "hover:text-gray-800"}>
+                        {crumb.label}
+                      </span>
+                    )}
+                    {!isLast && <ChevronRight size={14} className="mx-1 text-gray-400 shrink-0" />}
+                  </React.Fragment>
+                );
+              })}
+            </div>
+          )}
         </div>
-
-        {breadcrumbs && breadcrumbs.length > 0 && (
-          <div className="flex items-center text-[13px] font-medium text-gray-500 flex-wrap gap-y-1 mt-1">
-            <button
-              onClick={handleBack}
-              className="group mr-2.5 flex items-center justify-center text-[#225091] hover:text-white hover:bg-[#225091] rounded-full transition-all duration-300 cursor-pointer shrink-0 overflow-hidden px-1.5 py-1.5"
-              type="button"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-arrow-left-circle shrink-0"><circle cx="12" cy="12" r="10"/><path d="M16 12H8"/><path d="m12 8-4 4 4 4"/></svg>
-              <span className="max-w-0 overflow-hidden whitespace-nowrap opacity-0 group-hover:max-w-[50px] group-hover:opacity-100 group-hover:ml-1.5 group-hover:mr-1 transition-all duration-300 ease-in-out font-medium text-[13px]">Back</span>
-            </button>
-            {breadcrumbs.map((crumb, index) => {
-              const isLast = index === breadcrumbs.length - 1;
-              return (
-                <React.Fragment key={crumb.label || index}>
-                  {crumb.to && !isLast ? (
-                    <Link
-                      to={crumb.to}
-                      className="hover:text-gray-800 transition-colors cursor-pointer"
-                    >
-                      {crumb.label}
-                    </Link>
-                  ) : (
-                    <span className={isLast ? "text-[#225091]" : "hover:text-gray-800"}>
-                      {crumb.label}
-                    </span>
-                  )}
-                  {!isLast && <ChevronRight size={14} className="mx-1 text-gray-400 shrink-0" />}
-                </React.Fragment>
-              );
-            })}
-          </div>
-        )}
       </div>
 
       {/* Right: Actions */}
-      {children && (
-        <div className="flex flex-wrap items-center gap-3 self-start sm:self-center">
-          {children}
-        </div>
-      )}
+      <div className="flex flex-wrap items-center gap-3 self-start sm:self-center">
+        {children}
+      </div>
     </div>
   );
 };

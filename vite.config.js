@@ -26,21 +26,12 @@ export default defineConfig(({ mode }) => {
           configure: (proxy) => {
             proxy.on('proxyReq', (proxyReq, req) => {
               proxyReq.removeHeader('origin');
-              // Strip oversized localhost cookie headers to prevent HTTP header overflow
-              if (req.headers && req.headers.cookie && req.headers.cookie.length > 2048) {
-                proxyReq.removeHeader('cookie');
-              }
+              proxyReq.removeHeader('referer');
             });
-            proxy.on('error', (err, req, res) => {
-              console.warn('Vite proxy warning:', err.message);
-              if (res && !res.headersSent) {
-                res.writeHead(502, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({
-                  success: false,
-                  statusCode: 502,
-                  message: 'The remote backend server (devapi.advitacredit.com) is temporarily unreachable. Please retry.'
-                }));
-              }
+            proxy.on('proxyRes', (proxyRes, req, res) => {
+              res.setHeader('Access-Control-Allow-Origin', '*');
+              res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+              res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With, content-type, Authorization');
             });
           }
         }

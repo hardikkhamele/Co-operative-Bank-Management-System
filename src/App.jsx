@@ -250,6 +250,8 @@ function App() {
               {/* Inventory */}
               <Route element={<PermissionRoute permission="inventory.view" />}>
                 <Route path="inventory" element={<Inventory />} />
+                <Route path="inventory/:tab" element={<Inventory />} />
+                <Route path="inventory/:tab/:subtab" element={<Inventory />} />
                 <Route path="inventory/create" element={<CreateInventory />} />
                 <Route path="inventory/edit" element={<EditInventory />} />
                 <Route path="inventory/edit/:id" element={<EditInventory />} />
