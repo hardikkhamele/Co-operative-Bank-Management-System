@@ -28,7 +28,7 @@ const SidebarAccordionContext = createContext({
 
 const SidebarGroup = ({ title, children, icon: Icon }) => {
   const location = useLocation();
-  const { openGroup, toggleGroup, setOpenGroup, isDesktopSidebarOpen, setHoverTooltip } = useContext(SidebarAccordionContext);
+  const { openGroup, toggleGroup, setOpenGroup } = useContext(SidebarAccordionContext);
   // Filter out any false/null/undefined children and unpack any Fragment
   const validChildren = flattenChildren(children).filter(Boolean);
 
@@ -59,13 +59,6 @@ const SidebarGroup = ({ title, children, icon: Icon }) => {
     <div className="mb-1">
       <div 
         onClick={() => toggleGroup(title)}
-        onMouseEnter={(e) => {
-          if (!isDesktopSidebarOpen) {
-            const rect = e.currentTarget.getBoundingClientRect();
-            setHoverTooltip({ text: title, top: rect.top + rect.height / 2 });
-          }
-        }}
-        onMouseLeave={() => setHoverTooltip(null)}
         role="button"
         tabIndex={0}
         onKeyDown={(e) => {
@@ -86,9 +79,9 @@ const SidebarGroup = ({ title, children, icon: Icon }) => {
               : 'border-transparent hover:bg-brand-surface'
         }`}
       >
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5 min-w-0 flex-1 mr-2">
           {hasActiveChild && !isOpen && (
-            <span className="w-2 h-2 rounded-full bg-brand-primary animate-pulse" title="Active module" />
+            <span className="w-2 h-2 rounded-full bg-brand-primary animate-pulse shrink-0" title="Active module" />
           )}
           {Icon && (
             <Icon 
@@ -96,9 +89,9 @@ const SidebarGroup = ({ title, children, icon: Icon }) => {
               className={`shrink-0 ${hasActiveChild ? 'text-brand-primary' : isOpen ? 'text-text-heading' : 'text-text-muted'}`} 
             />
           )}
-          <h3 className={`text-[14px] transition-all duration-200 m-0 select-none whitespace-nowrap ${
-            !isDesktopSidebarOpen ? 'lg:w-0 lg:opacity-0 lg:overflow-hidden' : ''
-          } ${
+          <h3 
+            title={title}
+            className={`text-[14px] transition-all duration-200 m-0 select-none truncate ${
             hasActiveChild 
               ? 'font-bold text-brand-primary' 
               : isOpen 
@@ -110,9 +103,7 @@ const SidebarGroup = ({ title, children, icon: Icon }) => {
         </div>
         <ChevronDown 
           size={16} 
-          className={`shrink-0 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${
-            !isDesktopSidebarOpen ? 'lg:w-0 lg:opacity-0 lg:overflow-hidden' : ''
-          } ${
+          className={`shrink-0 ml-auto transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${
             hasActiveChild 
               ? 'text-brand-primary' 
               : 'text-text-muted'
@@ -255,7 +246,6 @@ const DashboardLayout = () => {
     hasAnyPermission(['help_support.view', 'settings.view']);
 
   const [openGroup, setOpenGroup] = useState(null);
-  const [hoverTooltip, setHoverTooltip] = useState(null);
 
   const toggleGroup = useCallback((title) => {
     setOpenGroup((prev) => (prev === title ? null : title));
@@ -277,11 +267,11 @@ const DashboardLayout = () => {
           isMobileMenuOpen ? 'w-[260px] translate-x-0' : '-translate-x-full lg:translate-x-0'
         } ${
           isDesktopSidebarOpen
-            ? 'lg:w-[236px] lg:opacity-100'
-            : 'lg:w-[76px] lg:opacity-100'
+            ? 'lg:w-[260px] lg:opacity-100 lg:visible'
+            : 'lg:w-0 lg:opacity-0 lg:invisible lg:border-none lg:p-0 lg:overflow-hidden'
         }`}
       >
-        <div className={`w-[260px] ${isDesktopSidebarOpen ? "lg:w-[236px]" : "lg:w-[76px]"} h-full flex flex-col shrink-0 min-h-0`}>
+        <div className="w-[260px] h-full flex flex-col shrink-0 min-h-0">
           {/* Logo Area */}
         <div className="h-[76px] flex items-center justify-between px-4 border-b border-border-divider shrink-0 overflow-hidden">
           <div className="flex items-center gap-3">
@@ -294,7 +284,7 @@ const DashboardLayout = () => {
               <span className="text-[4px] font-bold text-[#1b58a6] mt-0.5 whitespace-nowrap">ADVITA CREDIT</span>
             </div>
             {/* Logo Text */}
-            <div className={`flex flex-col text-[#1b58a6] transition-all duration-200 ${!isDesktopSidebarOpen ? "lg:w-0 lg:opacity-0 lg:overflow-hidden" : ""}`}>
+            <div className="flex flex-col text-[#1b58a6]">
               <span className="font-extrabold text-[17px] leading-tight tracking-wide whitespace-nowrap">ADVITA CREDIT</span>
               <span className="font-bold text-[10px] leading-tight tracking-wide whitespace-nowrap">INFO PRIVATE LIMITED</span>
             </div>
@@ -311,26 +301,26 @@ const DashboardLayout = () => {
         </div>
 
         {/* Navigation */}
-        <SidebarAccordionContext.Provider value={{ openGroup, toggleGroup, setOpenGroup, isDesktopSidebarOpen, setHoverTooltip }}>
-          <div className={`flex-1 overflow-y-auto overflow-x-hidden py-4 px-0 space-y-1 ${!isDesktopSidebarOpen ? 'no-scrollbar' : ''}`}>
+        <SidebarAccordionContext.Provider value={{ openGroup, toggleGroup, setOpenGroup }}>
+          <div className="flex-1 overflow-y-auto overflow-x-hidden py-4 px-0 space-y-1">
             {hasPermission('dashboard.view') && (
               <div className="mb-2">
-                <NavLink onMouseEnter={(e) => { if (!isDesktopSidebarOpen) { const rect = e.currentTarget.getBoundingClientRect(); setHoverTooltip({ text: "Dashboard", top: rect.top + rect.height / 2 }); } }} onMouseLeave={() => setHoverTooltip(null)} 
+                <NavLink 
                   to="/dashboard"
                   className={navLinkClass}
                 >
-                <LayoutDashboard size={20} className="shrink-0" /> <span className={!isDesktopSidebarOpen ? "lg:w-0 lg:opacity-0 lg:overflow-hidden transition-all duration-200 whitespace-nowrap" : "whitespace-nowrap transition-all duration-200"}>Dashboard
-                </span>
-              </NavLink>
+                  <LayoutDashboard size={20} className="shrink-0" />
+                  <span className="whitespace-nowrap">Dashboard</span>
+                </NavLink>
               </div>
             )}
 
           {/* Branch Management */}
           <SidebarGroup title="Branch Management" icon={MapPin}>
             {hasPermission('branch.view') && (
-              <NavLink onMouseEnter={(e) => { if (!isDesktopSidebarOpen) { const rect = e.currentTarget.getBoundingClientRect(); setHoverTooltip({ text: "Branch", top: rect.top + rect.height / 2 }); } }} onMouseLeave={() => setHoverTooltip(null)}  to="/branch" className={subNavLinkClass}>
-                <MapPin size={20} className="shrink-0" /> <span className={!isDesktopSidebarOpen ? "lg:w-0 lg:opacity-0 lg:overflow-hidden transition-all duration-200 whitespace-nowrap" : "whitespace-nowrap transition-all duration-200"}>Branch
-              </span>
+              <NavLink to="/branch" className={subNavLinkClass}>
+                <MapPin size={20} className="shrink-0" />
+                <span>Branch</span>
               </NavLink>
             )}
           </SidebarGroup>
@@ -338,9 +328,9 @@ const DashboardLayout = () => {
           {/* Partner Management */}
           <SidebarGroup title="Partner Management" icon={Store}>
             {hasPermission('merchant.view') && (
-              <NavLink onMouseEnter={(e) => { if (!isDesktopSidebarOpen) { const rect = e.currentTarget.getBoundingClientRect(); setHoverTooltip({ text: "Merchant", top: rect.top + rect.height / 2 }); } }} onMouseLeave={() => setHoverTooltip(null)}  to="/merchant" className={subNavLinkClass}>
-                <Store size={20} className="shrink-0" /> <span className={!isDesktopSidebarOpen ? "lg:w-0 lg:opacity-0 lg:overflow-hidden transition-all duration-200 whitespace-nowrap" : "whitespace-nowrap transition-all duration-200"}>Merchant
-              </span>
+              <NavLink to="/merchant" className={subNavLinkClass}>
+                <Store size={20} className="shrink-0" />
+                <span>Merchant</span>
               </NavLink>
             )}
           </SidebarGroup>
@@ -348,39 +338,39 @@ const DashboardLayout = () => {
           {/* HR Management */}
           <SidebarGroup title="HR Management" icon={UserCheck}>
             {hasPermission('employee.view') && (
-              <NavLink onMouseEnter={(e) => { if (!isDesktopSidebarOpen) { const rect = e.currentTarget.getBoundingClientRect(); setHoverTooltip({ text: "Employee", top: rect.top + rect.height / 2 }); } }} onMouseLeave={() => setHoverTooltip(null)}  to="/employees" className={subNavLinkClass}>
-                <UserCheck size={20} className="shrink-0" /> <span className={!isDesktopSidebarOpen ? "lg:w-0 lg:opacity-0 lg:overflow-hidden transition-all duration-200 whitespace-nowrap" : "whitespace-nowrap transition-all duration-200"}>Employee
-              </span>
+              <NavLink to="/employees" className={subNavLinkClass}>
+                <UserCheck size={20} className="shrink-0" />
+                <span>Employee</span>
               </NavLink>
             )}
             {hasAnyPermission(['attendance.view', 'attendance_report.view', 'employee.view']) && (
-              <NavLink onMouseEnter={(e) => { if (!isDesktopSidebarOpen) { const rect = e.currentTarget.getBoundingClientRect(); setHoverTooltip({ text: "Attendance Report", top: rect.top + rect.height / 2 }); } }} onMouseLeave={() => setHoverTooltip(null)}  to="/attendance-report" className={subNavLinkClass}>
-                <CalendarCheck size={20} className="shrink-0" /> <span className={!isDesktopSidebarOpen ? "lg:w-0 lg:opacity-0 lg:overflow-hidden transition-all duration-200 whitespace-nowrap" : "whitespace-nowrap transition-all duration-200"}>Attendance Report
-              </span>
+              <NavLink to="/attendance-report" className={subNavLinkClass}>
+                <CalendarCheck size={20} className="shrink-0" />
+                <span>Attendance Report</span>
               </NavLink>
             )}
             {hasAnyPermission(['letters_payroll.view', 'payroll.view', 'employee.view']) && (
-              <NavLink onMouseEnter={(e) => { if (!isDesktopSidebarOpen) { const rect = e.currentTarget.getBoundingClientRect(); setHoverTooltip({ text: "Letters & Payroll", top: rect.top + rect.height / 2 }); } }} onMouseLeave={() => setHoverTooltip(null)}  to="/letters-payroll" className={subNavLinkClass}>
-                <FileText size={20} className="shrink-0" /> <span className={!isDesktopSidebarOpen ? "lg:w-0 lg:opacity-0 lg:overflow-hidden transition-all duration-200 whitespace-nowrap" : "whitespace-nowrap transition-all duration-200"}>Letters & Payroll
-              </span>
+              <NavLink to="/letters-payroll" className={subNavLinkClass}>
+                <FileText size={20} className="shrink-0" />
+                <span>Letters & Payroll</span>
               </NavLink>
             )}
             {hasAnyPermission(['daily_work_report.view', 'work_report.view', 'employee.view']) && (
-              <NavLink onMouseEnter={(e) => { if (!isDesktopSidebarOpen) { const rect = e.currentTarget.getBoundingClientRect(); setHoverTooltip({ text: "Daily Work Report", top: rect.top + rect.height / 2 }); } }} onMouseLeave={() => setHoverTooltip(null)}  to="/daily-work-report" className={subNavLinkClass}>
-                <BarChart2 size={20} className="shrink-0" /> <span className={!isDesktopSidebarOpen ? "lg:w-0 lg:opacity-0 lg:overflow-hidden transition-all duration-200 whitespace-nowrap" : "whitespace-nowrap transition-all duration-200"}>Daily Work Report
-              </span>
+              <NavLink to="/daily-work-report" className={subNavLinkClass}>
+                <BarChart2 size={20} className="shrink-0" />
+                <span>Daily Work Report</span>
               </NavLink>
             )}
             {hasAnyPermission(['kpa_report.view', 'employee.view']) && (
-              <NavLink onMouseEnter={(e) => { if (!isDesktopSidebarOpen) { const rect = e.currentTarget.getBoundingClientRect(); setHoverTooltip({ text: "KPA Report", top: rect.top + rect.height / 2 }); } }} onMouseLeave={() => setHoverTooltip(null)}  to="/kpa-report" className={subNavLinkClass}>
-                <TrendingUp size={20} className="shrink-0" /> <span className={!isDesktopSidebarOpen ? "lg:w-0 lg:opacity-0 lg:overflow-hidden transition-all duration-200 whitespace-nowrap" : "whitespace-nowrap transition-all duration-200"}>KPA Report
-              </span>
+              <NavLink to="/kpa-report" className={subNavLinkClass}>
+                <TrendingUp size={20} className="shrink-0" />
+                <span>KPA Report</span>
               </NavLink>
             )}
             {hasAnyPermission(['important_dates.view', 'employee.view']) && (
-              <NavLink onMouseEnter={(e) => { if (!isDesktopSidebarOpen) { const rect = e.currentTarget.getBoundingClientRect(); setHoverTooltip({ text: "Important Dates", top: rect.top + rect.height / 2 }); } }} onMouseLeave={() => setHoverTooltip(null)}  to="/important-dates" className={subNavLinkClass}>
-                <CalendarDays size={20} className="shrink-0" /> <span className={!isDesktopSidebarOpen ? "lg:w-0 lg:opacity-0 lg:overflow-hidden transition-all duration-200 whitespace-nowrap" : "whitespace-nowrap transition-all duration-200"}>Important Dates
-              </span>
+              <NavLink to="/important-dates" className={subNavLinkClass}>
+                <CalendarDays size={20} className="shrink-0" />
+                <span>Important Dates</span>
               </NavLink>
             )}
           </SidebarGroup>
@@ -388,15 +378,15 @@ const DashboardLayout = () => {
           {/* CRM Management */}
           <SidebarGroup title="CRM Management" icon={UserPlus}>
             {hasPermission('lead.view') && (
-              <NavLink onMouseEnter={(e) => { if (!isDesktopSidebarOpen) { const rect = e.currentTarget.getBoundingClientRect(); setHoverTooltip({ text: "Leads", top: rect.top + rect.height / 2 }); } }} onMouseLeave={() => setHoverTooltip(null)}  to="/leads" className={subNavLinkClass}>
-                <UserPlus size={20} className="shrink-0" /> <span className={!isDesktopSidebarOpen ? "lg:w-0 lg:opacity-0 lg:overflow-hidden transition-all duration-200 whitespace-nowrap" : "whitespace-nowrap transition-all duration-200"}>Leads
-              </span>
+              <NavLink to="/leads" className={subNavLinkClass}>
+                <UserPlus size={20} className="shrink-0" />
+                <span>Leads</span>
               </NavLink>
             )}
             {hasPermission('inventory.view') && (
-              <NavLink onMouseEnter={(e) => { if (!isDesktopSidebarOpen) { const rect = e.currentTarget.getBoundingClientRect(); setHoverTooltip({ text: "Inventory", top: rect.top + rect.height / 2 }); } }} onMouseLeave={() => setHoverTooltip(null)}  to="/inventory" className={subNavLinkClass}>
-                <List size={20} className="shrink-0" /> <span className={!isDesktopSidebarOpen ? "lg:w-0 lg:opacity-0 lg:overflow-hidden transition-all duration-200 whitespace-nowrap" : "whitespace-nowrap transition-all duration-200"}>Inventory
-              </span>
+              <NavLink to="/inventory" className={subNavLinkClass}>
+                <List size={20} className="shrink-0" />
+                <span>Inventory</span>
               </NavLink>
             )}
           </SidebarGroup>
@@ -438,19 +428,19 @@ const DashboardLayout = () => {
           {/* Payment */}
           <SidebarGroup title="Payment" icon={Banknote}>
             {hasPermission('cash_payment.view') && (
-              <NavLink onMouseEnter={(e) => { if (!isDesktopSidebarOpen) { const rect = e.currentTarget.getBoundingClientRect(); setHoverTooltip({ text: "Cash Payment", top: rect.top + rect.height / 2 }); } }} onMouseLeave={() => setHoverTooltip(null)}  to="/cash-payment" className={subNavLinkClass}>
-                <Banknote size={20} className="shrink-0" /> <span className={!isDesktopSidebarOpen ? "lg:w-0 lg:opacity-0 lg:overflow-hidden transition-all duration-200 whitespace-nowrap" : "whitespace-nowrap transition-all duration-200"}>Cash Payment
-              </span>
+              <NavLink to="/cash-payment" className={subNavLinkClass}>
+                <Banknote size={20} className="shrink-0" />
+                <span>Cash Payment</span>
               </NavLink>
             )}
           </SidebarGroup>
 
-          {/* EMI Cards & Verification Credits */}
-          <SidebarGroup title="EMI Cards & Verification Credits" icon={CreditCard}>
+          {/* Cards & Credit */}
+          <SidebarGroup title="Cards & Credit" icon={CreditCard}>
             {hasAnyPermission(['cards_credit.view', 'card_credit.view', 'emi_card.view', 'card.view']) && (
-              <NavLink onMouseEnter={(e) => { if (!isDesktopSidebarOpen) { const rect = e.currentTarget.getBoundingClientRect(); setHoverTooltip({ text: "Cards & Credit", top: rect.top + rect.height / 2 }); } }} onMouseLeave={() => setHoverTooltip(null)}  to="/cards-credit" className={subNavLinkClass}>
-                <CreditCard size={20} className="shrink-0" /> <span className={!isDesktopSidebarOpen ? "lg:w-0 lg:opacity-0 lg:overflow-hidden transition-all duration-200 whitespace-nowrap" : "whitespace-nowrap transition-all duration-200"}>Cards & Credit
-              </span>
+              <NavLink to="/cards-credit" className={subNavLinkClass}>
+                <CreditCard size={20} className="shrink-0" />
+                <span>Cards & Credit</span>
               </NavLink>
             )}
           </SidebarGroup>
@@ -467,9 +457,9 @@ const DashboardLayout = () => {
           {/* Geo Tagging */}
           <SidebarGroup title="Geo Tagging" icon={MapPin}>
             {hasAnyPermission(['geotagging.view', 'geo_tagging.view', 'geo.view', 'tracking.view']) && (
-              <NavLink onMouseEnter={(e) => { if (!isDesktopSidebarOpen) { const rect = e.currentTarget.getBoundingClientRect(); setHoverTooltip({ text: "Geo Tagging", top: rect.top + rect.height / 2 }); } }} onMouseLeave={() => setHoverTooltip(null)}  to="/geo-tagging" className={subNavLinkClass}>
-                <MapPin size={20} className="shrink-0" /> <span className={!isDesktopSidebarOpen ? "lg:w-0 lg:opacity-0 lg:overflow-hidden transition-all duration-200 whitespace-nowrap" : "whitespace-nowrap transition-all duration-200"}>Geo Tagging
-              </span>
+              <NavLink to="/geo-tagging" className={subNavLinkClass}>
+                <MapPin size={20} className="shrink-0" />
+                <span>Geo Tagging</span>
               </NavLink>
             )}
           </SidebarGroup>
@@ -479,46 +469,46 @@ const DashboardLayout = () => {
               <div className="sidebar-accordion-inner space-y-1">
                 <SidebarGroup title="UPI Smart" icon={Smartphone}>
                   {hasAnyPermission(['upi_autopay.view', 'upi.view']) && (
-                    <NavLink onMouseEnter={(e) => { if (!isDesktopSidebarOpen) { const rect = e.currentTarget.getBoundingClientRect(); setHoverTooltip({ text: "UPI Autopay", top: rect.top + rect.height / 2 }); } }} onMouseLeave={() => setHoverTooltip(null)}  to="/upi-autopay" className={subNavLinkClass}>
-                <Smartphone size={20} className="shrink-0" /> <span className={!isDesktopSidebarOpen ? "lg:w-0 lg:opacity-0 lg:overflow-hidden transition-all duration-200 whitespace-nowrap" : "whitespace-nowrap transition-all duration-200"}>UPI Autopay
-                    </span>
-              </NavLink>
+                    <NavLink to="/upi-autopay" className={subNavLinkClass}>
+                      <Smartphone size={20} className="shrink-0" />
+                      <span>UPI Autopay</span>
+                    </NavLink>
                   )}
                 </SidebarGroup>
 
                 <SidebarGroup title="WhatsApp Marketing" icon={MessageCircle}>
                   {hasAnyPermission(['whatsapp_banking.view', 'whatsapp.view']) && (
-                    <NavLink onMouseEnter={(e) => { if (!isDesktopSidebarOpen) { const rect = e.currentTarget.getBoundingClientRect(); setHoverTooltip({ text: "WhatsApp Banking", top: rect.top + rect.height / 2 }); } }} onMouseLeave={() => setHoverTooltip(null)}  to="/whatsapp-banking" className={subNavLinkClass}>
-                <MessageCircle size={20} className="shrink-0" /> <span className={!isDesktopSidebarOpen ? "lg:w-0 lg:opacity-0 lg:overflow-hidden transition-all duration-200 whitespace-nowrap" : "whitespace-nowrap transition-all duration-200"}>WhatsApp Banking
-                    </span>
-              </NavLink>
+                    <NavLink to="/whatsapp-banking" className={subNavLinkClass}>
+                      <MessageCircle size={20} className="shrink-0" />
+                      <span>WhatsApp Banking</span>
+                    </NavLink>
                   )}
                 </SidebarGroup>
 
                 <SidebarGroup title="Biomatrix Integration" icon={Fingerprint}>
                   {hasPermission('biomatrix.view') && (
-                    <NavLink onMouseEnter={(e) => { if (!isDesktopSidebarOpen) { const rect = e.currentTarget.getBoundingClientRect(); setHoverTooltip({ text: "Biomatrix Integration", top: rect.top + rect.height / 2 }); } }} onMouseLeave={() => setHoverTooltip(null)}  to="/biomatrix-integration" className={subNavLinkClass}>
-                <Fingerprint size={20} className="shrink-0" /> <span className={!isDesktopSidebarOpen ? "lg:w-0 lg:opacity-0 lg:overflow-hidden transition-all duration-200 whitespace-nowrap" : "whitespace-nowrap transition-all duration-200"}>Biomatrix Integration
-                    </span>
-              </NavLink>
+                    <NavLink to="/biomatrix-integration" className={subNavLinkClass}>
+                      <Fingerprint size={20} className="shrink-0" />
+                      <span>Biomatrix Integration</span>
+                    </NavLink>
                   )}
                 </SidebarGroup>
 
                 <SidebarGroup title="Roles & Permissions" icon={UserCog}>
                   {hasAnyPermission(['role.view', 'roles_permissions.view', 'role.create']) && (
-                    <NavLink onMouseEnter={(e) => { if (!isDesktopSidebarOpen) { const rect = e.currentTarget.getBoundingClientRect(); setHoverTooltip({ text: "Roles & Permissions", top: rect.top + rect.height / 2 }); } }} onMouseLeave={() => setHoverTooltip(null)}  to="/roles-permissions" className={subNavLinkClass}>
-                <UserCog size={20} className="shrink-0" /> <span className={!isDesktopSidebarOpen ? "lg:w-0 lg:opacity-0 lg:overflow-hidden transition-all duration-200 whitespace-nowrap" : "whitespace-nowrap transition-all duration-200"}>Roles & Permissions
-                    </span>
-              </NavLink>
+                    <NavLink to="/roles-permissions" className={subNavLinkClass}>
+                      <UserCog size={20} className="shrink-0" />
+                      <span>Roles & Permissions</span>
+                    </NavLink>
                   )}
                 </SidebarGroup>
 
                 <SidebarGroup title="Settings" icon={MoreHorizontal}>
                   {hasAnyPermission(['help_support.view', 'settings.view']) && (
-                    <NavLink onMouseEnter={(e) => { if (!isDesktopSidebarOpen) { const rect = e.currentTarget.getBoundingClientRect(); setHoverTooltip({ text: "Help & Support", top: rect.top + rect.height / 2 }); } }} onMouseLeave={() => setHoverTooltip(null)}  to="/settings/help" className={subNavLinkClass}>
-                <Headphones size={20} className="shrink-0" /> <span className={!isDesktopSidebarOpen ? "lg:w-0 lg:opacity-0 lg:overflow-hidden transition-all duration-200 whitespace-nowrap" : "whitespace-nowrap transition-all duration-200"}>Help & Support
-                    </span>
-              </NavLink>
+                    <NavLink to="/settings/help" className={subNavLinkClass}>
+                      <Headphones size={20} className="shrink-0" />
+                      <span>Help & Support</span>
+                    </NavLink>
                   )}
                 </SidebarGroup>
               </div>
@@ -561,14 +551,6 @@ const DashboardLayout = () => {
       </aside>
 
       {/* Main Content */}
-      {!isDesktopSidebarOpen && hoverTooltip && (
-        <div 
-          className="fixed left-[76px] bg-gray-900 text-white text-[13px] font-medium rounded shadow-xl px-2.5 py-1.5 whitespace-nowrap z-[9999] pointer-events-none"
-          style={{ top: hoverTooltip.top, transform: 'translateY(-50%)' }}
-        >
-          {hoverTooltip.text}
-        </div>
-      )}
       <div className="flex-1 flex flex-col overflow-hidden relative">
         {/* Topbar */}
         <header className="h-[76px] bg-brand-header text-white flex items-center justify-between px-4 sm:px-8 shadow-sm shrink-0 print:hidden">
@@ -583,8 +565,8 @@ const DashboardLayout = () => {
                   toggleDesktopSidebar();
                 }
               }}
-              aria-label={isDesktopSidebarOpen ? "Collapse navigation sidebar" : "Expand navigation sidebar"}
-              title={isDesktopSidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
+              aria-label={isDesktopSidebarOpen ? "Close navigation sidebar" : "Open navigation sidebar"}
+              title={isDesktopSidebarOpen ? "Close sidebar" : "Open sidebar"}
               className={`w-10 h-10 rounded-xl transition-all duration-200 cursor-pointer flex items-center justify-center shrink-0 border focus:outline-none focus:ring-2 focus:ring-white/30 active:scale-95 ${
                 isDesktopSidebarOpen
                   ? "bg-white/10 hover:bg-white/20 border-white/15 text-white/90 hover:text-white shadow-2xs"

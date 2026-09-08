@@ -67,8 +67,8 @@ const BankDashboardLayout = () => {
           isMobileOpen ? 'w-64 translate-x-0' : '-translate-x-full lg:translate-x-0'
         } ${
           isDesktopSidebarOpen
-            ? 'lg:w-64 lg:opacity-100'
-            : 'lg:w-0 lg:opacity-0 lg:border-r-0'
+            ? 'lg:w-64 lg:opacity-100 lg:visible'
+            : 'lg:w-0 lg:opacity-0 lg:invisible lg:border-none lg:p-0 lg:overflow-hidden'
         }`}
       >
         <div className="w-64 h-full flex flex-col shrink-0">
@@ -123,8 +123,8 @@ const BankDashboardLayout = () => {
                   toggleDesktopSidebar();
                 }
               }}
-              aria-label={isDesktopSidebarOpen ? "Collapse navigation sidebar" : "Expand navigation sidebar"}
-              title={isDesktopSidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
+              aria-label={isDesktopSidebarOpen ? "Close navigation sidebar" : "Open navigation sidebar"}
+              title={isDesktopSidebarOpen ? "Close sidebar" : "Open sidebar"}
               className={`w-9 h-9 rounded-xl transition-all duration-200 cursor-pointer flex items-center justify-center shrink-0 border focus:outline-none focus:ring-2 focus:ring-gray-300 active:scale-95 ${
                 isDesktopSidebarOpen
                   ? "bg-gray-100 hover:bg-gray-200 border-gray-200 text-gray-700 shadow-2xs"
