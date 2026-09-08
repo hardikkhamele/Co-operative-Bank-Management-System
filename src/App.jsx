@@ -51,6 +51,7 @@ const CustomerLoans = lazy(() => import('./pages/dashboard/CustomerLoans'));
 const LoanDetails = lazy(() => import('./pages/dashboard/LoanDetails'));
 const SelectLeadSystem = lazy(() => import('./pages/dashboard/SelectLeadSystem'));
 const Leads = lazy(() => import('./pages/dashboard/Leads'));
+const PigmyCustomers = lazy(() => import('./pages/dashboard/PigmyCustomers'));
 const CreateLead = lazy(() => import('./pages/dashboard/CreateLead'));
 const EditLead = lazy(() => import('./pages/dashboard/EditLead'));
 const ViewLead = lazy(() => import('./pages/dashboard/ViewLead'));
@@ -223,7 +224,8 @@ function App() {
                 <Route path="leads/customer" element={<Leads leadType="CUSTOMER" systemTitle="Customer" />} />
                 <Route path="leads/branch" element={<Leads leadType="CUSTOMER" systemTitle="Customer" />} />
                 <Route path="leads/merchant" element={<Leads leadType="MERCHANT" systemTitle="Merchant" />} />
-                <Route path="leads/sip" element={<Leads leadType="SIP" systemTitle="Smart SIP" />} />
+                <Route path="leads/sip" element={<PigmyCustomers />} />
+                <Route path="sip" element={<PigmyCustomers />} />
                 <Route path="leads/create" element={<CreateLead />} />
                 <Route path="leads/edit" element={<EditLead />} />
                 <Route path="leads/edit/:id" element={<EditLead />} />
@@ -239,9 +241,17 @@ function App() {
                 <Route path="customers/:id/loans/:loanId" element={<LoanDetails />} />
               </Route>
 
+              {/* Pigmy Deposit Management V2 */}
+              <Route element={<PermissionRoute anyOf={['pigmy.view', 'lead.view', 'customer.view']} />}>
+                <Route path="pigmy" element={<PigmyCustomers />} />
+                <Route path="leads/pigmy" element={<PigmyCustomers />} />
+              </Route>
+
               {/* Inventory */}
               <Route element={<PermissionRoute permission="inventory.view" />}>
                 <Route path="inventory" element={<Inventory />} />
+                <Route path="inventory/:tab" element={<Inventory />} />
+                <Route path="inventory/:tab/:subtab" element={<Inventory />} />
                 <Route path="inventory/create" element={<CreateInventory />} />
                 <Route path="inventory/edit" element={<EditInventory />} />
                 <Route path="inventory/edit/:id" element={<EditInventory />} />

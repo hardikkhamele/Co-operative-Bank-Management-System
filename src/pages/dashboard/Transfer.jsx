@@ -956,7 +956,7 @@ const Transfer = () => {
 
       {/* Table */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto custom-scrollbar">
           <table
             ref={tableRef}
             className="w-full text-left text-sm whitespace-nowrap"

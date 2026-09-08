@@ -57,9 +57,22 @@ axiosInstance.interceptors.request.use(
       useLoadingStore.getState().showLoader();
     }
 
-    const token = useAuthStore.getState().accessToken;
+    const authState = useAuthStore.getState();
+    const token = authState.accessToken;
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+    }
+
+    const societyId = 
+      authState.user?.societyId || 
+      authState.user?.bankId || 
+      authState.context?.societyId || 
+      authState.context?.bankId || 
+      authState.user?.society?._id || 
+      authState.user?.bank?._id;
+
+    if (societyId && !config.headers['x-society-id']) {
+      config.headers['x-society-id'] = societyId;
     }
     return config;
   },
