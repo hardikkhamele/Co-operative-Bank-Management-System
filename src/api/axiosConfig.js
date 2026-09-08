@@ -63,17 +63,6 @@ axiosInstance.interceptors.request.use(
       config.headers.Authorization = `Bearer ${token}`;
     }
 
-    const societyId = 
-      authState.user?.societyId || 
-      authState.user?.bankId || 
-      authState.context?.societyId || 
-      authState.context?.bankId || 
-      authState.user?.society?._id || 
-      authState.user?.bank?._id;
-
-    if (societyId && !config.headers['x-society-id']) {
-      config.headers['x-society-id'] = societyId;
-    }
     return config;
   },
   (error) => {
