@@ -31,6 +31,7 @@ import SearchableSelect from "../../components/common/SearchableSelect";
 import { Skeleton, SkeletonAvatar } from "../../components/common/Skeleton";
 import TableWrapper from "../../components/common/TableWrapper";
 import StatsCard from "../../components/common/StatsCard";
+import Pagination from "../../components/common/Pagination";
 
 // Comprehensive Indian States and Prominent Cities Map
 const INDIAN_STATES_WITH_CITIES = {
@@ -1061,32 +1062,13 @@ const Employees = () => {
 
         {/* Pagination Footer */}
         {!loading && employees.length > 0 && (
-          <div className="px-6 py-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4 mt-auto bg-gray-50/40">
-            <div className="text-xs text-gray-500 font-medium">
-              Showing page <span className="font-semibold text-gray-800">{page}</span> of{" "}
-              <span className="font-semibold text-gray-800">{totalPages}</span> (
-              <span className="font-semibold text-gray-800">{totalRecords}</span> total entries)
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page === 1}
-                className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-[#225091] hover:bg-[#225091] hover:text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-xs font-semibold cursor-pointer"
-              >
-                <ChevronLeft size={16} />
-              </button>
-              <span className="px-3 py-1 bg-[#225091] text-white text-xs font-bold rounded-full shadow-2xs">
-                {page}
-              </span>
-              <button
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                disabled={page === totalPages}
-                className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-[#225091] hover:bg-[#225091] hover:text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-xs font-semibold cursor-pointer"
-              >
-                <ChevronRight size={16} />
-              </button>
-            </div>
-          </div>
+          <Pagination
+            page={page}
+            totalPages={totalPages}
+            totalRecords={totalRecords}
+            limit={10}
+            onPageChange={setPage}
+          />
         )}
       </div>
 

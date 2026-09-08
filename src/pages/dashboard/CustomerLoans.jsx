@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import WalletIllustration from '../../assets/wallet-illustration.png';
 import PageHeader from '../../components/common/PageHeader';
+import Pagination from '../../components/common/Pagination';
 
 const tabs = ['All Loans', 'New Application', 'Active Loans', 'Completed Loans', 'Rejected Applications'];
 
@@ -24,6 +25,7 @@ const getStatusBadge = (status) => {
 
 const CustomerLoans = () => {
   const [activeTab, setActiveTab] = useState('All Loans');
+  const [page, setPage] = useState(1);
 
   return (
     <div className="max-w-[1400px] w-full pb-10">
@@ -165,28 +167,13 @@ const CustomerLoans = () => {
       </div>
 
       {/* Pagination */}
-      <div className="flex flex-col sm:flex-row justify-between items-center mt-6 text-sm text-gray-800 font-medium">
-        <div className="mb-4 sm:mb-0">
-          Showing 1 to 4 of 30 Entries
-        </div>
-        <div className="flex items-center gap-2">
-          <button className="w-10 h-10 flex items-center justify-center rounded-full border-2 border-[#225091] text-[#225091] hover:bg-teal-50 transition-colors">
-            <ChevronLeft size={18} />
-          </button>
-          <button className="w-10 h-10 flex items-center justify-center rounded-full bg-[#225091] text-white font-medium shadow-sm">
-            1
-          </button>
-          <button className="w-10 h-10 flex items-center justify-center rounded-full border-2 border-[#225091] text-[#225091] font-medium hover:bg-teal-50 transition-colors">
-            2
-          </button>
-          <button className="w-10 h-10 flex items-center justify-center rounded-full border-2 border-[#225091] text-[#225091] font-medium hover:bg-teal-50 transition-colors">
-            3
-          </button>
-          <button className="w-10 h-10 flex items-center justify-center rounded-full border-2 border-[#225091] text-[#225091] hover:bg-teal-50 transition-colors">
-            <ChevronRight size={18} />
-          </button>
-        </div>
-      </div>
+      <Pagination
+        page={page}
+        totalPages={1}
+        totalRecords={mockLoans.length}
+        limit={10}
+        onPageChange={setPage}
+      />
 
     </div>
   );

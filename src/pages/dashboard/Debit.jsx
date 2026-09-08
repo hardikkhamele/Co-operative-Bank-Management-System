@@ -27,6 +27,7 @@ import { isBankOwner, canApproveReceipts } from "../../utils/roleUtils";
 import ReceiptImageUpload from "../../components/common/ReceiptImageUpload";
 import TableWrapper from "../../components/common/TableWrapper";
 import StatsCard from "../../components/common/StatsCard";
+import Pagination from "../../components/common/Pagination";
 
 const GL_HEAD_OPTIONS = [
   { code: "410105", name: "Loan" },
@@ -1161,56 +1162,13 @@ const Debit = () => {
         </TableWrapper>
 
         {/* Pagination */}
-        <div className="px-6 py-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="text-sm text-gray-600 font-medium">
-            Showing {receipts.length > 0 ? (page - 1) * limit + 1 : 0} to{" "}
-            {Math.min(page * limit, meta.totalRecords || receipts.length)} of{" "}
-            {meta.totalRecords || receipts.length} Entries
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={page <= 1}
-              className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors disabled:opacity-50"
-            >
-              <ChevronRight size={16} className="rotate-180" />
-            </button>
-
-            {(() => {
-              const totalPages = meta.totalPages || 1;
-              let startPage = Math.max(1, page - 2);
-              let endPage = Math.min(totalPages, page + 2);
-              if (endPage - startPage < 4) {
-                if (startPage === 1) endPage = Math.min(5, totalPages);
-                else if (endPage === totalPages)
-                  startPage = Math.max(1, totalPages - 4);
-              }
-              const pageButtons = [];
-              for (let i = startPage; i <= endPage; i++) {
-                pageButtons.push(
-                  <button
-                    key={i}
-                    onClick={() => setPage(i)}
-                    className={`w-8 h-8 flex items-center justify-center rounded-full font-medium transition-colors ${page === i ? "bg-[#225091] text-white shadow-sm" : "border border-gray-200 text-gray-700 hover:bg-gray-50"}`}
-                  >
-                    {i}
-                  </button>,
-                );
-              }
-              return pageButtons;
-            })()}
-
-            <button
-              onClick={() =>
-                setPage((p) => Math.min(meta.totalPages || 1, p + 1))
-              }
-              disabled={page >= (meta.totalPages || 1)}
-              className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors disabled:opacity-50"
-            >
-              <ChevronRight size={16} />
-            </button>
-          </div>
-        </div>
+        <Pagination
+          page={page}
+          totalPages={meta.totalPages}
+          totalRecords={meta.totalRecords || receipts.length}
+          limit={limit}
+          onPageChange={setPage}
+        />
       </div>
 
       {/* 2.3 Create Debit Receipt Modal */}

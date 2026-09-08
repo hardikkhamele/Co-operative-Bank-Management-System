@@ -34,6 +34,7 @@ import useBranchStore from '../../store/branchStore';
 import { Skeleton, SkeletonAvatar } from '../../components/common/Skeleton';
 import TableWrapper from '../../components/common/TableWrapper';
 import StatsCard from '../../components/common/StatsCard';
+import Pagination from '../../components/common/Pagination';
 
 const INDIAN_STATES = [
   'Andhra Pradesh',
@@ -1122,31 +1123,14 @@ const KPAReport = () => {
             </TableWrapper>
 
             {/* Pagination Footer */}
-            <div className="p-6 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div className="text-[13px] font-medium text-gray-500">
-                Showing {startRecord} to {endRecord} of {meta.totalRecords} entries
-              </div>
-              <div className="flex items-center gap-2">
-                <button 
-                  onClick={() => setPage(prev => Math.max(1, prev - 1))}
-                  disabled={meta.page <= 1 || loading}
-                  className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  <ChevronLeft size={16} />
-                </button>
-                
-                {renderPaginationButtons()}
-
-                <button 
-                  onClick={() => setPage(prev => Math.min(meta.totalPages, prev + 1))}
-                  disabled={meta.page >= meta.totalPages || loading}
-                  className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  <ChevronRight size={16} />
-                </button>
-              </div>
-            </div>
-
+            <Pagination
+              page={meta.page}
+              totalPages={meta.totalPages}
+              totalRecords={meta.totalRecords}
+              limit={meta.limit}
+              onPageChange={setPage}
+              disabled={loading}
+            />
           </div>
         </>
       )}

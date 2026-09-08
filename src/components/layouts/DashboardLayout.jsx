@@ -383,6 +383,12 @@ const DashboardLayout = () => {
                 <span>Leads</span>
               </NavLink>
             )}
+            {hasAnyPermission(['customer.view', 'lead.view', 'merchant.view']) && (
+              <NavLink to="/society-members" className={subNavLinkClass}>
+                <UserCheck size={20} className="shrink-0" />
+                <span>Society Members</span>
+              </NavLink>
+            )}
             {hasPermission('inventory.view') && (
               <NavLink to="/inventory" className={subNavLinkClass}>
                 <List size={20} className="shrink-0" />

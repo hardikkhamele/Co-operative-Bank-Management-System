@@ -50,6 +50,7 @@ import {
   Pen
 } from 'lucide-react';
 import PageHeader from '../../components/common/PageHeader';
+import Pagination from '../../components/common/Pagination';
 import { Skeleton, SkeletonTable, SkeletonEmployeeProfile } from '../../components/common/Skeleton';
 import { employeeService } from '../../api/employeeService';
 import { branchService } from '../../api/branchService';
@@ -2149,34 +2150,14 @@ const LettersAndPayroll = () => {
           </div>
 
           {/* History Pagination */}
-          <div className="p-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-gray-500">
-            <div>
-              Showing {historyLogs.length > 0 ? (historyPage - 1) * historyLimit + 1 : 0} to {Math.min(historyPage * historyLimit, historyTotalRecords)} of {historyTotalRecords} Entries
-            </div>
-            {historyTotalPages > 1 && (
-              <div className="flex items-center gap-1">
-                <button
-                  type="button"
-                  disabled={historyPage === 1 || historyLoading}
-                  onClick={() => setHistoryPage(p => Math.max(1, p - 1))}
-                  className="px-3 py-1.5 border border-gray-200 rounded-lg disabled:opacity-40 hover:bg-gray-50 cursor-pointer font-medium"
-                >
-                  Previous
-                </button>
-                <span className="px-3 py-1.5 bg-gray-100 text-gray-800 font-semibold rounded-lg">
-                  {historyPage} / {historyTotalPages}
-                </span>
-                <button
-                  type="button"
-                  disabled={historyPage >= historyTotalPages || historyLoading}
-                  onClick={() => setHistoryPage(p => Math.min(historyTotalPages, p + 1))}
-                  className="px-3 py-1.5 border border-gray-200 rounded-lg disabled:opacity-40 hover:bg-gray-50 cursor-pointer font-medium"
-                >
-                  Next
-                </button>
-              </div>
-            )}
-          </div>
+          <Pagination
+            page={historyPage}
+            totalPages={historyTotalPages || 1}
+            totalRecords={historyTotalRecords}
+            limit={historyLimit}
+            onPageChange={setHistoryPage}
+            disabled={historyLoading}
+          />
         </div>
       )}
 

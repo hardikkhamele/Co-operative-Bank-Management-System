@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Search, ChevronDown, Edit, Trash2, X, Upload, Image as ImageIcon } from 'lucide-react';
 import PageHeader from '../../components/common/PageHeader';
+import Pagination from '../../components/common/Pagination';
 
 const mockBanners = [];
 
@@ -12,6 +13,8 @@ const Banners = () => {
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
   const [bannerToDelete, setBannerToDelete] = useState(null);
   const [selectedBanner, setSelectedBanner] = useState(null);
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
 
   return (
     <div className="max-w-[1400px] w-full">
@@ -121,30 +124,15 @@ const Banners = () => {
             </tbody>
           </table>
         </div>
-      </div>
-
-      {/* Pagination */}
-      <div className="flex flex-col sm:flex-row justify-between items-center mt-6 text-sm text-gray-600">
-        <div className="mb-4 sm:mb-0 font-medium text-[15px]">
-          Showing 1 to 4 of 12 Entries
-        </div>
-        <div className="flex items-center gap-2">
-          <button className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-[#225091] hover:bg-teal-50 transition-colors bg-white">
-            <ChevronRight size={16} className="rotate-180" />
-          </button>
-          <button className="w-8 h-8 flex items-center justify-center rounded-full bg-[#225091] text-white font-medium shadow-sm">
-            1
-          </button>
-          <button className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-[#225091] hover:bg-teal-50 transition-colors bg-white font-medium">
-            2
-          </button>
-          <button className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-[#225091] hover:bg-teal-50 transition-colors bg-white font-medium">
-            3
-          </button>
-          <button className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-[#225091] hover:bg-teal-50 transition-colors bg-white">
-            <ChevronRight size={16} />
-          </button>
-        </div>
+        {/* Pagination */}
+        <Pagination
+          page={page}
+          totalPages={1}
+          totalRecords={mockBanners.length}
+          limit={limit}
+          onPageChange={setPage}
+          onLimitChange={setLimit}
+        />
       </div>
 
       {/* Create Banner Modal */}

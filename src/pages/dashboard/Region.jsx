@@ -3,6 +3,7 @@ import { Search, Edit, Trash2, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import RegionModal from '../../components/modals/RegionModal';
 import PageHeader from '../../components/common/PageHeader';
+import Pagination from '../../components/common/Pagination';
 
 const mockRegions = [];
 
@@ -11,6 +12,8 @@ const Region = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState('create');
   const [selectedRegion, setSelectedRegion] = useState(null);
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
 
   const handleCreateClick = () => {
     setModalMode('create');
@@ -114,22 +117,14 @@ const Region = () => {
         </div>
         
         {/* Pagination */}
-        <div className="px-6 py-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="text-sm text-gray-600 font-medium">
-            Showing 1 to 5 of 5 Entries
-          </div>
-          <div className="flex items-center gap-2">
-            <button className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-[#225091] hover:bg-gray-50 transition-colors">
-              <ChevronRight size={16} className="rotate-180" />
-            </button>
-            <button className="w-8 h-8 flex items-center justify-center rounded-full bg-[#225091] text-white font-medium shadow-sm">
-              1
-            </button>
-            <button className="w-8 h-8 flex items-center justify-center rounded-full border border-[#225091] text-[#225091] hover:bg-gray-50 transition-colors">
-              <ChevronRight size={16} />
-            </button>
-          </div>
-        </div>
+        <Pagination
+          page={page}
+          totalPages={1}
+          totalRecords={mockRegions.length}
+          limit={limit}
+          onPageChange={setPage}
+          onLimitChange={setLimit}
+        />
       </div>
 
       <RegionModal 

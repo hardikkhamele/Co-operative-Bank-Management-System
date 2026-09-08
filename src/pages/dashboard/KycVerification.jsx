@@ -9,6 +9,7 @@ import { kycService } from '../../api/kycService';
 import { toast } from 'react-toastify';
 import { validateAadhaar, validatePAN, sanitizeDigits, sanitizePAN } from '../../utils/validation';
 import PageHeader from '../../components/common/PageHeader';
+import Pagination from '../../components/common/Pagination';
 
 const KycVerification = () => {
   const location = useLocation();
@@ -1417,33 +1418,15 @@ const KycVerification = () => {
               </div>
 
               {/* Server-Side Pagination */}
-              {historyPagination.totalPages > 1 && (
-                <div className="flex flex-col sm:flex-row items-center justify-between border-t border-gray-100 pt-4 mt-2 gap-3">
-                  <span className="text-xs text-gray-500">
-                    Showing {(historyPagination.page - 1) * historyPagination.limit + 1} to {Math.min(historyPagination.page * historyPagination.limit, historyPagination.total)} of {historyPagination.total} records
-                  </span>
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      type="button"
-                      disabled={historyPagination.page <= 1 || historyLoading}
-                      onClick={() => setHistoryPage((p) => Math.max(1, p - 1))}
-                      className="p-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
-                    >
-                      <ChevronLeft size={16} />
-                    </button>
-                    <span className="text-xs font-semibold px-3 py-1 bg-gray-100 text-gray-700 rounded-lg">
-                      Page {historyPagination.page} of {historyPagination.totalPages}
-                    </span>
-                    <button
-                      type="button"
-                      disabled={historyPagination.page >= historyPagination.totalPages || historyLoading}
-                      onClick={() => setHistoryPage((p) => Math.min(historyPagination.totalPages, p + 1))}
-                      className="p-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
-                    >
-                      <ChevronRight size={16} />
-                    </button>
-                  </div>
-                </div>
+              {!historyLoading && historyList && historyList.length > 0 && (
+                <Pagination
+                  page={historyPagination.page}
+                  totalPages={historyPagination.totalPages}
+                  totalRecords={historyPagination.total}
+                  limit={historyPagination.limit}
+                  onPageChange={(p) => setHistoryPage(p)}
+                  disabled={historyLoading}
+                />
               )}
             </div>
           )}

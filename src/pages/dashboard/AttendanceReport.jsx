@@ -31,6 +31,7 @@ import { toast } from 'react-toastify';
 import PageHeader from '../../components/common/PageHeader';
 import TableWrapper from '../../components/common/TableWrapper';
 import StatsCard from '../../components/common/StatsCard';
+import Pagination from '../../components/common/Pagination';
 import SearchableSelect from '../../components/common/SearchableSelect';
 import { branchService } from '../../api/branchService';
 import { attendanceService } from '../../api/attendanceService';
@@ -1465,93 +1466,34 @@ const AttendanceReport = () => {
           </TableWrapper>
 
           {/* Table Footer with Pagination */}
-          <div className="px-5 py-3.5 bg-white border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-gray-500">
-            {activeTab === 'daily' ? (
-              <>
-                <div>
-                  Showing <strong className="text-gray-800">{reportItems.length > 0 ? (page - 1) * limit + 1 : 0}</strong> to{' '}
-                  <strong className="text-gray-800">
-                    {Math.min(page * limit, meta.totalRecords || reportItems.length)}
-                  </strong> of <strong className="text-gray-800">{meta.totalRecords || reportItems.length}</strong> staff records
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <button
-                    onClick={() => setPage(p => Math.max(1, p - 1))}
-                    disabled={page <= 1 || loadingReportData}
-                    className="px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 font-semibold cursor-pointer transition-colors"
-                  >
-                    Previous
-                  </button>
-                  <span className="px-3 py-1.5 rounded-lg bg-[#225091] text-white font-bold text-xs">
-                    {page} / {meta.totalPages || 1}
-                  </span>
-                  <button
-                    onClick={() => setPage(p => Math.min(meta.totalPages || 1, p + 1))}
-                    disabled={page >= (meta.totalPages || 1) || loadingReportData}
-                    className="px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 font-semibold cursor-pointer transition-colors"
-                  >
-                    Next
-                  </button>
-                </div>
-              </>
-            ) : activeTab === 'monthly' ? (
-              <>
-                <div>
-                  Showing <strong className="text-gray-800">{monthlySheetData.items.length > 0 ? (monthlyPage - 1) * 10 + 1 : 0}</strong> to{' '}
-                  <strong className="text-gray-800">
-                    {Math.min(monthlyPage * 10, monthlySheetData.meta.totalRecords || monthlySheetData.items.length)}
-                  </strong> of <strong className="text-gray-800">{monthlySheetData.meta.totalRecords || monthlySheetData.items.length}</strong> staff records
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <button
-                    onClick={() => setMonthlyPage(p => Math.max(1, p - 1))}
-                    disabled={monthlyPage <= 1 || loadingMonthlySheet}
-                    className="px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 font-semibold cursor-pointer transition-colors"
-                  >
-                    Previous
-                  </button>
-                  <span className="px-3 py-1.5 rounded-lg bg-[#225091] text-white font-bold text-xs">
-                    {monthlyPage} / {monthlySheetData.meta.totalPages || 1}
-                  </span>
-                  <button
-                    onClick={() => setMonthlyPage(p => Math.min(monthlySheetData.meta.totalPages || 1, p + 1))}
-                    disabled={monthlyPage >= (monthlySheetData.meta.totalPages || 1) || loadingMonthlySheet}
-                    className="px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 font-semibold cursor-pointer transition-colors"
-                  >
-                    Next
-                  </button>
-                </div>
-              </>
-            ) : (
-              <>
-                <div>
-                  Showing <strong className="text-gray-800">{yearlyMatrixData.items.length > 0 ? (yearlyPage - 1) * 10 + 1 : 0}</strong> to{' '}
-                  <strong className="text-gray-800">
-                    {Math.min(yearlyPage * 10, yearlyMatrixData.meta.totalRecords || yearlyMatrixData.items.length)}
-                  </strong> of <strong className="text-gray-800">{yearlyMatrixData.meta.totalRecords || yearlyMatrixData.items.length}</strong> staff records
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <button
-                    onClick={() => setYearlyPage(p => Math.max(1, p - 1))}
-                    disabled={yearlyPage <= 1 || loadingYearlyMatrix}
-                    className="px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 font-semibold cursor-pointer transition-colors"
-                  >
-                    Previous
-                  </button>
-                  <span className="px-3 py-1.5 rounded-lg bg-[#225091] text-white font-bold text-xs">
-                    {yearlyPage} / {yearlyMatrixData.meta.totalPages || 1}
-                  </span>
-                  <button
-                    onClick={() => setYearlyPage(p => Math.min(yearlyMatrixData.meta.totalPages || 1, p + 1))}
-                    disabled={yearlyPage >= (yearlyMatrixData.meta.totalPages || 1) || loadingYearlyMatrix}
-                    className="px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 font-semibold cursor-pointer transition-colors"
-                  >
-                    Next
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
+          {activeTab === 'daily' ? (
+            <Pagination
+              page={page}
+              totalPages={meta.totalPages}
+              totalRecords={meta.totalRecords || reportItems.length}
+              limit={limit}
+              onPageChange={setPage}
+              disabled={loadingReportData}
+            />
+          ) : activeTab === 'monthly' ? (
+            <Pagination
+              page={monthlyPage}
+              totalPages={monthlySheetData.meta.totalPages}
+              totalRecords={monthlySheetData.meta.totalRecords || monthlySheetData.items.length}
+              limit={10}
+              onPageChange={setMonthlyPage}
+              disabled={loadingMonthlySheet}
+            />
+          ) : (
+            <Pagination
+              page={yearlyPage}
+              totalPages={yearlyMatrixData.meta.totalPages}
+              totalRecords={yearlyMatrixData.meta.totalRecords || yearlyMatrixData.items.length}
+              limit={10}
+              onPageChange={setYearlyPage}
+              disabled={loadingYearlyMatrix}
+            />
+          )}
         </div>
       </div>
     </div>

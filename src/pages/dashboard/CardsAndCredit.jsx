@@ -49,6 +49,7 @@ import branchService from '../../api/branchService';
 import PageHeader from '../../components/common/PageHeader';
 import TableWrapper from '../../components/common/TableWrapper';
 import StatsCard from '../../components/common/StatsCard';
+import Pagination from '../../components/common/Pagination';
 
 const HistoryIcon = ({ type, action }) => {
   const normAction = (action || '').toUpperCase();
@@ -833,36 +834,16 @@ const CardsAndCredit = () => {
             </div>
 
             {/* Pagination */}
-            <div className="flex items-center justify-between pt-4 mt-6 border-t border-gray-100">
-              <span className="text-xs font-semibold text-gray-500">
-                Page {emiPage} of {emiTotalPages} ({emiTotalRecords} total)
-              </span>
-              <div className="flex items-center gap-2">
-                <button
-                  disabled={emiPage <= 1}
-                  onClick={() => {
-                    const newP = emiPage - 1;
-                    setEmiPage(newP);
-                    fetchEmiHistory(newP);
-                  }}
-                  className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:border-[#225091] hover:text-[#225091] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                >
-                  <ChevronLeft size={16} />
-                </button>
-                <span className="text-xs font-bold text-[#225091] px-2">{emiPage}</span>
-                <button
-                  disabled={emiPage >= emiTotalPages}
-                  onClick={() => {
-                    const newP = emiPage + 1;
-                    setEmiPage(newP);
-                    fetchEmiHistory(newP);
-                  }}
-                  className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:border-[#225091] hover:text-[#225091] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                >
-                  <ChevronRight size={16} />
-                </button>
-              </div>
-            </div>
+            <Pagination
+              page={emiPage}
+              totalPages={emiTotalPages}
+              totalRecords={emiTotalRecords}
+              limit={10}
+              onPageChange={(newP) => {
+                setEmiPage(newP);
+                fetchEmiHistory(newP);
+              }}
+            />
           </div>
 
           {/* Verification Credit History */}
@@ -910,36 +891,16 @@ const CardsAndCredit = () => {
             </div>
 
             {/* Pagination */}
-            <div className="flex items-center justify-between pt-4 mt-6 border-t border-gray-100">
-              <span className="text-xs font-semibold text-gray-500">
-                Page {verificationPage} of {verificationTotalPages} ({verificationTotalRecords} total)
-              </span>
-              <div className="flex items-center gap-2">
-                <button
-                  disabled={verificationPage <= 1}
-                  onClick={() => {
-                    const newP = verificationPage - 1;
-                    setVerificationPage(newP);
-                    fetchVerificationHistory(newP);
-                  }}
-                  className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:border-[#225091] hover:text-[#225091] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                >
-                  <ChevronLeft size={16} />
-                </button>
-                <span className="text-xs font-bold text-[#225091] px-2">{verificationPage}</span>
-                <button
-                  disabled={verificationPage >= verificationTotalPages}
-                  onClick={() => {
-                    const newP = verificationPage + 1;
-                    setVerificationPage(newP);
-                    fetchVerificationHistory(newP);
-                  }}
-                  className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:border-[#225091] hover:text-[#225091] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                >
-                  <ChevronRight size={16} />
-                </button>
-              </div>
-            </div>
+            <Pagination
+              page={verificationPage}
+              totalPages={verificationTotalPages}
+              totalRecords={verificationTotalRecords}
+              limit={10}
+              onPageChange={(newP) => {
+                setVerificationPage(newP);
+                fetchVerificationHistory(newP);
+              }}
+            />
           </div>
         </div>
       )}
@@ -1072,36 +1033,16 @@ const CardsAndCredit = () => {
           </TableWrapper>
 
           {/* Pagination */}
-          <div className="flex items-center justify-between pt-4 mt-6 border-t border-gray-100">
-            <span className="text-xs font-semibold text-gray-500">
-              Showing page {purchaseHistoryPage} of {purchaseHistoryTotalPages} ({purchaseHistoryTotal} total orders)
-            </span>
-            <div className="flex items-center gap-2">
-              <button
-                disabled={purchaseHistoryPage <= 1}
-                onClick={() => {
-                  const newP = purchaseHistoryPage - 1;
-                  setPurchaseHistoryPage(newP);
-                  fetchPurchaseHistory(newP);
-                }}
-                className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:border-[#225091] hover:text-[#225091] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-              >
-                <ChevronLeft size={16} />
-              </button>
-              <span className="text-xs font-bold text-[#225091] px-2">{purchaseHistoryPage}</span>
-              <button
-                disabled={purchaseHistoryPage >= purchaseHistoryTotalPages}
-                onClick={() => {
-                  const newP = purchaseHistoryPage + 1;
-                  setPurchaseHistoryPage(newP);
-                  fetchPurchaseHistory(newP);
-                }}
-                className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:border-[#225091] hover:text-[#225091] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-              >
-                <ChevronRight size={16} />
-              </button>
-            </div>
-          </div>
+          <Pagination
+            page={purchaseHistoryPage}
+            totalPages={purchaseHistoryTotalPages}
+            totalRecords={purchaseHistoryTotal}
+            limit={10}
+            onPageChange={(newP) => {
+              setPurchaseHistoryPage(newP);
+              fetchPurchaseHistory(newP);
+            }}
+          />
         </div>
       )}
 
@@ -1195,36 +1136,16 @@ const CardsAndCredit = () => {
           </TableWrapper>
 
           {/* Pagination */}
-          <div className="flex items-center justify-between pt-4 mt-6 border-t border-gray-100">
-            <span className="text-xs font-semibold text-gray-500">
-              Showing page {transferHistoryPage} of {transferHistoryTotalPages} ({transferHistoryTotal} total transfers)
-            </span>
-            <div className="flex items-center gap-2">
-              <button
-                disabled={transferHistoryPage <= 1}
-                onClick={() => {
-                  const newP = transferHistoryPage - 1;
-                  setTransferHistoryPage(newP);
-                  fetchTransferHistory(newP);
-                }}
-                className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:border-[#225091] hover:text-[#225091] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-              >
-                <ChevronLeft size={16} />
-              </button>
-              <span className="text-xs font-bold text-[#225091] px-2">{transferHistoryPage}</span>
-              <button
-                disabled={transferHistoryPage >= transferHistoryTotalPages}
-                onClick={() => {
-                  const newP = transferHistoryPage + 1;
-                  setTransferHistoryPage(newP);
-                  fetchTransferHistory(newP);
-                }}
-                className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:border-[#225091] hover:text-[#225091] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-              >
-                <ChevronRight size={16} />
-              </button>
-            </div>
-          </div>
+          <Pagination
+            page={transferHistoryPage}
+            totalPages={transferHistoryTotalPages}
+            totalRecords={transferHistoryTotal}
+            limit={10}
+            onPageChange={(newP) => {
+              setTransferHistoryPage(newP);
+              fetchTransferHistory(newP);
+            }}
+          />
         </div>
       )}
 

@@ -5,6 +5,7 @@ import { toast } from 'react-toastify';
 import PageHeader from '../../components/common/PageHeader';
 import { branchService } from '../../api/branchService';
 import { Skeleton } from '../../components/common/Skeleton';
+import Pagination from '../../components/common/Pagination';
 
 const Managers = () => {
   const [managers, setManagers] = useState([]);
@@ -404,32 +405,14 @@ const Managers = () => {
       </div>
 
       {/* Pagination */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-gray-500 font-medium shrink-0">
-        <div>
-          Showing {managers.length > 0 ? (page - 1) * limit + 1 : 0} to {Math.min(page * limit, meta.totalRecords)} of {meta.totalRecords} Entries
-        </div>
-        <div className="flex items-center gap-1.5">
-          <button 
-            onClick={() => setPage(p => Math.max(1, p - 1))}
-            disabled={page <= 1 || loading}
-            className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
-          >
-            <ChevronLeft size={16} />
-          </button>
-          
-          <span className="px-3 py-1 bg-[#225091] text-white rounded-lg font-bold text-xs shadow-2xs">
-            {page} / {meta.totalPages || 1}
-          </span>
-
-          <button 
-            onClick={() => setPage(p => Math.min(meta.totalPages, p + 1))}
-            disabled={page >= meta.totalPages || loading}
-            className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
-          >
-            <ChevronRight size={16} />
-          </button>
-        </div>
-      </div>
+      <Pagination
+        page={page}
+        totalPages={meta.totalPages}
+        totalRecords={meta.totalRecords}
+        limit={limit}
+        onPageChange={setPage}
+        disabled={loading}
+      />
 
       {/* Delete Confirmation Modal */}
       {isDeleteModalOpen && (

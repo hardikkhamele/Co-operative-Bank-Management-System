@@ -26,6 +26,7 @@ import SearchableSelect from '../../components/common/SearchableSelect';
 import { Skeleton, SkeletonTable } from '../../components/common/Skeleton';
 import TableWrapper from '../../components/common/TableWrapper';
 import StatsCard from '../../components/common/StatsCard';
+import Pagination from '../../components/common/Pagination';
 import { validateEmail, validatePhone, validatePassword, validatePincode, sanitizeDigits, preventInvalidNumberKeys } from '../../utils/validation';
 
 const INDIAN_STATES_WITH_CITIES = {
@@ -880,30 +881,13 @@ const Branch = () => {
         
         {/* Pagination */}
         {!loading && Array.isArray(branches) && branches.length > 0 && (
-          <div className="px-4 sm:px-6 py-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="text-sm text-gray-800 font-medium">
-              Page {page} of {totalPages}
-            </div>
-            <div className="flex items-center gap-2">
-              <button 
-                onClick={() => setPage(p => Math.max(1, p - 1))}
-                disabled={page === 1}
-                className="w-8 h-8 flex items-center justify-center rounded-full border border-[#225091] text-[#225091] hover:bg-teal-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                <ChevronRight size={16} className="rotate-180" />
-              </button>
-              <button className="w-8 h-8 flex items-center justify-center rounded-full bg-[#225091] text-white font-medium shadow-sm">
-                {page}
-              </button>
-              <button 
-                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                disabled={page === totalPages}
-                className="w-8 h-8 flex items-center justify-center rounded-full border border-[#225091] text-[#225091] hover:bg-teal-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                <ChevronRight size={16} />
-              </button>
-            </div>
-          </div>
+          <Pagination
+            page={page}
+            totalPages={totalPages}
+            totalRecords={stats?.totalBranches || branches.length}
+            limit={10}
+            onPageChange={setPage}
+          />
         )}
       </div>
 

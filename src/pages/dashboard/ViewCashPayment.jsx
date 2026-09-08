@@ -16,6 +16,7 @@ import { ArrowLeft,
 import { toast } from 'react-toastify';
 import { cashPaymentService } from '../../api/cashPaymentService';
 import PageHeader from '../../components/common/PageHeader';
+import Pagination from '../../components/common/Pagination';
 import { Skeleton, SkeletonTableRow } from '../../components/common/Skeleton';
 
 const ViewCashPayment = () => {
@@ -337,51 +338,13 @@ const ViewCashPayment = () => {
         </div>
         
         {/* Pagination */}
-        <div className="px-6 py-5 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <span className="text-[14px] font-semibold text-[#1b2559]">
-            Showing {history.length > 0 ? (page - 1) * limit + 1 : 0} to {Math.min(page * limit, meta.totalRecords || history.length)} of {meta.totalRecords || history.length} Entries
-          </span>
-          <div className="flex items-center gap-2">
-            <button 
-              onClick={() => setPage(p => Math.max(1, p - 1))}
-              disabled={page <= 1}
-              className="w-8 h-8 flex items-center justify-center rounded-full border border-[#225091] text-[#225091] hover:bg-teal-50 transition-colors disabled:opacity-40"
-            >
-              <ChevronLeft size={16} />
-            </button>
-
-            {(() => {
-              const totalPages = meta.totalPages || 1;
-              let startPage = Math.max(1, page - 2);
-              let endPage = Math.min(totalPages, page + 2);
-              if (endPage - startPage < 4) {
-                if (startPage === 1) endPage = Math.min(5, totalPages);
-                else if (endPage === totalPages) startPage = Math.max(1, totalPages - 4);
-              }
-              const pageButtons = [];
-              for (let i = startPage; i <= endPage; i++) {
-                pageButtons.push(
-                  <button 
-                    key={i}
-                    onClick={() => setPage(i)}
-                    className={`w-8 h-8 flex items-center justify-center rounded-full font-bold transition-colors ${page === i ? 'bg-[#225091] text-white shadow-sm border border-[#225091]' : 'border border-gray-200 text-gray-700 hover:bg-gray-50'}`}
-                  >
-                    {i}
-                  </button>
-                );
-              }
-              return pageButtons;
-            })()}
-
-            <button 
-              onClick={() => setPage(p => Math.min(meta.totalPages || 1, p + 1))}
-              disabled={page >= (meta.totalPages || 1)}
-              className="w-8 h-8 flex items-center justify-center rounded-full border border-[#225091] text-[#225091] hover:bg-teal-50 transition-colors disabled:opacity-40"
-            >
-              <ChevronRight size={16} />
-            </button>
-          </div>
-        </div>
+        <Pagination
+          page={page}
+          totalPages={meta.totalPages}
+          totalRecords={meta.totalRecords || history.length}
+          limit={limit}
+          onPageChange={setPage}
+        />
       </div>
 
       {/* Submit Cash Modal */}

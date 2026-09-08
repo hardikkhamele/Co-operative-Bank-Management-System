@@ -19,6 +19,7 @@ import {
 import { workReportService } from '../../api/workReportService';
 import { branchService } from '../../api/branchService';
 import PageHeader from '../../components/common/PageHeader';
+import Pagination from '../../components/common/Pagination';
 import { roleService } from '../../api/roleService';
 import useBranchStore from '../../store/branchStore';
 
@@ -208,6 +209,11 @@ const ImportantDates = () => {
       );
     });
   }, [datesList, search]);
+
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const totalPages = Math.ceil(filteredList.length / limit) || 1;
+  const paginatedList = filteredList.slice((page - 1) * limit, page * limit);
 
   // Open Filter Modal
   const handleOpenFilterModal = () => {
@@ -502,12 +508,12 @@ const ImportantDates = () => {
                   </td>
                 </tr>
               ) : (
-                filteredList.map((row, index) => {
+                paginatedList.map((row, index) => {
                   const empName = row.employeeName || row.name || row.fullName || '—';
                   const initials = empName !== '—'
                     ? empName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()
                     : 'E';
-                  const srNo = row.srNo || (index + 1);
+                  const srNo = (page - 1) * limit + (index + 1);
                   const desig = row.designation || row.type || row.role || '—';
                   const state = row.state || '—';
                   const branch = row.branch || row.branchName || '—';
@@ -554,10 +560,15 @@ const ImportantDates = () => {
           </table>
         </div>
 
-        {/* Footer */}
-        <div className="p-6 border-t border-gray-100 flex items-center justify-between text-[13px] font-medium text-gray-500">
-          <div>Showing {filteredList.length} entries</div>
-        </div>
+        {/* Pagination */}
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          totalRecords={filteredList.length}
+          limit={limit}
+          onPageChange={setPage}
+          onLimitChange={setLimit}
+        />
 
       </div>
 

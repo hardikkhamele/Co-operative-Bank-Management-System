@@ -33,6 +33,7 @@ import { roleService } from '../../api/roleService';
 import PageHeader from '../../components/common/PageHeader';
 import TableWrapper from '../../components/common/TableWrapper';
 import StatsCard from '../../components/common/StatsCard';
+import Pagination from '../../components/common/Pagination';
 import useAuthStore from '../../store/authStore';
 import useBranchStore from '../../store/branchStore';
 import { Skeleton, SkeletonAvatar } from '../../components/common/Skeleton';
@@ -888,32 +889,14 @@ const DailyWorkReport = () => {
         </TableWrapper>
 
         {/* Pagination Footer */}
-        <div className="p-5 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-gray-500 font-medium">
-          <div>
-            Showing {reports.length > 0 ? (page - 1) * limit + 1 : 0} to {Math.min(page * limit, meta.totalRecords)} of {meta.totalRecords} Entries
-          </div>
-          <div className="flex items-center gap-1.5">
-            <button 
-              onClick={() => setPage(prev => Math.max(1, prev - 1))}
-              disabled={meta.page <= 1 || loading}
-              className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
-            >
-              <ChevronLeft size={16} />
-            </button>
-            
-            <span className="px-3 py-1 bg-[#225091] text-white rounded-lg font-bold text-xs shadow-2xs">
-              {page} / {meta.totalPages || 1}
-            </span>
-
-            <button 
-              onClick={() => setPage(prev => Math.min(meta.totalPages, prev + 1))}
-              disabled={meta.page >= meta.totalPages || loading}
-              className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
-            >
-              <ChevronRight size={16} />
-            </button>
-          </div>
-        </div>
+        <Pagination
+          page={page}
+          totalPages={meta.totalPages}
+          totalRecords={meta.totalRecords}
+          limit={limit}
+          onPageChange={setPage}
+          disabled={loading}
+        />
       </div>
 
 

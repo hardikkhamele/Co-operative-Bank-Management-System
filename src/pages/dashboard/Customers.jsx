@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronRight, Search, ChevronDown, Eye, Edit, Trash2, X, SlidersHorizontal, Calendar, Mail, Phone, MapPin, User, Camera } from 'lucide-react';
+import Pagination from '../../components/common/Pagination';
 
 const mockCustomers = [];
 
@@ -14,6 +15,8 @@ const Customers = () => {
   const [customerToView, setCustomerToView] = useState(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [customerToEdit, setCustomerToEdit] = useState(null);
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
 
   const handleEditClick = (customer) => {
     setCustomerToEdit(customer);
@@ -204,30 +207,15 @@ const Customers = () => {
             </tbody>
           </table>
         </div>
-      </div>
-
-      {/* Pagination */}
-      <div className="flex flex-col sm:flex-row justify-between items-center mt-6 text-sm text-gray-600">
-        <div className="mb-4 sm:mb-0 text-[13px] font-medium text-gray-600">
-          Showing 1 to 10 of 30 Entries
-        </div>
-        <div className="flex items-center gap-2">
-          <button className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors">
-            <ChevronRight size={16} className="rotate-180" />
-          </button>
-          <button className="w-8 h-8 flex items-center justify-center rounded-full bg-[#225091] text-white font-medium shadow-sm">
-            1
-          </button>
-          <button className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-[#225091] font-medium hover:bg-teal-50 transition-colors">
-            2
-          </button>
-          <button className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-[#225091] font-medium hover:bg-teal-50 transition-colors">
-            3
-          </button>
-          <button className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors">
-            <ChevronRight size={16} />
-          </button>
-        </div>
+        {/* Pagination */}
+        <Pagination
+          page={page}
+          totalPages={1}
+          totalRecords={mockCustomers.length}
+          limit={limit}
+          onPageChange={setPage}
+          onLimitChange={setLimit}
+        />
       </div>
 
       {/* Delete Modal */}

@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'react-toastify';
 import PageHeader from '../../components/common/PageHeader';
+import Pagination from '../../components/common/Pagination';
 import { reportService } from '../../api/reportService';
 import useBranchStore from '../../store/branchStore';
 import usePermission from '../../hooks/usePermission';
@@ -1118,50 +1119,15 @@ const ReportViewer = () => {
         </div>
 
         {/* Table Footer with Pagination */}
-        <div className="p-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-gray-600">
-          <div className="flex items-center gap-2">
-            <span>Rows per page:</span>
-            <select
-              value={limit}
-              onChange={(e) => { setLimit(Number(e.target.value)); setPage(1); }}
-              className="px-2 py-1 bg-gray-50 border border-gray-200 rounded-lg text-xs font-semibold cursor-pointer"
-            >
-              <option value={10}>10</option>
-              <option value={25}>25</option>
-              <option value={50}>50</option>
-              <option value={100}>100</option>
-            </select>
-            <span className="text-gray-400 ml-2">
-              Total {pagination.totalRecords || items.length} records
-            </span>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <span className="font-semibold text-gray-700">
-              Page {pagination.page || page} of {pagination.totalPages || 1}
-            </span>
-            <div className="flex items-center gap-1">
-              <button
-                type="button"
-                disabled={page <= 1 || isLoading}
-                onClick={() => setPage(prev => Math.max(prev - 1, 1))}
-                className="p-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-600 disabled:opacity-40 cursor-pointer"
-                title="Previous page"
-              >
-                <ChevronLeft size={16} />
-              </button>
-              <button
-                type="button"
-                disabled={page >= (pagination.totalPages || 1) || isLoading}
-                onClick={() => setPage(prev => prev + 1)}
-                className="p-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-600 disabled:opacity-40 cursor-pointer"
-                title="Next page"
-              >
-                <ChevronRight size={16} />
-              </button>
-            </div>
-          </div>
-        </div>
+        <Pagination
+          page={page}
+          totalPages={pagination.totalPages || 1}
+          totalRecords={pagination.totalRecords || items.length}
+          limit={limit}
+          onPageChange={setPage}
+          onLimitChange={setLimit}
+          disabled={isLoading}
+        />
       </div>
     </div>
   );

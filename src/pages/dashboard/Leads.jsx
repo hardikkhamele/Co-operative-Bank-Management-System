@@ -38,6 +38,7 @@ import { leadService } from "../../api/leadService";
 import PageHeader from "../../components/common/PageHeader";
 import TableWrapper from "../../components/common/TableWrapper";
 import StatsCard from "../../components/common/StatsCard";
+import Pagination from "../../components/common/Pagination";
 
 const getStatusBadge = (status) => {
   const normalized = (status || "").toUpperCase();
@@ -1371,62 +1372,14 @@ const Leads = ({ leadType: propLeadType, systemTitle: propSystemTitle }) => {
 
         {/* Integrated Pagination Bar */}
         {!loading && meta.totalRecords > 0 && (
-          <div className="p-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs bg-gray-50/30">
-            <div className="text-gray-500 font-medium">
-              Showing <span className="font-bold text-gray-800">{leads.length > 0 ? (meta.page - 1) * meta.limit + 1 : 0}</span> to{" "}
-              <span className="font-bold text-gray-800">{Math.min(meta.page * meta.limit, meta.totalRecords)}</span> of{" "}
-              <span className="font-bold text-gray-800">{meta.totalRecords}</span> Entries
-            </div>
-            <div className="flex items-center gap-1.5">
-              <button
-                type="button"
-                onClick={() => setPage((p) => Math.max(p - 1, 1))}
-                disabled={!meta.hasPrevPage || page <= 1 || loading}
-                className="p-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors bg-white cursor-pointer"
-                title="Previous Page"
-              >
-                <ChevronLeft size={15} />
-              </button>
-
-              {Array.from({ length: meta.totalPages || 1 }, (_, i) => i + 1)
-                .filter(
-                  (p) =>
-                    p === 1 || p === meta.totalPages || Math.abs(p - meta.page) <= 1,
-                )
-                .map((p, idx, arr) => {
-                  const prev = arr[idx - 1];
-                  const showEllipsis = prev && p - prev > 1;
-                  return (
-                    <React.Fragment key={p}>
-                      {showEllipsis && (
-                        <span className="px-1 text-gray-400">...</span>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => setPage(p)}
-                        className={`w-8 h-8 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                          meta.page === p
-                            ? "bg-[#225091] text-white shadow-2xs"
-                            : "border border-gray-200 text-gray-700 hover:bg-gray-50 bg-white"
-                        }`}
-                      >
-                        {p}
-                      </button>
-                    </React.Fragment>
-                  );
-                })}
-
-              <button
-                type="button"
-                onClick={() => setPage((p) => Math.min(p + 1, meta.totalPages))}
-                disabled={!meta.hasNextPage || page >= meta.totalPages || loading}
-                className="p-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors bg-white cursor-pointer"
-                title="Next Page"
-              >
-                <ChevronRight size={15} />
-              </button>
-            </div>
-          </div>
+          <Pagination
+            page={page}
+            totalPages={meta.totalPages}
+            totalRecords={meta.totalRecords}
+            limit={meta.limit}
+            onPageChange={setPage}
+            disabled={loading}
+          />
         )}
       </div>
 

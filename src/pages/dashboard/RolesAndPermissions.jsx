@@ -21,6 +21,7 @@ import {
 import { roleService } from "../../api/roleService";
 import PageHeader from "../../components/common/PageHeader";
 import TableWrapper from "../../components/common/TableWrapper";
+import Pagination from "../../components/common/Pagination";
 
 const RolesAndPermissions = () => {
   const navigate = useNavigate();
@@ -301,32 +302,13 @@ const RolesAndPermissions = () => {
 
         {/* Footer Pagination */}
         {!loading && roles.length > 0 && (
-          <div className="px-5 py-3 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 bg-slate-50/50">
-            <div className="text-xs text-slate-500">
-              Showing <span className="font-semibold text-slate-700">{(page - 1) * 10 + 1}</span> to{" "}
-              <span className="font-semibold text-slate-700">{Math.min(page * 10, totalRecords)}</span> of{" "}
-              <span className="font-semibold text-slate-700">{totalRecords}</span> roles
-            </div>
-            <div className="flex items-center gap-1.5">
-              <button
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page === 1}
-                className="px-2.5 py-1 rounded-md border border-slate-200 bg-white text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
-              >
-                Previous
-              </button>
-              <div className="px-2.5 py-1 bg-white border border-slate-200 rounded-md text-xs font-semibold text-slate-800">
-                {page} / {totalPages}
-              </div>
-              <button
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                disabled={page === totalPages}
-                className="px-2.5 py-1 rounded-md border border-slate-200 bg-white text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
-              >
-                Next
-              </button>
-            </div>
-          </div>
+          <Pagination
+            page={page}
+            totalPages={totalPages}
+            totalRecords={totalRecords}
+            limit={10}
+            onPageChange={setPage}
+          />
         )}
       </div>
 

@@ -2,11 +2,14 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Search, SlidersHorizontal, Edit, Trash2, ChevronLeft, X, ChevronDown, Camera } from 'lucide-react';
 import PageHeader from '../../components/common/PageHeader';
+import Pagination from '../../components/common/Pagination';
 
 const ProductBrands = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editBrandData, setEditBrandData] = useState(null);
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
 
   const brandsData = [
     { id: 1, name: 'Apple', category: 'Smart Phones', models: 12, products: 108, image: 'https://ui-avatars.com/api/?name=Apple&background=fff&color=374151' },
@@ -22,6 +25,9 @@ const ProductBrands = () => {
   const filteredData = brandsData.filter(row => {
     return row.name.toLowerCase().includes(searchTerm.toLowerCase());
   });
+
+  const totalPages = Math.ceil(filteredData.length / limit) || 1;
+  const paginatedData = filteredData.slice((page - 1) * limit, page * limit);
 
   return (
     <div className="h-full flex flex-col gap-6">
@@ -71,16 +77,16 @@ const ProductBrands = () => {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
-            {filteredData.map((row, index) => (
+            {paginatedData.map((row, index) => (
               <tr key={row.id} className="hover:bg-slate-50/70 transition-colors">
-                <td className="py-3.5 px-5 text-center text-[13px] text-gray-500 font-medium">{index + 1}</td>
+                <td className="py-3.5 px-5 text-center text-[13px] text-gray-500 font-medium">{(page - 1) * limit + index + 1}</td>
                 <td className="py-3.5 px-5 font-semibold text-gray-900 flex items-center gap-3 text-sm">
                   <div className="w-8 h-8 rounded-lg border border-gray-200 overflow-hidden bg-white flex items-center justify-center p-0.5 shadow-2xs">
                     <img src={row.image} alt={row.name} className="w-full h-full object-contain" />
                   </div>
                   {row.name}
                 </td>
-                <td className="py-3.5 px-5 text-xs text-gray-600 font-medium">{row.category}</td>
+                <td className="py-3.5 px-5 text-xs text-gray-700 font-medium">{row.category}</td>
                 <td className="py-3.5 px-5 text-xs text-gray-600 font-medium tabular-nums">{row.models}</td>
                 <td className="py-3.5 px-5 text-xs text-gray-600 font-medium tabular-nums">{row.products}</td>
                 <td className="py-3.5 px-5 text-center">
@@ -103,28 +109,16 @@ const ProductBrands = () => {
           </tbody>
         </table>
       </div>
-      </div>
 
       {/* Pagination */}
-      <div className="flex items-center justify-between text-sm text-gray-500 shrink-0">
-        <div>Showing {filteredData.length > 0 ? 1 : 0} to {filteredData.length} of 30 Entries</div>
-        <div className="flex items-center gap-2">
-          <button className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 bg-white text-[#225091] hover:bg-[#225091] hover:text-white transition-colors shadow-sm">
-            <ChevronLeft size={16} />
-          </button>
-          <button className="w-8 h-8 flex items-center justify-center rounded-full bg-[#225091] text-white border border-[#225091] shadow-sm">
-            1
-          </button>
-          <button className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 bg-white text-[#225091] hover:bg-[#225091] hover:text-white transition-colors shadow-sm">
-            2
-          </button>
-          <button className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 bg-white text-[#225091] hover:bg-[#225091] hover:text-white transition-colors shadow-sm">
-            3
-          </button>
-          <button className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 bg-white text-[#225091] hover:bg-[#225091] hover:text-white transition-colors shadow-sm">
-            <ChevronRight size={16} />
-          </button>
-        </div>
+      <Pagination
+        page={page}
+        totalPages={totalPages}
+        totalRecords={filteredData.length}
+        limit={limit}
+        onPageChange={setPage}
+        onLimitChange={setLimit}
+      />
       </div>
 
       {/* Create Modal */}

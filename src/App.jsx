@@ -56,6 +56,7 @@ const CreateLead = lazy(() => import('./pages/dashboard/CreateLead'));
 const EditLead = lazy(() => import('./pages/dashboard/EditLead'));
 const ViewLead = lazy(() => import('./pages/dashboard/ViewLead'));
 const SetupLoan = lazy(() => import('./pages/dashboard/SetupLoan'));
+const SocietyCustomers = lazy(() => import('./pages/dashboard/SocietyCustomers'));
 
 // Structure & Roles
 const Region = lazy(() => import('./pages/dashboard/Region'));
@@ -233,6 +234,11 @@ function App() {
                 <Route path="leads/view/:id" element={<ViewLead />} />
                 <Route path="leads/setup-loan" element={<SetupLoan />} />
                 <Route path="leads/setup-loan/:id" element={<SetupLoan />} />
+              </Route>
+
+              {/* Society Members */}
+              <Route element={<PermissionRoute anyOf={['customer.view', 'lead.view', 'merchant.view']} />}>
+                <Route path="society-members" element={<SocietyCustomers />} />
               </Route>
 
               <Route element={<PermissionRoute anyOf={['customer.view', 'lead.view']} />}>

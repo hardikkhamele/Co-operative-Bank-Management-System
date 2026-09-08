@@ -19,6 +19,7 @@ import SearchableSelect from '../../components/common/SearchableSelect';
 import { Skeleton } from '../../components/common/Skeleton';
 import TableWrapper from '../../components/common/TableWrapper';
 import StatsCard from '../../components/common/StatsCard';
+import Pagination from '../../components/common/Pagination';
 
 // Comprehensive Indian States and Prominent Cities Map for fallback
 const INDIAN_STATES_WITH_CITIES = {
@@ -1219,34 +1220,13 @@ const Merchants = () => {
         
         {/* Pagination Footer */}
         {!loading && merchants && merchants.length > 0 && (
-          <div className="px-6 py-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4 mt-auto bg-gray-50/40">
-            <div className="text-xs text-gray-500 font-medium">
-              Showing page <span className="font-semibold text-gray-800">{page}</span> of{" "}
-              <span className="font-semibold text-gray-800">{meta.totalPages || 1}</span> (
-              <span className="font-semibold text-gray-800">{meta.totalRecords || merchants.length}</span> total entries)
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => handlePageChange(page - 1)}
-                disabled={page <= 1}
-                className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-[#225091] hover:bg-[#225091] hover:text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-xs font-semibold cursor-pointer shadow-2xs"
-                title="Previous Page"
-              >
-                <ChevronLeft size={16} />
-              </button>
-              <span className="px-3 py-1 bg-[#225091] text-white text-xs font-bold rounded-full shadow-2xs">
-                {page}
-              </span>
-              <button
-                onClick={() => handlePageChange(page + 1)}
-                disabled={page >= (meta.totalPages || 1)}
-                className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-[#225091] hover:bg-[#225091] hover:text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-xs font-semibold cursor-pointer shadow-2xs"
-                title="Next Page"
-              >
-                <ChevronRight size={16} />
-              </button>
-            </div>
-          </div>
+          <Pagination
+            page={page}
+            totalPages={meta.totalPages}
+            totalRecords={meta.totalRecords || merchants.length}
+            limit={limit}
+            onPageChange={handlePageChange}
+          />
         )}
       </div>
 

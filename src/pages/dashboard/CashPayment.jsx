@@ -28,6 +28,7 @@ import SearchableSelect from '../../components/common/SearchableSelect';
 import { Skeleton, SkeletonTableRow } from '../../components/common/Skeleton';
 import TableWrapper from '../../components/common/TableWrapper';
 import StatsCard from '../../components/common/StatsCard';
+import Pagination from '../../components/common/Pagination';
 
 // Comprehensive Indian States and Prominent Cities Map
 const INDIAN_STATES_WITH_CITIES = {
@@ -799,63 +800,14 @@ const CashPayment = () => {
         </TableWrapper>
 
         {/* 5. Pagination Bar */}
-        <div className="p-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs">
-          <div className="text-gray-500 font-medium">
-            Showing <span className="font-bold text-gray-800">{items.length > 0 ? (page - 1) * limit + 1 : 0}</span> to{' '}
-            <span className="font-bold text-gray-800">
-              {Math.min(page * limit, meta.totalRecords || items.length)}
-            </span>{' '}
-            of <span className="font-bold text-gray-800">{meta.totalRecords || items.length}</span> staff handlers
-          </div>
-
-          <div className="flex items-center gap-1.5">
-            <button
-              onClick={() => setPage(p => Math.max(1, p - 1))}
-              disabled={page <= 1 || loading}
-              className="p-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-              title="Previous Page"
-            >
-              <ChevronLeft size={15} />
-            </button>
-
-            {Array.from({ length: Math.min(5, meta.totalPages || 1) }, (_, i) => {
-              let pageNum;
-              const totalP = meta.totalPages || 1;
-              if (totalP <= 5) {
-                pageNum = i + 1;
-              } else if (page <= 3) {
-                pageNum = i + 1;
-              } else if (page >= totalP - 2) {
-                pageNum = totalP - 4 + i;
-              } else {
-                pageNum = page - 2 + i;
-              }
-
-              return (
-                <button
-                  key={pageNum}
-                  onClick={() => setPage(pageNum)}
-                  className={`w-8 h-8 rounded-lg font-bold transition-colors ${
-                    page === pageNum
-                      ? 'bg-[#225091] text-white shadow-2xs'
-                      : 'border border-gray-200 text-gray-700 hover:bg-gray-50'
-                  }`}
-                >
-                  {pageNum}
-                </button>
-              );
-            })}
-
-            <button
-              onClick={() => setPage(p => Math.min(meta.totalPages || 1, p + 1))}
-              disabled={page >= (meta.totalPages || 1) || loading}
-              className="p-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-              title="Next Page"
-            >
-              <ChevronRight size={15} />
-            </button>
-          </div>
-        </div>
+        <Pagination
+          page={page}
+          totalPages={meta.totalPages}
+          totalRecords={meta.totalRecords || items.length}
+          limit={limit}
+          onPageChange={setPage}
+          disabled={loading}
+        />
       </div>
 
       {/* 6. Deposit Cash Modal */}

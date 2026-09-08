@@ -11,6 +11,7 @@ import { toast } from 'react-toastify';
 import PageHeader from '../../components/common/PageHeader';
 import TableWrapper from '../../components/common/TableWrapper';
 import StatsCard from '../../components/common/StatsCard';
+import Pagination from '../../components/common/Pagination';
 import InventoryModals from './InventoryModals';
 import inventoryService from '../../api/inventoryService';
 import { useInventoryPermissions } from '../../hooks/useInventoryPermissions';
@@ -523,41 +524,15 @@ const SocietyInventorySPA = () => {
   };
 
   const renderPagination = () => {
-    const limit = 10;
-    const startRange = totalRecords === 0 ? 0 : (currentPage - 1) * limit + 1;
-    const endRange = Math.min(currentPage * limit, totalRecords);
-
     return (
-      <div className="p-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs bg-gray-50/30">
-        <div className="text-gray-500 font-medium">
-          Showing <span className="font-bold text-gray-800">{startRange}</span> to{" "}
-          <span className="font-bold text-gray-800">{endRange}</span> of{" "}
-          <span className="font-bold text-gray-800">{totalRecords}</span> Entries
-        </div>
-        <div className="flex items-center gap-1.5">
-          <button
-            type="button"
-            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-            disabled={currentPage <= 1 || isLoading}
-            className="p-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors bg-white cursor-pointer shadow-2xs"
-            title="Previous Page"
-          >
-            <ChevronLeft size={14} />
-          </button>
-          <span className="px-3 py-1 bg-[#225091] text-white rounded-lg font-bold text-xs shadow-2xs">
-            {currentPage} / {totalPages || 1}
-          </span>
-          <button
-            type="button"
-            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-            disabled={currentPage >= totalPages || isLoading}
-            className="p-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors bg-white cursor-pointer shadow-2xs"
-            title="Next Page"
-          >
-            <ChevronRight size={14} />
-          </button>
-        </div>
-      </div>
+      <Pagination
+        page={currentPage}
+        totalPages={totalPages}
+        totalRecords={totalRecords}
+        limit={10}
+        onPageChange={setCurrentPage}
+        disabled={isLoading}
+      />
     );
   };
 

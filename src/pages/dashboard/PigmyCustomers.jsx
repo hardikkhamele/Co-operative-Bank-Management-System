@@ -53,6 +53,7 @@ import branchService from '../../api/branchService';
 import PageHeader from '../../components/common/PageHeader';
 import StatsCard from '../../components/common/StatsCard';
 import TableWrapper from '../../components/common/TableWrapper';
+import Pagination from '../../components/common/Pagination';
 
 // SIP Sub-Components (Modals & Utilities)
 import {
@@ -1447,14 +1448,13 @@ const PigmyCustomers = () => {
               </TableWrapper>
 
             {/* Pagination */}
-            <div className="p-4 bg-gray-50/50 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-gray-500">
-              <span>Showing page <strong>{page}</strong> of <strong>{meta.totalPages || 1}</strong> (Total {meta.totalRecords || 0} applications)</span>
-              <div className="flex items-center gap-2">
-                <button onClick={() => setPage(prev => Math.max(1, prev - 1))} disabled={page <= 1} className="px-3 py-1.5 rounded-lg border border-gray-200 bg-white font-semibold hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer">Previous</button>
-                <span className="font-mono font-bold text-gray-700 px-2">{page} / {meta.totalPages || 1}</span>
-                <button onClick={() => setPage(prev => Math.min(meta.totalPages || 1, prev + 1))} disabled={page >= (meta.totalPages || 1)} className="px-3 py-1.5 rounded-lg border border-gray-200 bg-white font-semibold hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer">Next</button>
-              </div>
-            </div>
+            <Pagination
+              page={page}
+              totalPages={meta.totalPages}
+              totalRecords={meta.totalRecords}
+              limit={limit}
+              onPageChange={setPage}
+            />
         </>
       )}
 

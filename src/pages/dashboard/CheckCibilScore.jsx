@@ -44,6 +44,7 @@ import {
 import { toast } from 'react-toastify';
 import PageHeader from '../../components/common/PageHeader';
 import TableWrapper from '../../components/common/TableWrapper';
+import Pagination from '../../components/common/Pagination';
 import { verificationService } from '../../api/verificationService';
 import { validatePAN, sanitizePAN } from '../../utils/validation';
 import { Skeleton } from '../../components/common/Skeleton';
@@ -990,31 +991,9 @@ const CheckCibilScore = () => {
 
               {/* Multi-Section Content Card */}
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                <div className="flex border-b border-gray-100 bg-gray-50/50 px-6 pt-3 gap-2 overflow-x-auto">
-                  {[
-                    { id: 'overview', label: 'Overview & Profile' },
-                    { id: 'accounts', label: `Loan & Credit Accounts (${liveParsed.accounts.length})` },
-                    { id: 'inquiries', label: `Credit Enquiries (${liveParsed.inquiries.length})` },
-                    { id: 'bureau', label: 'Bureau Details' }
-                  ].map((tabItem) => (
-                    <button
-                      key={tabItem.id}
-                      onClick={() => setActiveTab(tabItem.id)}
-                      className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider rounded-t-xl transition-all border-b-2 cursor-pointer ${
-                        activeTab === tabItem.id
-                          ? 'border-[#225091] text-[#225091] bg-white shadow-xs'
-                          : 'border-transparent text-gray-500 hover:text-gray-800'
-                      }`}
-                    >
-                      {tabItem.label}
-                    </button>
-                  ))}
-                </div>
-
-                <div className="p-6">
-                  {/* TAB 1: Overview & Profile */}
-                  {activeTab === 'overview' && (
-                    <div className="space-y-6">
+                <div className="p-6 space-y-8">
+                  {/* Overview & Profile */}
+                  <div className="space-y-6">
                       {/* Applicant Profile Information Box */}
                       <div className="p-5 rounded-2xl bg-gray-50/70 border border-gray-100">
                         <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wider mb-4 flex items-center gap-2">
@@ -1068,11 +1047,13 @@ const CheckCibilScore = () => {
                         </p>
                       </div>
                     </div>
-                  )}
 
-                  {/* TAB 2: Accounts Table */}
-                  {activeTab === 'accounts' && (
-                    <div className="space-y-4">
+                  {/* Accounts Table */}
+                  <div className="space-y-4">
+                    <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wider flex items-center gap-2 mb-2">
+                      <Wallet size={16} className="text-[#225091]" />
+                      <span>Loan & Credit Accounts ({liveParsed.accounts.length})</span>
+                    </h4>
                       {liveParsed.accounts.length > 0 ? (
                         <div className="border border-gray-100 rounded-2xl overflow-hidden shadow-2xs">
                           <table className="w-full text-xs border-collapse text-center text-sm whitespace-nowrap">
@@ -1115,11 +1096,13 @@ const CheckCibilScore = () => {
                         </div>
                       )}
                     </div>
-                  )}
 
-                  {/* TAB 3: Enquiries Table */}
-                  {activeTab === 'inquiries' && (
-                    <div className="space-y-4">
+                  {/* Enquiries Table */}
+                  <div className="space-y-4">
+                    <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wider flex items-center gap-2 mb-2">
+                      <Search size={16} className="text-purple-600" />
+                      <span>Credit Enquiries ({liveParsed.inquiries.length})</span>
+                    </h4>
                       {liveParsed.inquiries.length > 0 ? (
                         <div className="border border-gray-100 rounded-2xl overflow-hidden shadow-2xs">
                           <table className="w-full text-xs border-collapse text-center text-sm whitespace-nowrap">
@@ -1154,11 +1137,9 @@ const CheckCibilScore = () => {
                         </div>
                       )}
                     </div>
-                  )}
 
-                  {/* TAB 4: Bureau Details (Structured Human-Readable Bureau Assessment) */}
-                  {activeTab === 'bureau' && (
-                    <div className="space-y-6">
+                  {/* Bureau Details (Structured Human-Readable Bureau Assessment) */}
+                  <div className="space-y-6">
                       {/* Bureau Provider & Protocol Details */}
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="p-5 rounded-2xl bg-gray-50/80 border border-gray-100 space-y-3">
@@ -1239,7 +1220,6 @@ const CheckCibilScore = () => {
                         )}
                       </div>
                     </div>
-                  )}
                 </div>
               </div>
             </div>
@@ -1432,32 +1412,13 @@ const CheckCibilScore = () => {
 
             {/* Pagination */}
             {!historyLoading && historyList && historyList.length > 0 && (
-              <div className="px-6 py-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4 mt-auto bg-gray-50/40">
-                <div className="text-xs text-gray-500 font-medium">
-                  Showing page <span className="font-semibold text-gray-800">{pagination.page}</span> of{' '}
-                  <span className="font-semibold text-gray-800">{pagination.totalPages || 1}</span> (
-                  <span className="font-semibold text-gray-800">{pagination.total || historyList.length}</span> total records)
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setPage(p => Math.max(1, p - 1))}
-                    disabled={pagination.page <= 1}
-                    className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-[#225091] hover:bg-[#225091] hover:text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-xs font-semibold cursor-pointer shadow-2xs"
-                  >
-                    <ChevronLeft size={16} />
-                  </button>
-                  <span className="px-3 py-1 bg-[#225091] text-white text-xs font-bold rounded-full shadow-2xs">
-                    {pagination.page}
-                  </span>
-                  <button
-                    onClick={() => setPage(p => Math.min(pagination.totalPages || 1, p + 1))}
-                    disabled={pagination.page >= (pagination.totalPages || 1)}
-                    className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-[#225091] hover:bg-[#225091] hover:text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-xs font-semibold cursor-pointer shadow-2xs"
-                  >
-                    <ChevronRight size={16} />
-                  </button>
-                </div>
-              </div>
+              <Pagination
+                page={pagination.page}
+                totalPages={pagination.totalPages}
+                totalRecords={pagination.total || historyList.length}
+                limit={pagination.limit || 10}
+                onPageChange={setPage}
+              />
             )}
           </div>
         </div>
