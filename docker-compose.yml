@@ -1,0 +1,13 @@
+services:
+  bank-panel:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL}
+    container_name: advita-cooperative-panel
+    ports:
+      - "4173:3000"
+    env_file:
+      - .env
+    restart: always
