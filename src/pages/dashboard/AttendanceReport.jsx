@@ -1130,16 +1130,16 @@ const AttendanceReport = () => {
           <TableWrapper minHeight="360px">
             {/* TAB 1: DAILY LOGS (Section 1.2) */}
             {activeTab === 'daily' && (
-              <table ref={tableRef} className="w-full text-left text-xs border-collapse min-w-[800px]">
-                <thead className="bg-slate-50/80 border-b border-gray-200/80">
+              <table ref={tableRef} className="w-full text-xs border-collapse min-w-[800px] text-center text-sm whitespace-nowrap">
+                <thead className="bg-[#225091] text-white text-xs uppercase tracking-wider font-semibold border-b border-[#225091]">
                   <tr>
-                    <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap text-center w-14">SR.NO.</th>
-                    <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">EMPLOYEE</th>
-                    <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">DESIGNATION</th>
-                    <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">CHECK-IN</th>
-                    <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">CHECK-OUT</th>
-                    <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">WORKING HRS</th>
-                    <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap text-center">STATUS</th>
+                    <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center w-14">SR.NO.</th>
+                    <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">EMPLOYEE</th>
+                    <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">DESIGNATION</th>
+                    <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">CHECK-IN</th>
+                    <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">CHECK-OUT</th>
+                    <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">WORKING HRS</th>
+                    <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">STATUS</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 font-medium">
@@ -1228,22 +1228,22 @@ const AttendanceReport = () => {
 
             {/* TAB 2: MONTHLY SHEET (Section 5: /api/v1/society/attendance/sheet) */}
             {activeTab === 'monthly' && (
-              <table ref={tableRef} className="w-full text-left text-xs border-collapse min-w-[1100px]">
-                <thead className="bg-[#F8FAFC] text-gray-500 uppercase tracking-wider font-semibold border-b border-gray-200/80 sticky top-0 z-10">
+              <table ref={tableRef} className="w-full text-xs border-collapse min-w-[1100px] text-center text-sm whitespace-nowrap">
+                <thead className="bg-[#225091] text-white text-xs uppercase tracking-wider font-semibold border-b border-[#225091]">
                   <tr>
-                    <th className="py-3.5 px-4 sticky left-0 bg-[#F8FAFC] z-20 shadow-xs min-w-[180px]">
+                    <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center min-w-[180px]">
                       EMPLOYEE
                     </th>
                     {Array.from({ length: monthlySheetData.daysInMonth || 31 }, (_, i) => (
-                      <th key={i} className="py-3.5 px-1.5 text-center font-mono font-bold text-[11px] min-w-[34px]">
+                      <th key={i} className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center min-w-[34px]">
                         {i + 1}
                       </th>
                     ))}
-                    <th className="py-3.5 px-3 text-center font-bold text-emerald-700 min-w-[48px]">P</th>
-                    <th className="py-3.5 px-3 text-center font-bold text-rose-700 min-w-[48px]">A</th>
-                    <th className="py-3.5 px-3 text-center font-bold text-[#225091] min-w-[48px]">L</th>
-                    <th className="py-3.5 px-3 text-center font-bold text-purple-700 min-w-[48px]">HD</th>
-                    <th className="py-3.5 px-3 text-center font-bold text-indigo-700 min-w-[60px]">%</th>
+                    <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center min-w-[48px]">P</th>
+                    <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center min-w-[48px]">A</th>
+                    <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center min-w-[48px]">L</th>
+                    <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center min-w-[48px]">HD</th>
+                    <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center min-w-[60px]">%</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 font-medium">
@@ -1321,11 +1321,11 @@ const AttendanceReport = () => {
 
             {/* TAB 3: YEARLY MATRIX (Section 6: /api/v1/society/attendance/yearly-matrix) */}
             {activeTab === 'yearly' && (
-              <table ref={tableRef} className="w-full text-left text-xs border-collapse min-w-[1000px]">
-                <thead className="bg-[#F8FAFC] text-gray-500 uppercase tracking-wider font-semibold border-b border-gray-200/80 sticky top-0 z-10">
+              <table ref={tableRef} className="w-full text-xs border-collapse min-w-[1000px] text-center text-sm whitespace-nowrap">
+                <thead className="bg-[#225091] text-white text-xs uppercase tracking-wider font-semibold border-b border-[#225091]">
                   <tr>
-                    <th className="py-3.5 px-3 text-center w-12 sticky left-0 bg-[#F8FAFC] z-20">SR.NO.</th>
-                    <th className="py-3.5 px-4 sticky left-12 bg-[#F8FAFC] z-20 shadow-xs min-w-[200px]">
+                    <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center w-12">SR.NO.</th>
+                    <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center min-w-[200px]">
                       EMPLOYEE
                     </th>
                     {MONTH_SHORT_NAMES.map((mCode, idx) => {
@@ -1342,8 +1342,8 @@ const AttendanceReport = () => {
                         </th>
                       );
                     })}
-                    <th className="py-3.5 px-3 text-center font-bold text-slate-800 min-w-[90px]">TOTAL PRESENT</th>
-                    <th className="py-3.5 px-4 text-center font-bold text-emerald-700 min-w-[95px]">AVG ATTENDANCE</th>
+                    <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center min-w-[90px]">TOTAL PRESENT</th>
+                    <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center min-w-[95px]">AVG ATTENDANCE</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 font-medium">

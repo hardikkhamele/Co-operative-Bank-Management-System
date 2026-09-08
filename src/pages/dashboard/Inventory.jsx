@@ -49,11 +49,14 @@ const SocietyInventorySPA = () => {
     }
   }, []);
 
-  const handleTabChange = (newTab) => {
+  const handleTabChange = (newTab, newSubTab = null) => {
     setActiveTab(newTab);
     localStorage.setItem('inventory_last_tab', newTab);
+    if (newSubTab) {
+      setActiveSubTab(newSubTab);
+    }
     const searchString = searchParams.toString();
-    navigate(`/inventory/${newTab}${searchString ? `?${searchString}` : ''}`);
+    navigate(`/inventory/${newTab}${newSubTab ? `/${newSubTab}` : ''}${searchString ? `?${searchString}` : ''}`);
   };
 
   const handleSubTabChange = (newSubTab) => {
@@ -685,22 +688,22 @@ const SocietyInventorySPA = () => {
 
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
         <TableWrapper minHeight="360px">
-          <table className="w-full text-left border-collapse min-w-[800px]">
-            <thead className="bg-slate-50/80 border-b border-gray-200/80">
+          <table className="w-full border-collapse min-w-[800px] text-center text-sm whitespace-nowrap">
+            <thead className="bg-[#225091] text-white text-xs uppercase tracking-wider font-semibold border-b border-[#225091]">
               <tr>
-                <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">Code</th>
-                <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">Name</th>
-                {activeSubTab === 'vendors' && <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">Contact Person</th>}
-                {activeSubTab === 'vendors' && <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">Email / Phone</th>}
-                {activeSubTab === 'vendors' && <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">GST Number</th>}
-                {activeSubTab === 'central' && <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">Manager</th>}
-                {activeSubTab === 'categories' && <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">Description</th>}
-                {activeSubTab === 'subcategories' && <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">Parent Category</th>}
-                <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap text-center">Status</th>
+                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Code</th>
+                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Name</th>
+                {activeSubTab === 'vendors' && <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Contact Person</th>}
+                {activeSubTab === 'vendors' && <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Email / Phone</th>}
+                {activeSubTab === 'vendors' && <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">GST Number</th>}
+                {activeSubTab === 'central' && <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Manager</th>}
+                {activeSubTab === 'categories' && <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Description</th>}
+                {activeSubTab === 'subcategories' && <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Parent Category</th>}
+                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Status</th>
                 {(((activeSubTab === 'categories' || activeSubTab === 'subcategories') && permissions.canManageCatalog) ||
                  (activeSubTab === 'central' && permissions.canManageCentralWarehouse) ||
                  (activeSubTab === 'vendors' && permissions.canManageVendors)) && (
-                  <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap text-right">Actions</th>
+                  <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center text-right">Actions</th>
                 )}
               </tr>
             </thead>
@@ -807,17 +810,17 @@ const SocietyInventorySPA = () => {
       
       <div className="bg-white rounded-2xl shadow-xs border border-gray-100 overflow-hidden">
         <TableWrapper minHeight="360px">
-          <table className="w-full text-left border-collapse text-sm">
-            <thead className="bg-slate-50/80 border-b border-gray-200/80 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">
+          <table className="w-full border-collapse text-sm text-center whitespace-nowrap">
+            <thead className="bg-[#225091] text-white text-xs uppercase tracking-wider font-semibold border-b border-[#225091]">
               <tr>
-                <th className="py-3.5 px-4 text-left">Code</th>
-                <th className="py-3.5 px-4 text-left">Name</th>
-                <th className="py-3.5 px-4 text-left">Category</th>
-                <th className="py-3.5 px-4 text-left">Subcategory</th>
-                <th className="py-3.5 px-4 text-center">Consumable</th>
-                <th className="py-3.5 px-4 text-center">Unit</th>
-                <th className="py-3.5 px-4 text-right">Min Stock</th>
-                {permissions.canManageCatalog && <th className="py-3.5 px-4 text-right">Actions</th>}
+                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center text-left">Code</th>
+                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center text-left">Name</th>
+                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center text-left">Category</th>
+                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center text-left">Subcategory</th>
+                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Consumable</th>
+                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Unit</th>
+                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center text-right">Min Stock</th>
+                {permissions.canManageCatalog && <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center text-right">Actions</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -891,17 +894,17 @@ const SocietyInventorySPA = () => {
 
       <div className="bg-white rounded-2xl shadow-xs border border-gray-100 overflow-hidden">
         <TableWrapper minHeight="360px">
-          <table className="w-full text-left border-collapse text-sm">
-            <thead className="bg-slate-50/80 border-b border-gray-200/80 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">
+          <table className="w-full border-collapse text-sm text-center whitespace-nowrap">
+            <thead className="bg-[#225091] text-white text-xs uppercase tracking-wider font-semibold border-b border-[#225091]">
               <tr>
-                <th className="py-3.5 px-4 text-left">Asset Tag</th>
-                <th className="py-3.5 px-4 text-left">Item Master</th>
-                <th className="py-3.5 px-4 text-left">Serial No.</th>
-                <th className="py-3.5 px-4 text-left">Current Location / Assignee</th>
-                <th className="py-3.5 px-4 text-left">Condition</th>
-                <th className="py-3.5 px-4 text-left">Purchase Date / Warranty</th>
-                <th className="py-3.5 px-4 text-center">Asset Status</th>
-                <th className="py-3.5 px-4 text-right">Actions</th>
+                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center text-left">Asset Tag</th>
+                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center text-left">Item Master</th>
+                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center text-left">Serial No.</th>
+                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center text-left">Current Location / Assignee</th>
+                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center text-left">Condition</th>
+                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center text-left">Purchase Date / Warranty</th>
+                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Asset Status</th>
+                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -974,16 +977,16 @@ const SocietyInventorySPA = () => {
 
       <div className="bg-white rounded-2xl shadow-xs border border-gray-100 overflow-hidden">
         <TableWrapper minHeight="360px">
-          <table className="w-full text-left border-collapse text-sm">
-            <thead className="bg-slate-50/80 border-b border-gray-200/80 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">
+          <table className="w-full border-collapse text-sm text-center whitespace-nowrap">
+            <thead className="bg-[#225091] text-white text-xs uppercase tracking-wider font-semibold border-b border-[#225091]">
               <tr>
-                <th className="py-3.5 px-3 w-10 text-center"></th>
-                <th className="py-3.5 px-4 text-left">Req ID / Transfer ID</th>
-                <th className="py-3.5 px-4 text-left">Origin &rarr; Destination</th>
-                <th className="py-3.5 px-4 text-left">Employee</th>
-                <th className="py-3.5 px-4 text-left">Remarks</th>
-                <th className="py-3.5 px-4 text-center">Status</th>
-                <th className="py-3.5 px-4 text-right">Actions</th>
+                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center w-10"></th>
+                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center text-left">Req ID / Transfer ID</th>
+                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center text-left">Origin &rarr; Destination</th>
+                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center text-left">Employee</th>
+                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center text-left">Remarks</th>
+                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Status</th>
+                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -1019,11 +1022,11 @@ const SocietyInventorySPA = () => {
                           <div className="p-5 pl-12 bg-slate-50/70">
                             <h4 className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2.5">Requested Items</h4>
                             <div className="max-w-xl border border-gray-200 rounded-xl overflow-hidden bg-white shadow-2xs">
-                              <table className="w-full text-left border-collapse">
-                                <thead className="bg-slate-50 text-slate-600 text-[11px] font-bold uppercase tracking-wider">
+                              <table className="w-full border-collapse text-center text-sm whitespace-nowrap">
+                                <thead className="bg-[#225091] text-white text-xs uppercase tracking-wider font-semibold border-b border-[#225091]">
                                   <tr>
-                                    <th className="py-2.5 px-3 border-b border-gray-200">Item Master</th>
-                                    <th className="py-2.5 px-3 border-b border-gray-200 text-right">Requested Qty</th>
+                                    <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Item Master</th>
+                                    <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center text-right">Requested Qty</th>
                                   </tr>
                                 </thead>
                                 <tbody className="text-xs divide-y divide-gray-100">
@@ -1109,22 +1112,23 @@ const SocietyInventorySPA = () => {
             label="Categories"
             value={isLoading && !statsData ? '...' : (statsData?.overview?.totalCategories ?? 0)}
             isActive={activeTab === 'master' && activeSubTab === 'categories'}
-            onClick={() => { handleTabChange('master'); handleSubTabChange('categories'); }}
+            onClick={() => handleTabChange('master', 'categories')}
           />
           <StatsCard
             layout="centered"
             color="emerald"
             label="Total Assets"
             value={isLoading && !statsData ? '...' : (statsData?.assets?.total ?? 0)}
-            isActive={activeTab === 'assets'}
-            onClick={() => handleTabChange('assets')}
+            isActive={activeTab === 'assets' && activeSubTab !== 'active'}
+            onClick={() => handleTabChange('assets', 'all')}
           />
           <StatsCard
             layout="centered"
             color="cyan"
             label="Active Assets"
             value={isLoading && !statsData ? '...' : (statsData?.assets?.active ?? 0)}
-            onClick={() => handleTabChange('assets')}
+            isActive={activeTab === 'assets' && activeSubTab === 'active'}
+            onClick={() => handleTabChange('assets', 'active')}
           />
           {permissions.canViewSocietyStats && (
             <StatsCard
@@ -1133,7 +1137,7 @@ const SocietyInventorySPA = () => {
               label="Central Stock"
               value={isLoading && !statsData ? '...' : (statsData?.stockDistribution?.centralStock?.quantity ?? 0)}
               isActive={activeTab === 'master' && activeSubTab === 'central_stock'}
-              onClick={() => { handleTabChange('master'); handleSubTabChange('central_stock'); }}
+              onClick={() => handleTabChange('master', 'central_stock')}
             />
           )}
           <StatsCard
@@ -1141,7 +1145,8 @@ const SocietyInventorySPA = () => {
             color="rose"
             label="Branch Stock"
             value={isLoading && !statsData ? '...' : (statsData?.stockDistribution?.branchStock?.quantity ?? 0)}
-            onClick={() => handleTabChange('master')}
+            isActive={activeTab === 'master' && activeSubTab === 'branch_stock'}
+            onClick={() => handleTabChange('master', 'branch_stock')}
           />
           <StatsCard
             layout="centered"
@@ -1283,15 +1288,15 @@ const SocietyInventorySPA = () => {
 
       <div className="bg-white rounded-2xl shadow-xs border border-gray-100 overflow-hidden">
         <TableWrapper minHeight="360px">
-          <table className="w-full text-left border-collapse text-sm">
-            <thead className="bg-slate-50/80 border-b border-gray-200/80 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">
+          <table className="w-full border-collapse text-sm text-center whitespace-nowrap">
+            <thead className="bg-[#225091] text-white text-xs uppercase tracking-wider font-semibold border-b border-[#225091]">
               <tr>
-                <th className="py-3.5 px-4 text-left">Timestamp</th>
-                <th className="py-3.5 px-4 text-left">Action Type</th>
-                <th className="py-3.5 px-4 text-left">Entity Type</th>
-                <th className="py-3.5 px-4 text-left">User</th>
-                <th className="py-3.5 px-4 text-left">Remarks</th>
-                <th className="py-3.5 px-4 text-right">Details</th>
+                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center text-left">Timestamp</th>
+                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center text-left">Action Type</th>
+                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center text-left">Entity Type</th>
+                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center text-left">User</th>
+                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center text-left">Remarks</th>
+                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center text-right">Details</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">

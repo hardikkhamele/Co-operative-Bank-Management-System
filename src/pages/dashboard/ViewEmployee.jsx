@@ -477,16 +477,16 @@ const ViewEmployee = () => {
                 </div>
                 
                 <div className="overflow-x-auto px-4 pb-6">
-                  <table className="w-full text-left border-collapse min-w-[650px] bg-white rounded-xl overflow-hidden shadow-2xs">
-                    <thead>
-                      <tr className="border-b border-gray-100 bg-[#f4f3fb] text-[13px] text-[#1b2559] font-bold">
-                        <th className="py-3.5 px-6 font-bold w-20">Sr. No.</th>
-                        <th className="py-3.5 px-6 font-bold">Product / KPI Area</th>
-                        <th className="py-3.5 px-6 font-bold">Target Type</th>
-                        <th className="py-3.5 px-6 font-bold text-right">Daily (W/5)</th>
-                        <th className="py-3.5 px-6 font-bold text-right">Weekly (M/4)</th>
-                        <th className="py-3.5 px-6 font-bold text-right">Monthly (Y/12)</th>
-                        <th className="py-3.5 px-6 font-bold text-right">Annual Target</th>
+                  <table className="w-full border-collapse min-w-[650px] bg-white rounded-xl overflow-hidden shadow-2xs text-center text-sm whitespace-nowrap">
+                    <thead className="bg-[#225091] text-white text-xs uppercase tracking-wider font-semibold border-b border-[#225091]">
+                      <tr >
+                        <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center w-20">Sr. No.</th>
+                        <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Product / KPI Area</th>
+                        <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Target Type</th>
+                        <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center text-right">Daily (W/5)</th>
+                        <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center text-right">Weekly (M/4)</th>
+                        <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center text-right">Monthly (Y/12)</th>
+                        <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center text-right">Annual Target</th>
                       </tr>
                     </thead>
                     <tbody>

@@ -581,11 +581,11 @@ const Dashboard = () => {
             {loadingOverview && <Loader2 size={14} className="animate-spin text-brand-primary" />}
           </div>
           <div className="overflow-x-auto flex-1">
-            <table className="w-full text-left border-collapse">
-              <thead>
+            <table className="w-full border-collapse text-center text-sm whitespace-nowrap">
+              <thead className="bg-[#225091] text-white text-xs uppercase tracking-wider font-semibold border-b border-[#225091]">
                 <tr>
-                  <th className="py-3 px-3 font-bold text-[15px] border-b border-gray-200 w-1/3">Time</th>
-                  <th className="py-3 px-3 font-bold text-[15px] border-b border-gray-200 w-2/3">Actions</th>
+                  <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center w-1/3">Time</th>
+                  <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center w-2/3">Actions</th>
                 </tr>
               </thead>
               <tbody>

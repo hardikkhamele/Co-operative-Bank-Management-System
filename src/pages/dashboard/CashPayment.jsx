@@ -364,7 +364,7 @@ const CashPayment = () => {
     const { headers, rows } = getSelectedDataFromTable();
     const tableHtml = `
       <table border="1">
-        <thead>
+        <thead className="bg-[#225091] text-white text-xs uppercase tracking-wider font-semibold border-b border-[#225091]">
           <tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr>
         </thead>
         <tbody>
@@ -386,7 +386,7 @@ const CashPayment = () => {
       <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
       <head><meta charset='utf-8'><title>Cash Payments Export</title></head><body>
       <table border="1">
-        <thead>
+        <thead className="bg-[#225091] text-white text-xs uppercase tracking-wider font-semibold border-b border-[#225091]">
           <tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr>
         </thead>
         <tbody>
@@ -645,31 +645,31 @@ const CashPayment = () => {
       {/* 4. Table Card */}
       <div className="bg-white rounded-2xl border border-gray-200/80 shadow-2xs overflow-hidden">
         <TableWrapper minHeight="360px">
-          <table ref={tableRef} className="w-full text-left border-collapse min-w-[900px]">
-            <thead className="bg-slate-50/80 border-b border-gray-200/80">
+          <table ref={tableRef} className="w-full border-collapse min-w-[900px] text-center text-sm whitespace-nowrap">
+            <thead className="bg-[#225091] text-white text-xs uppercase tracking-wider font-semibold border-b border-[#225091]">
               <tr>
-                <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider text-center w-16 select-none whitespace-nowrap">
+                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center w-16">
                   Sr.No.
                 </th>
-                <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">
+                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">
                   Staff Member
                 </th>
-                <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">
+                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">
                   Branch & Location
                 </th>
-                <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">
+                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">
                   Designation
                 </th>
-                <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap text-right">
+                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center text-right">
                   Collected
                 </th>
-                <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap text-right">
+                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center text-right">
                   Submitted
                 </th>
-                <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap text-right">
+                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center text-right">
                   Pending
                 </th>
-                <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap text-center w-36">
+                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center w-36">
                   Actions
                 </th>
               </tr>

@@ -648,7 +648,7 @@ const KPAReport = () => {
     const { headers, rows } = getSelectedDataFromTable();
     const tableHtml = `
       <table ref={tableRef} border="1">
-        <thead>
+        <thead className="bg-[#225091] text-white text-xs uppercase tracking-wider font-semibold border-b border-[#225091]">
           <tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr>
         </thead>
         <tbody>
@@ -670,7 +670,7 @@ const KPAReport = () => {
       <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
       <head><meta charset='utf-8'><title>Export</title></head><body>
       <table ref={tableRef} border="1">
-        <thead>
+        <thead className="bg-[#225091] text-white text-xs uppercase tracking-wider font-semibold border-b border-[#225091]">
           <tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr>
         </thead>
         <tbody>
@@ -1021,16 +1021,16 @@ const KPAReport = () => {
 
             {/* Table View */}
             <TableWrapper minHeight="320px">
-              <table ref={tableRef} className="w-full min-w-[900px] text-left border-collapse">
-                <thead className="bg-slate-50/80 border-b border-gray-200/80">
+              <table ref={tableRef} className="w-full min-w-[900px] border-collapse text-center text-sm whitespace-nowrap">
+                <thead className="bg-[#225091] text-white text-xs uppercase tracking-wider font-semibold border-b border-[#225091]">
                   <tr>
-                    <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider text-center w-16 select-none whitespace-nowrap">Sr.No.</th>
-                    <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider text-left select-none whitespace-nowrap">Employee Name</th>
-                    <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider text-left select-none whitespace-nowrap">Designation</th>
-                    <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider text-left select-none whitespace-nowrap">Branch</th>
-                    <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider text-left select-none whitespace-nowrap">Phone Number</th>
-                    <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider text-left select-none whitespace-nowrap">Email</th>
-                    <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider text-center select-none whitespace-nowrap w-24">Action</th>
+                    <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center w-16">Sr.No.</th>
+                    <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center text-left">Employee Name</th>
+                    <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center text-left">Designation</th>
+                    <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center text-left">Branch</th>
+                    <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center text-left">Phone Number</th>
+                    <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center text-left">Email</th>
+                    <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center w-24">Action</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
@@ -1252,15 +1252,15 @@ const KPAReport = () => {
 
             {/* Table */}
             <TableWrapper minHeight="260px">
-              <table className="w-full text-left border-collapse min-w-[750px]">
-                <thead className="bg-slate-50/80 border-b border-gray-200/80">
+              <table className="w-full border-collapse min-w-[750px] text-center text-sm whitespace-nowrap">
+                <thead className="bg-[#225091] text-white text-xs uppercase tracking-wider font-semibold border-b border-[#225091]">
                   <tr>
-                    <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">Sr.</th>
-                    <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">Product Name</th>
-                    <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">Incentive Type</th>
-                    <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">Configured Rate / Value</th>
-                    <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">Applied Formula</th>
-                    <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap text-center">Action</th>
+                    <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Sr.</th>
+                    <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Product Name</th>
+                    <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Incentive Type</th>
+                    <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Configured Rate / Value</th>
+                    <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Applied Formula</th>
+                    <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Action</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">

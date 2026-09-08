@@ -535,13 +535,15 @@ const DashboardLayout = () => {
                     !showMore && hiddenRoutes.some(route => location.pathname.startsWith(route))
                       ? 'font-bold text-brand-primary'
                       : 'font-semibold text-text-body group-hover:text-brand-primary'
-                  }`}>
+                  } ${!isDesktopSidebarOpen ? 'lg:hidden' : ''}`}>
                     {showMore ? 'Show Less' : 'Show More'}
                   </h3>
                 </div>
-                <ChevronDown size={16} className={`transition-transform duration-300 ease-out ${
-                  showMore ? 'rotate-180 text-brand-primary' : !showMore && hiddenRoutes.some(route => location.pathname.startsWith(route)) ? 'text-brand-primary' : 'text-text-muted'
-                }`} />
+                <div className={!isDesktopSidebarOpen ? 'lg:hidden' : ''}>
+                  <ChevronDown size={16} className={`transition-transform duration-300 ease-out ${
+                    showMore ? 'rotate-180 text-brand-primary' : !showMore && hiddenRoutes.some(route => location.pathname.startsWith(route)) ? 'text-brand-primary' : 'text-text-muted'
+                  }`} />
+                </div>
               </div>
             </div>
           )}

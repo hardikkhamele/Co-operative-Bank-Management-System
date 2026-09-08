@@ -40,7 +40,8 @@ import {
   Sparkles,
   Layers,
   Wallet,
-  SlidersHorizontal
+  SlidersHorizontal,
+  Filter
 } from 'lucide-react';
 import { toast } from 'react-toastify';
 import useAuthStore from '../../store/authStore';
@@ -48,6 +49,10 @@ import { isBankOwner } from '../../utils/roleUtils';
 import pigmyService from '../../api/pigmyService';
 import sipService from '../../api/sipService';
 import branchService from '../../api/branchService';
+
+import PageHeader from '../../components/common/PageHeader';
+import StatsCard from '../../components/common/StatsCard';
+import TableWrapper from '../../components/common/TableWrapper';
 
 // SIP Sub-Components (Modals & Utilities)
 import {
@@ -70,7 +75,7 @@ const AddSocietyAccountModal = ({ isOpen, customer, onClose, onSuccess }) => {
   const [ifscCode, setIfscCode] = useState('');
   const [accountHolderName, setAccountHolderName] = useState('');
   const [bankBranchName, setBankBranchName] = useState('');
-  const [pincode, setPincode] = useState('');
+  const [showConfirm, setShowConfirm] = useState(false);
 
   useEffect(() => {
     if (customer) {
@@ -80,28 +85,46 @@ const AddSocietyAccountModal = ({ isOpen, customer, onClose, onSuccess }) => {
       setIfscCode(sa.ifscCode || '');
       setAccountHolderName(sa.accountHolderName || cName);
       setBankBranchName(sa.bankBranchName || customer.branchName || '');
-      setPincode(sa.pincode || '');
+      setShowConfirm(false);
     }
-  }, [customer]);
+  }, [customer, isOpen]);
 
   if (!isOpen || !customer) return null;
 
   const displayName = customer.fullName || customer.name || customer.ownerName || 'Customer';
   const displayCode = customer.pigmyCustomerCode || customer.pigmyCode || customer.code || customer.id || '';
 
-  const handleSubmit = async (e) => {
+  const handleInitialSubmit = (e) => {
     e.preventDefault();
     if (!societyAccountNumber.trim()) {
       toast.error('Society Account Number is required.');
       return;
     }
+    if (!ifscCode.trim()) {
+      toast.error('IFSC Code is required.');
+      return;
+    }
+    if (!/^[A-Z0-9]+$/.test(ifscCode.trim().toUpperCase())) {
+      toast.error('IFSC Code should contain only letters and numbers.');
+      return;
+    }
+    if (!accountHolderName.trim()) {
+      toast.error('Account Holder Name is required.');
+      return;
+    }
+    if (!bankBranchName.trim()) {
+      toast.error('Bank / Branch Name is required.');
+      return;
+    }
+    setShowConfirm(true);
+  };
 
+  const handleFinalSubmit = async () => {
     const payload = {
       societyAccountNumber: societyAccountNumber.trim(),
       ifscCode: ifscCode.trim().toUpperCase(),
       accountHolderName: accountHolderName.trim() || displayName,
       bankBranchName: bankBranchName.trim() || customer.branchName,
-      pincode: pincode ? String(pincode).trim() : undefined,
       pigmyCustomerId: customer._id || customer.id || customer.pigmyCustomerId
     };
 
@@ -115,6 +138,7 @@ const AddSocietyAccountModal = ({ isOpen, customer, onClose, onSuccess }) => {
     } catch (err) {
       console.error('Failed to link society account:', err);
       toast.error(err.response?.data?.message || 'Failed to link society account. Please check account details.');
+      setShowConfirm(false);
     } finally {
       setSubmitting(false);
     }
@@ -122,16 +146,16 @@ const AddSocietyAccountModal = ({ isOpen, customer, onClose, onSuccess }) => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
-      <div className="bg-white rounded-3xl shadow-2xl border border-gray-100 max-w-lg w-full overflow-hidden my-8 animate-in fade-in zoom-in duration-200">
+      <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full overflow-hidden my-8 animate-in fade-in zoom-in duration-200">
         {/* Header */}
-        <div className="px-6 py-5 bg-gradient-to-r from-teal-700 to-emerald-800 text-white flex items-center justify-between">
+        <div className="px-6 py-5 bg-[#225091] text-white flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center backdrop-blur-md">
-              <Landmark size={20} className="text-emerald-300" />
+              <Landmark size={20} className="text-white" />
             </div>
             <div>
               <h3 className="text-lg font-bold tracking-tight">Link Society Bank Account</h3>
-              <p className="text-xs text-teal-100">Credit Destination (Internal Cooperative Bank Account)</p>
+              <p className="text-xs text-blue-100">Credit Destination (Internal Cooperative Bank Account)</p>
             </div>
           </div>
           <button
@@ -142,106 +166,120 @@ const AddSocietyAccountModal = ({ isOpen, customer, onClose, onSuccess }) => {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          {/* Customer Identifier Card */}
-          <div className="bg-gray-50 p-3.5 rounded-2xl border border-gray-200/80 flex items-center justify-between">
-            <div>
-              <span className="text-xs font-bold text-gray-900 block">{displayName}</span>
-              <span className="font-mono text-[11px] text-gray-500">{displayCode}</span>
+        {showConfirm ? (
+          <div className="p-6 space-y-4">
+            <div className="p-4 text-center">
+              <h4 className="text-gray-900 font-bold text-lg mb-2">Confirm Details</h4>
+              <p className="text-gray-600 text-sm">Confirm details it can not be change later</p>
             </div>
-            <span className="font-mono text-xs px-2.5 py-1 rounded-lg bg-teal-100 text-teal-800 font-bold">
-              {customer.branchName || 'Assigned Branch'}
-            </span>
+            <div className="pt-3 border-t border-gray-100 flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setShowConfirm(false)}
+                className="px-4 py-2 rounded-xl border border-gray-200 text-gray-600 font-semibold text-xs hover:bg-gray-50 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleFinalSubmit}
+                disabled={submitting}
+                className="px-5 py-2 rounded-xl bg-[#225091] hover:bg-[#1a3d70] text-white font-medium text-sm shadow-sm flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
+              >
+                {submitting && <Loader2 size={14} className="animate-spin" />}
+                <span>{submitting ? 'Linking...' : 'Confirm'}</span>
+              </button>
+            </div>
           </div>
+        ) : (
+          <form onSubmit={handleInitialSubmit} className="p-6 space-y-4">
+            {/* Customer Identifier Card */}
+            <div className="bg-gray-50 p-3.5 rounded-xl border border-gray-200/80 flex items-center justify-between">
+              <div>
+                <span className="text-sm font-semibold text-gray-900 block">{displayName}</span>
+                <span className="text-xs text-gray-500 mt-0.5 block">{displayCode}</span>
+              </div>
+              <span className="text-xs px-2.5 py-1 rounded-md bg-teal-50 border border-teal-100 text-teal-700 font-medium">
+                {customer.branchName || 'Assigned Branch'}
+              </span>
+            </div>
 
-          <div>
-            <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
-              Society Account Number <span className="text-rose-500">*</span>
-            </label>
-            <input
-              type="text"
-              placeholder="e.g. ACC-SB-998811 or 1234567890"
-              value={societyAccountNumber}
-              onChange={(e) => setSocietyAccountNumber(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 font-mono text-sm font-bold text-teal-900 focus:ring-2 focus:ring-teal-500/20 focus:border-teal-600 outline-none"
-              required
-            />
-            <span className="text-[11px] text-gray-400 mt-1 block">
-              Daily micro-deposits collected via auto-debit will accumulate into this Society Account.
-            </span>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
-                IFSC Code (Optional)
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                Society Account Number <span className="text-rose-500">*</span>
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. ACC-SB-998811 or 1234567890"
+                value={societyAccountNumber}
+                onChange={(e) => setSocietyAccountNumber(e.target.value)}
+                className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-sm text-gray-900 focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] outline-none"
+                required
+              />
+              <span className="text-xs text-gray-500 mt-1 block">
+                Daily micro-deposits collected via auto-debit will accumulate into this Society Account.
+              </span>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                IFSC Code <span className="text-rose-500">*</span>
               </label>
               <input
                 type="text"
                 placeholder="e.g. PUNB0123400"
                 value={ifscCode}
                 onChange={(e) => setIfscCode(e.target.value.toUpperCase())}
-                className="w-full px-3.5 py-2 rounded-xl border border-gray-200 font-mono text-xs uppercase outline-none"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-sm uppercase text-gray-900 focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] outline-none"
+                required
               />
             </div>
+
             <div>
-              <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
-                Branch Pincode
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                Account Holder Name <span className="text-rose-500">*</span>
               </label>
               <input
                 type="text"
-                placeholder="e.g. 411001"
-                value={pincode}
-                onChange={(e) => setPincode(e.target.value)}
-                className="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-xs outline-none"
+                placeholder={displayName}
+                value={accountHolderName}
+                onChange={(e) => setAccountHolderName(e.target.value)}
+                className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-sm text-gray-900 focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] outline-none"
+                required
               />
             </div>
-          </div>
 
-          <div>
-            <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
-              Account Holder Name
-            </label>
-            <input
-              type="text"
-              placeholder={displayName}
-              value={accountHolderName}
-              onChange={(e) => setAccountHolderName(e.target.value)}
-              className="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-xs outline-none"
-            />
-          </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                Bank / Branch Name <span className="text-rose-500">*</span>
+              </label>
+              <input
+                type="text"
+                placeholder={customer.branchName || 'e.g. Pune Main Branch'}
+                value={bankBranchName}
+                onChange={(e) => setBankBranchName(e.target.value)}
+                className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-sm text-gray-900 focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] outline-none"
+                required
+              />
+            </div>
 
-          <div>
-            <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
-              Bank / Branch Name
-            </label>
-            <input
-              type="text"
-              placeholder={customer.branchName || 'e.g. Pune Main Branch'}
-              value={bankBranchName}
-              onChange={(e) => setBankBranchName(e.target.value)}
-              className="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-xs outline-none"
-            />
-          </div>
-
-          <div className="pt-3 border-t border-gray-100 flex items-center justify-end gap-3">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 rounded-xl border border-gray-200 text-gray-600 font-semibold text-xs hover:bg-gray-50 cursor-pointer"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={submitting}
-              className="px-5 py-2 rounded-xl bg-teal-700 hover:bg-teal-800 text-white font-bold text-xs shadow-sm flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
-            >
-              {submitting && <Loader2 size={14} className="animate-spin" />}
-              <span>{submitting ? 'Linking...' : 'Save & Link Account'}</span>
-            </button>
-          </div>
-        </form>
+            <div className="pt-3 border-t border-gray-100 flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2 rounded-xl border border-gray-200 text-gray-600 font-medium text-sm hover:bg-gray-50 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-5 py-2 rounded-xl bg-[#225091] hover:bg-[#1a3d70] text-white font-medium text-sm shadow-sm flex items-center gap-1.5 cursor-pointer"
+              >
+                Save & Link Account
+              </button>
+            </div>
+          </form>
+        )}
       </div>
     </div>
   );
@@ -564,26 +602,25 @@ const CustomerDetailsModal = ({ isOpen, customerId, onClose, onOpenApprove, onOp
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
-      <div className="bg-white rounded-3xl shadow-2xl border border-gray-100 max-w-3xl w-full overflow-hidden my-8 animate-in fade-in zoom-in duration-200">
+      <div className="bg-white rounded-xl shadow-2xl max-w-5xl w-full overflow-hidden my-8 animate-in fade-in zoom-in duration-200">
         {/* Header */}
-        <div className="px-6 py-5 bg-gradient-to-r from-slate-900 via-teal-950 to-slate-900 text-white flex items-center justify-between">
+        <div className="px-6 py-5 bg-[#225091] text-white flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-2xl bg-teal-500/20 border border-teal-400/30 flex items-center justify-center">
-              <Coins size={22} className="text-teal-300" />
-            </div>
             <div>
-              <div className="flex items-center gap-2">
-                <span className="font-mono text-xs px-2 py-0.5 rounded-md bg-white/15 font-bold tracking-wider">{displayCode}</span>
-                <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
-                  isApproved ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                  : isRejected ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
-                  : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+              <h3 className="text-lg font-semibold text-white tracking-tight">{displayName}</h3>
+              <div className="flex items-center gap-2 mt-1">
+                <span className="text-sm text-white/80">{displayCode}</span>
+                <span className="text-sm text-white/40">|</span>
+                <span className={`text-sm font-semibold ${
+                  isApproved ? 'text-emerald-400'
+                  : isRejected ? 'text-rose-400'
+                  : 'text-amber-400'
                 }`}>{customer?.approvalStatus || 'PENDING'}</span>
-                <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30">
+                <span className="text-sm text-white/40">|</span>
+                <span className="text-sm font-medium text-blue-200">
                   {isMerchant ? 'MERCHANT' : 'INDIVIDUAL'}
                 </span>
               </div>
-              <h3 className="text-lg font-bold mt-1 text-white tracking-tight">{displayName}</h3>
             </div>
           </div>
           <button onClick={onClose} className="p-2 rounded-xl text-white/70 hover:text-white hover:bg-white/10 transition-colors cursor-pointer">
@@ -627,62 +664,62 @@ const CustomerDetailsModal = ({ isOpen, customerId, onClose, onOpenApprove, onOp
               {activeTab === 'OVERVIEW' && (
                 <>
                   {isRejected && (
-                    <div className="bg-rose-50 border border-rose-200 rounded-2xl p-4 flex items-start gap-3">
+                    <div className="bg-rose-50 border border-rose-200 rounded-xl p-4 flex items-start gap-3">
                       <XCircle size={18} className="text-rose-600 mt-0.5 shrink-0" />
                       <div>
-                        <span className="text-xs font-bold text-rose-900 block">Application Rejected</span>
-                        <p className="text-xs text-rose-700 mt-0.5"><strong>Reason:</strong> {customer.rejectionReason || 'QC criteria not met'}</p>
+                        <span className="text-sm font-semibold text-rose-900 block">Application Rejected</span>
+                        <p className="text-sm text-rose-700 mt-0.5"><strong>Reason:</strong> {customer.rejectionReason || 'QC criteria not met'}</p>
                       </div>
                     </div>
                   )}
                   <div>
-                    <span className="text-xs font-bold text-gray-400 uppercase tracking-wider block mb-2">Customer & Contact Details</span>
+                    <span className="text-sm font-semibold text-gray-900 block mb-3">Customer & Contact Details</span>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                       <div className="bg-gray-50 p-3 rounded-xl border border-gray-100">
-                        <span className="text-[11px] text-gray-400 block">Primary Phone</span>
-                        <span className="text-xs font-bold text-gray-800 flex items-center gap-1 mt-0.5"><Phone size={11} className="text-teal-600" />{customer.primaryPhoneNumber || customer.phoneNumber || customer.phone || '—'}</span>
+                        <span className="text-sm text-gray-500 block mb-1">Primary Phone</span>
+                        <span className="text-base font-medium text-gray-900 flex items-center gap-1.5 mt-0.5"><Phone size={13} className="text-teal-600" />{customer.primaryPhoneNumber || customer.phoneNumber || customer.phone || '—'}</span>
                       </div>
                       <div className="bg-gray-50 p-3 rounded-xl border border-gray-100">
-                        <span className="text-[11px] text-gray-400 block">Secondary Phone</span>
-                        <span className="text-xs font-bold text-gray-800 flex items-center gap-1 mt-0.5"><Phone size={11} className="text-gray-400" />{customer.secondaryPhoneNumber || '—'}</span>
+                        <span className="text-sm text-gray-500 block mb-1">Secondary Phone</span>
+                        <span className="text-base font-medium text-gray-900 flex items-center gap-1.5 mt-0.5"><Phone size={13} className="text-gray-400" />{customer.secondaryPhoneNumber || '—'}</span>
                       </div>
                       <div className="bg-gray-50 p-3 rounded-xl border border-gray-100 truncate">
-                        <span className="text-[11px] text-gray-400 block">Email Address</span>
-                        <span className="text-xs font-bold text-gray-800 flex items-center gap-1 mt-0.5 truncate"><Mail size={11} className="text-teal-600" /> {customer.email || '—'}</span>
+                        <span className="text-sm text-gray-500 block mb-1">Email Address</span>
+                        <span className="text-base font-medium text-gray-900 flex items-center gap-1.5 mt-0.5 truncate"><Mail size={13} className="text-teal-600" /> {customer.email || '—'}</span>
                       </div>
                     </div>
                   </div>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     {[
-                      { label: 'PAN Number', value: customer.panNumber, mono: true },
-                      { label: 'Aadhaar Number', value: customer.aadhaarNumber ? `•••• •••• ${customer.aadhaarNumber.slice(-4)}` : '—', mono: true },
+                      { label: 'PAN Number', value: customer.panNumber },
+                      { label: 'Aadhaar Number', value: customer.aadhaarNumber ? `•••• •••• ${customer.aadhaarNumber.slice(-4)}` : '—' },
                       { label: 'Date of Birth', value: customer.dob },
                       { label: 'Gender', value: customer.gender }
                     ].map((item, i) => (
                       <div key={i} className="bg-gray-50 p-3 rounded-xl border border-gray-100">
-                        <span className="text-[11px] text-gray-400 block">{item.label}</span>
-                        <span className={`text-xs font-bold text-gray-800 mt-0.5 block ${item.mono ? 'font-mono uppercase' : ''}`}>{item.value || '—'}</span>
+                        <span className="text-sm text-gray-500 block mb-1">{item.label}</span>
+                        <span className="text-base font-medium text-gray-900 block">{item.value || '—'}</span>
                       </div>
                     ))}
                   </div>
-                  <div className="bg-gray-50 p-3 rounded-xl border border-gray-100 text-xs">
-                    <span className="text-[11px] text-gray-400 block">Residence Address</span>
-                    <span className="font-medium text-gray-800 mt-0.5 block">{customer.residenceAddress || customer.address || '—'}</span>
+                  <div className="bg-gray-50 p-3 rounded-xl border border-gray-100">
+                    <span className="text-sm text-gray-500 block mb-1">Residence Address</span>
+                    <span className="text-base font-medium text-gray-900 block">{customer.residenceAddress || customer.address || '—'}</span>
                   </div>
                   {isMerchant && (
-                    <div className="bg-amber-50/60 border border-amber-200/70 rounded-2xl p-4 space-y-2.5">
-                      <div className="flex items-center gap-2 text-amber-900 font-bold text-xs"><Store size={16} className="text-amber-700" /><span>Merchant Business Profile</span></div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                        <div><span className="text-[11px] text-amber-800/80 block">Shop Name</span><span className="font-bold text-gray-900">{customer.shopName || '—'}</span></div>
-                        <div><span className="text-[11px] text-amber-800/80 block">GSTIN / Business Proof</span><span className="font-mono font-bold text-gray-900">{customer.gstinNumber || customer.businessProofNumber || '—'}</span></div>
-                        <div className="sm:col-span-2"><span className="text-[11px] text-amber-800/80 block">Shop Address</span><span className="font-medium text-gray-800">{customer.shopAddress || '—'}</span></div>
+                    <div className="bg-amber-50/60 border border-amber-200/70 rounded-xl p-4 space-y-2.5">
+                      <div className="text-amber-900 font-semibold text-sm">Merchant Business Profile</div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                        <div><span className="text-xs text-amber-800/80 block">Shop Name</span><span className="text-base font-medium text-gray-900">{customer.shopName || '—'}</span></div>
+                        <div><span className="text-xs text-amber-800/80 block">{customer.businessProofType ? `${customer.businessProofType} Number` : 'Business Proof'}</span><span className="text-base font-medium text-gray-900">{customer.gstinNumber || customer.businessProofNumber || '—'}</span></div>
+                        <div className="sm:col-span-2"><span className="text-xs text-amber-800/80 block">Shop Address</span><span className="text-base font-medium text-gray-900">{customer.shopAddress || '—'}</span></div>
                       </div>
                     </div>
                   )}
-                  <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 flex flex-wrap items-center justify-between gap-3 text-xs">
-                    <div><span className="text-[11px] text-gray-400 block">Branch & Bank</span><span className="font-bold text-gray-800">{customer.branchName || 'Pune Main'} ({customer.bankName || 'Cooperative Bank'})</span></div>
-                    {onboardedBy.name && (<div><span className="text-[11px] text-gray-400 block">Onboarded By</span><span className="font-bold text-teal-800">{onboardedBy.name} ({onboardedBy.role || 'Executive'})</span></div>)}
-                    <div><span className="text-[11px] text-gray-400 block">Created On</span><span className="font-medium text-gray-600">{customer.createdAt ? new Date(customer.createdAt).toLocaleDateString('en-IN') : '—'}</span></div>
+                  <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200 flex flex-wrap items-center justify-between gap-3 text-sm">
+                    <div><span className="text-sm text-gray-500 block mb-1">Branch & Bank</span><span className="text-base font-medium text-gray-900">{customer.branchName || 'Pune Main'} ({customer.bankName || 'Cooperative Bank'})</span></div>
+                    {onboardedBy.name && (<div><span className="text-sm text-gray-500 block mb-1">Onboarded By</span><span className="font-medium text-teal-800">{onboardedBy.name} ({onboardedBy.role || 'Executive'})</span></div>)}
+                    <div><span className="text-sm text-gray-500 block mb-1">Created On</span><span className="font-medium text-gray-600">{customer.createdAt ? new Date(customer.createdAt).toLocaleDateString('en-IN') : '—'}</span></div>
                   </div>
                 </>
               )}
@@ -690,7 +727,7 @@ const CustomerDetailsModal = ({ isOpen, customerId, onClose, onOpenApprove, onOp
               {/* TAB 2: DUAL BANKING ACCOUNTS */}
               {activeTab === 'ACCOUNTS' && (
                 <div className="space-y-4">
-                  <div className="p-3.5 bg-blue-50/80 border border-blue-200/80 rounded-2xl text-xs text-blue-900 leading-relaxed">
+                  <div className="p-3.5 bg-blue-50/80 border border-blue-200/80 rounded-xl text-xs text-blue-900 leading-relaxed">
                     <strong>Business Architecture Notice:</strong> Pigmy deposits operate on dual accounts:
                     <ul className="list-disc pl-5 mt-1 space-y-0.5">
                       <li><strong>Commercial Bank Account</strong>: External bank account from where daily installments are DEBITED via e-NACH mandate.</li>
@@ -698,22 +735,22 @@ const CustomerDetailsModal = ({ isOpen, customerId, onClose, onOpenApprove, onOp
                     </ul>
                   </div>
                   {/* Commercial Bank Account */}
-                  <div className="border border-indigo-100 bg-indigo-50/40 rounded-2xl p-4 space-y-3">
+                  <div className="border border-indigo-100 bg-indigo-50/40 rounded-xl p-4 space-y-3">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <div className="w-8 h-8 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center"><ArrowUpRight size={16} /></div>
                         <div>
-                          <h4 className="text-xs font-bold text-indigo-950 uppercase tracking-wide">Commercial Bank Account (Debit Source)</h4>
-                          <span className="text-[11px] text-indigo-600">External Bank for Daily e-NACH Auto-Debit</span>
+                          <h4 className="text-sm font-semibold text-gray-900 tracking-wide">Commercial Bank Account (Debit Source)</h4>
+                          <span className="text-xs text-indigo-600">External Bank for Daily e-NACH Auto-Debit</span>
                         </div>
                       </div>
-                      <span className="px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-800 font-bold text-[10px]">DEBIT SOURCE</span>
+                      <span className="text-xs text-indigo-800 font-medium">DEBIT SOURCE</span>
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs bg-white p-3.5 rounded-xl border border-indigo-100">
-                      <div><span className="text-[11px] text-gray-400 block">Bank Name</span><span className="font-bold text-gray-900">{ba.bankName || 'HDFC Bank'}</span></div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm bg-white p-3.5 rounded-xl border border-indigo-100">
+                      <div><span className="text-sm text-gray-500 block mb-1">Bank Name</span><span className="text-base font-medium text-gray-900">{ba.bankName || '—'}</span></div>
                       <div>
-                        <span className="text-[11px] text-gray-400 block">Account Number</span>
-                        <div className="flex items-center gap-1.5 font-mono font-bold text-indigo-900">
+                        <span className="text-sm text-gray-500 block mb-1">Account Number</span>
+                        <div className="flex items-center gap-1.5 font-medium text-indigo-900">
                           <span>{ba.accountNumber || '—'}</span>
                           {ba.accountNumber && (
                             <button onClick={() => copyToClipboard(ba.accountNumber, 'Commercial Account')} className="text-gray-400 hover:text-indigo-600 cursor-pointer" title="Copy account number">
@@ -722,47 +759,54 @@ const CustomerDetailsModal = ({ isOpen, customerId, onClose, onOpenApprove, onOp
                           )}
                         </div>
                       </div>
-                      <div><span className="text-[11px] text-gray-400 block">IFSC Code</span><span className="font-mono font-bold text-gray-800">{ba.ifscCode || '—'}</span></div>
-                      <div><span className="text-[11px] text-gray-400 block">Account Type</span><span className="font-bold text-gray-800">{ba.accountType || 'SAVINGS'}</span></div>
-                      <div className="sm:col-span-2"><span className="text-[11px] text-gray-400 block">Account Holder</span><span className="font-semibold text-gray-800">{ba.accountHolderName || displayName}</span></div>
+                      <div><span className="text-sm text-gray-500 block mb-1">IFSC Code</span><span className="text-base font-medium text-gray-900">{ba.ifscCode || '—'}</span></div>
+                      <div><span className="text-sm text-gray-500 block mb-1">Branch Name</span><span className="text-base font-medium text-gray-900">{ba.branchName || '—'}</span></div>
+                      <div><span className="text-sm text-gray-500 block mb-1">Account Type</span><span className="text-base font-medium text-gray-900">{ba.accountType || 'SAVINGS'}</span></div>
+                      <div><span className="text-sm text-gray-500 block mb-1">Account Holder</span><span className="text-base font-medium text-gray-900">{ba.accountHolderName || displayName}</span></div>
                     </div>
                   </div>
                   {/* Society Account */}
-                  <div className="border border-emerald-200 bg-emerald-50/40 rounded-2xl p-4 space-y-3">
+                  <div className="border border-emerald-200 bg-emerald-50/40 rounded-xl p-4 space-y-3">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center"><ArrowDownRight size={16} /></div>
                         <div>
-                          <h4 className="text-xs font-bold text-emerald-950 uppercase tracking-wide">Society Account (Credit Destination)</h4>
-                          <span className="text-[11px] text-emerald-700">Internal Cooperative Bank Account</span>
+                          <h4 className="text-sm font-semibold text-gray-900 tracking-wide">Society Account (Credit Destination)</h4>
+                          <span className="text-xs text-emerald-700">Internal Cooperative Bank Account</span>
                         </div>
                       </div>
                       {hasSocietyAccount ? (
-                        <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold text-[10px]">LINKED</span>
+                        <span className="text-xs text-emerald-800 font-medium">LINKED</span>
                       ) : (
-                        <span className="px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-800 font-bold text-[10px]">UNLINKED (REQUIRED)</span>
+                        <span className="text-xs text-rose-800 font-medium">UNLINKED (REQUIRED)</span>
                       )}
                     </div>
                     {hasSocietyAccount ? (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs bg-white p-3.5 rounded-xl border border-emerald-100">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm bg-white p-3.5 rounded-xl border border-emerald-100">
                         <div>
-                          <span className="text-[11px] text-gray-400 block">Society Account Number</span>
-                          <div className="flex items-center gap-1.5 font-mono font-bold text-emerald-900 text-sm">
+                          <span className="text-sm text-gray-500 block mb-1">Society Account Number</span>
+                          <div className="flex items-center gap-1.5 font-medium text-emerald-900">
                             <span>{sa.societyAccountNumber || customer.existingSavingsAccountNumber}</span>
                             <button onClick={() => copyToClipboard(sa.societyAccountNumber || customer.existingSavingsAccountNumber, 'Society Account')} className="text-gray-400 hover:text-emerald-700 cursor-pointer" title="Copy society account">
                               {copiedField === 'Society Account' ? <CheckCheck size={12} className="text-emerald-600" /> : <Copy size={12} />}
                             </button>
                           </div>
                         </div>
-                        <div><span className="text-[11px] text-gray-400 block">Society Branch</span><span className="font-bold text-gray-900">{sa.bankBranchName || customer.branchName || 'Pune Main'}</span></div>
-                        <div><span className="text-[11px] text-gray-400 block">IFSC Code</span><span className="font-mono font-bold text-gray-800">{sa.ifscCode || 'PUNB0123400'}</span></div>
-                        <div><span className="text-[11px] text-gray-400 block">Account Holder</span><span className="font-semibold text-gray-800">{sa.accountHolderName || displayName}</span></div>
+                        <div><span className="text-sm text-gray-500 block mb-1">Society Branch</span><span className="text-base font-medium text-gray-900">{sa.bankBranchName || customer.branchName || 'Pune Main'}</span></div>
+                        <div><span className="text-sm text-gray-500 block mb-1">IFSC Code</span><span className="text-base font-medium text-gray-900">{sa.ifscCode || 'PUNB0123400'}</span></div>
+                        <div><span className="text-sm text-gray-500 block mb-1">Account Holder</span><span className="text-base font-medium text-gray-900">{sa.accountHolderName || displayName}</span></div>
                       </div>
                     ) : (
                       <div className="bg-white p-4 rounded-xl border border-rose-200 text-center space-y-2">
-                        <p className="text-xs text-rose-600 font-semibold">No internal society account has been linked to this Pigmy customer record.</p>
-                        <button type="button" onClick={() => { onClose(); onOpenAddAccount(customer); }} className="px-4 py-1.5 rounded-xl bg-teal-700 hover:bg-teal-800 text-white text-xs font-bold shadow-xs cursor-pointer inline-flex items-center gap-1.5">
-                          <Plus size={14} /> Link Society Account Now
+                        <p className="text-sm text-rose-600 font-medium">No internal society account has been linked to this Pigmy customer record.</p>
+                        {customer.savingsAccountOption && (
+                           <p className="text-xs text-gray-500">
+                             Customer preference: <strong>{customer.savingsAccountOption}</strong> 
+                             {customer.newSavingsAccountRequested && ' (Requested New Account)'}
+                           </p>
+                        )}
+                        <button type="button" onClick={() => { onClose(); onOpenAddAccount(customer); }} className="px-4 py-1.5 rounded-xl bg-teal-700 hover:bg-teal-800 text-white text-sm font-medium shadow-xs cursor-pointer inline-flex items-center gap-1.5 mt-2">
+                          <Plus size={16} /> Link Society Account Now
                         </button>
                       </div>
                     )}
@@ -774,7 +818,15 @@ const CustomerDetailsModal = ({ isOpen, customerId, onClose, onOpenApprove, onOp
               {activeTab === 'MANDATE' && (
                 <div className="space-y-4">
                   <div>
-                    <span className="text-xs font-bold text-gray-400 uppercase tracking-wider block mb-2">Subscribed Pigmy Scheme</span>
+                    <span className="text-sm font-semibold text-gray-900 block mb-3">Subscribed Pigmy Scheme</span>
+                    <div className="bg-gray-50 p-3 rounded-xl border border-gray-100 mb-3 text-sm">
+                       <div className="grid grid-cols-2 gap-3">
+                         <div><span className="text-sm text-gray-500 block mb-1">Scheme Name</span><span className="text-base font-medium text-gray-900">{customer.schemeName || scheme.name || '—'}</span></div>
+                         <div><span className="text-sm text-gray-500 block mb-1">Scheme Code</span><span className="text-base font-medium text-gray-900">{customer.schemeCode || scheme.code || '—'}</span></div>
+                         <div><span className="text-sm text-gray-500 block mb-1">Deposit Frequency</span><span className="text-base font-medium text-gray-900">{customer.depositFrequency || mandate.autoDebitFrequency || 'DAILY'}</span></div>
+                         <div><span className="text-sm text-gray-500 block mb-1">Custom Amount Allowed</span><span className="text-base font-medium text-gray-900">{customer.isCustomAmount || scheme.isCustomAmount ? 'Yes' : 'No'}</span></div>
+                       </div>
+                    </div>
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                       {[
                         { label: 'Daily Deposit', value: `₹${Number(scheme.dailyDepositAmount || customer?.dailyAmount || mandate.autoDebitAmount || 0).toLocaleString('en-IN')}`, color: 'teal' },
@@ -783,32 +835,32 @@ const CustomerDetailsModal = ({ isOpen, customerId, onClose, onOpenApprove, onOp
                         { label: 'Maturity Value', value: `₹${Number(scheme.maturityAmount || customer?.maturityAmount || 0).toLocaleString('en-IN')}`, color: 'emerald' }
                       ].map((item, i) => (
                         <div key={i} className={`p-3 bg-${item.color}-50/70 border border-${item.color}-100 rounded-xl text-center`}>
-                          <span className={`text-[11px] text-${item.color}-800 font-semibold block`}>{item.label}</span>
-                          <span className={`text-base font-black text-${item.color}-900 block mt-0.5`}>{item.value}</span>
+                          <span className={`text-xs text-${item.color}-800 font-medium block`}>{item.label}</span>
+                          <span className={`text-base font-semibold text-${item.color}-900 block mt-0.5`}>{item.value}</span>
                         </div>
                       ))}
                     </div>
                   </div>
                   <div>
-                    <span className="text-xs font-bold text-gray-400 uppercase tracking-wider block mb-2">e-NACH Auto-Debit Mandate Status</span>
-                    <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 space-y-3 text-xs">
+                    <span className="text-sm font-semibold text-gray-900 block mb-3">e-NACH Auto-Debit Mandate Status</span>
+                    <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 space-y-3 text-sm">
                       <div className="flex justify-between items-center pb-2 border-b border-gray-200/60">
                         <span className="text-gray-500 font-medium">Mandate ID</span>
-                        <span className="font-mono font-bold text-gray-900">{mandate.mandateId || 'MAND-PIG-' + displayCode}</span>
+                        <span className="text-base font-medium text-gray-900">{mandate.mandateId || 'MAND-PIG-' + displayCode}</span>
                       </div>
                       <div className="flex justify-between items-center pb-2 border-b border-gray-200/60">
                         <span className="text-gray-500 font-medium">Mandate Status</span>
-                        <span className={`font-bold px-2 py-0.5 rounded-full text-[11px] ${(mandate.mandateStatus || customer?.mandateStatus) === 'ACTIVE' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}`}>
+                        <span className={`font-medium text-sm ${(mandate.mandateStatus || customer?.mandateStatus) === 'ACTIVE' ? 'text-emerald-600' : 'text-amber-600'}`}>
                           {mandate.mandateStatus || customer?.mandateStatus || (isApproved ? 'ACTIVE' : 'PENDING')}
                         </span>
                       </div>
                       <div className="flex justify-between items-center pb-2 border-b border-gray-200/60">
                         <span className="text-gray-500 font-medium">Debit Frequency</span>
-                        <span className="font-bold text-gray-800">{mandate.autoDebitFrequency || 'DAILY'}</span>
+                        <span className="text-base font-medium text-gray-900">{mandate.autoDebitFrequency || 'DAILY'}</span>
                       </div>
-                      <div className="grid grid-cols-2 gap-2 pt-1 text-xs">
-                        <div><span className="text-[11px] text-gray-400 block">Tenure Start Date</span><span className="font-medium text-gray-800">{customer?.startDate || mandate.mandateStartDate ? new Date(customer?.startDate || mandate.mandateStartDate).toLocaleDateString('en-IN') : 'Upon QC Approval'}</span></div>
-                        <div><span className="text-[11px] text-gray-400 block">Tenure End Date</span><span className="font-medium text-gray-800">{customer?.endDate || mandate.mandateEndDate ? new Date(customer?.endDate || mandate.mandateEndDate).toLocaleDateString('en-IN') : 'Calculated from approval'}</span></div>
+                      <div className="grid grid-cols-2 gap-2 pt-1 text-sm">
+                        <div><span className="text-sm text-gray-500 block mb-1">Tenure Start Date</span><span className="text-base font-medium text-gray-900">{customer?.startDate || mandate.mandateStartDate ? new Date(customer?.startDate || mandate.mandateStartDate).toLocaleDateString('en-IN') : 'Upon QC Approval'}</span></div>
+                        <div><span className="text-sm text-gray-500 block mb-1">Tenure End Date</span><span className="text-base font-medium text-gray-900">{customer?.endDate || mandate.mandateEndDate ? new Date(customer?.endDate || mandate.mandateEndDate).toLocaleDateString('en-IN') : 'Calculated from approval'}</span></div>
                       </div>
                     </div>
                   </div>
@@ -817,28 +869,31 @@ const CustomerDetailsModal = ({ isOpen, customerId, onClose, onOpenApprove, onOp
 
               {/* TAB 4: AGREEMENTS & DOCUMENTS */}
               {activeTab === 'DOCUMENTS' && (
-                <div className="space-y-4 text-xs">
+                <div className="space-y-4 text-sm">
                   <div>
-                    <span className="text-xs font-bold text-gray-400 uppercase tracking-wider block mb-2">Legal Agreements</span>
-                    <div className="p-4 bg-emerald-50/50 border border-emerald-200 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                    <span className="text-sm font-semibold text-gray-900 block mb-3">Legal Agreements</span>
+                    <div className="p-4 bg-emerald-50/50 border border-emerald-200 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0"><FileText size={20} /></div>
                         <div>
-                          <span className="font-bold text-emerald-950 block">Pigmy Deposit Agreement (PDF)</span>
-                          <span className="font-mono text-[11px] text-emerald-700 block">Doc ID: {agreements.pigmyAgreementDocId || 'DOC-PIG-' + displayCode}</span>
+                          <span className="font-semibold text-emerald-950 block">Pigmy Deposit Agreement (PDF)</span>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <span className="text-xs text-emerald-700 block">Doc ID: {agreements.pigmyAgreementDocId || 'DOC-PIG-' + displayCode}</span>
+                            <span className="text-xs text-emerald-800 font-medium">| {agreements.pigmyAgreementStatus || 'PENDING'}</span>
+                          </div>
                         </div>
                       </div>
                       {agreements.pigmyAgreementPdfUrl ? (
-                        <a href={agreements.pigmyAgreementPdfUrl} target="_blank" rel="noreferrer" className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs inline-flex items-center gap-1.5 cursor-pointer">
-                          <FileCheck size={14} /><span>Open PDF</span><ExternalLink size={12} />
+                        <a href={agreements.pigmyAgreementPdfUrl} target="_blank" rel="noreferrer" className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-sm shadow-xs inline-flex items-center gap-1.5 cursor-pointer">
+                          <FileCheck size={16} /><span>Open PDF</span><ExternalLink size={14} />
                         </a>
                       ) : (
-                        <span className="px-2.5 py-1 rounded-lg bg-gray-100 text-gray-500 font-semibold text-[11px]">Generated upon approval</span>
+                        <span className="text-xs text-gray-500 font-medium">Generated upon approval</span>
                       )}
                     </div>
                   </div>
                   <div>
-                    <span className="text-xs font-bold text-gray-400 uppercase tracking-wider block mb-2">KYC Documents & Photos</span>
+                    <span className="text-sm font-semibold text-gray-900 block mb-3">KYC Documents & Photos</span>
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
                       {[
                         { key: 'profilePhoto', label: 'Profile Photo' },
@@ -848,8 +903,8 @@ const CustomerDetailsModal = ({ isOpen, customerId, onClose, onOpenApprove, onOp
                         { key: 'businessProof', label: 'Business Proof' }
                       ].filter(d => documents[d.key]).map(d => (
                         <a key={d.key} href={documents[d.key]} target="_blank" rel="noreferrer" className="p-3 bg-gray-50 border border-gray-200 rounded-xl hover:bg-teal-50 hover:border-teal-300 transition-colors flex items-center justify-between">
-                          <span className="font-semibold text-gray-800">{d.label}</span>
-                          <ExternalLink size={13} className="text-gray-400" />
+                          <span className="font-medium text-gray-800">{d.label}</span>
+                          <ExternalLink size={14} className="text-gray-400" />
                         </a>
                       ))}
                     </div>
@@ -1113,70 +1168,39 @@ const PigmyCustomers = () => {
   const isLoading = mainTab === 'customers' ? pigmyLoading : mainTab === 'schemes' ? schemesLoading : subsLoading;
 
   return (
-    <div className="max-w-[1440px] w-full mx-auto space-y-6 pb-12">
-      {/* ==================== TOP HEADER ==================== */}
-      <div className="bg-white rounded-2xl p-6 sm:p-7 shadow-xs border border-gray-100 relative overflow-hidden">
-        <div className="absolute -top-24 -right-24 w-72 h-72 bg-gradient-to-br from-emerald-400/10 via-teal-400/10 to-transparent rounded-full blur-2xl pointer-events-none" />
-
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5 relative z-10">
-          <div>
-            {/* Breadcrumb */}
-            <div className="flex items-center gap-2.5 mb-2.5">
-              <button
-                type="button"
-                onClick={() => { if (window.history.state && window.history.state.idx > 0) navigate(-1); else navigate('/leads'); }}
-                className="group mr-2.5 flex items-center justify-center text-[#225091] hover:text-white hover:bg-[#225091] rounded-full transition-all duration-300 cursor-pointer shrink-0 overflow-hidden px-1.5 py-1.5"
-                title="Go Back"
-              >
-                <ArrowLeftCircle size={22} strokeWidth={2.2} className="shrink-0" />
-                <span className="max-w-0 overflow-hidden whitespace-nowrap opacity-0 group-hover:max-w-[50px] group-hover:opacity-100 group-hover:ml-1.5 group-hover:mr-1 transition-all duration-300 ease-in-out font-medium text-[13px]">Back</span>
-              </button>
-              <div className="flex items-center text-xs font-semibold text-gray-400 space-x-1">
-                <Link to="/leads" className="hover:text-[#225091] transition-colors">CRM Management</Link>
-                <ChevronRight size={14} />
-                <span className="text-emerald-600 font-bold">Pigmy / Smart SIP</span>
-              </div>
-            </div>
-
-            {/* Title */}
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-emerald-700 to-teal-800 text-white flex items-center justify-center shadow-md shadow-teal-900/15">
-                <Coins size={24} />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h1 className="text-2xl sm:text-3xl font-extrabold text-[#1b2559] tracking-tight">Pigmy Deposit Management</h1>
-                  <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-teal-100 text-teal-800 border border-teal-200">Smart SIP</span>
-                </div>
-                <p className="text-xs sm:text-sm text-gray-500 font-medium mt-0.5">
-                  Daily micro-savings, scheme configuration, customer onboarding & portfolio tracking
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex flex-wrap items-center gap-2.5">
-            <button onClick={() => handleOpenCalculator()} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 font-semibold text-sm shadow-2xs hover:shadow-xs transition-all cursor-pointer">
-              <Calculator size={16} className="text-teal-600" /><span>SIP Calculator</span>
+    <div className="w-full">
+      {/* Page Header */}
+      <div className="mb-6">
+        <PageHeader
+          title="Pigmy Deposit Management"
+          breadcrumbs={[
+            { label: "Dashboard", to: "/dashboard" },
+            { label: "CRM Management" },
+            { label: "Leads", to: "/leads" },
+            { label: "Customer" }
+          ]}
+          showBack={true}
+          backUrl="/leads"
+        >
+          <button onClick={() => handleOpenCalculator()} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 font-semibold text-sm shadow-2xs hover:shadow-xs transition-all cursor-pointer">
+            <Calculator size={16} className="text-[#225091]" /><span>SIP Calculator</span>
+          </button>
+          <button onClick={() => handleOpenSubscribe()} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#225091] hover:bg-[#1b3f72] text-white font-semibold text-sm shadow-xs hover:shadow-md transition-all cursor-pointer" title="Onboard verified customer to a Daily SIP">
+            <UserPlus size={16} /><span>Onboard Customer</span>
+          </button>
+          {isOwner && (
+            <button onClick={() => setIsCreateSchemeOpen(true)} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#1b58a6] to-[#225091] hover:from-[#174682] hover:to-[#1b3f72] text-white font-semibold text-sm shadow-sm hover:shadow-md transition-all cursor-pointer">
+              <Plus size={17} strokeWidth={2.5} /><span>Create Scheme</span>
             </button>
-            <button onClick={() => handleOpenSubscribe()} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-semibold text-sm shadow-xs hover:shadow-md transition-all cursor-pointer" title="Onboard verified customer to a Daily SIP">
-              <UserPlus size={16} /><span>Onboard Customer</span>
-            </button>
-            {isOwner && (
-              <button onClick={() => setIsCreateSchemeOpen(true)} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#1b58a6] to-[#225091] hover:from-[#174682] hover:to-[#1b3f72] text-white font-semibold text-sm shadow-sm hover:shadow-md transition-all cursor-pointer">
-                <Plus size={17} strokeWidth={2.5} /><span>Create Scheme</span>
-              </button>
-            )}
-            <button onClick={handleRefresh} disabled={isLoading} className="p-2.5 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-500 hover:text-gray-800 transition-colors cursor-pointer" title="Refresh Data">
-              <RefreshCw size={17} className={isLoading ? 'animate-spin text-teal-600' : ''} />
-            </button>
-          </div>
-        </div>
+          )}
+          <button onClick={handleRefresh} disabled={isLoading} className="p-2.5 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-500 hover:text-gray-800 transition-colors cursor-pointer" title="Refresh Data">
+            <RefreshCw size={17} className={isLoading ? 'animate-spin text-[#225091]' : ''} />
+          </button>
+        </PageHeader>
       </div>
 
       {/* ==================== MODULE TABS ==================== */}
-      <div className="flex items-center gap-1 border-b border-gray-200 bg-white rounded-t-2xl px-2 pt-1">
+      <div className="flex items-center gap-1 border-b border-gray-200 bg-white rounded-t-2xl px-2 pt-1 mb-6">
         {[
           { key: 'customers', label: 'Customer Applications', icon: User, count: stats.total },
           { key: 'schemes', label: 'SIP Schemes Catalog', icon: Layers, count: schemes.length },
@@ -1186,7 +1210,7 @@ const PigmyCustomers = () => {
             key={tab.key}
             onClick={() => setMainTab(tab.key)}
             className={`px-5 py-3 text-sm font-bold border-b-2 transition-all cursor-pointer flex items-center gap-2 ${
-              mainTab === tab.key ? 'border-teal-600 text-teal-700' : 'border-transparent text-gray-500 hover:text-gray-800'
+              mainTab === tab.key ? 'border-[#225091] text-[#225091]' : 'border-transparent text-gray-500 hover:text-gray-800'
             }`}
           >
             <tab.icon size={16} />
@@ -1199,96 +1223,140 @@ const PigmyCustomers = () => {
       {mainTab === 'customers' && (
         <>
           {/* Stats Cards */}
-          <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-            {[
-              { label: 'Total Leads', value: stats.total, sub: `${stats.individual} Indiv. · ${stats.merchant} Merch.`, icon: User, color: 'blue' },
-              { label: 'Pending QC', value: stats.pending, sub: 'Awaiting approval', icon: Clock, color: 'amber' },
-              { label: 'Active Deposits', value: stats.approved, sub: 'Mandate active', icon: ShieldCheck, color: 'emerald' },
-              { label: 'Rejected', value: stats.rejected, sub: 'Failed QC checks', icon: XCircle, color: 'rose' },
-              { label: 'Daily Volume', value: `₹${Number(stats.totalDailyVolume || 0).toLocaleString('en-IN')}`, sub: 'Per day savings', icon: IndianRupee, color: 'teal', span: true }
-            ].map((card, i) => (
-              <div key={i} className={`bg-white rounded-2xl p-5 shadow-xs border border-gray-100 flex items-center justify-between ${card.span ? 'col-span-2 lg:col-span-1' : ''}`}>
-                <div>
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{card.label}</p>
-                  <h3 className={`text-2xl font-bold text-${card.color}-${card.color === 'blue' ? '600' : '700'} mt-1`}>{card.value}</h3>
-                  <p className={`text-xs text-${card.color === 'blue' ? 'gray' : card.color}-${card.color === 'blue' ? '400' : '500'} mt-1`}>{card.sub}</p>
-                </div>
-                <div className={`w-12 h-12 rounded-xl bg-${card.color}-50 border border-${card.color}-100 flex items-center justify-center text-${card.color}-600`}>
-                  <card.icon size={24} />
-                </div>
-              </div>
-            ))}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5 mb-6">
+            <StatsCard
+              layout="centered"
+              label="Total Leads"
+              value={stats.total}
+              sublabel={`${stats.individual} Indiv. · ${stats.merchant} Merch.`}
+              color="blue"
+              loading={pigmyLoading && stats.total === 0}
+            />
+            <StatsCard
+              layout="centered"
+              label="Pending QC"
+              value={stats.pending}
+              sublabel="Awaiting approval"
+              color="amber"
+              loading={pigmyLoading && stats.total === 0}
+            />
+            <StatsCard
+              layout="centered"
+              label="Active Deposits"
+              value={stats.approved}
+              sublabel="Mandate active"
+              color="emerald"
+              loading={pigmyLoading && stats.total === 0}
+            />
+            <StatsCard
+              layout="centered"
+              label="Rejected"
+              value={stats.rejected}
+              sublabel="Failed QC checks"
+              color="rose"
+              loading={pigmyLoading && stats.total === 0}
+            />
+            <div className="bg-gradient-to-tr from-[#1b58a6] to-[#2563eb] rounded-2xl p-4 shadow-sm flex flex-col items-center justify-center text-white">
+              <span className="text-xl font-black leading-none mb-1">
+                {pigmyLoading && stats.total === 0 ? <Loader2 size={18} className="animate-spin text-white/70" /> : `₹${Number(stats.totalDailyVolume || 0).toLocaleString('en-IN')}`}
+              </span>
+              <span className="text-[10px] font-bold text-blue-100 uppercase tracking-wider text-center">
+                Daily Volume
+              </span>
+            </div>
           </div>
 
-          {/* Filter Bar */}
-          <div className="bg-white rounded-2xl p-4 shadow-xs border border-gray-100 flex flex-col lg:flex-row items-center justify-between gap-4">
-            <div className="relative w-full lg:w-80">
-              <Search size={17} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input type="text" placeholder="Search by name, phone, Pigmy Code (e.g. PIG-508462)..." value={search} onChange={(e) => setSearch(e.target.value)} className="w-full pl-10 pr-4 py-2 text-sm bg-gray-50/70 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition-all text-gray-800 placeholder-gray-400" />
-              {search && (<button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"><X size={15} /></button>)}
-            </div>
-
-            <div className="flex flex-wrap items-center justify-between lg:justify-end gap-3 w-full lg:w-auto">
-              <div className="inline-flex p-1 bg-gray-100/80 rounded-xl border border-gray-200/60 text-xs font-semibold">
-                {['ALL', 'INDIVIDUAL', 'MERCHANT'].map(t => (
-                  <button key={t} onClick={() => { setCustomerType(t); setPage(1); }} className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${customerType === t ? (t === 'ALL' ? 'bg-white text-gray-900 shadow-2xs font-bold' : t === 'INDIVIDUAL' ? 'bg-white text-teal-800 shadow-2xs font-bold' : 'bg-white text-purple-800 shadow-2xs font-bold') : 'text-gray-500 hover:text-gray-800'}`}>
-                    {t === 'ALL' ? 'All Types' : t === 'INDIVIDUAL' ? 'Individual' : 'Merchant'}
+          {/* Harmonized Filter Toolbar Card */}
+          <div className="bg-white rounded-2xl border border-gray-200/80 p-3.5 sm:p-4 shadow-2xs space-y-3.5 mb-6">
+            <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
+              {/* Search Input */}
+              <div className="relative flex-1">
+                <Search size={17} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                <input
+                  type="text"
+                  placeholder="Search by name, phone, Pigmy Code (e.g. PIG-508462)..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full pl-10 pr-9 py-2.5 bg-gray-50/70 hover:bg-gray-50 focus:bg-white border border-gray-200 rounded-xl text-xs sm:text-sm font-medium text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all shadow-2xs"
+                />
+                {search && (
+                  <button type="button" onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer" title="Clear Search">
+                    <X size={15} />
                   </button>
-                ))}
+                )}
               </div>
 
-              <div className="inline-flex p-1 bg-gray-100/80 rounded-xl border border-gray-200/60 text-xs font-semibold">
-                {[
-                  { key: 'ALL', label: 'All Status', color: '' },
-                  { key: 'PENDING', label: `Pending (${stats.pending})`, color: 'amber' },
-                  { key: 'APPROVED', label: `Approved (${stats.approved})`, color: 'emerald' },
-                  { key: 'REJECTED', label: `Rejected (${stats.rejected})`, color: 'rose' }
-                ].map(s => (
-                  <button key={s.key} onClick={() => { setApprovalStatus(s.key); setPage(1); }} className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${approvalStatus === s.key ? (s.color ? `bg-${s.color}-600 text-white shadow-2xs font-bold` : 'bg-white text-gray-900 shadow-2xs font-bold') : 'text-gray-500 hover:text-gray-800'}`}>
-                    {s.label}
-                  </button>
-                ))}
-              </div>
-
-              {isOwner && (
-                <div className="w-44">
-                  <select value={selectedBranchId} onChange={(e) => { setSelectedBranchId(e.target.value); setPage(1); }} className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs font-semibold bg-gray-50 text-gray-700 outline-none">
-                    <option value="">All Branches</option>
-                    {branches.map(b => (<option key={b._id || b.id} value={b._id || b.id}>{b.name || b.branchName}</option>))}
+              {/* Filter Controls Row */}
+              <div className="flex items-center gap-2.5 flex-wrap sm:flex-nowrap">
+                <div className="relative">
+                  <select value={customerType} onChange={(e) => { setCustomerType(e.target.value); setPage(1); }} className="pl-3 pr-8 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] bg-white text-xs font-semibold text-gray-700 shadow-2xs cursor-pointer appearance-none">
+                    <option value="ALL">All Types</option>
+                    <option value="INDIVIDUAL">Individual</option>
+                    <option value="MERCHANT">Merchant</option>
                   </select>
+                  <Filter size={13} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
                 </div>
-              )}
+                
+                <div className="relative">
+                  <select value={approvalStatus} onChange={(e) => { setApprovalStatus(e.target.value); setPage(1); }} className="pl-3 pr-8 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] bg-white text-xs font-semibold text-gray-700 shadow-2xs cursor-pointer appearance-none">
+                    <option value="ALL">All Statuses</option>
+                    <option value="PENDING">Pending</option>
+                    <option value="APPROVED">Approved</option>
+                    <option value="REJECTED">Rejected</option>
+                  </select>
+                  <Filter size={13} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                </div>
 
-              <div className="flex items-center gap-1.5 text-xs text-gray-500">
-                <input type="date" value={startDate} onChange={(e) => { setStartDate(e.target.value); setPage(1); }} className="px-2.5 py-1.5 rounded-xl border border-gray-200 bg-gray-50 text-xs" title="From Date" />
-                <span>to</span>
-                <input type="date" value={endDate} onChange={(e) => { setEndDate(e.target.value); setPage(1); }} className="px-2.5 py-1.5 rounded-xl border border-gray-200 bg-gray-50 text-xs" title="To Date" />
+                {isOwner && (
+                  <div className="relative">
+                    <select value={selectedBranchId} onChange={(e) => { setSelectedBranchId(e.target.value); setPage(1); }} className="pl-3 pr-8 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] bg-white text-xs font-semibold text-gray-700 shadow-2xs cursor-pointer appearance-none">
+                      <option value="">All Branches</option>
+                      {branches.map(b => (<option key={b._id || b.id} value={b._id || b.id}>{b.name || b.branchName}</option>))}
+                    </select>
+                    <Filter size={13} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                  </div>
+                )}
+
+                <div className="relative flex items-center">
+                  <input type="date" value={startDate} onChange={(e) => { setStartDate(e.target.value); setPage(1); }} title="From Date" className="pl-8 pr-3 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] bg-white text-xs font-semibold text-gray-700 shadow-2xs cursor-pointer hover:bg-gray-50/50 transition-all" />
+                  <Calendar size={13} className="absolute left-2.5 text-gray-400 pointer-events-none" />
+                </div>
+                <div className="relative flex items-center">
+                  <input type="date" value={endDate} onChange={(e) => { setEndDate(e.target.value); setPage(1); }} title="To Date" className="pl-8 pr-3 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] bg-white text-xs font-semibold text-gray-700 shadow-2xs cursor-pointer hover:bg-gray-50/50 transition-all" />
+                  <Calendar size={13} className="absolute left-2.5 text-gray-400 pointer-events-none" />
+                </div>
+                {(startDate || endDate) && (
+                  <button type="button" onClick={() => { setStartDate(""); setEndDate(""); setPage(1); }} title="Clear Dates" className="p-2 rounded-xl text-gray-400 hover:text-rose-600 hover:bg-rose-50 border border-gray-200 transition-colors cursor-pointer">
+                    <X size={14} />
+                  </button>
+                )}
               </div>
             </div>
           </div>
 
           {/* Customer Table */}
-          <div className="bg-white rounded-2xl shadow-xs border border-gray-100 overflow-hidden">
-            <div className="overflow-x-auto custom-scrollbar">
-              <table className="w-full text-left text-sm whitespace-nowrap">
-                <thead className="bg-gray-50/80 text-gray-500 text-xs uppercase tracking-wider font-semibold border-b border-gray-200/80">
-                  <tr>
-                    <th className="py-3.5 px-5">Pigmy Customer & Code</th>
-                    <th className="py-3.5 px-5">Contact & Branch</th>
-                    <th className="py-3.5 px-5">Daily Deposit & Scheme</th>
-                    <th className="py-3.5 px-5">Society Account (Credit Link)</th>
-                    <th className="py-3.5 px-5">Commercial Account (Debit Source)</th>
-                    <th className="py-3.5 px-5">Approval Status</th>
-                    <th className="py-3.5 px-5 text-right">Actions</th>
-                  </tr>
-                </thead>
+          <TableWrapper>
+            <table className="w-full text-center text-sm whitespace-nowrap">
+              <thead>
+                <tr className="bg-[#225091] border-b border-[#225091]">
+                  <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 w-12 text-center">Sr. No.</th>
+                  <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Customer Name</th>
+                  <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Pigmy Code & Acc No</th>
+                  <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Contact & Branch</th>
+                  <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Daily Deposit & Scheme</th>
+                  <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Society Account (Credit Link)</th>
+                  <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Commercial Account (Debit Source)</th>
+                  <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Approval Status</th>
+                  <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider text-center">Actions</th>
+                </tr>
+              </thead>
                 <tbody className="divide-y divide-gray-100">
                   {pigmyLoading ? (
-                    <tr><td colSpan={7} className="py-12 text-center text-gray-400 font-medium text-xs"><Loader2 size={24} className="animate-spin mx-auto text-emerald-600 mb-2" />Loading Pigmy customer records...</td></tr>
+                    <tr><td colSpan={9} className="py-12 text-center text-gray-400 font-medium text-xs"><Loader2 size={24} className="animate-spin mx-auto text-emerald-600 mb-2" />Loading Pigmy customer records...</td></tr>
                   ) : customers.length === 0 ? (
-                    <tr><td colSpan={7} className="py-12 text-center text-gray-400 font-medium text-xs">No Pigmy deposit customers found matching the selected filters.</td></tr>
+                    <tr><td colSpan={9} className="py-12 text-center text-gray-400 font-medium text-xs">No Pigmy deposit customers found matching the selected filters.</td></tr>
                   ) : (
-                    customers.map((c) => {
+                    customers.map((c, index) => {
                       const cId = c._id || c.id || c.pigmyCustomerId;
                       const sa = c.societyAccount || {};
                       const ba = c.bankAccountDetails || {};
@@ -1305,78 +1373,78 @@ const PigmyCustomers = () => {
                       const interestRate = scheme.interestRate || c.interestRate || 8;
 
                       return (
-                        <tr key={cId} className="hover:bg-gray-50/60 transition-colors">
-                          <td className="py-3.5 px-5">
-                            <div className="flex items-center gap-3">
-                              <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs ${isMerchant ? 'bg-purple-100 text-purple-800' : 'bg-teal-100 text-teal-800'}`}>
-                                {isMerchant ? <Store size={16} /> : displayName.charAt(0).toUpperCase()}
-                              </div>
-                              <div>
-                                <div className="flex items-center gap-1.5">
-                                  <span className="font-bold text-gray-900 block">{displayName}</span>
-                                  <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded ${isMerchant ? 'bg-purple-50 text-purple-700 border border-purple-200' : 'bg-gray-100 text-gray-600'}`}>{isMerchant ? 'MERCHANT' : 'INDIVIDUAL'}</span>
-                                </div>
-                                <div className="flex items-center gap-2 mt-0.5">
-                                  <span className="font-mono text-[11px] font-bold text-gray-500">{displayCode}</span>
-                                  {c.accountNumber && <span className="font-mono text-[10px] text-gray-400">· {c.accountNumber}</span>}
-                                </div>
-                              </div>
+                        <tr key={cId} className="hover:bg-gray-50/60 transition-colors border-b border-gray-100">
+                          <td className="py-3.5 px-3 text-center border-r border-gray-100 text-sm font-medium text-gray-600">
+                            {(page - 1) * limit + index + 1}
+                          </td>
+                          <td className="py-3.5 px-3 border-r border-gray-100 text-center">
+                            <div className="flex items-center justify-center gap-1.5">
+                              <span className="font-semibold text-sm text-gray-900 block">{displayName}</span>
+                              <span className={`text-xs font-medium px-1.5 py-0.5 rounded ${isMerchant ? 'bg-purple-50 text-purple-700 border border-purple-200' : 'bg-gray-100 text-gray-600'}`}>{isMerchant ? 'MERCHANT' : 'INDIVIDUAL'}</span>
                             </div>
                           </td>
-                          <td className="py-3.5 px-5 text-xs text-gray-600">
-                            <span className="font-semibold text-gray-800 block">{c.primaryPhoneNumber || c.phoneNumber || c.phone || '—'}</span>
-                            <span className="text-[11px] text-teal-800 font-semibold block mt-0.5">{c.branchName || 'Assigned Branch'}</span>
+                          <td className="py-3.5 px-3 border-r border-gray-100">
+                            <span className="text-sm font-medium text-gray-800 block">{displayCode}</span>
+                            {c.accountNumber && <span className="text-sm text-gray-500 block mb-1">{c.accountNumber}</span>}
                           </td>
-                          <td className="py-3.5 px-5">
-                            <span className="font-extrabold text-teal-800 block text-xs">₹{Number(dailyDeposit).toLocaleString('en-IN')} / day</span>
-                            <span className="text-[11px] text-gray-500 block">{tenureMonths} Mo @ {interestRate}% p.a.</span>
+                          <td className="py-3.5 px-3 border-r border-gray-100">
+                            <span className="text-sm font-medium text-gray-800 block">{c.primaryPhoneNumber || c.phoneNumber || c.phone || '—'}</span>
+                            <span className="text-xs text-teal-700 font-medium block mt-0.5">{c.branchName || 'Assigned Branch'}</span>
                           </td>
-                          <td className="py-3.5 px-5">
+                          <td className="py-3.5 px-3 border-r border-gray-100">
+                            <span className="text-sm font-semibold text-teal-700 block">₹{Number(dailyDeposit).toLocaleString('en-IN')} / day</span>
+                            <span className="text-sm text-gray-500 block mb-1">{tenureMonths} Mo @ {interestRate}% p.a.</span>
+                          </td>
+                          <td className="py-3.5 px-3 border-r border-gray-100">
                             {hasAccount ? (
-                              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold">
-                                <Landmark size={13} className="text-emerald-600" />
-                                <span className="font-mono">{sa.societyAccountNumber || c.existingSavingsAccountNumber}</span>
-                              </div>
+                              <span className="text-sm font-medium text-gray-800 block">
+                                {sa.societyAccountNumber || c.existingSavingsAccountNumber}
+                              </span>
                             ) : (
                               <div className="inline-flex items-center gap-1.5">
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-rose-50 border border-rose-200 text-rose-700 text-[11px] font-bold">
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium">
                                   <AlertTriangle size={12} className="text-rose-500" />Missing Link
                                 </span>
-                                <button type="button" onClick={() => handleOpenAddAccount(c)} className="text-[11px] font-bold text-teal-600 hover:text-teal-800 underline cursor-pointer">+ Link</button>
+                                <button type="button" onClick={() => handleOpenAddAccount(c)} className="text-xs font-medium text-teal-600 hover:text-teal-800 underline cursor-pointer">+ Link</button>
                               </div>
                             )}
                           </td>
-                          <td className="py-3.5 px-5 text-xs">
-                            <span className="font-bold text-gray-800 block">{ba.bankName || 'HDFC Bank'}</span>
-                            <span className="font-mono text-[11px] text-gray-500 block">{ba.accountNumber ? `•••• ${ba.accountNumber.slice(-4)}` : 'e-NACH Linked'}</span>
+                          <td className="py-3.5 px-3 border-r border-gray-100">
+                            <span className="text-sm font-semibold text-gray-900 block">{ba.bankName || 'HDFC Bank'}</span>
+                            <span className="text-sm text-gray-500 block mb-1">{ba.accountNumber ? `•••• ${ba.accountNumber.slice(-4)}` : 'e-NACH Linked'}</span>
                           </td>
-                          <td className="py-3.5 px-5">
-                            <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold ${isApproved ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : isRejected ? 'bg-rose-50 text-rose-700 border border-rose-200' : 'bg-amber-50 text-amber-700 border border-amber-200'}`}>
-                              <span className={`w-1.5 h-1.5 rounded-full ${isApproved ? 'bg-emerald-500' : isRejected ? 'bg-rose-500' : 'bg-amber-500'}`} />
+                          <td className="py-3.5 px-3 border-r border-gray-100">
+                            <span className={`text-sm font-semibold ${isApproved ? 'text-emerald-600' : isRejected ? 'text-rose-600' : 'text-amber-600'}`}>
                               {isApproved ? 'APPROVED' : isRejected ? 'REJECTED' : 'PENDING APPROVAL'}
                             </span>
                           </td>
-                          <td className="py-3.5 px-5 text-right">
-                            <div className="flex items-center justify-end gap-1.5">
-                              <button type="button" onClick={() => handleOpenDetails(c)} className="p-1.5 rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-900 cursor-pointer" title="View Full Details"><Eye size={15} /></button>
-                              <button type="button" onClick={() => handleOpenAddAccount(c)} className="p-1.5 rounded-lg text-teal-600 hover:bg-teal-50 cursor-pointer" title="Add / Link Society Account"><Landmark size={15} /></button>
-                              {isPending && (
-                                <>
-                                  <button type="button" onClick={() => handleApproveClick(c)} className="px-3 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-2xs cursor-pointer flex items-center gap-1" title="Approve application">
-                                    <Check size={12} strokeWidth={2.5} /><span>Approve</span>
-                                  </button>
-                                  <button type="button" onClick={() => handleOpenReject(c)} className="px-2.5 py-1 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 font-bold text-xs cursor-pointer" title="Reject application">Reject</button>
-                                </>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })
-                  )}
-                </tbody>
-              </table>
-            </div>
+                          <td className="py-3.5 px-3 text-center">
+                              <div className="flex items-center justify-center gap-2">
+                                {isPending && (
+                                  <>
+                                    <button type="button" onClick={() => handleApproveClick(c)} className="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50 transition-colors cursor-pointer" title="Approve application">
+                                      <Check size={16} />
+                                    </button>
+                                    <button type="button" onClick={() => handleOpenReject(c)} className="p-1.5 rounded-lg text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer" title="Reject application">
+                                      <X size={16} />
+                                    </button>
+                                  </>
+                                )}
+                                <button type="button" onClick={() => handleOpenAddAccount(c)} className="p-1.5 rounded-lg text-[#225091] hover:bg-[#EAF2FB] transition-colors cursor-pointer" title="Add / Link Society Account">
+                                  <Landmark size={16} />
+                                </button>
+                                <button type="button" onClick={() => handleOpenDetails(c)} className="p-1.5 rounded-lg text-gray-500 hover:text-[#225091] hover:bg-[#EAF2FB] transition-colors cursor-pointer" title="Inspect Details">
+                                  <Eye size={16} />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </TableWrapper>
 
             {/* Pagination */}
             <div className="p-4 bg-gray-50/50 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-gray-500">
@@ -1387,7 +1455,6 @@ const PigmyCustomers = () => {
                 <button onClick={() => setPage(prev => Math.min(meta.totalPages || 1, prev + 1))} disabled={page >= (meta.totalPages || 1)} className="px-3 py-1.5 rounded-lg border border-gray-200 bg-white font-semibold hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer">Next</button>
               </div>
             </div>
-          </div>
         </>
       )}
 
@@ -1523,22 +1590,22 @@ const PigmyCustomers = () => {
               })}
             </div>
           ) : (
-            <div className="bg-white rounded-2xl shadow-xs border border-gray-100 overflow-hidden">
-              <div className="overflow-x-auto custom-scrollbar">
+            <TableWrapper>
                 <table className="w-full text-left text-sm whitespace-nowrap">
-                  <thead className="bg-gray-50/80 text-gray-500 text-xs uppercase tracking-wider font-semibold border-b border-gray-200/80">
+                  <thead className="bg-[#225091] text-white text-xs uppercase tracking-wider font-semibold border-b border-[#225091]">
                     <tr>
-                      <th className="py-3.5 px-5">Scheme Code</th>
-                      <th className="py-3.5 px-5">Scheme Name</th>
-                      <th className="py-3.5 px-5">Duration Milestones & Rates</th>
-                      <th className="py-3.5 px-5">Allowed Daily Tiers</th>
-                      <th className="py-3.5 px-5">Custom Limits</th>
-                      <th className="py-3.5 px-5">Status</th>
+                      <th className="py-3.5 px-3 border-r border-white/20 w-12 text-center">Sr. No.</th>
+                      <th className="py-3.5 px-5 border-r border-white/20">Scheme Code</th>
+                      <th className="py-3.5 px-5 border-r border-white/20">Scheme Name</th>
+                      <th className="py-3.5 px-5 border-r border-white/20">Duration Milestones & Rates</th>
+                      <th className="py-3.5 px-5 border-r border-white/20">Allowed Daily Tiers</th>
+                      <th className="py-3.5 px-5 border-r border-white/20">Custom Limits</th>
+                      <th className="py-3.5 px-5 border-r border-white/20">Status</th>
                       <th className="py-3.5 px-5 text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
-                    {filteredSchemes.map(scheme => {
+                    {filteredSchemes.map((scheme, index) => {
                       const sId = scheme._id || scheme.id;
                       const isActive = scheme.status === 'ACTIVE';
                       const isToggling = togglingId === sId;
@@ -1546,13 +1613,16 @@ const PigmyCustomers = () => {
                       const allowedList = scheme.allowedAmounts || DEFAULT_ALLOWED_AMOUNTS;
 
                       return (
-                        <tr key={sId} className="hover:bg-gray-50/60 transition-colors">
-                          <td className="py-3.5 px-5 font-mono text-xs font-bold text-[#1b2559]">{scheme.schemeCode}</td>
-                          <td className="py-3.5 px-5"><span className="font-bold text-gray-900 block">{scheme.schemeName}</span><span className="text-[11px] text-gray-400 block max-w-xs truncate">{scheme.description || 'Daily investment plan'}</span></td>
-                          <td className="py-3.5 px-5"><div className="flex items-center gap-1.5">{durationList.map(p => (<span key={p.durationMonths} className="px-2 py-0.5 rounded-lg bg-teal-50 border border-teal-100 text-teal-800 text-xs font-bold">{p.durationMonths}M: {p.interestRate}%</span>))}</div></td>
-                          <td className="py-3.5 px-5 text-xs text-gray-700 font-semibold">{allowedList.slice(0, 3).map(a => `₹${a}`).join(', ')}{allowedList.length > 3 && ` +${allowedList.length - 3}`}</td>
-                          <td className="py-3.5 px-5 text-xs text-gray-600">{scheme.customAmountEnabled ? `₹${(scheme.customAmountMin || 3000).toLocaleString('en-IN')} - ₹${(scheme.customAmountMax || 50000).toLocaleString('en-IN')}` : 'Disabled'}</td>
-                          <td className="py-3.5 px-5">
+                        <tr key={sId} className="hover:bg-gray-50/60 transition-colors border-b border-gray-100">
+                          <td className="py-3.5 px-3 text-center border-r border-gray-100 text-xs font-medium text-gray-500">
+                            {index + 1}
+                          </td>
+                          <td className="py-3.5 px-5 border-r border-gray-100 font-mono text-xs font-bold text-[#1b2559]">{scheme.schemeCode}</td>
+                          <td className="py-3.5 px-5 border-r border-gray-100"><span className="font-bold text-gray-900 block">{scheme.schemeName}</span><span className="text-[11px] text-gray-400 block max-w-xs truncate">{scheme.description || 'Daily investment plan'}</span></td>
+                          <td className="py-3.5 px-5 border-r border-gray-100"><div className="flex items-center gap-1.5">{durationList.map(p => (<span key={p.durationMonths} className="px-2 py-0.5 rounded-lg bg-teal-50 border border-teal-100 text-teal-800 text-xs font-bold">{p.durationMonths}M: {p.interestRate}%</span>))}</div></td>
+                          <td className="py-3.5 px-5 border-r border-gray-100 text-xs text-gray-700 font-semibold">{allowedList.slice(0, 3).map(a => `₹${a}`).join(', ')}{allowedList.length > 3 && ` +${allowedList.length - 3}`}</td>
+                          <td className="py-3.5 px-5 border-r border-gray-100 text-xs text-gray-600">{scheme.customAmountEnabled ? `₹${(scheme.customAmountMin || 3000).toLocaleString('en-IN')} - ₹${(scheme.customAmountMax || 50000).toLocaleString('en-IN')}` : 'Disabled'}</td>
+                          <td className="py-3.5 px-5 border-r border-gray-100">
                             <div className="flex items-center gap-2">
                               <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold ${isActive ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-gray-100 text-gray-600 border border-gray-200'}`}>{scheme.status || 'ACTIVE'}</span>
                               {isOwner && (<button type="button" onClick={() => handleToggleStatus(scheme)} disabled={isToggling} className="p-1 rounded-md border border-gray-200 text-gray-500 hover:text-emerald-600 cursor-pointer" title="Toggle status">{isToggling ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />}</button>)}
@@ -1562,7 +1632,7 @@ const PigmyCustomers = () => {
                             <div className="flex items-center justify-end gap-1.5">
                               <button onClick={() => handleOpenCalculator(scheme)} className="p-1.5 rounded-lg text-teal-600 hover:bg-teal-50 cursor-pointer" title="Calculator"><Calculator size={15} /></button>
                               {isOwner && (<button onClick={() => handleOpenSchemeEdit(scheme)} className="p-1.5 rounded-lg text-indigo-600 hover:bg-indigo-50 cursor-pointer" title="Customise"><Edit size={15} /></button>)}
-                              <button onClick={() => handleOpenSubscribe(scheme)} disabled={!isActive} className="px-3 py-1 rounded-lg bg-teal-600 text-white font-bold text-xs hover:bg-teal-700 disabled:opacity-40 cursor-pointer">Subscribe</button>
+                              <button onClick={() => handleOpenSubscribe(scheme)} disabled={!isActive} className="p-1.5 rounded-lg text-[#225091] hover:bg-[#EAF2FB] disabled:opacity-40 cursor-pointer" title="Subscribe"><UserPlus size={15} /></button>
                             </div>
                           </td>
                         </tr>
@@ -1570,8 +1640,7 @@ const PigmyCustomers = () => {
                     })}
                   </tbody>
                 </table>
-              </div>
-            </div>
+            </TableWrapper>
           )}
         </>
       )}
@@ -1588,46 +1657,50 @@ const PigmyCustomers = () => {
               <RefreshCw size={13} className={subsLoading ? 'animate-spin text-teal-600' : ''} /><span>Refresh Ledger</span>
             </button>
           </div>
-          <div className="overflow-x-auto custom-scrollbar">
+          <TableWrapper>
             <table className="w-full text-left text-sm whitespace-nowrap">
-              <thead className="bg-gray-50/80 text-gray-500 text-xs uppercase tracking-wider font-semibold border-b border-gray-200/80">
+              <thead className="bg-[#225091] text-white text-xs uppercase tracking-wider font-semibold border-b border-[#225091]">
                 <tr>
-                  <th className="py-3.5 px-5">Subscription ID</th>
-                  <th className="py-3.5 px-5">Scheme</th>
-                  <th className="py-3.5 px-5">Daily Contribution</th>
-                  <th className="py-3.5 px-5">Duration & Rate</th>
-                  <th className="py-3.5 px-5">Installments Progress</th>
-                  <th className="py-3.5 px-5">Total Invested</th>
-                  <th className="py-3.5 px-5">Est. Maturity Amount</th>
+                  <th className="py-3.5 px-3 border-r border-white/20 w-12 text-center">Sr. No.</th>
+                  <th className="py-3.5 px-5 border-r border-white/20">Subscription ID</th>
+                  <th className="py-3.5 px-5 border-r border-white/20">Scheme</th>
+                  <th className="py-3.5 px-5 border-r border-white/20">Daily Contribution</th>
+                  <th className="py-3.5 px-5 border-r border-white/20">Duration & Rate</th>
+                  <th className="py-3.5 px-5 border-r border-white/20">Installments Progress</th>
+                  <th className="py-3.5 px-5 border-r border-white/20">Total Invested</th>
+                  <th className="py-3.5 px-5 border-r border-white/20">Est. Maturity Amount</th>
                   <th className="py-3.5 px-5">Status</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {subsLoading ? (
-                  <tr><td colSpan={8} className="py-12 text-center text-gray-400 font-medium text-xs"><Loader2 size={24} className="animate-spin mx-auto text-teal-600 mb-2" />Loading customer subscriptions...</td></tr>
+                  <tr><td colSpan={9} className="py-12 text-center text-gray-400 font-medium text-xs"><Loader2 size={24} className="animate-spin mx-auto text-teal-600 mb-2" />Loading customer subscriptions...</td></tr>
                 ) : subscriptions.length === 0 ? (
-                  <tr><td colSpan={8} className="py-12 text-center text-gray-400 font-medium text-xs">No customer SIP subscriptions recorded yet. Use "Onboard Customer" to create one.</td></tr>
+                  <tr><td colSpan={9} className="py-12 text-center text-gray-400 font-medium text-xs">No customer SIP subscriptions recorded yet. Use "Onboard Customer" to create one.</td></tr>
                 ) : (
-                  subscriptions.map(sub => {
+                  subscriptions.map((sub, index) => {
                     const subId = sub._id || sub.id;
                     const paid = sub.paidInstallments || 0;
                     const total = sub.totalInstallments || (sub.durationMonths === 6 ? 181 : 365);
                     const pct = Math.min(100, Math.round((paid / total) * 100));
 
                     return (
-                      <tr key={subId} className="hover:bg-gray-50/60 transition-colors">
-                        <td className="py-3.5 px-5 font-mono text-xs font-bold text-[#225091]">{subId ? `${subId.slice(-8)}` : '—'}</td>
-                        <td className="py-3.5 px-5"><span className="font-bold text-gray-900 block">{sub.schemeName || sub.schemeId?.schemeName || 'Daily SIP'}</span><span className="font-mono text-[11px] text-gray-400 block">{sub.schemeCode || sub.schemeId?.schemeCode}</span></td>
-                        <td className="py-3.5 px-5 font-extrabold text-teal-700">₹{sub.amount?.toLocaleString('en-IN')} / day</td>
-                        <td className="py-3.5 px-5 text-xs text-gray-700"><span className="font-semibold">{sub.durationMonths} Months</span><span className="text-gray-400 block text-[11px]">Rate: {sub.interestRate}% p.a.</span></td>
-                        <td className="py-3.5 px-5">
+                      <tr key={subId} className="hover:bg-gray-50/60 transition-colors border-b border-gray-100">
+                        <td className="py-3.5 px-3 text-center border-r border-gray-100 text-xs font-medium text-gray-500">
+                          {index + 1}
+                        </td>
+                        <td className="py-3.5 px-5 border-r border-gray-100 font-mono text-xs font-bold text-[#225091]">{subId ? `${subId.slice(-8)}` : '—'}</td>
+                        <td className="py-3.5 px-5 border-r border-gray-100"><span className="font-bold text-gray-900 block">{sub.schemeName || sub.schemeId?.schemeName || 'Daily SIP'}</span><span className="font-mono text-[11px] text-gray-400 block">{sub.schemeCode || sub.schemeId?.schemeCode}</span></td>
+                        <td className="py-3.5 px-5 border-r border-gray-100 font-extrabold text-teal-700">₹{sub.amount?.toLocaleString('en-IN')} / day</td>
+                        <td className="py-3.5 px-5 border-r border-gray-100 text-xs text-gray-700"><span className="font-semibold">{sub.durationMonths} Months</span><span className="text-gray-400 block text-[11px]">Rate: {sub.interestRate}% p.a.</span></td>
+                        <td className="py-3.5 px-5 border-r border-gray-100">
                           <div className="w-32">
                             <div className="flex justify-between text-[11px] font-bold text-gray-600 mb-1"><span>{paid} / {total}</span><span>{pct}%</span></div>
                             <div className="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden"><div className="bg-teal-600 h-1.5 rounded-full" style={{ width: `${pct}%` }} /></div>
                           </div>
                         </td>
-                        <td className="py-3.5 px-5 font-bold text-gray-900 text-xs">₹{(sub.totalInvested || 0).toLocaleString('en-IN')}</td>
-                        <td className="py-3.5 px-5 font-black text-emerald-700 text-xs">₹{Number(sub.maturityAmount || 0).toLocaleString('en-IN')}</td>
+                        <td className="py-3.5 px-5 border-r border-gray-100 font-bold text-gray-900 text-xs">₹{(sub.totalInvested || 0).toLocaleString('en-IN')}</td>
+                        <td className="py-3.5 px-5 border-r border-gray-100 font-black text-emerald-700 text-xs">₹{Number(sub.maturityAmount || 0).toLocaleString('en-IN')}</td>
                         <td className="py-3.5 px-5">
                           <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${sub.status === 'ACTIVE' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : sub.status === 'MATURED' ? 'bg-purple-50 text-purple-700 border border-purple-200' : 'bg-amber-50 text-amber-700 border border-amber-200'}`}>
                             {sub.status || 'PENDING'}
@@ -1639,7 +1712,7 @@ const PigmyCustomers = () => {
                 )}
               </tbody>
             </table>
-          </div>
+          </TableWrapper>
         </div>
       )}
 

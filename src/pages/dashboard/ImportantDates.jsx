@@ -469,16 +469,16 @@ const ImportantDates = () => {
         )}
         {/* Table */}
         <div className="overflow-x-auto min-h-[300px] relative">
-          <table className="w-full min-w-[900px]">
-            <thead className="bg-[#F8FAFC] text-gray-600 text-xs uppercase tracking-wider font-semibold border-b border-gray-200/80">
+          <table className="w-full min-w-[900px] text-center text-sm whitespace-nowrap">
+            <thead className="bg-[#225091] text-white text-xs uppercase tracking-wider font-semibold border-b border-[#225091]">
               <tr>
-                <th className="py-3.5 px-5 text-left font-semibold whitespace-nowrap w-20">Sr.No.</th>
-                <th className="py-3.5 px-5 text-left font-semibold whitespace-nowrap">Employee Name</th>
-                <th className="py-3.5 px-5 text-left font-semibold whitespace-nowrap">Designation</th>
-                <th className="py-3.5 px-5 text-left font-semibold whitespace-nowrap">State / UT</th>
-                <th className="py-3.5 px-5 text-left font-semibold whitespace-nowrap">Branch</th>
-                <th className="py-3.5 px-5 text-left font-semibold whitespace-nowrap">Day / Date</th>
-                <th className="py-3.5 px-5 text-left font-semibold whitespace-nowrap">Celebration</th>
+                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center text-left w-20">Sr.No.</th>
+                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center text-left">Employee Name</th>
+                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center text-left">Designation</th>
+                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center text-left">State / UT</th>
+                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center text-left">Branch</th>
+                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center text-left">Day / Date</th>
+                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center text-left">Celebration</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">

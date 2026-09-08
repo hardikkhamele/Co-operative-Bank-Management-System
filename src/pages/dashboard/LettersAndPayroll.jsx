@@ -1765,8 +1765,8 @@ const LettersAndPayroll = () => {
                         <textarea rows={2} required value={perfManagerComments} onChange={(e) => setPerfManagerComments(e.target.value)} className="w-full px-3.5 py-2.5 bg-gray-50/70 focus:bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-[#225091]" />
                       </div>
                       <div className="overflow-x-auto border border-gray-200 rounded-xl">
-                        <table className="w-full text-left text-xs border-collapse">
-                          <thead><tr className="bg-gray-50 text-gray-600 uppercase font-semibold"><th className="p-2.5">KRA</th><th className="p-2.5">Target</th><th className="p-2.5">Achieved</th><th className="p-2.5">Rating</th><th className="p-2.5"></th></tr></thead>
+                        <table className="w-full text-xs border-collapse text-center text-sm whitespace-nowrap">
+                          <thead className="bg-[#225091] text-white text-xs uppercase tracking-wider font-semibold border-b border-[#225091]"><tr ><th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">KRA</th><th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Target</th><th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Achieved</th><th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Rating</th><th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center"></th></tr></thead>
                           <tbody className="divide-y divide-gray-100">{kraRatings.map((row, idx) => (
                             <tr key={idx}>
                               <td className="p-2"><input value={row.kraName} onChange={(e) => handleKraChange(idx, 'kraName', e.target.value)} className="w-full p-1.5 border rounded-lg text-xs" /></td>
@@ -2002,16 +2002,16 @@ const LettersAndPayroll = () => {
 
           {/* History Table */}
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse min-w-[850px]">
-              <thead className="bg-[#F8FAFC] text-gray-600 text-xs uppercase tracking-wider font-semibold border-b border-gray-200/80">
+            <table className="w-full border-collapse min-w-[850px] text-center text-sm whitespace-nowrap">
+              <thead className="bg-[#225091] text-white text-xs uppercase tracking-wider font-semibold border-b border-[#225091]">
                 <tr>
-                  <th className="py-3.5 px-5 font-semibold">Ref Number</th>
-                  <th className="py-3.5 px-5 font-semibold">Employee</th>
-                  <th className="py-3.5 px-5 font-semibold">Branch</th>
-                  <th className="py-3.5 px-5 font-semibold">Document Type</th>
-                  <th className="py-3.5 px-5 font-semibold">Issued Date</th>
-                  <th className="py-3.5 px-5 font-semibold">Details Summary</th>
-                  <th className="py-3.5 px-5 font-semibold text-center">Action</th>
+                  <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Ref Number</th>
+                  <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Employee</th>
+                  <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Branch</th>
+                  <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Document Type</th>
+                  <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Issued Date</th>
+                  <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Details Summary</th>
+                  <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 text-xs">

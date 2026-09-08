@@ -131,16 +131,16 @@ const Customers = () => {
       {/* Table */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse min-w-[1000px]">
-            <thead className="bg-[#F8FAFC] text-gray-600 text-xs uppercase tracking-wider font-semibold border-b border-gray-200/80">
+          <table className="w-full border-collapse min-w-[1000px] text-center text-sm whitespace-nowrap">
+            <thead className="bg-[#225091] text-white text-xs uppercase tracking-wider font-semibold border-b border-[#225091]">
               <tr>
-                <th className="py-3.5 px-5 font-semibold">Sr.No.</th>
-                <th className="py-3.5 px-5 font-semibold">Customer Name</th>
-                <th className="py-3.5 px-5 font-semibold">Gender</th>
-                <th className="py-3.5 px-5 font-semibold">Date Of Birth</th>
-                <th className="py-3.5 px-5 font-semibold">Phone Number</th>
-                <th className="py-3.5 px-5 font-semibold">Email</th>
-                <th className="py-3.5 px-5 font-semibold text-center min-w-[210px] whitespace-nowrap">Action</th>
+                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Sr.No.</th>
+                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Customer Name</th>
+                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Gender</th>
+                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Date Of Birth</th>
+                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Phone Number</th>
+                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Email</th>
+                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center min-w-[210px]">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">

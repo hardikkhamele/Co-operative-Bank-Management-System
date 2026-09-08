@@ -292,17 +292,17 @@ const Managers = () => {
       {/* Table Card */}
       <div className="bg-white border border-gray-100 rounded-xl shadow-sm flex-1 overflow-hidden flex flex-col min-h-0">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse min-w-[800px]">
-            <thead className="bg-[#F8FAFC] text-gray-600 text-xs uppercase tracking-wider font-semibold border-b border-gray-200/80">
+          <table className="w-full border-collapse min-w-[800px] text-center text-sm whitespace-nowrap">
+            <thead className="bg-[#225091] text-white text-xs uppercase tracking-wider font-semibold border-b border-[#225091]">
               <tr>
-                <th className="py-3.5 px-5 font-semibold text-center w-16">Sr.No.</th>
-                <th className="py-3.5 px-5 font-semibold">Manager Name</th>
-                <th className="py-3.5 px-5 font-semibold">Designation</th>
-                <th className="py-3.5 px-5 font-semibold">Branch</th>
-                <th className="py-3.5 px-5 font-semibold">Region</th>
-                <th className="py-3.5 px-5 font-semibold">Contact Details</th>
-                <th className="py-3.5 px-5 font-semibold text-center w-28">Status</th>
-                <th className="py-3.5 px-5 font-semibold text-center w-36">Action</th>
+                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center w-16">Sr.No.</th>
+                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Manager Name</th>
+                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Designation</th>
+                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Branch</th>
+                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Region</th>
+                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Contact Details</th>
+                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center w-28">Status</th>
+                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center w-36">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">

@@ -513,24 +513,51 @@ const CheckCibilScore = () => {
 
     const rating = getScoreRating(score);
 
+    // Helper to dynamically find an array of objects that have specific keys
+    const findArrayByKeys = (obj, keys) => {
+      let found = null;
+      const search = (node) => {
+        if (!node || typeof node !== 'object' || found) return;
+        if (Array.isArray(node) && node.length > 0 && typeof node[0] === 'object') {
+          if (keys.some(k => node[0][k] !== undefined)) {
+            found = node;
+            return;
+          }
+        }
+        Object.values(node).forEach(search);
+      };
+      search(obj);
+      return found || [];
+    };
+
     // Accounts
-    const accountList = 
+    let accountList = 
       bureauReport?.ACCOUNT?.CAIS_Account_DETAILS ||
       innerData?.ACCOUNT?.CAIS_Account_DETAILS ||
       bureauReport?.accounts ||
       innerData?.accounts ||
       rawData?.accounts ||
       [];
+    
+    if (!Array.isArray(accountList) || accountList.length === 0) {
+       const dyn = findArrayByKeys(innerData, ['Account_Type', 'accountType', 'Current_Balance', 'balance', 'Subscriber_Name', 'institution', 'Date_Reported']);
+       if (dyn.length > 0) accountList = dyn;
+    }
     const safeAccounts = Array.isArray(accountList) ? accountList : (accountList ? [accountList] : []);
 
     // Inquiries
-    const inquiryList = 
+    let inquiryList = 
       bureauReport?.CAPS?.CAPS_Application_Details ||
       innerData?.CAPS?.CAPS_Application_Details ||
       bureauReport?.inquiries ||
       innerData?.inquiries ||
       rawData?.inquiries ||
       [];
+
+    if (!Array.isArray(inquiryList) || inquiryList.length === 0) {
+       const dyn = findArrayByKeys(innerData, ['Enquiry_Purpose', 'purpose', 'Enquiry_Amount', 'amount', 'Enquiry_Date', 'dateOfEnquiry']);
+       if (dyn.length > 0) inquiryList = dyn;
+    }
     const safeInquiries = Array.isArray(inquiryList) ? inquiryList : (inquiryList ? [inquiryList] : []);
 
     // Summary
@@ -1044,14 +1071,14 @@ const CheckCibilScore = () => {
                     <div className="space-y-4">
                       {liveParsed.accounts.length > 0 ? (
                         <div className="border border-gray-100 rounded-2xl overflow-hidden shadow-2xs">
-                          <table className="w-full text-left text-xs border-collapse">
-                            <thead className="bg-[#F8FAFC] text-gray-600 uppercase font-semibold border-b border-gray-200/70">
+                          <table className="w-full text-xs border-collapse text-center text-sm whitespace-nowrap">
+                            <thead className="bg-[#225091] text-white text-xs uppercase tracking-wider font-semibold border-b border-[#225091]">
                               <tr>
-                                <th className="p-3.5">Institution / Bank</th>
-                                <th className="p-3.5">Account / Loan Type</th>
-                                <th className="p-3.5">Account Number</th>
-                                <th className="p-3.5">Current Balance</th>
-                                <th className="p-3.5">Status</th>
+                                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Institution / Bank</th>
+                                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Account / Loan Type</th>
+                                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Account Number</th>
+                                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Current Balance</th>
+                                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Status</th>
                               </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100 font-medium">
@@ -1091,13 +1118,13 @@ const CheckCibilScore = () => {
                     <div className="space-y-4">
                       {liveParsed.inquiries.length > 0 ? (
                         <div className="border border-gray-100 rounded-2xl overflow-hidden shadow-2xs">
-                          <table className="w-full text-left text-xs border-collapse">
-                            <thead className="bg-[#F8FAFC] text-gray-600 uppercase font-semibold border-b border-gray-200/70">
+                          <table className="w-full text-xs border-collapse text-center text-sm whitespace-nowrap">
+                            <thead className="bg-[#225091] text-white text-xs uppercase tracking-wider font-semibold border-b border-[#225091]">
                               <tr>
-                                <th className="p-3.5">Inquiring Member</th>
-                                <th className="p-3.5">Purpose of Loan / Credit</th>
-                                <th className="p-3.5">Amount</th>
-                                <th className="p-3.5">Enquiry Date</th>
+                                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Inquiring Member</th>
+                                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Purpose of Loan / Credit</th>
+                                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Amount</th>
+                                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Enquiry Date</th>
                               </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100 font-medium">
@@ -1309,17 +1336,17 @@ const CheckCibilScore = () => {
           {/* History Data Table */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
             <TableWrapper minHeight="360px">
-              <table ref={historyTableRef} className="w-full text-left border-collapse min-w-[900px]">
-                <thead className="bg-slate-50/80 border-b border-gray-200/80">
+              <table ref={historyTableRef} className="w-full border-collapse min-w-[900px] text-center text-sm whitespace-nowrap">
+                <thead className="bg-[#225091] text-white text-xs uppercase tracking-wider font-semibold border-b border-[#225091]">
                   <tr>
-                    <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap text-center w-16">Sr.No.</th>
-                    <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">Applicant Name</th>
-                    <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">PAN Card</th>
-                    <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">Mobile</th>
-                    <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">Status</th>
-                    <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">Requested By</th>
-                    <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">Checked On</th>
-                    <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap text-center">Action</th>
+                    <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center w-16">Sr.No.</th>
+                    <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Applicant Name</th>
+                    <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">PAN Card</th>
+                    <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Mobile</th>
+                    <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Status</th>
+                    <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Requested By</th>
+                    <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Checked On</th>
+                    <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Action</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 text-[13px]">
@@ -1545,13 +1572,13 @@ const CheckCibilScore = () => {
                     </h4>
                     {(detailParsed?.accounts?.length || 0) > 0 ? (
                       <div className="border border-gray-100 rounded-2xl overflow-hidden">
-                        <table className="w-full text-left text-xs border-collapse">
-                          <thead className="bg-gray-50 text-gray-600 uppercase font-semibold">
+                        <table className="w-full text-xs border-collapse text-center text-sm whitespace-nowrap">
+                          <thead className="bg-[#225091] text-white text-xs uppercase tracking-wider font-semibold border-b border-[#225091]">
                             <tr>
-                              <th className="p-3">Institution</th>
-                              <th className="p-3">Type</th>
-                              <th className="p-3">Balance</th>
-                              <th className="p-3">Status</th>
+                              <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Institution</th>
+                              <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Type</th>
+                              <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Balance</th>
+                              <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Status</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-gray-100">
@@ -1584,13 +1611,13 @@ const CheckCibilScore = () => {
                         Enquiries on Record ({detailParsed.inquiries.length})
                       </h4>
                       <div className="border border-gray-100 rounded-2xl overflow-hidden">
-                        <table className="w-full text-left text-xs border-collapse">
-                          <thead className="bg-gray-50 text-gray-600 uppercase font-semibold">
+                        <table className="w-full text-xs border-collapse text-center text-sm whitespace-nowrap">
+                          <thead className="bg-[#225091] text-white text-xs uppercase tracking-wider font-semibold border-b border-[#225091]">
                             <tr>
-                              <th className="p-3">Member</th>
-                              <th className="p-3">Purpose</th>
-                              <th className="p-3">Amount</th>
-                              <th className="p-3">Date</th>
+                              <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Member</th>
+                              <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Purpose</th>
+                              <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Amount</th>
+                              <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Date</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-gray-100">

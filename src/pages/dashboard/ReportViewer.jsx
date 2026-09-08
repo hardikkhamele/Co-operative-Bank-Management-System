@@ -697,14 +697,14 @@ const ReportViewer = () => {
     if (reportType === 'BRANCH_FINANCIAL_SUMMARY') {
       return (
         <tr>
-          <th className="py-3.5 px-4 font-semibold w-14">Sr.No</th>
-          <th className="py-3.5 px-4 font-semibold">Branch Code</th>
-          <th className="py-3.5 px-4 font-semibold">Branch Name</th>
-          <th className="py-3.5 px-4 font-semibold">Location</th>
-          <th className="py-3.5 px-4 font-semibold text-right">Total Credit</th>
-          <th className="py-3.5 px-4 font-semibold text-right">Total Debit</th>
-          <th className="py-3.5 px-4 font-semibold text-right">Net Cash Flow</th>
-          <th className="py-3.5 px-4 font-semibold text-center">Vouchers</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center w-14">Sr.No</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Branch Code</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Branch Name</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Location</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center text-right">Total Credit</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center text-right">Total Debit</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center text-right">Net Cash Flow</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Vouchers</th>
         </tr>
       );
     }
@@ -712,16 +712,16 @@ const ReportViewer = () => {
     if (reportType === 'CREDIT_RECEIPTS' || reportType === 'DEBIT_RECEIPTS') {
       return (
         <tr>
-          <th className="py-3.5 px-4 font-semibold w-14">Sr.No</th>
-          <th className="py-3.5 px-4 font-semibold">Receipt No</th>
-          <th className="py-3.5 px-4 font-semibold">Date</th>
-          <th className="py-3.5 px-4 font-semibold">Name / Customer</th>
-          <th className="py-3.5 px-4 font-semibold">Account No</th>
-          <th className="py-3.5 px-4 font-semibold">GL Head</th>
-          <th className="py-3.5 px-4 font-semibold">Branch</th>
-          <th className="py-3.5 px-4 font-semibold text-right">Amount</th>
-          <th className="py-3.5 px-4 font-semibold text-center">Status</th>
-          <th className="py-3.5 px-4 font-semibold">Audit</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center w-14">Sr.No</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Receipt No</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Date</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Name / Customer</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Account No</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">GL Head</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Branch</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center text-right">Amount</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Status</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Audit</th>
         </tr>
       );
     }
@@ -729,15 +729,15 @@ const ReportViewer = () => {
     if (reportType === 'TRANSFER_CONTRA_RECEIPTS') {
       return (
         <tr>
-          <th className="py-3.5 px-4 font-semibold w-14">Sr.No</th>
-          <th className="py-3.5 px-4 font-semibold">Voucher No</th>
-          <th className="py-3.5 px-4 font-semibold">Type</th>
-          <th className="py-3.5 px-4 font-semibold">Date</th>
-          <th className="py-3.5 px-4 font-semibold">From Account</th>
-          <th className="py-3.5 px-4 font-semibold">To Account</th>
-          <th className="py-3.5 px-4 font-semibold text-right">Amount</th>
-          <th className="py-3.5 px-4 font-semibold text-center">Status</th>
-          <th className="py-3.5 px-4 font-semibold">Branch</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center w-14">Sr.No</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Voucher No</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Type</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Date</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">From Account</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">To Account</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center text-right">Amount</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Status</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Branch</th>
         </tr>
       );
     }
@@ -745,14 +745,14 @@ const ReportViewer = () => {
     if (reportType === 'CASH_PAYMENTS') {
       return (
         <tr>
-          <th className="py-3.5 px-4 font-semibold w-14">Sr.No</th>
-          <th className="py-3.5 px-4 font-semibold">Payment No</th>
-          <th className="py-3.5 px-4 font-semibold">Date</th>
-          <th className="py-3.5 px-4 font-semibold">Collector / Staff</th>
-          <th className="py-3.5 px-4 font-semibold">Drawer / Mode</th>
-          <th className="py-3.5 px-4 font-semibold">Branch</th>
-          <th className="py-3.5 px-4 font-semibold text-right">Amount</th>
-          <th className="py-3.5 px-4 font-semibold text-center">Status</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center w-14">Sr.No</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Payment No</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Date</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Collector / Staff</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Drawer / Mode</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Branch</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center text-right">Amount</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Status</th>
         </tr>
       );
     }
@@ -760,15 +760,15 @@ const ReportViewer = () => {
     if (reportType === 'ATTENDANCE_SUMMARY') {
       return (
         <tr>
-          <th className="py-3.5 px-4 font-semibold w-14">Sr.No</th>
-          <th className="py-3.5 px-4 font-semibold">Employee Code</th>
-          <th className="py-3.5 px-4 font-semibold">Employee Name</th>
-          <th className="py-3.5 px-4 font-semibold">Branch</th>
-          <th className="py-3.5 px-4 font-semibold">Date</th>
-          <th className="py-3.5 px-4 font-semibold">Punch In</th>
-          <th className="py-3.5 px-4 font-semibold">Punch Out</th>
-          <th className="py-3.5 px-4 font-semibold">Work Hours</th>
-          <th className="py-3.5 px-4 font-semibold text-center">Status</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center w-14">Sr.No</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Employee Code</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Employee Name</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Branch</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Date</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Punch In</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Punch Out</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Work Hours</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Status</th>
         </tr>
       );
     }
@@ -776,13 +776,13 @@ const ReportViewer = () => {
     if (reportType === 'DAILY_WORK_REPORT') {
       return (
         <tr>
-          <th className="py-3.5 px-4 font-semibold w-14">Sr.No</th>
-          <th className="py-3.5 px-4 font-semibold">Date</th>
-          <th className="py-3.5 px-4 font-semibold">Executive Name</th>
-          <th className="py-3.5 px-4 font-semibold">Branch</th>
-          <th className="py-3.5 px-4 font-semibold text-center">Field Visits</th>
-          <th className="py-3.5 px-4 font-semibold">Created By</th>
-          <th className="py-3.5 px-4 font-semibold">Remarks / Activity</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center w-14">Sr.No</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Date</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Executive Name</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Branch</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Field Visits</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Created By</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Remarks / Activity</th>
         </tr>
       );
     }
@@ -790,15 +790,15 @@ const ReportViewer = () => {
     if (reportType === 'STAFF_DIRECTORY') {
       return (
         <tr>
-          <th className="py-3.5 px-4 font-semibold w-14">Sr.No</th>
-          <th className="py-3.5 px-4 font-semibold">Emp Code</th>
-          <th className="py-3.5 px-4 font-semibold">Full Name</th>
-          <th className="py-3.5 px-4 font-semibold">Role</th>
-          <th className="py-3.5 px-4 font-semibold">Branch</th>
-          <th className="py-3.5 px-4 font-semibold">Phone</th>
-          <th className="py-3.5 px-4 font-semibold">Email</th>
-          <th className="py-3.5 px-4 font-semibold text-center">KYC Status</th>
-          <th className="py-3.5 px-4 font-semibold text-center">Status</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center w-14">Sr.No</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Emp Code</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Full Name</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Role</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Branch</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Phone</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Email</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">KYC Status</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Status</th>
         </tr>
       );
     }
@@ -806,16 +806,16 @@ const ReportViewer = () => {
     if (reportType === 'LEADS_AND_LOANS') {
       return (
         <tr>
-          <th className="py-3.5 px-4 font-semibold w-14">Sr.No</th>
-          <th className="py-3.5 px-4 font-semibold">Lead / App No</th>
-          <th className="py-3.5 px-4 font-semibold">Date</th>
-          <th className="py-3.5 px-4 font-semibold">Customer Name</th>
-          <th className="py-3.5 px-4 font-semibold">Phone</th>
-          <th className="py-3.5 px-4 font-semibold">Product</th>
-          <th className="py-3.5 px-4 font-semibold text-right">Requested</th>
-          <th className="py-3.5 px-4 font-semibold text-right">Disbursed</th>
-          <th className="py-3.5 px-4 font-semibold text-center">Status</th>
-          <th className="py-3.5 px-4 font-semibold">Branch</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center w-14">Sr.No</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Lead / App No</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Date</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Customer Name</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Phone</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Product</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center text-right">Requested</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center text-right">Disbursed</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Status</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Branch</th>
         </tr>
       );
     }
@@ -823,14 +823,14 @@ const ReportViewer = () => {
     if (reportType === 'CIBIL_ASSESSMENT_AUDIT') {
       return (
         <tr>
-          <th className="py-3.5 px-4 font-semibold w-14">Sr.No</th>
-          <th className="py-3.5 px-4 font-semibold">Date</th>
-          <th className="py-3.5 px-4 font-semibold">Customer Name</th>
-          <th className="py-3.5 px-4 font-semibold">PAN / ID</th>
-          <th className="py-3.5 px-4 font-semibold text-center">CIBIL Score</th>
-          <th className="py-3.5 px-4 font-semibold text-center">Risk Classification</th>
-          <th className="py-3.5 px-4 font-semibold">Checked By</th>
-          <th className="py-3.5 px-4 font-semibold">Branch</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center w-14">Sr.No</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Date</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Customer Name</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">PAN / ID</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">CIBIL Score</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Risk Classification</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Checked By</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Branch</th>
         </tr>
       );
     }
@@ -838,14 +838,14 @@ const ReportViewer = () => {
     if (reportType === 'MERCHANT_SUMMARY') {
       return (
         <tr>
-          <th className="py-3.5 px-4 font-semibold w-14">Sr.No</th>
-          <th className="py-3.5 px-4 font-semibold">Merchant Code</th>
-          <th className="py-3.5 px-4 font-semibold">Shop Name</th>
-          <th className="py-3.5 px-4 font-semibold">Owner Name</th>
-          <th className="py-3.5 px-4 font-semibold">Phone</th>
-          <th className="py-3.5 px-4 font-semibold">Branch</th>
-          <th className="py-3.5 px-4 font-semibold text-right">Sales Volume</th>
-          <th className="py-3.5 px-4 font-semibold text-center">Status</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center w-14">Sr.No</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Merchant Code</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Shop Name</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Owner Name</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Phone</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Branch</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center text-right">Sales Volume</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Status</th>
         </tr>
       );
     }
@@ -853,28 +853,28 @@ const ReportViewer = () => {
     if (reportType === 'CARDS_CREDIT_USAGE') {
       return (
         <tr>
-          <th className="py-3.5 px-4 font-semibold w-14">Sr.No</th>
-          <th className="py-3.5 px-4 font-semibold">Date</th>
-          <th className="py-3.5 px-4 font-semibold">Branch</th>
-          <th className="py-3.5 px-4 font-semibold">Card Type</th>
-          <th className="py-3.5 px-4 font-semibold text-right">Allocated</th>
-          <th className="py-3.5 px-4 font-semibold text-right">Consumed</th>
-          <th className="py-3.5 px-4 font-semibold text-right">Balance</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center w-14">Sr.No</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Date</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Branch</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Card Type</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center text-right">Allocated</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center text-right">Consumed</th>
+          <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center text-right">Balance</th>
         </tr>
       );
     }
 
     return (
       <tr>
-        <th className="py-3.5 px-4 font-semibold w-14">Sr.No</th>
-        <th className="py-3.5 px-4 font-semibold">Reference / ID</th>
-        <th className="py-3.5 px-4 font-semibold">Date</th>
-        <th className="py-3.5 px-4 font-semibold">Name / Entity</th>
-        <th className="py-3.5 px-4 font-semibold">Account / Head</th>
-        <th className="py-3.5 px-4 font-semibold">Branch</th>
-        <th className="py-3.5 px-4 font-semibold">Amount / Value</th>
-        <th className="py-3.5 px-4 font-semibold text-center">Status</th>
-        <th className="py-3.5 px-4 font-semibold">Audit / Approver</th>
+        <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center w-14">Sr.No</th>
+        <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Reference / ID</th>
+        <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Date</th>
+        <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Name / Entity</th>
+        <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Account / Head</th>
+        <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Branch</th>
+        <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Amount / Value</th>
+        <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Status</th>
+        <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Audit / Approver</th>
       </tr>
     );
   };
@@ -1109,8 +1109,8 @@ const ReportViewer = () => {
       {/* Main Report Data Table */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse min-w-[900px]">
-            <thead className="bg-[#F8FAFC] text-gray-600 text-[11px] uppercase tracking-wider font-semibold border-b border-gray-200/80">
+          <table className="w-full border-collapse min-w-[900px] text-center text-sm whitespace-nowrap">
+            <thead className="bg-[#225091] text-white text-xs uppercase tracking-wider font-semibold border-b border-[#225091]">
               {renderTableHeaders()}
             </thead>
             {renderTableContent()}

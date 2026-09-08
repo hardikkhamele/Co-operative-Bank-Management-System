@@ -874,17 +874,17 @@ const Merchants = () => {
       {/* Table Card */}
       <div className="bg-white rounded-2xl shadow-2xs border border-gray-200/80 overflow-hidden flex flex-col">
         <TableWrapper minHeight="360px">
-          <table ref={tableRef} className="w-full text-left border-collapse min-w-[1100px]">
-            <thead className="bg-slate-50/80 border-b border-gray-200/80">
-              <tr>
-                <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap text-center w-14">#</th>
-                <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap min-w-[230px]">Shop / Business</th>
-                <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap min-w-[180px]">Owner Name</th>
-                <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap min-w-[200px]">Contact Info</th>
-                <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap min-w-[190px]">Branch & Location</th>
-                <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap text-center min-w-[130px]">Approval</th>
-                <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap text-center min-w-[110px]">Status</th>
-                <th className="py-3.5 px-4 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap text-center min-w-[220px]">Actions</th>
+          <table ref={tableRef} className="w-full text-center text-sm whitespace-nowrap min-w-[1100px]">
+            <thead>
+              <tr className="bg-[#225091] border-b border-[#225091]">
+                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center w-14">#</th>
+                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center min-w-[230px]">Shop / Business</th>
+                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center min-w-[180px]">Owner Name</th>
+                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center min-w-[200px]">Contact Info</th>
+                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center min-w-[190px]">Branch & Location</th>
+                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center min-w-[130px]">Approval</th>
+                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center min-w-[110px]">Status</th>
+                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider text-center min-w-[220px]">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">

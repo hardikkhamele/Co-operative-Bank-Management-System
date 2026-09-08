@@ -61,15 +61,15 @@ const Region = () => {
       {/* Table */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm whitespace-nowrap">
-            <thead className="bg-[#f8f9ff] text-gray-700 font-semibold border-b border-gray-100">
+          <table className="w-full text-sm whitespace-nowrap text-center">
+            <thead className="bg-[#225091] text-white text-xs uppercase tracking-wider font-semibold border-b border-[#225091]">
               <tr>
-                <th className="px-6 py-4 font-bold">Sr.No.</th>
-                <th className="px-6 py-4 font-bold">Region Name</th>
-                <th className="px-6 py-4 font-bold">Region Manager</th>
-                <th className="px-6 py-4 font-bold">Total Branch</th>
-                <th className="px-6 py-4 font-bold">Total Employee</th>
-                <th className="px-6 py-4 text-center">Action</th>
+                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Sr.No.</th>
+                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Region Name</th>
+                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Region Manager</th>
+                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Total Branch</th>
+                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Total Employee</th>
+                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">

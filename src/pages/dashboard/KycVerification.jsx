@@ -1234,16 +1234,16 @@ const KycVerification = () => {
 
               {/* History Table */}
               <div className="overflow-x-auto rounded-xl border border-gray-100 mt-2">
-                <table className="w-full text-left border-collapse">
-                  <thead>
-                    <tr className="bg-gray-50/80 border-b border-gray-100 text-[11px] font-bold text-gray-500 uppercase tracking-wider">
-                      <th className="py-3 px-4">Reference ID</th>
-                      <th className="py-3 px-4">Document Type</th>
-                      <th className="py-3 px-4">Applicant / ID</th>
-                      <th className="py-3 px-4">Created By</th>
-                      <th className="py-3 px-4">Status</th>
-                      <th className="py-3 px-4">Verified / Created Date</th>
-                      <th className="py-3 px-4 text-right">Actions</th>
+                <table className="w-full border-collapse text-center text-sm whitespace-nowrap">
+                  <thead className="bg-[#225091] text-white text-xs uppercase tracking-wider font-semibold border-b border-[#225091]">
+                    <tr >
+                      <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Reference ID</th>
+                      <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Document Type</th>
+                      <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Applicant / ID</th>
+                      <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Created By</th>
+                      <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Status</th>
+                      <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Verified / Created Date</th>
+                      <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100 text-xs">
