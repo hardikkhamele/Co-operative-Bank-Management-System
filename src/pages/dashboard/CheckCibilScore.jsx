@@ -565,19 +565,23 @@ const CheckCibilScore = () => {
 
     // Demographics / Address
     const demo = bureauReport?.DEMOGRAPHICS || innerData?.DEMOGRAPHICS || {};
-    const address = demo?.Flat_No_Plot_No_House_No || demo?.Address_Line_1 || bureauReport?.ADDRESS_DETAILS?.Address_Line_1 || '—';
-    const city = demo?.City || bureauReport?.ADDRESS_DETAILS?.City || '—';
-    const state = demo?.State || bureauReport?.ADDRESS_DETAILS?.State || '—';
-    const pincode = demo?.PIN_Code || bureauReport?.ADDRESS_DETAILS?.PIN_Code || '—';
+    const currentAppDetails = bureauReport?.Current_Application?.Current_Application_Details || {};
+    const appAddress = currentAppDetails?.Current_Applicant_Address_Details || {};
+    const appDetails = currentAppDetails?.Current_Applicant_Details || {};
+
+    const address = demo?.Flat_No_Plot_No_House_No || demo?.Address_Line_1 || bureauReport?.ADDRESS_DETAILS?.Address_Line_1 || appAddress?.FlatNoPlotNoHouseNo || '—';
+    const city = demo?.City || bureauReport?.ADDRESS_DETAILS?.City || appAddress?.City || '—';
+    const state = demo?.State || bureauReport?.ADDRESS_DETAILS?.State || appAddress?.State || '—';
+    const pincode = demo?.PIN_Code || bureauReport?.ADDRESS_DETAILS?.PIN_Code || appAddress?.PINCode || '—';
 
     // Applicant Details
     const applicant = {
-      fullName: rawData.fullName || innerData.fullName || formData?.fullName || '—',
-      pan: rawData.pan || innerData.pan || formData?.panNumber || '—',
-      mobileNumber: rawData.mobileNumber || innerData.mobileNumber || formData?.mobileNumber || '—',
-      dob: rawData.dob || innerData.dob || formData?.dob || '—',
-      gender: demo?.Gender || '—',
-      address: address !== '—' ? `${address}, ${city}, ${state} - ${pincode}` : '—',
+      fullName: rawData.fullName || innerData.fullName || innerData.name || formData?.fullName || '—',
+      pan: rawData.pan || innerData.pan || innerData.pan || appDetails?.IncomeTaxPan || formData?.panNumber || '—',
+      mobileNumber: rawData.mobileNumber || innerData.mobileNumber || innerData.mobile || appDetails?.Telephone_Number_Applicant_1st || formData?.mobileNumber || '—',
+      dob: rawData.dob || innerData.dob || appDetails?.Date_Of_Birth_Applicant || formData?.dob || '—',
+      gender: demo?.Gender || appDetails?.Gender_Code || '—',
+      address: address !== '—' && address !== 'DEFAULT' ? `${address}, ${city}, ${state} - ${pincode}` : `${city !== '—' ? city + ', ' : ''}${state !== '—' ? state + ' - ' : ''}${pincode}`,
       requestId: rawData.requestId || innerData.requestId || rawData._id || '—',
       status: rawData.status || innerData.status || 'completed',
       createdAt: rawData.createdAt || innerData.createdAt,
@@ -595,12 +599,12 @@ const CheckCibilScore = () => {
     const loans = safeAccounts.filter(a => !(a?.Account_Type || a?.accountType || '').toLowerCase().includes('credit card'));
 
     // Bureau Control Info
-    const bureauHeader = bureauReport?.HEADER || innerData?.HEADER || {};
+    const bureauHeader = bureauReport?.HEADER || innerData?.HEADER || bureauReport?.CreditProfileHeader || {};
     const bureauMeta = {
       bureauProvider: 'Experian Credit Information Bureau of India / CIBIL',
-      scoreModel: rawData.scoreName || innerData.scoreName || reportJson?.scoreName || 'Experian / CIBIL Risk Score v2.0',
-      controlNumber: bureauHeader?.Bureau_Control_Number || applicant.requestId,
-      reportTimestamp: rawData.createdAt ? new Date(rawData.createdAt).toLocaleString('en-GB') : new Date().toLocaleString('en-GB'),
+      scoreModel: rawData.scoreName || innerData.scoreName || reportJson?.scoreName || (bureauHeader?.Version ? `Risk Score ${bureauHeader.Version}` : 'Experian / CIBIL Risk Score v2.0'),
+      controlNumber: bureauHeader?.Bureau_Control_Number || bureauHeader?.ReportNumber || applicant.requestId,
+      reportTimestamp: rawData.createdAt ? new Date(rawData.createdAt).toLocaleString('en-GB') : (bureauHeader?.ReportDate ? String(bureauHeader.ReportDate) : new Date().toLocaleString('en-GB')),
       delinquencyCount: summary?.Delinquency_Accounts || summary?.delinquentAccounts || 0,
       securedAccounts: summary?.Secured_Accounts || 0,
       unsecuredAccounts: summary?.Unsecured_Accounts || 0,
