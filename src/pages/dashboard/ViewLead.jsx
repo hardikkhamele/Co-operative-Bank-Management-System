@@ -208,7 +208,9 @@ const ViewLead = () => {
             <img 
               src={avatar} 
               alt={customerName} 
-              className="w-16 h-16 rounded-full object-cover shadow-sm"
+              onClick={() => setPreviewImage({ url: avatar, title: `${customerName} - Profile / Live Photo` })}
+              className="w-16 h-16 rounded-full object-cover shadow-sm cursor-pointer hover:ring-2 hover:ring-[#225091] hover:scale-105 transition-all"
+              title="Click to preview photo"
             />
           ) : (
             <div className="w-16 h-16 rounded-full bg-[#f4f2ff] flex items-center justify-center text-xl font-bold text-[#225091]">
@@ -671,8 +673,14 @@ const ViewLead = () => {
 
       {/* Image Lightbox / Full Preview Modal */}
       {previewImage && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in">
-          <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden shadow-2xl flex flex-col relative">
+        <div 
+          onClick={() => setPreviewImage(null)}
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in cursor-pointer"
+        >
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden shadow-2xl flex flex-col relative cursor-default z-10"
+          >
             <div className="p-4 bg-gray-100 border-b border-gray-200 flex justify-between items-center">
               <h3 className="font-bold text-gray-800 text-sm">{previewImage.title}</h3>
               <div className="flex items-center gap-2">
@@ -685,8 +693,9 @@ const ViewLead = () => {
                   <ExternalLink size={14} /> Open in new tab
                 </a>
                 <button 
+                  type="button"
                   onClick={() => setPreviewImage(null)}
-                  className="p-1 rounded-full text-gray-500 hover:bg-gray-200"
+                  className="p-1 rounded-full text-gray-500 hover:bg-gray-200 cursor-pointer"
                 >
                   <X size={18} />
                 </button>

@@ -24,7 +24,7 @@ import { creditReceiptService } from "../../api/creditReceiptService";
 import useBranchStore from "../../store/branchStore";
 import PageHeader from "../../components/common/PageHeader";
 import { Skeleton, SkeletonTableRow } from "../../components/common/Skeleton";
-import { isBankOwner } from "../../utils/roleUtils";
+import { isBankOwner, canApproveReceipts } from "../../utils/roleUtils";
 import ReceiptImageUpload from "../../components/common/ReceiptImageUpload";
 
 const GL_HEAD_OPTIONS = [
@@ -37,6 +37,27 @@ const GL_HEAD_OPTIONS = [
   { code: "410111", name: "Fixed Deposit" },
   { code: "410112", name: "Recurring Deposit" },
 ];
+
+const formatDateTime = (dateStr) => {
+  if (!dateStr) return { date: "—", time: "" };
+  try {
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return { date: String(dateStr), time: "" };
+    const date = d.toLocaleDateString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+    const time = d.toLocaleTimeString("en-IN", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
+    return { date, time };
+  } catch {
+    return { date: String(dateStr), time: "" };
+  }
+};
 
 const Credit = () => {
   const navigate = useNavigate();
@@ -146,7 +167,8 @@ const Credit = () => {
 
   const authRole = useAuthStore((state) => state.role);
   const authUser = useAuthStore((state) => state.user);
-  const canApprove = isBankOwner(authRole, authUser);
+  const permissions = useAuthStore((state) => state.permissions) || [];
+  const canApprove = canApproveReceipts(authRole, authUser, permissions);
 
   // Form State for Create
   const todayISO = new Date().toISOString().split("T")[0];
@@ -217,35 +239,89 @@ const Credit = () => {
       if (selectedCity) params.city = selectedCity;
       if (dateFrom) params.dateFrom = dateFrom;
       if (dateTo) params.dateTo = dateTo;
-      if (globalBranchId) params.branchId = globalBranchId;
+      if (
+        globalBranchId &&
+        typeof globalBranchId === "string" &&
+        globalBranchId.trim() &&
+        globalBranchId !== "all" &&
+        globalBranchId !== "undefined" &&
+        globalBranchId !== "null"
+      ) {
+        params.branchId = globalBranchId.trim();
+      }
 
+      console.log("[Credit] Fetching receipts with params:", params);
       const res = await creditReceiptService.list(params);
-      if (res && res.success) {
-        const listData = Array.isArray(res.data)
-          ? res.data
-          : res.data?.items || res.data?.receipts || [];
-        setReceipts(listData);
-        if (res.data && res.data.stats) {
-          setStats(res.data.stats);
-        } else if (res.stats) {
-          setStats(res.stats);
+      console.log("[Credit] Raw API response:", res);
+
+      const isSuccess =
+        res &&
+        (res.success === true ||
+          res.success === "true" ||
+          res.status === "success" ||
+          res.statusCode === 200 ||
+          res.code === 200 ||
+          Array.isArray(res.data) ||
+          Array.isArray(res) ||
+          (res.data && typeof res.data === "object"));
+
+      if (isSuccess) {
+        let listData = [];
+        if (Array.isArray(res)) {
+          listData = res;
+        } else if (Array.isArray(res.data)) {
+          listData = res.data;
+        } else if (res.data && typeof res.data === "object") {
+          listData =
+            res.data.creditReceipts ||
+            res.data.receipts ||
+            res.data.items ||
+            res.data.docs ||
+            res.data.records ||
+            res.data.data ||
+            res.data.rows ||
+            res.data.list ||
+            [];
+        } else if (
+          res.creditReceipts ||
+          res.receipts ||
+          res.items ||
+          res.docs ||
+          res.records ||
+          res.rows ||
+          res.data
+        ) {
+          listData =
+            res.creditReceipts ||
+            res.receipts ||
+            res.items ||
+            res.docs ||
+            res.records ||
+            res.rows ||
+            (Array.isArray(res.data) ? res.data : []);
         }
-        if (
+
+        console.log("[Credit] Extracted listData:", listData);
+        setReceipts(Array.isArray(listData) ? listData : []);
+
+        const statsData = res.data?.stats || res.stats || null;
+        if (statsData) {
+          setStats(statsData);
+        }
+
+        const metaData =
           res.meta ||
           res.pagination ||
           res.data?.meta ||
-          res.data?.pagination
-        ) {
-          setMeta(
-            res.meta ||
-              res.pagination ||
-              res.data?.meta ||
-              res.data?.pagination,
-          );
+          res.data?.pagination;
+
+        if (metaData) {
+          setMeta(metaData);
         } else {
           setMeta({
-            totalRecords: listData.length,
-            totalPages: Math.ceil(listData.length / limit) || 1,
+            totalRecords: Array.isArray(listData) ? listData.length : 0,
+            totalPages:
+              Math.ceil((Array.isArray(listData) ? listData.length : 0) / limit) || 1,
             page,
             limit,
             hasNextPage: false,
@@ -256,7 +332,12 @@ const Credit = () => {
         throw new Error(res?.message || "Failed to retrieve receipts");
       }
     } catch (err) {
-      console.warn("Live credit-receipts API call error:", err.message);
+      console.error("Live credit-receipts API call error:", err);
+      const errMsg =
+        err.response?.data?.message ||
+        err.message ||
+        "Failed to load credit receipts";
+      toast.error(errMsg);
       setReceipts([]);
       setMeta({
         totalRecords: 0,
@@ -494,20 +575,37 @@ const Credit = () => {
         "Name",
         "GL Head",
         "GL Head Name",
-        "Account Number",
-        "Date",
+        "Account No",
+        "Amount",
+        "Date & Time",
         "Status",
+        "Branch Name",
+        "City",
+        "State",
       ];
-      const rows = receipts.map((r, idx) => [
-        (page - 1) * limit + idx + 1,
-        `"${r.receiptNo || ""}"`,
-        `"${r.name || ""}"`,
-        `"${r.glHead || ""}"`,
-        `"${r.glHeadName || ""}"`,
-        `"${r.accountNumber || r.acNo || ""}"`,
-        `"${r.date || ""}"`,
-        `"${r.status || ""}"`,
-      ]);
+      const rows = receipts.map((r, idx) => {
+        const dt = formatDateTime(r.date);
+        const dateTimeStr = dt.time ? `${dt.date} ${dt.time}` : dt.date;
+        const amtStr =
+          r.formattedAmount ||
+          (r.amount !== undefined && r.amount !== null && r.amount !== ""
+            ? `₹${Number(r.amount).toLocaleString("en-IN")}`
+            : "₹0");
+        return [
+          r.srNo || (page - 1) * limit + idx + 1,
+          `"${r.receiptNo || ""}"`,
+          `"${r.name || ""}"`,
+          `"${r.glHead || ""}"`,
+          `"${r.glHeadName || ""}"`,
+          `"${r.accountNumber || r.acNo || ""}"`,
+          `"${amtStr}"`,
+          `"${dateTimeStr}"`,
+          `"${r.status || ""}"`,
+          `"${r.branchName || ""}"`,
+          `"${r.city || ""}"`,
+          `"${r.state || ""}"`,
+        ];
+      });
       const csvContent =
         "data:text/csv;charset=utf-8," +
         [headers.join(","), ...rows.map((e) => e.join(","))].join("\n");
@@ -707,6 +805,8 @@ const Credit = () => {
           { label: "Receipt Management" },
           { label: "Credit Receipt" }
         ]}
+        showBack={false}
+        backUrl="/dashboard"
       />
 
       {/* Stats Cards */}
@@ -900,7 +1000,7 @@ const Credit = () => {
             disabled={!selectedState}
             className="px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-sm text-gray-700 min-w-[140px] disabled:bg-gray-100 disabled:text-gray-400"
           >
-            <option value="">All Cities</option>
+            <option value="">{selectedState ? "All Cities" : "Select State first"}</option>
             {availableCities.map((c) => (
               <option key={c} value={c}>
                 {c}
@@ -938,7 +1038,8 @@ const Credit = () => {
             selectedState ||
             selectedCity ||
             dateFrom ||
-            dateTo) && (
+            dateTo ||
+            searchTerm) && (
             <button
               onClick={() => {
                 setSelectedStatus("");
@@ -946,6 +1047,8 @@ const Credit = () => {
                 setDateTo("");
                 setSelectedState("");
                 setSelectedCity("");
+                setSearchTerm("");
+                setDebouncedSearch("");
                 setPage(1);
               }}
               className="ml-auto px-4 py-2 rounded-lg text-[#225091] font-semibold hover:bg-blue-50 transition-colors text-sm"
@@ -958,7 +1061,7 @@ const Credit = () => {
 
       {/* Table */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto custom-scrollbar">
           <table
             ref={tableRef}
             className="w-full text-left text-sm whitespace-nowrap"
@@ -968,12 +1071,15 @@ const Credit = () => {
                 <th className="py-3.5 px-5 font-semibold">Sr.No.</th>
                 <th className="py-3.5 px-5 font-semibold">Receipt No</th>
                 <th className="py-3.5 px-5 font-semibold">Name</th>
-                <th className="py-3.5 px-5 font-semibold">Branch Name</th>
-                <th className="py-3.5 px-5 font-semibold">City</th>
                 <th className="py-3.5 px-5 font-semibold">GL Head</th>
                 <th className="py-3.5 px-5 font-semibold">GL Head Name</th>
-                <th className="py-3.5 px-5 font-semibold">Date</th>
+                <th className="py-3.5 px-5 font-semibold">Account No</th>
+                <th className="py-3.5 px-5 font-semibold">Amount</th>
+                <th className="py-3.5 px-5 font-semibold">Date & Time</th>
                 <th className="py-3.5 px-5 font-semibold">Status</th>
+                <th className="py-3.5 px-5 font-semibold">Branch Name</th>
+                <th className="py-3.5 px-5 font-semibold">City</th>
+                <th className="py-3.5 px-5 font-semibold">State</th>
                 {canApprove && (
                   <th className="py-3.5 px-5 font-semibold text-center">Approve / Reject</th>
                 )}
@@ -984,12 +1090,12 @@ const Credit = () => {
             <tbody className="divide-y divide-gray-100">
               {loading ? (
                 Array.from({ length: 8 }).map((_, idx) => (
-                  <SkeletonTableRow key={idx} cols={canApprove ? 13 : 12} />
+                  <SkeletonTableRow key={idx} cols={canApprove ? 15 : 14} />
                 ))
               ) : receipts.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={canApprove ? 13 : 12}
+                    colSpan={canApprove ? 15 : 14}
                     className="text-center py-10 font-medium text-gray-500 text-sm"
                   >
                     No credit receipts found.
@@ -998,11 +1104,6 @@ const Credit = () => {
               ) : (
                 receipts.map((receipt, index) => {
                   const receiptId = receipt._id || receipt.id;
-                  const formattedDate = receipt.date
-                    ? receipt.date.includes("T")
-                      ? receipt.date.split("T")[0]
-                      : receipt.date
-                    : "—";
                   const status = (receipt.status || "PENDING").toUpperCase();
                   const isPending = status === "PENDING" || status === "NEW";
 
@@ -1021,23 +1122,37 @@ const Credit = () => {
                       <td className="py-3.5 px-5 text-sm text-gray-900 font-semibold">
                         {receipt.name}
                       </td>
-                      <td className="py-3.5 px-5 text-xs text-gray-600">
-                        {receipt.branchName || "—"}
-                      </td>
-                      <td className="py-3.5 px-5 text-xs text-gray-600">
-                        {receipt.city || "—"}
-                      </td>
                       <td className="py-3.5 px-5 text-xs text-gray-600 font-medium">
-                        {receipt.glHead}
+                        {receipt.glHead || "—"}
                       </td>
                       <td className="py-3.5 px-5 text-xs text-gray-600">
-                        {receipt.glHeadName}
+                        {receipt.glHeadName || "—"}
                       </td>
                       <td className="py-3.5 px-5 text-xs text-gray-700 font-mono font-medium">
-                        {receipt.accountNumber || receipt.acNo}
+                        {receipt.accountNumber || receipt.acNo || "—"}
+                      </td>
+                      <td className="py-3.5 px-5 text-sm text-gray-900 font-semibold">
+                        {receipt.formattedAmount ||
+                          (receipt.amount !== undefined && receipt.amount !== null && receipt.amount !== ""
+                            ? `₹${Number(receipt.amount).toLocaleString("en-IN")}`
+                            : "₹0")}
                       </td>
                       <td className="py-3.5 px-5 text-xs text-gray-600">
-                        {formattedDate}
+                        {(() => {
+                          const dt = formatDateTime(receipt.date);
+                          return (
+                            <div className="flex flex-col leading-tight">
+                              <span className="font-semibold text-gray-800">
+                                {dt.date}
+                              </span>
+                              {dt.time && (
+                                <span className="text-[11px] text-gray-500 mt-0.5">
+                                  {dt.time}
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })()}
                       </td>
 
                       {/* Status Column */}
@@ -1064,6 +1179,16 @@ const Credit = () => {
                             PENDING
                           </span>
                         )}
+                      </td>
+
+                      <td className="py-3.5 px-5 text-xs text-gray-600">
+                        {receipt.branchName || "—"}
+                      </td>
+                      <td className="py-3.5 px-5 text-xs text-gray-600">
+                        {receipt.city || "—"}
+                      </td>
+                      <td className="py-3.5 px-5 text-xs text-gray-600">
+                        {receipt.state || "—"}
                       </td>
 
                       {/* Approve / Reject Toggle Column (Visible exclusively to Bank Owner) */}

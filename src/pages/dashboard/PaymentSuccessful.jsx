@@ -91,9 +91,9 @@ const PaymentSuccessful = () => {
         <div className="flex flex-col sm:flex-row items-center gap-3 w-full justify-center">
           <Link 
             to="/cards-credit"
-            className="w-full sm:w-auto px-8 py-3 rounded-xl bg-[#225091] text-white font-semibold hover:bg-[#168f94] transition-all shadow-sm text-sm flex items-center justify-center gap-2"
+            className="group w-full sm:w-auto px-8 py-3 rounded-xl bg-[#225091] text-white font-semibold hover:bg-[#1a3f73] transition-all shadow-sm text-sm flex items-center justify-center gap-2 active:scale-[0.98]"
           >
-            <ArrowLeft size={16} />
+            <ArrowLeft size={16} className="transition-transform duration-200 group-hover:-translate-x-0.5" />
             <span>Return to Cards & Credit</span>
           </Link>
         </div>

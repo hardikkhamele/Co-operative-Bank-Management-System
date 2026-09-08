@@ -134,15 +134,7 @@ const RolesAndPermissions = () => {
           { label: "Security" },
           { label: "Roles & Permissions" }
         ]}
-      >
-        <Link
-          to="/roles-permissions/create"
-          className="bg-[#225091] hover:bg-[#1a3f73] active:scale-[0.99] text-white px-5 py-2.5 rounded-full font-semibold transition-all shadow-sm flex items-center gap-2 text-sm shrink-0 tracking-normal cursor-pointer"
-        >
-          <Plus size={16} />
-          <span>Create Role</span>
-        </Link>
-      </PageHeader>
+      />
 
       {/* Error Alert with Retry */}
       {errorMsg && (

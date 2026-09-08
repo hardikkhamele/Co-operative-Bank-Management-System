@@ -411,6 +411,8 @@ const CashPayment = () => {
           { label: "Payment Operations" },
           { label: "Cash Payments" }
         ]}
+        showBack={false}
+        backUrl="/dashboard"
       />
 
       {/* 2. Top Stats Overview (4 Centered KPI Cards Matching Employee Standard) */}
@@ -583,8 +585,8 @@ const CashPayment = () => {
           <div>
             <SearchableSelect
               value={selectedCity}
-              disabled={Boolean(selectedState && availableCities.length === 0)}
-              disabledPlaceholder="No cities available"
+              disabled={!selectedState || availableCities.length === 0}
+              disabledPlaceholder={!selectedState ? "Select State first" : "No cities available"}
               onChange={(val) => {
                 setSelectedCity(val);
                 setPage(1);
@@ -593,7 +595,7 @@ const CashPayment = () => {
                 { value: '', label: selectedState ? `All Cities in ${selectedState}` : 'All Cities' },
                 ...availableCities.map((ct) => ({ value: ct, label: ct }))
               ]}
-              placeholder={selectedState ? `All Cities in ${selectedState}` : 'All Cities'}
+              placeholder={selectedState ? `All Cities in ${selectedState}` : 'Select State first'}
               searchPlaceholder="Search city..."
               className="text-xs"
             />

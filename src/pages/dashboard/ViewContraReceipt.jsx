@@ -5,7 +5,7 @@ import { toast } from 'react-toastify';
 import { contraReceiptService } from '../../api/contraReceiptService';
 import useAuthStore from '../../store/authStore';
 import PageHeader from '../../components/common/PageHeader';
-import { isBankOwner } from '../../utils/roleUtils';
+import { isBankOwner, canApproveReceipts } from '../../utils/roleUtils';
 import { SkeletonReceiptView } from '../../components/common/Skeleton';
 
 const ViewContraReceipt = () => {
@@ -22,7 +22,8 @@ const ViewContraReceipt = () => {
 
   const authRole = useAuthStore((state) => state.role);
   const authUser = useAuthStore((state) => state.user);
-  const canApprove = isBankOwner(authRole, authUser);
+  const permissions = useAuthStore((state) => state.permissions) || [];
+  const canApprove = canApproveReceipts(authRole, authUser, permissions);
 
   useEffect(() => {
     const fetchDetails = async () => {

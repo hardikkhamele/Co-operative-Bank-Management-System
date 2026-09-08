@@ -140,7 +140,7 @@ const Customers = () => {
                 <th className="py-3.5 px-5 font-semibold">Date Of Birth</th>
                 <th className="py-3.5 px-5 font-semibold">Phone Number</th>
                 <th className="py-3.5 px-5 font-semibold">Email</th>
-                <th className="py-3.5 px-5 font-semibold text-center">Action</th>
+                <th className="py-3.5 px-5 font-semibold text-center min-w-[210px] whitespace-nowrap">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -170,28 +170,31 @@ const Customers = () => {
                     <td className="py-3.5 px-5 text-xs text-gray-600">{customer.dob}</td>
                     <td className="py-3.5 px-5 text-xs text-gray-600 font-medium">{customer.phone}</td>
                     <td className="py-3.5 px-5 text-xs text-gray-600">{customer.email}</td>
-                    <td className="py-3.5 px-5 text-center">
+                    <td className="py-3.5 px-5 text-center whitespace-nowrap">
                       <div className="flex justify-center items-center gap-1.5">
                         <button 
                           onClick={() => handleViewClick(customer)}
-                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-[#225091] bg-[#EAF2FB] hover:bg-[#d8e8f8] border border-[#225091]/15 transition-all shadow-xs"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-[#225091] bg-[#EAF2FB] hover:bg-[#d8e8f8] border border-[#225091]/15 hover:border-[#225091]/30 transition-all shadow-2xs hover:shadow-xs active:scale-95 cursor-pointer"
                           title="View"
                         >
-                          <Eye size={13} /> View
+                          <Eye size={13} className="text-[#225091]" />
+                          <span>View</span>
                         </button>
                         <button 
                           onClick={() => handleEditClick(customer)}
-                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200/60 transition-all shadow-xs"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200/60 hover:border-amber-300 transition-all shadow-2xs hover:shadow-xs active:scale-95 cursor-pointer"
                           title="Edit"
                         >
-                          <Edit size={13} /> Edit
+                          <Edit size={13} className="text-amber-600" />
+                          <span>Edit</span>
                         </button>
                         <button 
                           onClick={() => handleDeleteClick(customer)}
-                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200/60 transition-all shadow-xs"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200/60 hover:border-rose-300 transition-all shadow-2xs hover:shadow-xs active:scale-95 cursor-pointer"
                           title="Delete"
                         >
-                          <Trash2 size={13} /> Delete
+                          <Trash2 size={13} className="text-rose-600" />
+                          <span>Delete</span>
                         </button>
                       </div>
                     </td>

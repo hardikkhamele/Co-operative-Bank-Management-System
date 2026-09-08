@@ -1167,9 +1167,9 @@ const CreateEmployee = () => {
             <button 
               type="button"
               onClick={handlePrevious} 
-              className="flex items-center gap-1.5 px-6 py-2.5 rounded-xl border border-gray-300 text-gray-700 font-semibold hover:bg-gray-50 transition-colors bg-white shadow-xs cursor-pointer text-sm"
+              className="group flex items-center gap-2 px-6 py-2.5 rounded-xl border border-gray-300 text-gray-700 font-semibold hover:bg-gray-50 transition-all bg-white shadow-xs cursor-pointer text-sm active:scale-[0.98]"
             >
-              <ArrowLeft size={16} /> Previous
+              <ArrowLeft size={16} className="transition-transform duration-200 group-hover:-translate-x-0.5" /> Previous
             </button>
           )}
         </div>

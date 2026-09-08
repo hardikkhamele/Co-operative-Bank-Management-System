@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { 
   Download, CheckCircle2, User, Calendar, Users, MapPin, CreditCard, 
   FileText, AlertCircle, Loader2, ShieldCheck, Copy, History, Search, 
-  RefreshCw, Eye, ArrowLeft, CheckCircle, Clock, XCircle, ChevronLeft, ChevronRight, FileCheck, X
+  RefreshCw, Eye, ArrowLeft, CheckCircle, Clock, XCircle, ChevronLeft, ChevronRight, FileCheck, X, Filter
 } from 'lucide-react';
 import { kycService } from '../../api/kycService';
 import { toast } from 'react-toastify';
@@ -13,9 +13,24 @@ import PageHeader from '../../components/common/PageHeader';
 const KycVerification = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   
-  const [step, setStep] = useState('form'); // 'form' or 'result'
-  const [activeTab, setActiveTab] = useState('aadhaar'); // 'aadhaar' | 'pan' | 'history'
+  // Read initial params from URL searchParams
+  const tabParam = (searchParams.get('tab') || searchParams.get('view') || '').toLowerCase();
+  const initialTab = (tabParam === 'history' || tabParam === 'pan' || tabParam === 'aadhaar')
+    ? tabParam
+    : (searchParams.get('refid') || location.state?.refid ? 'history' : 'aadhaar');
+
+  const initialSearch = searchParams.get('search') || '';
+  const initialDoc = (searchParams.get('doc') || searchParams.get('documentType') || 'ALL').toUpperCase();
+  const initialStatus = (searchParams.get('status') || 'ALL').toUpperCase();
+  const initialStartDate = searchParams.get('startDate') || '';
+  const initialEndDate = searchParams.get('endDate') || '';
+  const initialPage = parseInt(searchParams.get('page') || '1', 10);
+  const initialRefId = searchParams.get('refid') || location.state?.refid || '';
+
+  const [step, setStep] = useState(initialRefId ? 'result' : 'form'); // 'form' or 'result'
+  const [activeTab, setActiveTab] = useState(initialTab); // 'aadhaar' | 'pan' | 'history'
   
   // 3-part 4-4-4 Aadhaar state
   const [aadhaarParts, setAadhaarParts] = useState(['', '', '']);
@@ -37,21 +52,80 @@ const KycVerification = () => {
   const [loading, setLoading] = useState(false);
   const [reportData, setReportData] = useState(null);
   const [fullReportRecord, setFullReportRecord] = useState(null);
-  const [currentRefId, setCurrentRefId] = useState(null);
+  const [currentRefId, setCurrentRefId] = useState(initialRefId || null);
 
   // History State with Server Pagination & Filters (API 4.5)
   const [historyList, setHistoryList] = useState([]);
-  const [historyPagination, setHistoryPagination] = useState({ total: 0, page: 1, limit: 10, totalPages: 1 });
+  const [backendStats, setBackendStats] = useState(null);
+  const [globalStats, setGlobalStats] = useState(null);
+  const [historyPagination, setHistoryPagination] = useState({ total: 0, page: isNaN(initialPage) || initialPage < 1 ? 1 : initialPage, limit: 10, totalPages: 1 });
   const [historyLoading, setHistoryLoading] = useState(false);
-  const [historySearch, setHistorySearch] = useState('');
-  const [historyDocFilter, setHistoryDocFilter] = useState('ALL');
-  const [historyStatusFilter, setHistoryStatusFilter] = useState('ALL');
-  const [historyStartDate, setHistoryStartDate] = useState('');
-  const [historyEndDate, setHistoryEndDate] = useState('');
+  const [historySearch, setHistorySearch] = useState(initialSearch);
+  const [historyDocFilter, setHistoryDocFilter] = useState(initialDoc);
+  const [historyStatusFilter, setHistoryStatusFilter] = useState(initialStatus);
+  const [historyStartDate, setHistoryStartDate] = useState(initialStartDate);
+  const [historyEndDate, setHistoryEndDate] = useState(initialEndDate);
   const [lookupRefId, setLookupRefId] = useState('');
   const [lookupLoading, setLookupLoading] = useState(false);
-  const [historyPage, setHistoryPage] = useState(1);
+  const [historyPage, setHistoryPage] = useState(isNaN(initialPage) || initialPage < 1 ? 1 : initialPage);
   const historyPerPage = 10;
+
+  // Helper to update URL search parameters cleanly
+  const updateUrl = useCallback((updates, replace = true) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      Object.entries(updates).forEach(([key, val]) => {
+        if (val === null || val === undefined || val === '' || val === 'ALL') {
+          next.delete(key);
+        } else {
+          next.set(key, String(val));
+        }
+      });
+      return next;
+    }, { replace });
+  }, [setSearchParams]);
+
+  // Fetch overall global KYC stats on mount
+  const fetchGlobalStats = useCallback(async () => {
+    try {
+      // Fetch unfiltered records with high limit to compute accurate global counts
+      const res = await kycService.getKycHistory({ page: 1, limit: 100 });
+      if (res && res.data) {
+        const items = res.data.items || [];
+        const total = res.data.pagination?.total || items.length;
+        const verified = items.filter(i => (i.status || '').toUpperCase() === 'VERIFIED').length;
+        const aadhaarVerified = items.filter(i => (i.documentType || '').toUpperCase() === 'AADHAAR' && (i.status || '').toUpperCase() === 'VERIFIED').length;
+        const panVerified = items.filter(i => (i.documentType || '').toUpperCase() === 'PAN' && (i.status || '').toUpperCase() === 'VERIFIED').length;
+        const failed = items.filter(i => {
+          const s = (i.status || '').toUpperCase();
+          return s === 'FAILED' || s === 'REJECTED';
+        }).length;
+
+        const bStats = res.data.stats;
+        setGlobalStats({
+          totalKyc: bStats?.totalKyc || total,
+          verified: (bStats?.verified !== undefined && bStats.verified >= verified) ? bStats.verified : verified,
+          aadhaarVerified: (bStats?.aadhaarVerified !== undefined && bStats.aadhaarVerified >= aadhaarVerified) ? bStats.aadhaarVerified : aadhaarVerified,
+          panVerified: (bStats?.panVerified !== undefined && bStats.panVerified >= panVerified) ? bStats.panVerified : panVerified,
+          failed: (bStats?.failed !== undefined && bStats.failed >= failed) ? bStats.failed : failed,
+        });
+      }
+    } catch (e) {
+      console.warn('Could not fetch global KYC stats:', e);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchGlobalStats();
+  }, [fetchGlobalStats]);
+
+  // Filter out failed records so they are never visible in the table
+  const visibleHistoryList = useMemo(() => {
+    return historyList.filter(item => {
+      const st = (item.status || '').toUpperCase();
+      return st !== 'FAILED' && st !== 'REJECTED';
+    });
+  }, [historyList]);
 
   // Load History from API 4.5: GET /v1/society/kyc-verification/history
   const fetchHistory = useCallback(async (pageNo = historyPage) => {
@@ -78,15 +152,30 @@ const KycVerification = () => {
       const res = await kycService.getKycHistory(params);
       if (res && res.data) {
         const items = res.data.items || (Array.isArray(res.data) ? res.data : []);
-        setHistoryList(items);
+        // Strictly filter out failed records so failed data is never visible in the table
+        const visibleItems = items.filter(item => {
+          const st = (item.status || '').toUpperCase();
+          return st !== 'FAILED' && st !== 'REJECTED';
+        });
+        setHistoryList(visibleItems);
+        if (res.data.stats) {
+          setBackendStats(res.data.stats);
+          // If unfiltered query, keep globalStats up to date
+          if ((!params.documentType || params.documentType === 'ALL') &&
+              (!params.status || params.status === 'ALL') &&
+              (!params.search)) {
+            setGlobalStats(res.data.stats);
+          }
+        }
         if (res.data.pagination) {
           setHistoryPagination(res.data.pagination);
         } else {
+          const totalCount = res.data.stats?.totalKyc || visibleItems.length;
           setHistoryPagination({
-            total: items.length,
+            total: totalCount,
             page: pageNo,
             limit: historyPerPage,
-            totalPages: Math.ceil(items.length / historyPerPage) || 1,
+            totalPages: Math.ceil(totalCount / historyPerPage) || 1,
           });
         }
       }
@@ -96,6 +185,132 @@ const KycVerification = () => {
       setHistoryLoading(false);
     }
   }, [historyPage, historyPerPage, historySearch, historyDocFilter, historyStatusFilter, historyStartDate, historyEndDate]);
+
+  // Handle tab change and sync to URL
+  const handleTabChange = (newTab) => {
+    setActiveTab(newTab);
+    if (newTab === 'history') {
+      updateUrl({
+        tab: 'history',
+        doc: historyDocFilter !== 'ALL' ? historyDocFilter : null,
+        status: historyStatusFilter !== 'ALL' ? historyStatusFilter : null,
+        search: historySearch.trim() || null,
+        startDate: historyStartDate || null,
+        endDate: historyEndDate || null,
+        page: historyPage > 1 ? historyPage : null,
+        refid: null,
+      });
+    } else {
+      updateUrl({
+        tab: newTab,
+        doc: null,
+        status: null,
+        search: null,
+        startDate: null,
+        endDate: null,
+        page: null,
+        refid: null,
+      });
+      handleReset();
+    }
+  };
+
+  // Determine which KPI card is currently active (if on History tab)
+  const activeKpiCard = useMemo(() => {
+    if (activeTab !== 'history') return null;
+    if (historyDocFilter === 'AADHAAR' && historyStatusFilter === 'VERIFIED') return 'AADHAAR_VERIFIED';
+    if (historyDocFilter === 'PAN' && historyStatusFilter === 'VERIFIED') return 'PAN_VERIFIED';
+    if (historyDocFilter === 'ALL' && historyStatusFilter === 'VERIFIED') return 'VERIFIED';
+    if (historyDocFilter === 'ALL' && historyStatusFilter === 'ALL' && !historySearch && !historyStartDate && !historyEndDate) return 'ALL';
+    return null;
+  }, [activeTab, historyDocFilter, historyStatusFilter, historySearch, historyStartDate, historyEndDate]);
+
+  // Quick filter from top KPI stat cards with toggle capability
+  const handleCardFilterClick = (cardKey) => {
+    // If clicking an already active filtered card, toggle back to ALL
+    if (activeTab === 'history' && activeKpiCard === cardKey && cardKey !== 'ALL') {
+      setHistoryDocFilter('ALL');
+      setHistoryStatusFilter('ALL');
+      setHistorySearch('');
+      setHistoryPage(1);
+      setActiveTab('history');
+      updateUrl({
+        tab: 'history',
+        doc: null,
+        status: null,
+        search: null,
+        startDate: historyStartDate || null,
+        endDate: historyEndDate || null,
+        page: null,
+        refid: null,
+      });
+      return;
+    }
+
+    let nextDoc = 'ALL';
+    let nextStatus = 'ALL';
+
+    if (cardKey === 'VERIFIED') {
+      nextStatus = 'VERIFIED';
+    } else if (cardKey === 'AADHAAR_VERIFIED') {
+      nextDoc = 'AADHAAR';
+      nextStatus = 'VERIFIED';
+    } else if (cardKey === 'PAN_VERIFIED') {
+      nextDoc = 'PAN';
+      nextStatus = 'VERIFIED';
+    }
+
+    setHistoryDocFilter(nextDoc);
+    setHistoryStatusFilter(nextStatus);
+    setHistorySearch('');
+    setHistoryPage(1);
+    setActiveTab('history');
+    updateUrl({
+      tab: 'history',
+      doc: nextDoc !== 'ALL' ? nextDoc : null,
+      status: nextStatus !== 'ALL' ? nextStatus : null,
+      search: null,
+      startDate: historyStartDate || null,
+      endDate: historyEndDate || null,
+      page: null,
+      refid: null,
+    });
+  };
+
+  // Sync state when URL params change (e.g., Browser Back/Forward navigation)
+  useEffect(() => {
+    const tabFromUrl = (searchParams.get('tab') || searchParams.get('view') || '').toLowerCase();
+    const targetTab = (tabFromUrl === 'history' || tabFromUrl === 'pan' || tabFromUrl === 'aadhaar')
+      ? tabFromUrl
+      : (searchParams.get('refid') ? 'history' : 'aadhaar');
+
+    if (activeTab !== targetTab) {
+      setActiveTab(targetTab);
+    }
+
+    const refidParam = searchParams.get('refid');
+    if (refidParam && refidParam !== currentRefId) {
+      handleLookupReport(refidParam, false);
+    } else if (!refidParam && step === 'result' && !location.state?.refid) {
+      setStep('form');
+      setCurrentRefId(null);
+    }
+  }, [searchParams]);
+
+  // Sync history filters to URL
+  useEffect(() => {
+    if (activeTab === 'history') {
+      updateUrl({
+        tab: 'history',
+        doc: historyDocFilter !== 'ALL' ? historyDocFilter : null,
+        status: historyStatusFilter !== 'ALL' ? historyStatusFilter : null,
+        search: historySearch.trim() || null,
+        startDate: historyStartDate || null,
+        endDate: historyEndDate || null,
+        page: historyPage > 1 ? historyPage : null,
+      });
+    }
+  }, [activeTab, historyPage, historySearch, historyDocFilter, historyStatusFilter, historyStartDate, historyEndDate, updateUrl]);
 
   // Trigger fetch with debounce on filter/page updates
   useEffect(() => {
@@ -133,7 +348,7 @@ const KycVerification = () => {
   }, [location.state]);
 
   // Handle direct lookup by refid (4.3 Get KYC Report)
-  const handleLookupReport = async (refIdToLookup) => {
+  const handleLookupReport = async (refIdToLookup, shouldUpdateUrl = true) => {
     const targetRefId = (refIdToLookup || lookupRefId).trim();
     if (!targetRefId) {
       toast.warn('Please enter a valid Reference ID to lookup.');
@@ -149,6 +364,9 @@ const KycVerification = () => {
         setCurrentRefId(response.data.refid || targetRefId);
         setActiveTab(response.data.documentType ? response.data.documentType.toLowerCase() : 'aadhaar');
         setStep('result');
+        if (shouldUpdateUrl) {
+          updateUrl({ refid: response.data.refid || targetRefId });
+        }
         toast.success(response.message || 'KYC verification report retrieved successfully.');
         fetchHistory();
       } else {
@@ -368,6 +586,7 @@ const KycVerification = () => {
     setCurrentRefId(null);
     setLookupRefId('');
     setStep('form');
+    updateUrl({ refid: null });
     // Clear router state to prevent old refid from reloading
     if (location.state) {
       window.history.replaceState({}, document.title);
@@ -407,17 +626,13 @@ const KycVerification = () => {
     }
   };
 
-  // Compute Metrics
-  const totalVerifications = historyPagination.total || historyList.length;
-  const verifiedCount = historyList.filter(
-    (h) => (h.status || '').toUpperCase() === 'VERIFIED' || (h.status || '').toUpperCase() === 'SUCCESS' || (h.personalDetails && (h.status || '').toUpperCase() !== 'FAILED')
-  ).length;
-  const aadhaarVerificationsCount = historyList.filter(
-    (h) => (h.documentType || '').toUpperCase() === 'AADHAAR' || h.personalDetails?.aadhaarNumber
-  ).length;
-  const panVerificationsCount = historyList.filter(
-    (h) => (h.documentType || '').toUpperCase() === 'PAN' || h.personalDetails?.panNumber
-  ).length;
+  // Metrics strictly taken from API response data.stats or globalStats
+  const currentStats = globalStats || backendStats;
+  const totalVerifications = currentStats?.totalKyc ?? historyPagination?.total ?? 0;
+  const verifiedCount = currentStats?.verified ?? 0;
+  const failedCount = currentStats?.failed ?? 0;
+  const aadhaarVerificationsCount = currentStats?.aadhaarVerified ?? (currentStats?.aadhaar ?? 0);
+  const panVerificationsCount = currentStats?.panVerified ?? (currentStats?.pan ?? 0);
 
   return (
     <div className="w-full h-full flex flex-col">
@@ -431,73 +646,169 @@ const KycVerification = () => {
               { label: "Verification" },
               { label: "KYC Verification" }
             ]}
+            showBack={false}
+            backUrl="/dashboard"
           />
 
-          {/* Stats Summary Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Stats Summary Cards (Matching Backend Keys: totalKyc, verified, aadhaarVerified, panVerified) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
             {/* Total Verifications Done */}
-            <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-xs flex items-center justify-between">
-              <div>
-                <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1">
-                  Total Verifications Done
+            <div 
+              onClick={() => handleCardFilterClick('ALL')}
+              title={activeKpiCard === 'ALL' ? 'Showing all KYC requests' : 'Click to view all KYC requests in history'}
+              className={`p-4.5 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between group relative overflow-hidden ${
+                activeKpiCard === 'ALL'
+                  ? 'bg-blue-50/60 border-2 border-[#225091] ring-3 ring-blue-500/20 shadow-sm'
+                  : 'bg-white border-gray-100 hover:border-blue-200 hover:shadow-xs shadow-2xs'
+              }`}
+            >
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <span className={`text-[11px] font-bold uppercase tracking-wider transition-colors ${
+                  activeKpiCard === 'ALL' ? 'text-[#225091]' : 'text-gray-500 group-hover:text-[#225091]'
+                }`}>
+                  Total KYC Requests
                 </span>
+                {activeKpiCard === 'ALL' ? (
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#225091] text-white flex items-center gap-1 shadow-2xs">
+                    ✓ All Records
+                  </span>
+                ) : (
+                  <span className="text-[10px] font-medium text-gray-400 group-hover:text-[#225091] transition-colors">
+                    Click to view
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center justify-between">
                 <div className="flex items-baseline gap-2">
                   <span className="text-2xl font-bold text-gray-900">{totalVerifications}</span>
-                  <span className="text-xs font-medium text-gray-400">sessions</span>
+                  <span className="text-[11px] font-medium text-gray-400">total</span>
                 </div>
-              </div>
-              <div className="w-12 h-12 rounded-xl bg-blue-50 text-[#225091] flex items-center justify-center shrink-0">
-                <FileCheck size={24} />
+                <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
+                  activeKpiCard === 'ALL'
+                    ? 'bg-[#225091] text-white shadow-xs'
+                    : 'bg-blue-50 text-[#225091] group-hover:bg-[#225091] group-hover:text-white'
+                }`}>
+                  <FileCheck size={22} />
+                </div>
               </div>
             </div>
 
             {/* Verified Successfully */}
-            <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-xs flex items-center justify-between">
-              <div>
-                <span className="text-xs font-semibold text-emerald-700 uppercase tracking-wider block mb-1">
-                  Verified Successfully
+            <div 
+              onClick={() => handleCardFilterClick('VERIFIED')}
+              title={activeKpiCard === 'VERIFIED' ? 'Filter active. Click to clear filter' : 'Click to filter verified KYC requests'}
+              className={`p-4.5 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between group relative overflow-hidden ${
+                activeKpiCard === 'VERIFIED'
+                  ? 'bg-emerald-50/60 border-2 border-emerald-600 ring-3 ring-emerald-500/20 shadow-sm'
+                  : 'bg-white border-gray-100 hover:border-emerald-200 hover:shadow-xs shadow-2xs'
+              }`}
+            >
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <span className="text-[11px] font-bold text-emerald-700 uppercase tracking-wider">
+                  Verified
                 </span>
+                {activeKpiCard === 'VERIFIED' ? (
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-600 text-white flex items-center gap-1 shadow-2xs">
+                    ✓ Filter Active
+                  </span>
+                ) : (
+                  <span className="text-[10px] font-medium text-gray-400 group-hover:text-emerald-700 transition-colors">
+                    Click to filter
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center justify-between">
                 <div className="flex items-baseline gap-2">
                   <span className="text-2xl font-bold text-emerald-700">{verifiedCount}</span>
-                  <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
+                  <span className="text-[11px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
                     {totalVerifications > 0 ? `${Math.round((verifiedCount / totalVerifications) * 100)}%` : '0%'}
                   </span>
                 </div>
-              </div>
-              <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
-                <CheckCircle2 size={24} />
+                <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
+                  activeKpiCard === 'VERIFIED'
+                    ? 'bg-emerald-600 text-white shadow-xs'
+                    : 'bg-emerald-50 text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white'
+                }`}>
+                  <CheckCircle2 size={22} />
+                </div>
               </div>
             </div>
 
             {/* Aadhaar Verifications */}
-            <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-xs flex items-center justify-between">
-              <div>
-                <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1">
-                  Aadhaar Verifications
+            <div 
+              onClick={() => handleCardFilterClick('AADHAAR_VERIFIED')}
+              title={activeKpiCard === 'AADHAAR_VERIFIED' ? 'Filter active. Click to clear filter' : 'Click to filter Aadhaar verified requests'}
+              className={`p-4.5 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between group relative overflow-hidden ${
+                activeKpiCard === 'AADHAAR_VERIFIED'
+                  ? 'bg-cyan-50/60 border-2 border-cyan-600 ring-3 ring-cyan-500/20 shadow-sm'
+                  : 'bg-white border-gray-100 hover:border-cyan-200 hover:shadow-xs shadow-2xs'
+              }`}
+            >
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <span className="text-[11px] font-bold text-cyan-800 uppercase tracking-wider">
+                  Aadhaar Verified
                 </span>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-2xl font-bold text-[#225091]">{aadhaarVerificationsCount}</span>
-                  <span className="text-xs font-medium text-gray-400">done</span>
-                </div>
+                {activeKpiCard === 'AADHAAR_VERIFIED' ? (
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-cyan-600 text-white flex items-center gap-1 shadow-2xs">
+                    ✓ Filter Active
+                  </span>
+                ) : (
+                  <span className="text-[10px] font-medium text-gray-400 group-hover:text-cyan-700 transition-colors">
+                    Click to filter
+                  </span>
+                )}
               </div>
-              <div className="w-12 h-12 rounded-xl bg-cyan-50 text-cyan-700 flex items-center justify-center shrink-0">
-                <CreditCard size={24} />
+              <div className="flex items-center justify-between">
+                <div className="flex items-baseline gap-2">
+                  <span className="text-2xl font-bold text-cyan-800">{aadhaarVerificationsCount}</span>
+                  <span className="text-[11px] font-medium text-gray-400">UIDAI</span>
+                </div>
+                <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
+                  activeKpiCard === 'AADHAAR_VERIFIED'
+                    ? 'bg-cyan-600 text-white shadow-xs'
+                    : 'bg-cyan-50 text-cyan-700 group-hover:bg-cyan-700 group-hover:text-white'
+                }`}>
+                  <CreditCard size={22} />
+                </div>
               </div>
             </div>
 
             {/* PAN Verifications */}
-            <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-xs flex items-center justify-between">
-              <div>
-                <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1">
-                  PAN Verifications
+            <div 
+              onClick={() => handleCardFilterClick('PAN_VERIFIED')}
+              title={activeKpiCard === 'PAN_VERIFIED' ? 'Filter active. Click to clear filter' : 'Click to filter PAN verified requests'}
+              className={`p-4.5 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between group relative overflow-hidden ${
+                activeKpiCard === 'PAN_VERIFIED'
+                  ? 'bg-indigo-50/60 border-2 border-indigo-600 ring-3 ring-indigo-500/20 shadow-sm'
+                  : 'bg-white border-gray-100 hover:border-indigo-200 hover:shadow-xs shadow-2xs'
+              }`}
+            >
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <span className="text-[11px] font-bold text-indigo-800 uppercase tracking-wider">
+                  PAN Verified
                 </span>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-2xl font-bold text-[#225091]">{panVerificationsCount}</span>
-                  <span className="text-xs font-medium text-gray-400">done</span>
-                </div>
+                {activeKpiCard === 'PAN_VERIFIED' ? (
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-600 text-white flex items-center gap-1 shadow-2xs">
+                    ✓ Filter Active
+                  </span>
+                ) : (
+                  <span className="text-[10px] font-medium text-gray-400 group-hover:text-indigo-700 transition-colors">
+                    Click to filter
+                  </span>
+                )}
               </div>
-              <div className="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-700 flex items-center justify-center shrink-0">
-                <FileText size={24} />
+              <div className="flex items-center justify-between">
+                <div className="flex items-baseline gap-2">
+                  <span className="text-2xl font-bold text-indigo-800">{panVerificationsCount}</span>
+                  <span className="text-[11px] font-medium text-gray-400">ITD</span>
+                </div>
+                <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
+                  activeKpiCard === 'PAN_VERIFIED'
+                    ? 'bg-indigo-600 text-white shadow-xs'
+                    : 'bg-indigo-50 text-indigo-700 group-hover:bg-indigo-700 group-hover:text-white'
+                }`}>
+                  <FileText size={22} />
+                </div>
               </div>
             </div>
           </div>
@@ -507,7 +818,7 @@ const KycVerification = () => {
             <div className="flex items-center gap-2">
               <button
                 type="button"
-                onClick={() => { setActiveTab('aadhaar'); handleReset(); }}
+                onClick={() => handleTabChange('aadhaar')}
                 className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all cursor-pointer ${
                   activeTab === 'aadhaar'
                     ? 'bg-[#225091] text-white shadow-xs'
@@ -520,7 +831,7 @@ const KycVerification = () => {
 
               <button
                 type="button"
-                onClick={() => { setActiveTab('pan'); handleReset(); }}
+                onClick={() => handleTabChange('pan')}
                 className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all cursor-pointer ${
                   activeTab === 'pan'
                     ? 'bg-[#225091] text-white shadow-xs'
@@ -533,7 +844,7 @@ const KycVerification = () => {
 
               <button
                 type="button"
-                onClick={() => { setActiveTab('history'); fetchHistory(); }}
+                onClick={() => handleTabChange('history')}
                 className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all cursor-pointer ${
                   activeTab === 'history'
                     ? 'bg-[#225091] text-white shadow-xs'
@@ -772,6 +1083,32 @@ const KycVerification = () => {
           {/* Verification History Tab */}
           {activeTab === 'history' && (
             <div className="bg-white rounded-2xl shadow-xs border border-gray-100 overflow-hidden flex flex-col gap-4 p-6">
+              {/* Active Filter Notice Banner */}
+              {activeKpiCard && activeKpiCard !== 'ALL' && (
+                <div className="flex flex-wrap items-center justify-between gap-3 bg-blue-50/80 border border-blue-200 px-4 py-2.5 rounded-xl text-xs text-[#225091]">
+                  <div className="flex items-center gap-2 font-medium">
+                    <Filter size={15} className="text-[#225091] shrink-0" />
+                    <span>
+                      Filtered by Stat Card: <strong className="font-bold text-gray-900">
+                        {activeKpiCard === 'VERIFIED' && 'Verified (All Documents)'}
+                        {activeKpiCard === 'AADHAAR_VERIFIED' && 'Aadhaar Verified (UIDAI)'}
+                        {activeKpiCard === 'PAN_VERIFIED' && 'PAN Verified (ITD)'}
+                      </strong>
+                      <span className="ml-2 px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 font-bold text-[11px]">
+                        {historyPagination.total} {historyPagination.total === 1 ? 'record' : 'records'}
+                      </span>
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleCardFilterClick('ALL')}
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-700 hover:text-red-600 bg-white hover:bg-red-50 border border-gray-200 px-3 py-1 rounded-lg transition-colors cursor-pointer shadow-2xs"
+                  >
+                    <X size={12} /> Reset to All Records
+                  </button>
+                </div>
+              )}
+
               {/* Top History Controls Bar */}
               <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                 {/* Search box */}
@@ -817,7 +1154,6 @@ const KycVerification = () => {
                     <option value="ALL">All Statuses</option>
                     <option value="VERIFIED">Verified</option>
                     <option value="INITIATED">Initiated</option>
-                    <option value="FAILED">Failed</option>
                     <option value="EXPIRED">Expired</option>
                   </select>
 
@@ -918,7 +1254,7 @@ const KycVerification = () => {
                           <span>Loading verification history...</span>
                         </td>
                       </tr>
-                    ) : historyList.length === 0 ? (
+                    ) : visibleHistoryList.length === 0 ? (
                       <tr>
                         <td colSpan={7} className="py-12 text-center">
                           <div className="w-12 h-12 rounded-full bg-gray-100 text-gray-400 flex items-center justify-center mx-auto mb-3">
@@ -942,7 +1278,7 @@ const KycVerification = () => {
                         </td>
                       </tr>
                     ) : (
-                      historyList.map((item, idx) => {
+                      visibleHistoryList.map((item, idx) => {
                         const ref = item.refid || 'N/A';
                         const doc = (item.documentType || (item.personalDetails?.aadhaarNumber ? 'AADHAAR' : 'PAN')).toUpperCase();
                         const name = item.personalDetails?.fullName || item.personalDetails?.name || item.name || 'N/A';
@@ -1017,6 +1353,11 @@ const KycVerification = () => {
                                 {isVerified ? <CheckCircle size={11} /> : isFailed ? <XCircle size={11} /> : <Clock size={11} />}
                                 {status}
                               </span>
+                              {isFailed && item.lastError && (
+                                <p className="text-[10px] text-rose-600 font-medium mt-0.5 max-w-[170px] truncate" title={item.lastError}>
+                                  {item.lastError}
+                                </p>
+                              )}
                             </td>
 
                             {/* Date */}
@@ -1119,7 +1460,7 @@ const KycVerification = () => {
               { label: "KYC Verification", to: "/kyc" },
               { label: currentRefId || "Report" }
             ]}
-            showBack={true}
+            showBack={false}
             onBack={() => { setStep('form'); setReportData(null); setFullReportRecord(null); setCurrentRefId(null); }}
           />
 

@@ -181,6 +181,8 @@ export const kycService = {
         items = payload.items;
       }
 
+      const stats = dataObj.stats || payload.stats || null;
+
       const pagination = dataObj.pagination || payload.pagination || {
         total: items.length,
         page: cleanParams.page || 1,
@@ -195,6 +197,13 @@ export const kycService = {
         data: {
           items,
           pagination,
+          stats: stats || {
+            totalKyc: pagination.total || items.length,
+            verified: items.filter(i => (i.status || '').toUpperCase() === 'VERIFIED').length,
+            failed: items.filter(i => (i.status || '').toUpperCase() === 'FAILED').length,
+            aadhaarVerified: items.filter(i => (i.documentType || '').toUpperCase() === 'AADHAAR' && (i.status || '').toUpperCase() === 'VERIFIED').length,
+            panVerified: items.filter(i => (i.documentType || '').toUpperCase() === 'PAN' && (i.status || '').toUpperCase() === 'VERIFIED').length,
+          }
         },
       };
     } catch (error) {
@@ -211,6 +220,13 @@ export const kycService = {
             limit: params.limit || 10,
             totalPages: Math.ceil(localList.length / (params.limit || 10)) || 1,
           },
+          stats: {
+            totalKyc: localList.length,
+            verified: localList.filter(i => (i.status || '').toUpperCase() === 'VERIFIED').length,
+            failed: localList.filter(i => (i.status || '').toUpperCase() === 'FAILED').length,
+            aadhaarVerified: localList.filter(i => (i.documentType || '').toUpperCase() === 'AADHAAR' && (i.status || '').toUpperCase() === 'VERIFIED').length,
+            panVerified: localList.filter(i => (i.documentType || '').toUpperCase() === 'PAN' && (i.status || '').toUpperCase() === 'VERIFIED').length,
+          }
         },
         error: error.response?.data || error.message,
       };

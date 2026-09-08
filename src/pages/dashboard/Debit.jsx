@@ -23,7 +23,7 @@ import { debitReceiptService } from "../../api/debitReceiptService";
 import useBranchStore from "../../store/branchStore";
 import PageHeader from "../../components/common/PageHeader";
 import { Skeleton, SkeletonTableRow } from "../../components/common/Skeleton";
-import { isBankOwner } from "../../utils/roleUtils";
+import { isBankOwner, canApproveReceipts } from "../../utils/roleUtils";
 import ReceiptImageUpload from "../../components/common/ReceiptImageUpload";
 
 const GL_HEAD_OPTIONS = [
@@ -145,7 +145,8 @@ const Debit = () => {
 
   const authRole = useAuthStore((state) => state.role);
   const authUser = useAuthStore((state) => state.user);
-  const canApprove = isBankOwner(authRole, authUser);
+  const permissions = useAuthStore((state) => state.permissions) || [];
+  const canApprove = canApproveReceipts(authRole, authUser, permissions);
 
   // Form State for Create
   const todayISO = new Date().toISOString().split("T")[0];
@@ -703,6 +704,8 @@ const Debit = () => {
           { label: "Receipt Management" },
           { label: "Debit Receipt" }
         ]}
+        showBack={false}
+        backUrl="/dashboard"
       />
 
       {/* Stats Cards */}
@@ -954,7 +957,7 @@ const Debit = () => {
 
       {/* Table */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto custom-scrollbar">
           <table
             ref={tableRef}
             className="w-full text-left text-sm whitespace-nowrap"

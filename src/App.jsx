@@ -51,6 +51,7 @@ const CustomerLoans = lazy(() => import('./pages/dashboard/CustomerLoans'));
 const LoanDetails = lazy(() => import('./pages/dashboard/LoanDetails'));
 const SelectLeadSystem = lazy(() => import('./pages/dashboard/SelectLeadSystem'));
 const Leads = lazy(() => import('./pages/dashboard/Leads'));
+const PigmyCustomers = lazy(() => import('./pages/dashboard/PigmyCustomers'));
 const CreateLead = lazy(() => import('./pages/dashboard/CreateLead'));
 const EditLead = lazy(() => import('./pages/dashboard/EditLead'));
 const ViewLead = lazy(() => import('./pages/dashboard/ViewLead'));
@@ -97,6 +98,14 @@ const ViewCashPayment = lazy(() => import('./pages/dashboard/ViewCashPayment'));
 const CardsAndCredit = lazy(() => import('./pages/dashboard/CardsAndCredit'));
 const ChoosePaymentMethod = lazy(() => import('./pages/dashboard/ChoosePaymentMethod'));
 const PaymentSuccessful = lazy(() => import('./pages/dashboard/PaymentSuccessful'));
+
+// Reports & Analytics Module
+const ReportsHub = lazy(() => import('./pages/dashboard/ReportsHub'));
+const ReportViewer = lazy(() => import('./pages/dashboard/ReportViewer'));
+
+// Geo Tagging & Audit
+const GeoTagging = lazy(() => import('./pages/dashboard/GeoTagging'));
+
 // General
 const ComingSoon = lazy(() => import('./pages/dashboard/ComingSoon'));
 
@@ -215,7 +224,8 @@ function App() {
                 <Route path="leads/customer" element={<Leads leadType="CUSTOMER" systemTitle="Customer" />} />
                 <Route path="leads/branch" element={<Leads leadType="CUSTOMER" systemTitle="Customer" />} />
                 <Route path="leads/merchant" element={<Leads leadType="MERCHANT" systemTitle="Merchant" />} />
-                <Route path="leads/sip" element={<Leads leadType="SIP" systemTitle="Smart SIP" />} />
+                <Route path="leads/sip" element={<PigmyCustomers />} />
+                <Route path="sip" element={<PigmyCustomers />} />
                 <Route path="leads/create" element={<CreateLead />} />
                 <Route path="leads/edit" element={<EditLead />} />
                 <Route path="leads/edit/:id" element={<EditLead />} />
@@ -229,6 +239,12 @@ function App() {
                 <Route path="customers" element={<Customers />} />
                 <Route path="customers/:id/loans" element={<CustomerLoans />} />
                 <Route path="customers/:id/loans/:loanId" element={<LoanDetails />} />
+              </Route>
+
+              {/* Pigmy Deposit Management V2 */}
+              <Route element={<PermissionRoute anyOf={['pigmy.view', 'lead.view', 'customer.view']} />}>
+                <Route path="pigmy" element={<PigmyCustomers />} />
+                <Route path="leads/pigmy" element={<PigmyCustomers />} />
               </Route>
 
               {/* Inventory */}
@@ -277,6 +293,12 @@ function App() {
                 <Route path="cards-credit/payment/success" element={<PaymentSuccessful />} />
               </Route>
 
+              {/* Reports & Analytics */}
+              <Route element={<PermissionRoute anyOf={['report.view', 'report.export']} />}>
+                <Route path="reports" element={<ReportsHub />} />
+                <Route path="reports/:reportType" element={<ReportViewer />} />
+              </Route>
+
               {/* Roles & Permissions */}
               <Route element={<PermissionRoute anyOf={['role.view', 'roles_permissions.view', 'role.create']} />}>
                 <Route path="roles-permissions" element={<RolesAndPermissions />} />
@@ -306,9 +328,13 @@ function App() {
                 <Route path="settings/help" element={<HelpSupport />} />
               </Route>
 
-              {/* Coming Soon */}
-              <Route path="geo-tagging" element={<ComingSoon featureName="Geo Tagging" />} />
-              <Route path="jio-tagging" element={<Navigate to="/geo-tagging" replace />} />
+              {/* Geo Tagging & Audit */}
+              <Route element={<PermissionRoute anyOf={['geotagging.view', 'geo_tagging.view', 'geo.view', 'tracking.view']} />}>
+                <Route path="geo-tagging" element={<GeoTagging />} />
+                <Route path="jio-tagging" element={<Navigate to="/geo-tagging" replace />} />
+              </Route>
+              
+              {/* Coming Soon Features */}
               <Route path="upi-autopay" element={<ComingSoon featureName="UPI Autopay" />} />
               <Route path="whatsapp-banking" element={<ComingSoon featureName="WhatsApp Banking" />} />
               <Route path="biomatrix-integration" element={<ComingSoon featureName="Biomatrix Integration" />} />

@@ -80,14 +80,55 @@
 }
 
 /* Hide scrollbar for Chrome, Safari and Opera */
-*::-webkit-scrollbar {
-  display: none;
+*::-webkit-scrollbar,
+.table-scroll-viewport::-webkit-scrollbar {
+  display: none !important;
 }
 
 /* Hide scrollbar for IE, Edge and Firefox */
-* {
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
+*,
+.table-scroll-viewport {
+  -ms-overflow-style: none !important;  /* IE and Edge */
+  scrollbar-width: none !important;  /* Firefox */
+}
+
+/* Custom slim aesthetic horizontal scrollbar for tables & desktop mouse navigation */
+.custom-scrollbar,
+.custom-horizontal-scrollbar {
+  scrollbar-width: thin !important;
+  scrollbar-color: #cbd5e1 #f1f5f9 !important;
+  -ms-overflow-style: auto !important;
+}
+
+.custom-scrollbar::-webkit-scrollbar,
+.custom-horizontal-scrollbar::-webkit-scrollbar {
+  display: block !important;
+  height: 6px !important;
+  width: 6px !important;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track,
+.custom-horizontal-scrollbar::-webkit-scrollbar-track {
+  background: #f1f5f9 !important;
+  border-radius: 9999px !important;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb,
+.custom-horizontal-scrollbar::-webkit-scrollbar-thumb {
+  background: #cbd5e1 !important;
+  border-radius: 9999px !important;
+  cursor: pointer !important;
+  transition: background-color 0.2s ease !important;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover,
+.custom-horizontal-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8 !important;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:active,
+.custom-horizontal-scrollbar::-webkit-scrollbar-thumb:active {
+  background: #64748b !important;
 }
 
 /* Shimmer wave animation for skeleton screens */
@@ -124,3 +165,45 @@
   will-change: background-position;
 }
 
+/* Sidebar Submodule & Accordion Transitions */
+.sidebar-accordion-grid {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 280ms cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: grid-template-rows;
+}
+
+.sidebar-accordion-grid.open {
+  grid-template-rows: 1fr;
+}
+
+.sidebar-accordion-content {
+  overflow: hidden;
+  min-height: 0;
+}
+
+.sidebar-accordion-inner {
+  transition: opacity 240ms cubic-bezier(0.4, 0, 0.2, 1), transform 240ms cubic-bezier(0.4, 0, 0.2, 1);
+  transform-origin: top;
+  will-change: opacity, transform;
+}
+
+.sidebar-accordion-grid:not(.open) .sidebar-accordion-inner {
+  opacity: 0;
+  transform: translateY(-6px);
+  pointer-events: none;
+}
+
+.sidebar-accordion-grid.open .sidebar-accordion-inner {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Hide scrollbar but keep scroll functionality */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

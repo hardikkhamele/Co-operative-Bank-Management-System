@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { 
   Search, 
   ChevronDown, 
@@ -120,6 +120,7 @@ const LegendItem = ({ status, label }) => (
 );
 
 const AttendanceReport = () => {
+  const tableRef = useRef(null);
   // Navigation Tabs: 'daily' | 'monthly' | 'yearly'
   const [activeTab, setActiveTab] = useState('daily');
 
@@ -626,6 +627,17 @@ const AttendanceReport = () => {
 
   return (
     <div className="w-full flex flex-col gap-6 font-sans antialiased pb-16">
+      <PageHeader
+        title="Attendance Report"
+        breadcrumbs={[
+          { label: "Dashboard", to: "/dashboard" },
+          { label: "HR Management" },
+          { label: "Attendance Report" }
+        ]}
+        showBack={false}
+        backUrl="/dashboard"
+      />
+
       {/* ========================================================= */}
       {/* 1. TOP QUICK PUNCH & LIVE SHIFT SNAPSHOT CARD */}
       {/* ========================================================= */}
@@ -1107,7 +1119,7 @@ const AttendanceReport = () => {
           <div className="overflow-x-auto">
             {/* TAB 1: DAILY LOGS (Section 1.2) */}
             {activeTab === 'daily' && (
-              <table className="w-full text-left text-xs border-collapse min-w-[800px]">
+              <table ref={tableRef} className="w-full text-left text-xs border-collapse min-w-[800px]">
                 <thead className="bg-[#F8FAFC] text-gray-500 uppercase tracking-wider font-semibold border-b border-gray-200/80">
                   <tr>
                     <th className="py-3.5 px-4 text-center w-14">SR.NO.</th>
@@ -1205,7 +1217,7 @@ const AttendanceReport = () => {
 
             {/* TAB 2: MONTHLY SHEET (Section 5: /api/v1/society/attendance/sheet) */}
             {activeTab === 'monthly' && (
-              <table className="w-full text-left text-xs border-collapse min-w-[1100px]">
+              <table ref={tableRef} className="w-full text-left text-xs border-collapse min-w-[1100px]">
                 <thead className="bg-[#F8FAFC] text-gray-500 uppercase tracking-wider font-semibold border-b border-gray-200/80 sticky top-0 z-10">
                   <tr>
                     <th className="py-3.5 px-4 sticky left-0 bg-[#F8FAFC] z-20 shadow-xs min-w-[180px]">
@@ -1298,7 +1310,7 @@ const AttendanceReport = () => {
 
             {/* TAB 3: YEARLY MATRIX (Section 6: /api/v1/society/attendance/yearly-matrix) */}
             {activeTab === 'yearly' && (
-              <table className="w-full text-left text-xs border-collapse min-w-[1000px]">
+              <table ref={tableRef} className="w-full text-left text-xs border-collapse min-w-[1000px]">
                 <thead className="bg-[#F8FAFC] text-gray-500 uppercase tracking-wider font-semibold border-b border-gray-200/80 sticky top-0 z-10">
                   <tr>
                     <th className="py-3.5 px-3 text-center w-12 sticky left-0 bg-[#F8FAFC] z-20">SR.NO.</th>

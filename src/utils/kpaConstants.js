@@ -2,53 +2,57 @@
  * KPA (Key Performance Area) Constants, Role Configuration Matrix & Goal Derivation Utilities
  */
 
+export const ALL_KPA_PRODUCTS = [
+  { name: 'Credit Receipts', key: 'creditReceipts', defaultType: 'AMOUNT' },
+  { name: 'Debit Receipts', key: 'debitReceipts', defaultType: 'AMOUNT' },
+  { name: 'Cash Submissions', key: 'cashSubmissions', defaultType: 'AMOUNT' },
+  { name: 'Loans Disbursed', key: 'loansDisbursed', defaultType: 'AMOUNT' },
+  { name: 'Leads Generated', key: 'leadsGenerated', defaultType: 'COUNT' },
+  { name: 'Manual Entries', key: 'manualEntries', defaultType: 'AMOUNT' }
+];
+
 export const KPA_ROLE_MATRIX = {
   LOAN_EXECUTIVE: [
-    { product: 'Loan Disbursement', targetType: 'AMOUNT', defaultTarget: 0 },
-    { product: 'Lead Generation', targetType: 'COUNT', defaultTarget: 0 }
+    { product: 'Loans Disbursed', targetType: 'AMOUNT', defaultTarget: 0 },
+    { product: 'Leads Generated', targetType: 'COUNT', defaultTarget: 0 }
   ],
   COLLECTION_EXECUTIVE: [
-    { product: 'Deposit Collection', targetType: 'AMOUNT', defaultTarget: 0 }
+    { product: 'Credit Receipts', targetType: 'AMOUNT', defaultTarget: 0 },
+    { product: 'Cash Submissions', targetType: 'AMOUNT', defaultTarget: 0 }
   ],
   BRANCH_MANAGER: [
-    { product: 'Loan Disbursement', targetType: 'AMOUNT', defaultTarget: 0 },
-    { product: 'Deposit Collection', targetType: 'AMOUNT', defaultTarget: 0 },
-    { product: 'Lead Generation', targetType: 'COUNT', defaultTarget: 0 }
+    { product: 'Credit Receipts', targetType: 'AMOUNT', defaultTarget: 0 },
+    { product: 'Debit Receipts', targetType: 'AMOUNT', defaultTarget: 0 },
+    { product: 'Loans Disbursed', targetType: 'AMOUNT', defaultTarget: 0 },
+    { product: 'Cash Submissions', targetType: 'AMOUNT', defaultTarget: 0 },
+    { product: 'Leads Generated', targetType: 'COUNT', defaultTarget: 0 }
   ],
   MANAGER: [
-    { product: 'Loan Disbursement', targetType: 'AMOUNT', defaultTarget: 0 },
-    { product: 'Deposit Collection', targetType: 'AMOUNT', defaultTarget: 0 },
-    { product: 'Lead Generation', targetType: 'COUNT', defaultTarget: 0 }
+    { product: 'Credit Receipts', targetType: 'AMOUNT', defaultTarget: 0 },
+    { product: 'Debit Receipts', targetType: 'AMOUNT', defaultTarget: 0 },
+    { product: 'Loans Disbursed', targetType: 'AMOUNT', defaultTarget: 0 },
+    { product: 'Cash Submissions', targetType: 'AMOUNT', defaultTarget: 0 },
+    { product: 'Leads Generated', targetType: 'COUNT', defaultTarget: 0 }
   ],
   RECEIPT_MANAGEMENT_EXECUTIVE: [
-    { product: 'Deposit Collection', targetType: 'AMOUNT', defaultTarget: 0 }
+    { product: 'Credit Receipts', targetType: 'AMOUNT', defaultTarget: 0 },
+    { product: 'Debit Receipts', targetType: 'AMOUNT', defaultTarget: 0 }
   ],
   ACCOUNTANT: [
-    { product: 'Share Capital', targetType: 'AMOUNT', defaultTarget: 0 }
+    { product: 'Credit Receipts', targetType: 'AMOUNT', defaultTarget: 0 },
+    { product: 'Debit Receipts', targetType: 'AMOUNT', defaultTarget: 0 },
+    { product: 'Manual Entries', targetType: 'AMOUNT', defaultTarget: 0 }
   ],
   SUPPORT_EXECUTIVE: [
-    { product: 'Lead Generation', targetType: 'COUNT', defaultTarget: 0 }
+    { product: 'Leads Generated', targetType: 'COUNT', defaultTarget: 0 }
   ],
   HR_EXECUTIVE: [
-    { product: 'Staff Onboarding', targetType: 'COUNT', defaultTarget: 0 }
+    { product: 'Manual Entries', targetType: 'AMOUNT', defaultTarget: 0 }
   ],
   HR: [
-    { product: 'Staff Onboarding', targetType: 'COUNT', defaultTarget: 0 }
+    { product: 'Manual Entries', targetType: 'AMOUNT', defaultTarget: 0 }
   ]
 };
-
-export const ALL_KPA_PRODUCTS = [
-  { name: 'Loan Disbursement', defaultType: 'AMOUNT' },
-  { name: 'Deposit Collection', defaultType: 'AMOUNT' },
-  { name: 'Lead Generation', defaultType: 'COUNT' },
-  { name: 'Share Capital', defaultType: 'AMOUNT' },
-  { name: 'Staff Onboarding', defaultType: 'COUNT' },
-  { name: 'Cash Collection', defaultType: 'AMOUNT' },
-  { name: 'Fixed Deposit', defaultType: 'AMOUNT' },
-  { name: 'Recurring Deposit', defaultType: 'AMOUNT' },
-  { name: 'Savings Account', defaultType: 'COUNT' },
-  { name: 'Gold Loan', defaultType: 'AMOUNT' }
-];
 
 /**
  * Derives proportional KPA goals according to the official backend formula:

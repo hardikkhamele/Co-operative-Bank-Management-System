@@ -1,6 +1,6 @@
 import React from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { Users, Store, TrendingUp, IndianRupee, ChevronRight, Sparkles, ArrowUpRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Users, Store, TrendingUp, IndianRupee, ChevronRight, Sparkles, ArrowUpRight, Coins } from 'lucide-react';
 
 const SelectLeadSystem = () => {
   const navigate = useNavigate();
@@ -47,6 +47,20 @@ const SelectLeadSystem = () => {
       borderHover: 'hover:border-[#0d9488]/40',
       badgeColor: 'text-white',
       accentGlow: 'bg-[#0d9488]/10'
+    },
+    {
+      id: 'pigmy',
+      title: 'Pigmy Deposit',
+      description: 'Daily micro-savings & recurring Pigmy collector deposit management',
+      path: '/pigmy',
+      icon: Coins,
+      gradient: 'from-[#ea580c] to-[#f97316]',
+      iconBg: 'bg-gradient-to-tr from-[#ea580c] to-[#f59e0b]',
+      badgeBg: 'bg-gradient-to-r from-blue-600 to-indigo-600',
+      glowColor: 'group-hover:shadow-[0_15px_35px_-5px_rgba(234,88,12,0.25)]',
+      borderHover: 'hover:border-[#ea580c]/40',
+      badgeColor: 'text-white',
+      accentGlow: 'bg-[#ea580c]/10'
     }
   ];
 
@@ -71,8 +85,8 @@ const SelectLeadSystem = () => {
           </p>
         </div>
 
-        {/* 3 Glassmorphism Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-7 max-w-4xl w-full">
+        {/* 4 Glassmorphism Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl w-full">
           {systems.map((sys) => {
             const IconComponent = sys.icon;
             return (

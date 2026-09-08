@@ -15,9 +15,10 @@ import {
   RefreshCw,
   Plus,
   ArrowUpRight,
-  Clock,
   Sparkles,
-  BarChart3
+  BarChart3,
+  Gift,
+  Coins
 } from 'lucide-react';
 import PageHeader from '../../components/common/PageHeader';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
@@ -103,6 +104,9 @@ const ViewReport = () => {
   const monthly = kpaData?.monthly || { goal: 0, achieved: 0, percentage: 0 };
   const weekly = kpaData?.weekly || { goal: 0, achieved: 0, percentage: 0 };
   const daily = kpaData?.daily || { goal: 0, achieved: 0, percentage: 0 };
+  
+  // Incentive Structure (e.g. type: "PRODUCT", value: 67, formattedValue: "67% of product cost")
+  const incentive = kpaData?.incentive || kpaData?.target?.incentive || kpaData?.productDetails?.incentive || null;
 
   // Current timeframe target data for analytics chart
   const currentTimeframeData = (() => {
@@ -226,6 +230,12 @@ const ViewReport = () => {
                 </span>
                 {employee.employeeCode && (
                   <span className="text-xs text-gray-400 font-mono">({employee.employeeCode})</span>
+                )}
+                {incentive && (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-amber-50 text-amber-800 border border-amber-200/80 rounded-full text-xs font-semibold shadow-2xs">
+                    <Gift size={12} className="text-amber-600" />
+                    <span>Incentive: {incentive.formattedValue || (incentive.value !== undefined ? `${incentive.value}%` : '—')}</span>
+                  </span>
                 )}
               </div>
             </div>
@@ -351,6 +361,46 @@ const ViewReport = () => {
         })}
       </div>
 
+      {/* Product Incentive Scheme Card */}
+      {incentive && (
+        <div className="bg-gradient-to-r from-amber-50/90 via-orange-50/60 to-yellow-50/50 border border-amber-200/90 rounded-2xl p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3.5">
+            <div className="w-11 h-11 rounded-2xl bg-amber-500/15 border border-amber-500/25 text-amber-700 flex items-center justify-center shrink-0">
+              <Gift size={20} className="text-amber-600" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h4 className="text-xs font-bold text-amber-950 uppercase tracking-wider">
+                  Product Incentive Scheme
+                </h4>
+                {incentive.type && (
+                  <span className="px-2 py-0.5 bg-amber-100/90 text-amber-800 rounded-md text-[10px] font-extrabold uppercase border border-amber-200 tracking-wide">
+                    {incentive.type}
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-amber-900/70 font-medium mt-0.5">
+                Staff reward rate payable on achieving milestone targets for <span className="font-semibold text-amber-950">{selectedProduct}</span>.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 self-start sm:self-auto shrink-0 bg-white/95 px-4 py-2.5 rounded-xl border border-amber-200/80 shadow-2xs">
+            <div className="text-right">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 block">
+                Incentive Value
+              </span>
+              <span className="text-sm font-extrabold text-amber-600">
+                {incentive.formattedValue || (incentive.value !== undefined ? `${incentive.value}%` : '—')}
+              </span>
+            </div>
+            <div className="w-8 h-8 rounded-lg bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-700">
+              <Coins size={16} />
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Target vs Achievement Metric Summary Banner */}
       <div className="bg-white rounded-2xl shadow-xs border border-gray-100 p-6 sm:p-7 flex flex-col md:flex-row items-center justify-between gap-6">
         <div className="flex items-center gap-4">
@@ -380,12 +430,22 @@ const ViewReport = () => {
               {formatCurrency(yearly.achieved, yearly.formattedAchieved)}
             </div>
           </div>
-          <div className="text-center pl-4">
+          <div className="text-center px-4">
             <div className="text-[11px] font-bold text-gray-400 uppercase">Pending Gap</div>
             <div className="text-base font-bold text-rose-600 mt-0.5">
               {formatCurrency(Math.max(0, (yearly.goal || 0) - (yearly.achieved || 0)))}
             </div>
           </div>
+          {incentive && (
+            <div className="text-center pl-4">
+              <div className="text-[11px] font-bold text-amber-600 uppercase flex items-center justify-center gap-1">
+                <Gift size={12} /> Incentive
+              </div>
+              <div className="text-sm font-extrabold text-amber-700 mt-0.5 whitespace-nowrap">
+                {incentive.formattedValue || (incentive.value !== undefined ? `${incentive.value}%` : '—')}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

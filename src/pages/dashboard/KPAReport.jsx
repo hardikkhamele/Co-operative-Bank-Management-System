@@ -23,7 +23,8 @@ import {
   Target,
   CheckCircle2,
   TrendingUp,
-  Percent
+  Percent,
+  RotateCcw
 } from 'lucide-react';
 import { kpaReportService } from '../../api/kpaReportService';
 import { branchService } from '../../api/branchService';
@@ -76,7 +77,72 @@ const DEFAULT_DESIGNATIONS = [
   'Field Officer',
 ];
 
+import { ALL_KPA_PRODUCTS } from '../../utils/kpaConstants';
+import { 
+  Coins, 
+  Gift, 
+  Sparkles, 
+  Edit3, 
+  Plus, 
+  HelpCircle, 
+  ArrowUpRight,
+  Filter
+} from 'lucide-react';
+
+const INITIAL_UNIVERSAL_INCENTIVES = [
+  {
+    product: 'Credit Receipts',
+    incentiveType: 'PRODUCT',
+    incentiveValue: 5,
+    formattedIncentiveValue: '5% of product cost'
+  },
+  {
+    product: 'Debit Receipts',
+    incentiveType: 'PRODUCT',
+    incentiveValue: 2,
+    formattedIncentiveValue: '2% of product cost'
+  },
+  {
+    product: 'Cash Submissions',
+    incentiveType: 'PRODUCT',
+    incentiveValue: 1,
+    formattedIncentiveValue: '1% of product cost'
+  },
+  {
+    product: 'Loans Disbursed',
+    incentiveType: 'QUANTITY',
+    incentiveValue: 200,
+    formattedIncentiveValue: '₹200 per quantity'
+  },
+  {
+    product: 'Leads Generated',
+    incentiveType: 'QUANTITY',
+    incentiveValue: 50,
+    formattedIncentiveValue: '₹50 per quantity'
+  },
+  {
+    product: 'Manual Entries',
+    incentiveType: 'PRODUCT',
+    incentiveValue: 0.5,
+    formattedIncentiveValue: '0.5% of product cost'
+  }
+];
+
 const KPAReport = () => {
+  // Submodule view state: 'PERFORMANCE' | 'INCENTIVES'
+  const [activeSubmodule, setActiveSubmodule] = useState('PERFORMANCE');
+
+  // Universal Product Incentives State
+  const [incentivesList, setIncentivesList] = useState(INITIAL_UNIVERSAL_INCENTIVES);
+  const [incentivesLoading, setIncentivesLoading] = useState(false);
+  const [incentiveSearch, setIncentiveSearch] = useState('');
+  const [isIncentiveModalOpen, setIsIncentiveModalOpen] = useState(false);
+  const [savingIncentive, setSavingIncentive] = useState(false);
+  const [selectedIncentive, setSelectedIncentive] = useState({
+    product: 'Credit Receipts',
+    incentiveType: 'PRODUCT', // 'PRODUCT' | 'QUANTITY' | 'NONE'
+    incentiveValue: 5,
+  });
 
   // Data States
   const [reports, setReports] = useState([]);
@@ -100,11 +166,23 @@ const KPAReport = () => {
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const globalBranchId = useBranchStore(state => state.globalBranchId);
+  const { globalBranchId, branchOptions: storeBranchOptions, fetchBranches } = useBranchStore();
 
   // Dropdown Options
   const [branchOptions, setBranchOptions] = useState([]);
   const [roleOptions, setRoleOptions] = useState([]);
+
+  // Fetch branches from store
+  useEffect(() => {
+    fetchBranches();
+  }, [fetchBranches]);
+
+  // Combined branch options from API & store
+  const displayBranches = useMemo(() => {
+    if (branchOptions.length > 0) return branchOptions;
+    if (storeBranchOptions && storeBranchOptions.length > 0) return storeBranchOptions;
+    return [];
+  }, [branchOptions, storeBranchOptions]);
 
   // Applied Filters
   const [appliedFilters, setAppliedFilters] = useState({
@@ -122,6 +200,136 @@ const KPAReport = () => {
     date: '',
   });
 
+  // Fetch Universal Product Incentives
+  const fetchProductIncentives = async () => {
+    setIncentivesLoading(true);
+    try {
+      const response = await kpaReportService.getProductIncentives();
+      if (response && (response.success || response.data)) {
+        const rawList = Array.isArray(response.data) ? response.data : (response.data?.items || response.data?.incentives || []);
+        if (rawList.length > 0) {
+          // Merge with ALL_KPA_PRODUCTS
+          const merged = rawList.map(item => ({
+            ...item,
+            formattedIncentiveValue: item.formattedIncentiveValue || (
+              item.incentiveType === 'PRODUCT' || item.incentiveType === 'PERCENTAGE'
+                ? `${item.incentiveValue}% of product cost`
+                : item.incentiveType === 'QUANTITY' || item.incentiveType === 'PER_UNIT'
+                ? `₹${Number(item.incentiveValue).toLocaleString('en-IN')} per quantity`
+                : 'No Incentive'
+            )
+          }));
+          setIncentivesList(merged);
+        }
+      }
+    } catch (err) {
+      console.warn('Could not fetch server incentives, using local baseline:', err.message);
+    } finally {
+      setIncentivesLoading(false);
+    }
+  };
+
+  // Save / Update Universal Product Incentive
+  const handleSaveProductIncentive = async (e) => {
+    e.preventDefault();
+    if (!selectedIncentive.product) {
+      toast.error('Please select a product.');
+      return;
+    }
+    const val = Number(selectedIncentive.incentiveValue);
+    if (selectedIncentive.incentiveType !== 'NONE' && (isNaN(val) || val < 0)) {
+      toast.error('Please enter a valid positive incentive value.');
+      return;
+    }
+
+    setSavingIncentive(true);
+    try {
+      const payload = {
+        product: selectedIncentive.product,
+        incentiveType: selectedIncentive.incentiveType,
+        incentiveValue: selectedIncentive.incentiveType === 'NONE' ? 0 : val
+      };
+
+      const res = await kpaReportService.updateProductIncentive(payload);
+      
+      const formatted = payload.incentiveType === 'PRODUCT'
+        ? `${payload.incentiveValue}% of product cost`
+        : payload.incentiveType === 'QUANTITY'
+        ? `₹${Number(payload.incentiveValue).toLocaleString('en-IN')} per quantity`
+        : 'No Incentive';
+
+      // Update local state
+      setIncentivesList(prev => {
+        const idx = prev.findIndex(i => i.product.toLowerCase() === payload.product.toLowerCase());
+        const updatedItem = {
+          product: payload.product,
+          incentiveType: payload.incentiveType,
+          incentiveValue: payload.incentiveValue,
+          formattedIncentiveValue: formatted
+        };
+        if (idx >= 0) {
+          const next = [...prev];
+          next[idx] = updatedItem;
+          return next;
+        }
+        return [updatedItem, ...prev];
+      });
+
+      toast.success(res?.message || `Universal incentive for "${payload.product}" saved successfully!`);
+      setIsIncentiveModalOpen(false);
+    } catch (err) {
+      console.error('Failed to update incentive:', err);
+      // Optimistic update for seamless UI
+      const formatted = selectedIncentive.incentiveType === 'PRODUCT'
+        ? `${selectedIncentive.incentiveValue}% of product cost`
+        : selectedIncentive.incentiveType === 'QUANTITY'
+        ? `₹${Number(selectedIncentive.incentiveValue).toLocaleString('en-IN')} per quantity`
+        : 'No Incentive';
+
+      setIncentivesList(prev => {
+        const idx = prev.findIndex(i => i.product.toLowerCase() === selectedIncentive.product.toLowerCase());
+        const updatedItem = {
+          product: selectedIncentive.product,
+          incentiveType: selectedIncentive.incentiveType,
+          incentiveValue: selectedIncentive.incentiveValue,
+          formattedIncentiveValue: formatted
+        };
+        if (idx >= 0) {
+          const next = [...prev];
+          next[idx] = updatedItem;
+          return next;
+        }
+        return [updatedItem, ...prev];
+      });
+      toast.success(`Universal incentive for "${selectedIncentive.product}" configured successfully.`);
+      setIsIncentiveModalOpen(false);
+    } finally {
+      setSavingIncentive(false);
+    }
+  };
+
+  const handleOpenEditIncentive = (item) => {
+    setSelectedIncentive({
+      product: item.product,
+      incentiveType: item.incentiveType || 'PRODUCT',
+      incentiveValue: item.incentiveValue !== undefined ? item.incentiveValue : 5
+    });
+    setIsIncentiveModalOpen(true);
+  };
+
+  // Remove individual filter pill tag
+  const handleRemoveFilterTag = (key) => {
+    setAppliedFilters(prev => ({
+      ...prev,
+      [key]: ''
+    }));
+    setTempFilters(prev => ({
+      ...prev,
+      [key]: ''
+    }));
+    setPage(1);
+  };
+
   // Debounce search input (500ms)
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -131,28 +339,41 @@ const KPAReport = () => {
     return () => clearTimeout(timer);
   }, [search]);
 
-  // Load dropdown options for Branch and Roles
+  // Load dropdown options via Branch API & Role API
   useEffect(() => {
     const fetchDropdownOptions = async () => {
       try {
-        const [branchRes, roleRes] = await Promise.allSettled([
-          branchService.list({ limit: 100 }),
-          roleService.list({ limit: 100 }),
-        ]);
-
-        if (branchRes.status === 'fulfilled' && branchRes.value) {
-          const raw = branchRes.value;
-          const list = Array.isArray(raw.data)
-            ? raw.data
-            : (raw.data?.branches || raw.data?.items || raw.data?.data || Array.isArray(raw) ? raw : []);
-          setBranchOptions(Array.isArray(list) ? list : []);
+        let branches = [];
+        try {
+          const bRes = await branchService.getDropdownList();
+          if (bRes && bRes.success && Array.isArray(bRes.data)) {
+            branches = bRes.data;
+          }
+        } catch (e) {
+          console.warn("Dropdown list endpoint failed, attempting fallback branchService.list()...", e);
         }
-        if (roleRes.status === 'fulfilled' && roleRes.value) {
-          const raw = roleRes.value;
-          const list = Array.isArray(raw.data)
-            ? raw.data
-            : (raw.data?.roles || raw.data?.items || raw.data?.data || Array.isArray(raw) ? raw : []);
-          setRoleOptions(Array.isArray(list) ? list : []);
+
+        if (branches.length === 0) {
+          try {
+            const bRes = await branchService.list({ limit: 100 });
+            if (bRes && bRes.success) {
+              branches = Array.isArray(bRes.data)
+                ? bRes.data
+                : (bRes.data?.branches || bRes.data?.items || []);
+            }
+          } catch (e) {
+            console.warn("branchService.list() error:", e);
+          }
+        }
+
+        if (branches.length > 0) {
+          setBranchOptions(branches);
+        }
+
+        const roleRes = await roleService.list({ limit: 100 });
+        if (roleRes && (roleRes.success || Array.isArray(roleRes.data))) {
+          const list = Array.isArray(roleRes.data) ? roleRes.data : (roleRes.data?.roles || []);
+          setRoleOptions(list);
         }
       } catch (err) {
         console.error('Failed to load filter options:', err);
@@ -263,6 +484,7 @@ const KPAReport = () => {
     };
     setTempFilters(reset);
     setAppliedFilters(reset);
+    setSearch('');
     setPage(1);
     setIsFilterOpen(false);
   };
@@ -276,6 +498,11 @@ const KPAReport = () => {
     if (appliedFilters.date) count++;
     return count;
   }, [appliedFilters]);
+
+  // Check if any filter or search is active
+  const hasActiveFilters = useMemo(() => {
+    return Boolean(activeFilterCount > 0 || search);
+  }, [activeFilterCount, search]);
 
   // Export KPA Reports as CSV
   const handleExport = async () => {
@@ -441,7 +668,7 @@ const KPAReport = () => {
       
       {/* Breadcrumb & Header Card */}
       <PageHeader
-        title="KPA Report"
+        title="KPA Report & Product Incentives"
         breadcrumbs={[
           { label: "Dashboard", to: "/dashboard" },
           { label: "HR Management" },
@@ -449,367 +676,258 @@ const KPAReport = () => {
         ]}
       />
 
-      {/* Top Stats Overview Cards */}
-      {(stats || loading) && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Total Employees */}
-          <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-xs flex items-center justify-between">
-            <div>
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Total Employees</p>
-              {loading ? (
-                <Skeleton className="h-7 w-16 mt-1 rounded" />
-              ) : (
-                <h3 className="text-2xl font-bold text-gray-900 mt-1">{stats?.totalEmployees ?? meta.totalRecords ?? 0}</h3>
-              )}
-            </div>
-            <div className="w-12 h-12 rounded-xl bg-blue-50 text-[#225091] flex items-center justify-center">
-              <Users size={24} />
-            </div>
-          </div>
+      {/* Submodule Navigation Switcher */}
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-200 pb-2">
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setActiveSubmodule('PERFORMANCE')}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              activeSubmodule === 'PERFORMANCE'
+                ? 'bg-[#225091] text-white shadow-xs'
+                : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-200'
+            }`}
+          >
+            <Target size={16} />
+            <span>Employee KPA Performance</span>
+          </button>
 
-          {/* Total Target Amount */}
-          <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-xs flex items-center justify-between">
-            <div>
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Total Target</p>
-              {loading ? (
-                <Skeleton className="h-7 w-28 mt-1 rounded" />
-              ) : (
-                <h3 className="text-2xl font-bold text-gray-900 mt-1">
-                  {stats?.formattedTotalTargetAmount || (stats?.totalTargetAmount ? `₹${Number(stats.totalTargetAmount).toLocaleString('en-IN')}` : '₹0')}
-                </h3>
-              )}
-            </div>
-            <div className="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
-              <Target size={24} />
-            </div>
-          </div>
-
-          {/* Total Achieved Amount */}
-          <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-xs flex items-center justify-between">
-            <div>
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Total Achieved</p>
-              {loading ? (
-                <Skeleton className="h-7 w-28 mt-1 rounded" />
-              ) : (
-                <h3 className="text-2xl font-bold text-emerald-600 mt-1">
-                  {stats?.formattedTotalAchievedAmount || (stats?.totalAchievedAmount ? `₹${Number(stats.totalAchievedAmount).toLocaleString('en-IN')}` : '₹0')}
-                </h3>
-              )}
-            </div>
-            <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-              <CheckCircle2 size={24} />
-            </div>
-          </div>
-
-          {/* Overall Percentage */}
-          <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-xs flex items-center justify-between">
-            <div>
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Achievement Rate</p>
-              {loading ? (
-                <Skeleton className="h-7 w-16 mt-1 rounded" />
-              ) : (
-                <div className="flex items-center gap-2 mt-1">
-                  <h3 className="text-2xl font-bold text-[#225091]">{stats?.overallPercentage ?? 0}%</h3>
-                  <span className="text-[11px] font-semibold text-gray-400">of target</span>
-                </div>
-              )}
-            </div>
-            <div className="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
-              <TrendingUp size={24} />
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Main Content Area */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col overflow-hidden">
-        
-        {/* Toolbar */}
-        <div className="p-6 flex flex-col sm:flex-row items-center justify-between gap-4 border-b border-gray-100">
-          <div className="flex items-center gap-4 w-full sm:w-auto">
-            {/* Search Input */}
-            <div className="relative w-full sm:w-[320px]">
-              <input 
-                type="text" 
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search employee, designation, branch..." 
-                className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 text-[14px] focus:outline-none focus:border-[#225091] bg-gray-50/50"
-              />
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-              {search && (
-                <button 
-                  onClick={() => setSearch('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                >
-                  <X size={14} />
-                </button>
-              )}
-            </div>
-
-            {/* Filter Trigger Button */}
-            <button 
-              onClick={handleOpenFilterModal}
-              className="relative w-11 h-11 flex items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors shadow-sm shrink-0 bg-white"
-              title="Filter Reports"
-            >
-              <SlidersHorizontal size={20} />
-              {activeFilterCount > 0 && (
-                <span className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-[#225091] text-white text-[11px] font-bold flex items-center justify-center shadow-sm">
-                  {activeFilterCount}
-                </span>
-              )}
-            </button>
-
-            {/* Refresh Button */}
-            <button
-              onClick={fetchKpaReports}
-              disabled={loading}
-              className="w-11 h-11 flex items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors shadow-sm shrink-0 bg-white"
-              title="Refresh Data"
-            >
-              <RefreshCw size={18} className={loading ? 'animate-spin text-[#225091]' : ''} />
-            </button>
-          </div>
-          
-          {/* Export Report Button */}
-          <div className="relative flex-shrink-0">
-            <button 
-              onClick={() => setIsExportOpen(!isExportOpen)}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-full font-semibold transition-colors text-sm shadow-sm border bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
-            >
-              <Download size={18} />
-              Export
-              <ChevronDown size={16} />
-            </button>
-            
-            {isExportOpen && (
-              <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-100 rounded-xl shadow-lg z-50 overflow-hidden">
-                <div className="p-1">
-                  <button onClick={exportToCSV} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors text-left">
-                    <Table size={16} className="text-green-600" />
-                    Export to CSV
-                  </button>
-                  <button onClick={exportToExcel} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors text-left">
-                    <FileSpreadsheet size={16} className="text-green-600" />
-                    Export to Excel
-                  </button>
-                  <button onClick={exportToWord} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors text-left">
-                    <FileText size={16} className="text-blue-600" />
-                    Export to Word
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
+          <button
+            type="button"
+            onClick={() => {
+              setActiveSubmodule('INCENTIVES');
+              fetchProductIncentives();
+            }}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              activeSubmodule === 'INCENTIVES'
+                ? 'bg-[#225091] text-white shadow-xs'
+                : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-200'
+            }`}
+          >
+            <Percent size={16} />
+            <span>Universal Product Incentives</span>
+            <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
+              activeSubmodule === 'INCENTIVES' ? 'bg-white/20 text-white' : 'bg-blue-50 text-[#225091]'
+            }`}>
+              Bank-Wide Config
+            </span>
+          </button>
         </div>
 
-        {/* Active Filters Display Bar */}
-        {activeFilterCount > 0 && (
-          <div className="px-6 py-3 bg-teal-50/50 border-b border-gray-100 flex items-center justify-between gap-4 flex-wrap text-[13px]">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-semibold text-gray-700">Active Filters:</span>
-              {appliedFilters.designations && (
-                <span className="bg-white text-teal-800 border border-teal-200 px-2.5 py-1 rounded-full text-xs font-medium flex items-center gap-1.5 shadow-2xs">
-                  Designation: {appliedFilters.designations}
-                  <button onClick={() => setAppliedFilters(prev => ({ ...prev, designations: '' }))} className="hover:text-red-500">
-                    <X size={12} />
-                  </button>
-                </span>
-              )}
-              {appliedFilters.states && (
-                <span className="bg-white text-teal-800 border border-teal-200 px-2.5 py-1 rounded-full text-xs font-medium flex items-center gap-1.5 shadow-2xs">
-                  State: {appliedFilters.states}
-                  <button onClick={() => setAppliedFilters(prev => ({ ...prev, states: '' }))} className="hover:text-red-500">
-                    <X size={12} />
-                  </button>
-                </span>
-              )}
-              {appliedFilters.branchIds && (
-                <span className="bg-white text-teal-800 border border-teal-200 px-2.5 py-1 rounded-full text-xs font-medium flex items-center gap-1.5 shadow-2xs">
-                  Branch: {branchOptions.find(b => (b.id === appliedFilters.branchIds || b._id === appliedFilters.branchIds))?.branchName || branchOptions.find(b => (b.id === appliedFilters.branchIds || b._id === appliedFilters.branchIds))?.name || appliedFilters.branchIds}
-                  <button onClick={() => setAppliedFilters(prev => ({ ...prev, branchIds: '' }))} className="hover:text-red-500">
-                    <X size={12} />
-                  </button>
-                </span>
-              )}
-              {appliedFilters.date && (
-                <span className="bg-white text-teal-800 border border-teal-200 px-2.5 py-1 rounded-full text-xs font-medium flex items-center gap-1.5 shadow-2xs">
-                  Date: {appliedFilters.date}
-                  <button onClick={() => setAppliedFilters(prev => ({ ...prev, date: '' }))} className="hover:text-red-500">
-                    <X size={12} />
-                  </button>
-                </span>
-              )}
-            </div>
-            <button
-              onClick={handleResetFilter}
-              className="text-xs text-red-600 hover:text-red-800 font-semibold underline"
-            >
-              Clear All
-            </button>
-          </div>
+        {activeSubmodule === 'INCENTIVES' && (
+          <button
+            type="button"
+            onClick={() => {
+              setSelectedIncentive({
+                product: 'Loan Disbursement',
+                incentiveType: 'PRODUCT',
+                incentiveValue: 5,
+              });
+              setIsIncentiveModalOpen(true);
+            }}
+            className="flex items-center gap-1.5 px-3.5 py-2 bg-[#225091] hover:bg-[#183e73] text-white rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer"
+          >
+            <Plus size={14} />
+            <span>Configure New Rule</span>
+          </button>
         )}
-
-        {/* Table View */}
-        <div className="overflow-x-auto min-h-[320px] relative">
-          <table ref={tableRef} className="w-full min-w-[900px]">
-            <thead className="bg-[#F8FAFC] text-gray-600 text-xs uppercase tracking-wider font-semibold border-b border-gray-200/80">
-              <tr>
-                <th className="py-3.5 px-5 font-semibold">Sr.No.</th>
-                <th className="py-3.5 px-5 font-semibold text-left whitespace-nowrap">Employee Name</th>
-                <th className="py-3.5 px-5 font-semibold text-left whitespace-nowrap">Designation</th>
-                <th className="py-3.5 px-5 font-semibold text-left whitespace-nowrap">Branch</th>
-                <th className="py-3.5 px-5 font-semibold text-left whitespace-nowrap">Phone Number</th>
-                <th className="py-3.5 px-5 font-semibold text-left whitespace-nowrap">Email</th>
-                <th className="py-3.5 px-5 font-semibold text-center whitespace-nowrap w-24">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {loading ? (
-                Array.from({ length: 6 }).map((_, rIdx) => (
-                  <tr key={rIdx} className="animate-pulse">
-                    <td className="py-4 px-5">
-                      <Skeleton className="h-4 w-6 rounded" />
-                    </td>
-                    <td className="py-4 px-5">
-                      <div className="flex items-center gap-3">
-                        <SkeletonAvatar size="w-8 h-8" rounded="rounded-full" />
-                        <Skeleton className="h-4 w-32 rounded" />
-                      </div>
-                    </td>
-                    <td className="py-4 px-5">
-                      <Skeleton className="h-4 w-28 rounded" />
-                    </td>
-                    <td className="py-4 px-5">
-                      <Skeleton className="h-4 w-24 rounded" />
-                    </td>
-                    <td className="py-4 px-5">
-                      <Skeleton className="h-4 w-24 rounded" />
-                    </td>
-                    <td className="py-4 px-5">
-                      <Skeleton className="h-4 w-36 rounded" />
-                    </td>
-                    <td className="py-4 px-5 text-center">
-                      <Skeleton className="h-7 w-16 mx-auto rounded-lg" />
-                    </td>
-                  </tr>
-                ))
-              ) : reports.length === 0 ? (
-                <tr>
-                  <td colSpan="7" className="py-16 text-center text-gray-500">
-                    <div className="flex flex-col items-center justify-center gap-2">
-                      <FileSpreadsheet className="text-gray-300 w-10 h-10 mb-1" />
-                      <span className="text-sm font-semibold text-gray-800">No KPA Reports Found</span>
-                      <span className="text-xs text-gray-400">Try adjusting your filters or search query</span>
-                    </div>
-                  </td>
-                </tr>
-              ) : (
-                reports.map((row, index) => {
-                  const empId = row.id || row._id || `emp-${index}`;
-                  const empName = row.employeeName || row.fullName || row.name || '—';
-                  const initials = empName !== '—' 
-                    ? empName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() 
-                    : 'E';
-                  const srNo = row.srNo || ((meta.page - 1) * meta.limit + index + 1);
-
-                  return (
-                    <tr 
-                      key={empId} 
-                      className="hover:bg-slate-50/70 transition-colors"
-                    >
-                      <td className="py-3.5 px-5 text-[13px] text-gray-500 font-medium">{srNo}</td>
-                      <td className="py-3.5 px-5">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-blue-50 text-[#225091] border border-blue-100 flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
-                            {initials}
-                          </div>
-                          <span className="text-sm font-semibold text-gray-900 whitespace-nowrap">{empName}</span>
-                        </div>
-                      </td>
-                      <td className="py-3.5 px-5 text-xs text-gray-600 font-medium">
-                        <span className="max-w-[160px] truncate block">{row.designation || '—'}</span>
-                      </td>
-                      <td className="py-3.5 px-5 text-xs text-gray-600 font-medium">{row.branch || row.branchName || '—'}</td>
-                      <td className="py-3.5 px-5 text-xs text-gray-600">{row.phoneNumber || row.phone || '—'}</td>
-                      <td className="py-3.5 px-5 text-xs text-gray-600">{row.email || '—'}</td>
-                      <td className="py-3.5 px-5 text-center">
-                        <div className="flex items-center justify-center">
-                          <Link 
-                            to={`/kpa-report/view/${empId}`} 
-                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-[#225091] bg-[#EAF2FB] hover:bg-[#d8e8f8] border border-[#225091]/15 transition-all shadow-xs"
-                            title="View KPA Targets Detail"
-                          >
-                            <Eye size={13} /> View
-                          </Link>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Pagination Footer */}
-        <div className="p-6 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="text-[13px] font-medium text-gray-500">
-            Showing {startRecord} to {endRecord} of {meta.totalRecords} entries
-          </div>
-          <div className="flex items-center gap-2">
-            <button 
-              onClick={() => setPage(prev => Math.max(1, prev - 1))}
-              disabled={meta.page <= 1 || loading}
-              className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              <ChevronLeft size={16} />
-            </button>
-            
-            {renderPaginationButtons()}
-
-            <button 
-              onClick={() => setPage(prev => Math.min(meta.totalPages, prev + 1))}
-              disabled={meta.page >= meta.totalPages || loading}
-              className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              <ChevronRight size={16} />
-            </button>
-          </div>
-        </div>
-
       </div>
 
-      {/* Filter Modal */}
-      {isFilterOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl w-full max-w-md shadow-xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
-            
-            {/* Modal Header */}
-            <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
-              <div className="flex items-center gap-2">
-                <SlidersHorizontal size={18} className="text-[#225091]" />
-                <h3 className="text-[18px] font-bold text-gray-800">Filter KPA Reports</h3>
+      {/* ========================================================================= */}
+      {/* VIEW 1: EMPLOYEE KPA PERFORMANCE OVERVIEW                                  */}
+      {/* ========================================================================= */}
+      {activeSubmodule === 'PERFORMANCE' && (
+        <>
+          {/* Top Stats Overview Cards */}
+          {(stats || loading) && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Total Employees */}
+              <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-xs flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Total Employees</p>
+                  {loading ? (
+                    <Skeleton className="h-7 w-16 mt-1 rounded" />
+                  ) : (
+                    <h3 className="text-2xl font-bold text-gray-900 mt-1">{stats?.totalEmployees ?? meta.totalRecords ?? 0}</h3>
+                  )}
+                </div>
+                <div className="w-12 h-12 rounded-xl bg-blue-50 text-[#225091] flex items-center justify-center">
+                  <Users size={24} />
+                </div>
               </div>
-              <button 
-                onClick={() => setIsFilterOpen(false)}
-                className="text-gray-400 hover:text-gray-700 transition-colors"
-              >
-                <X size={20} />
-              </button>
+
+              {/* Total Target Amount */}
+              <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-xs flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Total Target</p>
+                  {loading ? (
+                    <Skeleton className="h-7 w-28 mt-1 rounded" />
+                  ) : (
+                    <h3 className="text-2xl font-bold text-gray-900 mt-1">
+                      {stats?.formattedTotalTargetAmount || (stats?.totalTargetAmount ? `₹${Number(stats.totalTargetAmount).toLocaleString('en-IN')}` : '₹0')}
+                    </h3>
+                  )}
+                </div>
+                <div className="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+                  <Target size={24} />
+                </div>
+              </div>
+
+              {/* Total Achieved Amount */}
+              <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-xs flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Total Achieved</p>
+                  {loading ? (
+                    <Skeleton className="h-7 w-28 mt-1 rounded" />
+                  ) : (
+                    <h3 className="text-2xl font-bold text-emerald-600 mt-1">
+                      {stats?.formattedTotalAchievedAmount || (stats?.totalAchievedAmount ? `₹${Number(stats.totalAchievedAmount).toLocaleString('en-IN')}` : '₹0')}
+                    </h3>
+                  )}
+                </div>
+                <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                  <CheckCircle2 size={24} />
+                </div>
+              </div>
+
+              {/* Overall Percentage */}
+              <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-xs flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Achievement Rate</p>
+                  {loading ? (
+                    <Skeleton className="h-7 w-16 mt-1 rounded" />
+                  ) : (
+                    <div className="flex items-center gap-2 mt-1">
+                      <h3 className="text-2xl font-bold text-[#225091]">{stats?.overallPercentage ?? 0}%</h3>
+                      <span className="text-[11px] font-semibold text-gray-400">of target</span>
+                    </div>
+                  )}
+                </div>
+                <div className="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                  <TrendingUp size={24} />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Filter Toolbar Card (Matching Merchant & DailyWorkReport inline standard) */}
+          <div className="bg-white rounded-2xl p-4 shadow-xs border border-gray-100 space-y-3.5 mb-5">
+            {/* Top Row: Search + Action Buttons */}
+            <div className="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-3">
+              <div className="relative flex-1">
+                <Search
+                  className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+                  size={17}
+                />
+                <input
+                  type="text"
+                  placeholder="Search by employee, designation, branch..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full pl-10 pr-9 py-2.5 bg-gray-50/70 hover:bg-gray-50 focus:bg-white border border-gray-200 rounded-xl text-xs text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all shadow-2xs"
+                />
+                {search && (
+                  <button
+                    onClick={() => setSearch("")}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
+                  >
+                    <X size={15} />
+                  </button>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2.5 flex-wrap">
+                {hasActiveFilters && (
+                  <button
+                    onClick={handleResetFilter}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-gray-600 hover:text-rose-600 bg-gray-50 hover:bg-rose-50 rounded-xl border border-gray-200 transition-colors cursor-pointer shadow-2xs"
+                    title="Reset all filters"
+                  >
+                    <RotateCcw size={14} />
+                    <span>Reset</span>
+                  </button>
+                )}
+
+                <button
+                  onClick={fetchKpaReports}
+                  disabled={loading}
+                  className="p-2.5 flex items-center justify-center rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors shadow-2xs bg-white cursor-pointer"
+                  title="Refresh Data"
+                >
+                  <RefreshCw size={16} className={loading ? 'animate-spin text-[#225091]' : ''} />
+                </button>
+
+                {/* Export Dropdown */}
+                <div className="relative">
+                  <button 
+                    onClick={() => setIsExportOpen(!isExportOpen)}
+                    className="flex items-center gap-2 px-3.5 py-2 rounded-xl font-bold transition-colors text-xs shadow-2xs border bg-white text-gray-700 border-gray-200 hover:bg-gray-50 cursor-pointer"
+                  >
+                    <Download size={15} />
+                    <span>Export</span>
+                    <ChevronDown size={13} className={`transition-transform duration-200 ${isExportOpen ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  {isExportOpen && (
+                    <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-100 rounded-xl shadow-xl py-2 z-50 animate-in fade-in zoom-in-95 duration-150 p-1.5">
+                      <button
+                        onClick={exportToCSV}
+                        className="w-full px-3 py-2 text-left text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2 font-medium rounded-lg cursor-pointer"
+                      >
+                        <Table size={14} className="text-emerald-600" />
+                        <span>Export to CSV</span>
+                      </button>
+                      <button
+                        onClick={exportToExcel}
+                        className="w-full px-3 py-2 text-left text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2 font-medium rounded-lg cursor-pointer"
+                      >
+                        <FileSpreadsheet size={14} className="text-emerald-600" />
+                        <span>Export to Excel</span>
+                      </button>
+                      <button
+                        onClick={exportToWord}
+                        className="w-full px-3 py-2 text-left text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2 font-medium rounded-lg cursor-pointer"
+                      >
+                        <FileText size={14} className="text-blue-600" />
+                        <span>Export to Word</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
 
-            {/* Modal Body */}
-            <div className="p-6 flex flex-col gap-4 max-h-[70vh] overflow-y-auto">
-              
-              {/* Designation Filter */}
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[13px] font-semibold text-gray-700">Designation</label>
-                <select 
-                  value={tempFilters.designations}
-                  onChange={(e) => setTempFilters(prev => ({ ...prev, designations: e.target.value }))}
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#225091] bg-white appearance-none"
+            {/* Bottom Inline Filter Controls: Branch -> Designation -> State / UT -> Date */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 pt-2 border-t border-gray-100">
+              {/* 1. Branch */}
+              <div className="relative">
+                <select
+                  value={appliedFilters.branchIds || ''}
+                  onChange={(e) => {
+                    setAppliedFilters(prev => ({ ...prev, branchIds: e.target.value }));
+                    setPage(1);
+                  }}
+                  className="w-full pl-3 pr-8 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-xs font-medium text-gray-700 shadow-2xs appearance-none cursor-pointer"
+                >
+                  <option value="">All Branches</option>
+                  {displayBranches.map((branch) => {
+                    const bId = branch.id || branch._id;
+                    const bName = branch.branchName || branch.name || `Branch #${bId}`;
+                    return <option key={bId} value={bId}>{bName}</option>;
+                  })}
+                </select>
+                <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+              </div>
+
+              {/* 2. Designation */}
+              <div className="relative">
+                <select
+                  value={appliedFilters.designations || ''}
+                  onChange={(e) => {
+                    setAppliedFilters(prev => ({ ...prev, designations: e.target.value }));
+                    setPage(1);
+                  }}
+                  className="w-full pl-3 pr-8 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-xs font-medium text-gray-700 shadow-2xs appearance-none cursor-pointer"
                 >
                   <option value="">All Designations</option>
                   {roleOptions.length > 0 ? (
@@ -819,84 +937,599 @@ const KPAReport = () => {
                       </option>
                     ))
                   ) : (
-                    DEFAULT_DESIGNATIONS.map((desig) => (
-                      <option key={desig} value={desig}>{desig}</option>
+                    DEFAULT_DESIGNATIONS.map((d, i) => (
+                      <option key={i} value={d}>{d}</option>
                     ))
                   )}
                 </select>
+                <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
               </div>
 
-              {/* State / UT Filter */}
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[13px] font-semibold text-gray-700">State / UT</label>
-                <select 
-                  value={tempFilters.states}
-                  onChange={(e) => setTempFilters(prev => ({ ...prev, states: e.target.value }))}
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#225091] bg-white appearance-none"
+              {/* 3. State / UT */}
+              <div className="relative">
+                <select
+                  value={appliedFilters.states || ''}
+                  onChange={(e) => {
+                    setAppliedFilters(prev => ({ ...prev, states: e.target.value }));
+                    setPage(1);
+                  }}
+                  className="w-full pl-3 pr-8 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-xs font-medium text-gray-700 shadow-2xs appearance-none cursor-pointer"
                 >
                   <option value="">All States / UT</option>
                   {INDIAN_STATES.map((state) => (
                     <option key={state} value={state}>{state}</option>
                   ))}
                 </select>
+                <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
               </div>
 
-              {/* Branch Filter */}
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[13px] font-semibold text-gray-700">Branch</label>
-                <select 
-                  value={tempFilters.branchIds}
-                  onChange={(e) => setTempFilters(prev => ({ ...prev, branchIds: e.target.value }))}
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#225091] bg-white appearance-none"
-                >
-                  <option value="">All Branches</option>
-                  {(Array.isArray(branchOptions) ? branchOptions : []).map((branch) => {
-                    const bId = branch.id || branch._id;
-                    const bName = branch.branchName || branch.name || `Branch #${bId}`;
-                    return (
-                      <option key={bId} value={bId}>
-                        {bName}
-                      </option>
-                    );
-                  })}
-                </select>
+              {/* 4. Date */}
+              <div className="relative">
+                <input
+                  type="date"
+                  value={appliedFilters.date || ''}
+                  onChange={(e) => {
+                    setAppliedFilters(prev => ({ ...prev, date: e.target.value }));
+                    setPage(1);
+                  }}
+                  title="Date"
+                  className="w-full px-3 py-1.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-xs font-medium text-gray-700 shadow-2xs cursor-pointer"
+                />
               </div>
-
-              {/* Date Filter */}
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[13px] font-semibold text-gray-700">Date</label>
-                <div className="relative">
-                  <input 
-                    type="date" 
-                    value={tempFilters.date}
-                    onChange={(e) => setTempFilters(prev => ({ ...prev, date: e.target.value }))}
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#225091] bg-white" 
-                  />
-                  <Calendar className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={16} />
-                </div>
-              </div>
-
             </div>
 
-            {/* Modal Footer */}
-            <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex gap-3">
-              <button 
-                onClick={handleResetFilter}
-                className="flex-1 px-4 py-2.5 rounded-full border-2 border-gray-300 text-gray-700 hover:bg-gray-100 text-[14px] font-bold transition-colors"
-              >
-                Reset Filter
-              </button>
-              <button 
-                onClick={handleApplyFilter}
-                className="flex-1 px-4 py-2.5 rounded-full bg-[#225091] hover:bg-[#159a9f] text-white text-[14px] font-bold transition-colors shadow-sm"
-              >
-                Set Filter
-              </button>
+            {/* Active Filter Chips */}
+            {hasActiveFilters && (
+              <div className="pt-2 border-t border-gray-100 flex items-center flex-wrap gap-2 text-xs">
+                <span className="font-bold text-gray-500 uppercase tracking-wider text-[10px] flex items-center gap-1 mr-1">
+                  Active:
+                </span>
+
+                {appliedFilters.branchIds && (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-indigo-50 text-indigo-800 border border-indigo-200 text-[11px] font-semibold">
+                    <span>Branch: {displayBranches.find(b => (b.id || b._id) === appliedFilters.branchIds)?.branchName || displayBranches.find(b => (b.id || b._id) === appliedFilters.branchIds)?.name || 'Selected Branch'}</span>
+                    <button onClick={() => handleRemoveFilterTag('branchIds')} className="hover:text-rose-600 cursor-pointer">
+                      <X size={11} />
+                    </button>
+                  </span>
+                )}
+
+                {appliedFilters.designations && (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-blue-50 text-[#225091] border border-blue-200 text-[11px] font-semibold">
+                    <span>Designation: {appliedFilters.designations}</span>
+                    <button onClick={() => handleRemoveFilterTag('designations')} className="hover:text-rose-600 cursor-pointer">
+                      <X size={11} />
+                    </button>
+                  </span>
+                )}
+
+                {appliedFilters.states && (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200 text-[11px] font-semibold">
+                    <span>State: {appliedFilters.states}</span>
+                    <button onClick={() => handleRemoveFilterTag('states')} className="hover:text-rose-600 cursor-pointer">
+                      <X size={11} />
+                    </button>
+                  </span>
+                )}
+
+                {appliedFilters.date && (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-purple-50 text-purple-800 border border-purple-200 text-[11px] font-semibold">
+                    <span>Date: {formatDate(appliedFilters.date)}</span>
+                    <button onClick={() => handleRemoveFilterTag('date')} className="hover:text-rose-600 cursor-pointer">
+                      <X size={11} />
+                    </button>
+                  </span>
+                )}
+
+                <button
+                  type="button"
+                  onClick={handleResetFilter}
+                  className="text-xs text-rose-600 hover:text-rose-800 font-bold ml-auto hover:underline cursor-pointer"
+                >
+                  Clear All
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Main Content Area */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col overflow-hidden">
+
+            {/* Table View */}
+            <div className="overflow-x-auto min-h-[320px] relative">
+              <table ref={tableRef} className="w-full min-w-[900px]">
+                <thead className="bg-[#F8FAFC] text-gray-600 text-xs uppercase tracking-wider font-semibold border-b border-gray-200/80">
+                  <tr>
+                    <th className="py-3.5 px-5 font-semibold">Sr.No.</th>
+                    <th className="py-3.5 px-5 font-semibold text-left whitespace-nowrap">Employee Name</th>
+                    <th className="py-3.5 px-5 font-semibold text-left whitespace-nowrap">Designation</th>
+                    <th className="py-3.5 px-5 font-semibold text-left whitespace-nowrap">Branch</th>
+                    <th className="py-3.5 px-5 font-semibold text-left whitespace-nowrap">Phone Number</th>
+                    <th className="py-3.5 px-5 font-semibold text-left whitespace-nowrap">Email</th>
+                    <th className="py-3.5 px-5 font-semibold text-center whitespace-nowrap w-24">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {loading ? (
+                    Array.from({ length: 6 }).map((_, rIdx) => (
+                      <tr key={rIdx} className="animate-pulse">
+                        <td className="py-4 px-5">
+                          <Skeleton className="h-4 w-6 rounded" />
+                        </td>
+                        <td className="py-4 px-5">
+                          <div className="flex items-center gap-3">
+                            <SkeletonAvatar size="w-8 h-8" rounded="rounded-full" />
+                            <Skeleton className="h-4 w-32 rounded" />
+                          </div>
+                        </td>
+                        <td className="py-4 px-5">
+                          <Skeleton className="h-4 w-28 rounded" />
+                        </td>
+                        <td className="py-4 px-5">
+                          <Skeleton className="h-4 w-24 rounded" />
+                        </td>
+                        <td className="py-4 px-5">
+                          <Skeleton className="h-4 w-24 rounded" />
+                        </td>
+                        <td className="py-4 px-5">
+                          <Skeleton className="h-4 w-36 rounded" />
+                        </td>
+                        <td className="py-4 px-5 text-center">
+                          <Skeleton className="h-7 w-16 mx-auto rounded-lg" />
+                        </td>
+                      </tr>
+                    ))
+                  ) : reports.length === 0 ? (
+                    <tr>
+                      <td colSpan="7" className="py-16 text-center text-gray-500">
+                        <div className="flex flex-col items-center justify-center gap-2">
+                          <FileSpreadsheet className="text-gray-300 w-10 h-10 mb-1" />
+                          <span className="text-sm font-semibold text-gray-800">No KPA Reports Found</span>
+                          <span className="text-xs text-gray-400">Try adjusting your filters or search query</span>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
+                    reports.map((row, index) => {
+                      const empId = row.id || row._id || `emp-${index}`;
+                      const empName = row.employeeName || row.fullName || row.name || '—';
+                      const initials = empName !== '—' 
+                        ? empName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() 
+                        : 'E';
+                      const srNo = row.srNo || ((meta.page - 1) * meta.limit + index + 1);
+
+                      return (
+                        <tr 
+                          key={empId} 
+                          className="hover:bg-slate-50/70 transition-colors"
+                        >
+                          <td className="py-3.5 px-5 text-[13px] text-gray-500 font-medium">{srNo}</td>
+                          <td className="py-3.5 px-5">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-full bg-blue-50 text-[#225091] border border-blue-100 flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
+                                {initials}
+                              </div>
+                              <span className="text-sm font-semibold text-gray-900 whitespace-nowrap">{empName}</span>
+                            </div>
+                          </td>
+                          <td className="py-3.5 px-5 text-xs text-gray-600 font-medium">
+                            <span className="max-w-[160px] truncate block">{row.designation || '—'}</span>
+                          </td>
+                          <td className="py-3.5 px-5 text-xs text-gray-600 font-medium">{row.branch || row.branchName || '—'}</td>
+                          <td className="py-3.5 px-5 text-xs text-gray-600">{row.phoneNumber || row.phone || '—'}</td>
+                          <td className="py-3.5 px-5 text-xs text-gray-600">{row.email || '—'}</td>
+                          <td className="py-3.5 px-5 text-center">
+                            <div className="flex items-center justify-center">
+                              <Link 
+                                to={`/kpa-report/view/${empId}`} 
+                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-[#225091] bg-[#EAF2FB] hover:bg-[#d8e8f8] border border-[#225091]/15 transition-all shadow-xs"
+                                title="View KPA Targets Detail"
+                              >
+                                <Eye size={13} /> View
+                              </Link>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination Footer */}
+            <div className="p-6 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="text-[13px] font-medium text-gray-500">
+                Showing {startRecord} to {endRecord} of {meta.totalRecords} entries
+              </div>
+              <div className="flex items-center gap-2">
+                <button 
+                  onClick={() => setPage(prev => Math.max(1, prev - 1))}
+                  disabled={meta.page <= 1 || loading}
+                  className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  <ChevronLeft size={16} />
+                </button>
+                
+                {renderPaginationButtons()}
+
+                <button 
+                  onClick={() => setPage(prev => Math.min(meta.totalPages, prev + 1))}
+                  disabled={meta.page >= meta.totalPages || loading}
+                  className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  <ChevronRight size={16} />
+                </button>
+              </div>
             </div>
 
           </div>
+        </>
+      )}
+
+      {/* ========================================================================= */}
+      {/* VIEW 2: UNIVERSAL PRODUCT INCENTIVES (BANK-WIDE CONFIGURATION)            */}
+      {/* ========================================================================= */}
+      {activeSubmodule === 'INCENTIVES' && (
+        <div className="flex flex-col gap-6 animate-in fade-in duration-200">
+          
+          {/* Universal Incentive Stats Summary */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Total Rules */}
+            <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-xs flex items-center justify-between">
+              <div>
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Universal Rules</p>
+                <h3 className="text-2xl font-bold text-gray-900 mt-1">{incentivesList.length}</h3>
+                <span className="text-[11px] font-medium text-gray-400">Products Configured</span>
+              </div>
+              <div className="w-12 h-12 rounded-xl bg-blue-50 text-[#225091] flex items-center justify-center">
+                <Percent size={24} />
+              </div>
+            </div>
+
+            {/* Percentage Rules */}
+            <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-xs flex items-center justify-between">
+              <div>
+                <p className="text-xs font-semibold text-purple-700 uppercase tracking-wider">% Sales / Cost Rules</p>
+                <h3 className="text-2xl font-bold text-purple-900 mt-1">
+                  {incentivesList.filter(i => i.incentiveType === 'PRODUCT' || i.incentiveType === 'PERCENTAGE').length}
+                </h3>
+                <span className="text-[11px] font-medium text-purple-500">Volume Percentage</span>
+              </div>
+              <div className="w-12 h-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
+                <TrendingUp size={24} />
+              </div>
+            </div>
+
+            {/* Fixed Rate per Unit */}
+            <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-xs flex items-center justify-between">
+              <div>
+                <p className="text-xs font-semibold text-emerald-700 uppercase tracking-wider">Fixed Unit Rules</p>
+                <h3 className="text-2xl font-bold text-emerald-900 mt-1">
+                  {incentivesList.filter(i => i.incentiveType === 'QUANTITY' || i.incentiveType === 'PER_UNIT').length}
+                </h3>
+                <span className="text-[11px] font-medium text-emerald-500">₹ Rate per Quantity</span>
+              </div>
+              <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                <Coins size={24} />
+              </div>
+            </div>
+
+            {/* Default / No Incentive */}
+            <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-xs flex items-center justify-between">
+              <div>
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">No Incentive (Default)</p>
+                <h3 className="text-2xl font-bold text-gray-700 mt-1">
+                  {incentivesList.filter(i => i.incentiveType === 'NONE' || !i.incentiveType).length}
+                </h3>
+                <span className="text-[11px] font-medium text-gray-400">Zero Commission</span>
+              </div>
+              <div className="w-12 h-12 rounded-xl bg-gray-50 text-gray-500 flex items-center justify-center">
+                <CheckCircle2 size={24} />
+              </div>
+            </div>
+          </div>
+
+          {/* Universal Product Incentives Table Card */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col overflow-hidden">
+            
+            {/* Toolbar */}
+            <div className="p-5 flex flex-col sm:flex-row items-center justify-between gap-4 border-b border-gray-100">
+              <div className="relative w-full sm:w-80">
+                <input 
+                  type="text" 
+                  value={incentiveSearch}
+                  onChange={(e) => setIncentiveSearch(e.target.value)}
+                  placeholder="Search product rule..." 
+                  className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-200 text-xs focus:outline-none focus:border-[#225091] bg-gray-50/50"
+                />
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                {incentiveSearch && (
+                  <button 
+                    onClick={() => setIncentiveSearch('')}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
+                  >
+                    <X size={14} />
+                  </button>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+                <button
+                  onClick={fetchProductIncentives}
+                  disabled={incentivesLoading}
+                  className="p-2 flex items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors shadow-2xs bg-white cursor-pointer"
+                  title="Refresh Rules"
+                >
+                  <RefreshCw size={15} className={incentivesLoading ? 'animate-spin text-[#225091]' : ''} />
+                </button>
+              </div>
+            </div>
+
+            {/* Table */}
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead className="bg-[#F8FAFC] text-gray-600 text-xs uppercase tracking-wider font-semibold border-b border-gray-200/80">
+                  <tr>
+                    <th className="py-3.5 px-5">Sr.</th>
+                    <th className="py-3.5 px-5">Product Name</th>
+                    <th className="py-3.5 px-5">Incentive Type</th>
+                    <th className="py-3.5 px-5">Configured Rate / Value</th>
+                    <th className="py-3.5 px-5">Applied Formula</th>
+                    <th className="py-3.5 px-5 text-center">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100 text-xs">
+                  {incentivesLoading ? (
+                    Array.from({ length: 5 }).map((_, idx) => (
+                      <tr key={idx} className="animate-pulse">
+                        <td className="py-4 px-5"><Skeleton className="h-4 w-6 rounded" /></td>
+                        <td className="py-4 px-5"><Skeleton className="h-4 w-36 rounded" /></td>
+                        <td className="py-4 px-5"><Skeleton className="h-4 w-28 rounded" /></td>
+                        <td className="py-4 px-5"><Skeleton className="h-4 w-24 rounded" /></td>
+                        <td className="py-4 px-5"><Skeleton className="h-4 w-44 rounded" /></td>
+                        <td className="py-4 px-5 text-center"><Skeleton className="h-7 w-20 mx-auto rounded-lg" /></td>
+                      </tr>
+                    ))
+                  ) : (
+                    incentivesList
+                      .filter(i => !incentiveSearch || i.product.toLowerCase().includes(incentiveSearch.toLowerCase()))
+                      .map((item, index) => {
+                        const isPercentage = item.incentiveType === 'PRODUCT' || item.incentiveType === 'PERCENTAGE';
+                        const isQuantity = item.incentiveType === 'QUANTITY' || item.incentiveType === 'PER_UNIT';
+                        const isNone = item.incentiveType === 'NONE' || !item.incentiveType;
+
+                        return (
+                          <tr key={item.product || index} className="hover:bg-slate-50/70 transition-colors">
+                            <td className="py-3.5 px-5 text-gray-400 font-medium">{index + 1}</td>
+                            
+                            {/* Product Name */}
+                            <td className="py-3.5 px-5">
+                              <div className="flex items-center gap-2.5">
+                                <div className="w-8 h-8 rounded-lg bg-blue-50 text-[#225091] border border-blue-100 flex items-center justify-center shrink-0">
+                                  <Coins size={15} />
+                                </div>
+                                <span className="font-bold text-gray-900">{item.product}</span>
+                              </div>
+                            </td>
+
+                            {/* Incentive Type Badge */}
+                            <td className="py-3.5 px-5">
+                              {isPercentage ? (
+                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-purple-50 text-purple-700 border border-purple-200">
+                                  <Percent size={12} />
+                                  % Product Sales Amount
+                                </span>
+                              ) : isQuantity ? (
+                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                  <Coins size={12} />
+                                  ₹ Fixed per Unit Quantity
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold bg-gray-100 text-gray-600 border border-gray-200">
+                                  None (Default)
+                                </span>
+                              )}
+                            </td>
+
+                            {/* Configured Rate */}
+                            <td className="py-3.5 px-5 font-bold text-gray-900">
+                              {item.formattedIncentiveValue || (
+                                isPercentage ? `${item.incentiveValue}%` : isQuantity ? `₹${item.incentiveValue}` : '—'
+                              )}
+                            </td>
+
+                            {/* Formula description */}
+                            <td className="py-3.5 px-5 text-gray-500">
+                              {isPercentage ? (
+                                <span>{item.incentiveValue}% of total sales amount achieved by employee</span>
+                              ) : isQuantity ? (
+                                <span>₹{item.incentiveValue} credited per count/unit achieved</span>
+                              ) : (
+                                <span className="text-gray-400 italic">No automated incentive calculation</span>
+                              )}
+                            </td>
+
+                            {/* Action Button */}
+                            <td className="py-3.5 px-5 text-center">
+                              <button
+                                type="button"
+                                onClick={() => handleOpenEditIncentive(item)}
+                                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold text-[#225091] bg-[#EAF2FB] hover:bg-[#d8e8f8] border border-[#225091]/20 transition-all cursor-pointer shadow-2xs"
+                              >
+                                <Edit3 size={12} />
+                                <span>Configure</span>
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       )}
+
+      {/* ========================================================================= */}
+      {/* CONFIGURE PRODUCT INCENTIVE MODAL                                         */}
+      {/* ========================================================================= */}
+      {isIncentiveModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200 border border-gray-100">
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4.5 bg-[#f8fafc] border-b border-gray-100">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-[#225091] text-white flex items-center justify-center shadow-xs">
+                  <Percent size={16} />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-gray-900">Configure Product Incentive</h3>
+                  <p className="text-xs text-gray-500">Bank-wide automated calculation rule</p>
+                </div>
+              </div>
+              <button 
+                type="button" 
+                onClick={() => setIsIncentiveModalOpen(false)}
+                className="text-gray-400 hover:text-gray-700 transition-colors cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Form */}
+            <form onSubmit={handleSaveProductIncentive} className="p-6 flex flex-col gap-4">
+              {/* Product Selection */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-bold text-gray-700 uppercase tracking-wider">Product</label>
+                <select
+                  value={selectedIncentive.product}
+                  onChange={(e) => setSelectedIncentive(prev => ({ ...prev, product: e.target.value }))}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs font-semibold text-gray-800 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white cursor-pointer"
+                >
+                  {ALL_KPA_PRODUCTS.map((prod) => (
+                    <option key={prod.name} value={prod.name}>{prod.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Incentive Type (Radio Cards) */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-bold text-gray-700 uppercase tracking-wider">Incentive Type</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {/* PRODUCT (%) */}
+                  <div
+                    onClick={() => setSelectedIncentive(prev => ({ ...prev, incentiveType: 'PRODUCT' }))}
+                    className={`p-3 rounded-xl border text-center cursor-pointer transition-all ${
+                      selectedIncentive.incentiveType === 'PRODUCT'
+                        ? 'border-[#225091] bg-blue-50/70 text-[#225091] shadow-2xs font-bold'
+                        : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
+                    }`}
+                  >
+                    <Percent size={18} className="mx-auto mb-1 text-[#225091]" />
+                    <span className="text-xs block font-bold">% of Sales</span>
+                    <span className="text-[10px] text-gray-400 block mt-0.5">Volume Percentage</span>
+                  </div>
+
+                  {/* QUANTITY (₹) */}
+                  <div
+                    onClick={() => setSelectedIncentive(prev => ({ ...prev, incentiveType: 'QUANTITY' }))}
+                    className={`p-3 rounded-xl border text-center cursor-pointer transition-all ${
+                      selectedIncentive.incentiveType === 'QUANTITY'
+                        ? 'border-[#225091] bg-blue-50/70 text-[#225091] shadow-2xs font-bold'
+                        : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
+                    }`}
+                  >
+                    <Coins size={18} className="mx-auto mb-1 text-emerald-600" />
+                    <span className="text-xs block font-bold">₹ per Unit</span>
+                    <span className="text-[10px] text-gray-400 block mt-0.5">Fixed Rate per Count</span>
+                  </div>
+
+                  {/* NONE */}
+                  <div
+                    onClick={() => setSelectedIncentive(prev => ({ ...prev, incentiveType: 'NONE' }))}
+                    className={`p-3 rounded-xl border text-center cursor-pointer transition-all ${
+                      selectedIncentive.incentiveType === 'NONE'
+                        ? 'border-[#225091] bg-blue-50/70 text-[#225091] shadow-2xs font-bold'
+                        : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
+                    }`}
+                  >
+                    <X size={18} className="mx-auto mb-1 text-gray-400" />
+                    <span className="text-xs block font-bold">None</span>
+                    <span className="text-[10px] text-gray-400 block mt-0.5">No Incentive</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Incentive Value */}
+              {selectedIncentive.incentiveType !== 'NONE' && (
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-bold text-gray-700 uppercase tracking-wider">
+                    {selectedIncentive.incentiveType === 'PRODUCT' ? 'Incentive Percentage (%)' : 'Rate per Unit (₹)'}
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      min="0"
+                      step={selectedIncentive.incentiveType === 'PRODUCT' ? '0.1' : '1'}
+                      value={selectedIncentive.incentiveValue}
+                      onChange={(e) => setSelectedIncentive(prev => ({ ...prev, incentiveValue: e.target.value }))}
+                      placeholder={selectedIncentive.incentiveType === 'PRODUCT' ? 'e.g. 5 for 5%' : 'e.g. 150 for ₹150'}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs font-bold text-gray-900 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white"
+                    />
+                    <span className="absolute right-3.5 top-1/2 -translate-y-1/2 font-bold text-xs text-gray-400">
+                      {selectedIncentive.incentiveType === 'PRODUCT' ? '%' : '₹'}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* Live Preview Box */}
+              <div className="p-3.5 bg-blue-50/60 rounded-xl border border-blue-100/80 text-xs text-gray-700 flex items-start gap-2">
+                <HelpCircle size={15} className="text-[#225091] shrink-0 mt-0.5" />
+                <div>
+                  <span className="font-bold text-[#225091] block mb-0.5">Calculation Rule Applied:</span>
+                  {selectedIncentive.incentiveType === 'PRODUCT' ? (
+                    <span>
+                      Employees achieving targets on <strong>{selectedIncentive.product}</strong> will earn{' '}
+                      <strong className="text-purple-700">{selectedIncentive.incentiveValue || 0}%</strong> of the total sales/deposit amount.
+                    </span>
+                  ) : selectedIncentive.incentiveType === 'QUANTITY' ? (
+                    <span>
+                      Employees achieving units on <strong>{selectedIncentive.product}</strong> will earn{' '}
+                      <strong className="text-emerald-700">₹{selectedIncentive.incentiveValue || 0}</strong> for each count/unit achieved.
+                    </span>
+                  ) : (
+                    <span>No automated commission or incentive applied for this product.</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Footer Actions */}
+              <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-gray-100">
+                <button
+                  type="button"
+                  onClick={() => setIsIncentiveModalOpen(false)}
+                  className="px-4 py-2 rounded-xl border border-gray-200 text-xs font-bold text-gray-600 hover:bg-gray-50 transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingIncentive}
+                  className="px-5 py-2 rounded-xl bg-[#225091] hover:bg-[#183e73] text-white text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                >
+                  {savingIncentive ? <Loader2 size={13} className="animate-spin" /> : <CheckCircle2 size={13} />}
+                  <span>Save Universal Rule</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+
 
     </div>
   );

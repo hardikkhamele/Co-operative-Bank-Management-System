@@ -272,9 +272,25 @@ const Leads = ({ leadType: propLeadType, systemTitle: propSystemTitle }) => {
       };
 
       if (debouncedSearch.trim()) params.search = debouncedSearch.trim();
-      if (selectedStatus) {
-        params.status = selectedStatus;
-        params.approvalStatus = selectedStatus;
+      if (selectedStatus && selectedStatus !== 'ALL') {
+        if (selectedStatus === 'PENDING_BRANCH_PAYMENT' || selectedStatus === 'PENDING_SETTLEMENT') {
+          params.settlementStatus = 'PENDING_BRANCH_PAYMENT';
+          params.status = 'PENDING_BRANCH_PAYMENT';
+        } else if (selectedStatus === 'SETTLED_BY_BRANCH' || selectedStatus === 'SETTLED') {
+          params.settlementStatus = 'SETTLED_BY_BRANCH';
+          params.status = 'SETTLED_BY_BRANCH';
+        } else if (selectedStatus === 'PENDING_APPROVAL') {
+          params.status = 'PENDING_APPROVAL';
+          params.approvalStatus = 'PENDING_APPROVAL';
+        } else if (selectedStatus === 'APPROVED') {
+          params.status = 'APPROVED';
+          params.approvalStatus = 'APPROVED';
+        } else if (selectedStatus === 'ACTIVE') {
+          params.status = 'ACTIVE';
+        } else {
+          params.status = selectedStatus;
+          params.approvalStatus = selectedStatus;
+        }
       }
       if (dateFrom) params.startDate = dateFrom;
       if (dateTo) params.endDate = dateTo;
@@ -299,15 +315,25 @@ const Leads = ({ leadType: propLeadType, systemTitle: propSystemTitle }) => {
         if (apiStats && typeof apiStats === 'object' && Object.keys(apiStats).length > 0) {
           setStats(prev => {
             const isPrevAllZeros = !prev || (prev.totalLeads === 0 && prev.pendingLeads === 0 && prev.approvedLeads === 0);
-            if (!selectedStatus || isPrevAllZeros) {
-              return { ...prev, ...apiStats };
+            if (!selectedStatus || selectedStatus === 'ALL' || isPrevAllZeros) {
+              return { 
+                ...prev, 
+                ...apiStats,
+                pendingSettlementLeads: apiStats.pendingSettlementLeads ?? apiStats.pendingSettlement ?? 0,
+                settledLeads: apiStats.settledLeads ?? apiStats.settled ?? 0,
+                approvedLeads: apiStats.approvedLeads ?? 0,
+                activeLeads: apiStats.activeLeads ?? 0,
+                totalBusinessVolume: apiStats.totalBusinessVolume ?? 0,
+                pendingSettlementAmount: apiStats.pendingSettlementAmount ?? 0,
+                totalSettledAmount: apiStats.totalSettledAmount ?? 0
+              };
             }
             return prev;
           });
         }
 
         // Store master list when unfiltered
-        if (!selectedStatus) {
+        if (!selectedStatus || selectedStatus === 'ALL') {
           setMasterLeads(rawItems);
           if ((!apiStats || Object.keys(apiStats).length === 0) && rawItems.length > 0) {
             // Compute client fallback stats from unfiltered data
@@ -318,10 +344,22 @@ const Leads = ({ leadType: propLeadType, systemTitle: propSystemTitle }) => {
               activeLeads: rawItems.filter(l => (l.status || '').toUpperCase() === 'ACTIVE').length,
               completedLeads: rawItems.filter(l => (l.status || '').toUpperCase() === 'COMPLETED').length,
               rejectedLeads: rawItems.filter(l => (l.status || '').toUpperCase() === 'REJECTED').length,
-              pendingSettlementLeads: rawItems.filter(l => (l.settlementDetails?.settlementStatus || '').toUpperCase().includes('PENDING')).length,
-              settledLeads: rawItems.filter(l => (l.settlementDetails?.settlementStatus || l.status || '').toUpperCase() === 'SETTLED').length,
-              pendingSettlementAmount: rawItems.filter(l => (l.settlementDetails?.settlementStatus || '').toUpperCase().includes('PENDING')).reduce((sum, l) => sum + (l.settlementDetails?.netDisbursalAmount || l.financialDetails?.totalLoanAmount || 0), 0),
-              totalSettledAmount: rawItems.filter(l => (l.settlementDetails?.settlementStatus || '').toUpperCase() === 'SETTLED').reduce((sum, l) => sum + (l.settlementDetails?.netDisbursalAmount || l.financialDetails?.totalLoanAmount || 0), 0),
+              pendingSettlementLeads: rawItems.filter(l => {
+                const s = (l.settlementDetails?.settlementStatus || l.settlementStatus || l.status || '').toUpperCase();
+                return s === 'PENDING_BRANCH_PAYMENT' || s.includes('PENDING');
+              }).length,
+              settledLeads: rawItems.filter(l => {
+                const s = (l.settlementDetails?.settlementStatus || l.settlementStatus || l.status || '').toUpperCase();
+                return s === 'SETTLED_BY_BRANCH' || s === 'SETTLED';
+              }).length,
+              pendingSettlementAmount: rawItems.filter(l => {
+                const s = (l.settlementDetails?.settlementStatus || l.settlementStatus || l.status || '').toUpperCase();
+                return s === 'PENDING_BRANCH_PAYMENT' || s.includes('PENDING');
+              }).reduce((sum, l) => sum + (l.settlementDetails?.netDisbursalAmount || l.financialDetails?.totalLoanAmount || 0), 0),
+              totalSettledAmount: rawItems.filter(l => {
+                const s = (l.settlementDetails?.settlementStatus || l.settlementStatus || l.status || '').toUpperCase();
+                return s === 'SETTLED_BY_BRANCH' || s === 'SETTLED';
+              }).reduce((sum, l) => sum + (l.settlementDetails?.netDisbursalAmount || l.financialDetails?.totalLoanAmount || 0), 0),
               totalBusinessVolume: rawItems.reduce((acc, l) => acc + (l.financialDetails?.totalLoanAmount || l.productDetails?.productPrice || 0), 0),
             });
           }
@@ -496,7 +534,22 @@ const Leads = ({ leadType: propLeadType, systemTitle: propSystemTitle }) => {
   };
 
   const tableRef = useRef(null);
+  const exportDropdownRef = useRef(null);
   const [isExportOpen, setIsExportOpen] = useState(false);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (exportDropdownRef.current && !exportDropdownRef.current.contains(event.target)) {
+        setIsExportOpen(false);
+      }
+    };
+    if (isExportOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isExportOpen]);
 
   const getSelectedDataFromTable = () => {
     if (!tableRef.current) return { headers: [], rows: [] };
@@ -520,10 +573,14 @@ const Leads = ({ leadType: propLeadType, systemTitle: propSystemTitle }) => {
 
   const exportToCSV = () => {
     const { headers, rows } = getSelectedDataFromTable();
+    if (!headers.length || !rows.length) {
+      toast.warning("No data available to export");
+      return;
+    }
     const csvContent = [
       headers.join(","),
       ...rows.map((row) =>
-        row.map((v) => '"' + v.replace(/"/g, '""') + '"').join(","),
+        row.map((v) => '"' + (v || "").replace(/"/g, '""') + '"').join(","),
       ),
     ].join("\n");
 
@@ -531,6 +588,57 @@ const Leads = ({ leadType: propLeadType, systemTitle: propSystemTitle }) => {
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
     link.download = `${resolvedTitle || 'Leads'}_Export.csv`;
+    link.click();
+    setIsExportOpen(false);
+  };
+
+  const exportToExcel = () => {
+    const { headers, rows } = getSelectedDataFromTable();
+    if (!headers.length || !rows.length) {
+      toast.warning("No data available to export");
+      return;
+    }
+    const tableHtml = `
+      <table border="1">
+        <thead>
+          <tr>${headers.map((h) => `<th>${h}</th>`).join("")}</tr>
+        </thead>
+        <tbody>
+          ${rows.map((row) => `<tr>${row.map((c) => `<td>${c}</td>`).join("")}</tr>`).join("")}
+        </tbody>
+      </table>
+    `;
+    const blob = new Blob([tableHtml], { type: "application/vnd.ms-excel" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `${resolvedTitle || 'Leads'}_Export.xls`;
+    link.click();
+    setIsExportOpen(false);
+  };
+
+  const exportToWord = () => {
+    const { headers, rows } = getSelectedDataFromTable();
+    if (!headers.length || !rows.length) {
+      toast.warning("No data available to export");
+      return;
+    }
+    const tableHtml = `
+      <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+      <head><meta charset='utf-8'><title>${resolvedTitle || 'Leads'} Export</title></head><body>
+      <table border="1">
+        <thead>
+          <tr>${headers.map((h) => `<th>${h}</th>`).join("")}</tr>
+        </thead>
+        <tbody>
+          ${rows.map((row) => `<tr>${row.map((c) => `<td>${c}</td>`).join("")}</tr>`).join("")}
+        </tbody>
+      </table>
+      </body></html>
+    `;
+    const blob = new Blob([tableHtml], { type: "application/msword" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `${resolvedTitle || 'Leads'}_Export.doc`;
     link.click();
     setIsExportOpen(false);
   };
@@ -554,7 +662,7 @@ const Leads = ({ leadType: propLeadType, systemTitle: propSystemTitle }) => {
             ...(resolvedTitle ? [{ label: resolvedTitle }] : [])
           ]}
           showBack={true}
-          backUrl="/leads"
+          backUrl={isCustomerSystem || isMerchantSystem ? "/leads" : "/dashboard"}
         />
       </div>
 
@@ -691,8 +799,8 @@ const Leads = ({ leadType: propLeadType, systemTitle: propSystemTitle }) => {
               </div>
 
               <div
-                onClick={() => handleStatusCardClick("SETTLED")}
-                className={`bg-white rounded-2xl p-4 border shadow-xs flex flex-col items-center justify-center cursor-pointer transition-all hover:shadow-md ${selectedStatus === "SETTLED" ? "border-teal-500 ring-2 ring-teal-500/20 bg-teal-50/30" : "border-gray-100 hover:border-teal-200"}`}
+                onClick={() => handleStatusCardClick("SETTLED_BY_BRANCH")}
+                className={`bg-white rounded-2xl p-4 border shadow-xs flex flex-col items-center justify-center cursor-pointer transition-all hover:shadow-md ${selectedStatus === "SETTLED_BY_BRANCH" || selectedStatus === "SETTLED" ? "border-teal-500 ring-2 ring-teal-500/20 bg-teal-50/30" : "border-gray-100 hover:border-teal-200"}`}
               >
                 <span className="text-2xl font-black text-teal-600 leading-none mb-1">
                   {loading && stats.totalLeads === 0 ? <Loader2 size={20} className="animate-spin text-teal-500/50" /> : (stats.settledLeads ?? 0)}
@@ -793,20 +901,20 @@ const Leads = ({ leadType: propLeadType, systemTitle: propSystemTitle }) => {
                   <>
                     <option value="PENDING_APPROVAL">Pending Approval</option>
                     <option value="APPROVED">Approved</option>
-                    <option value="ACTIVE">Active</option>
+                    <option value="ACTIVE">Active Loans</option>
                     <option value="COMPLETED">Completed</option>
                     <option value="REJECTED">Rejected</option>
                   </>
                 ) : isMerchantSystem ? (
                   <>
                     <option value="PENDING_BRANCH_PAYMENT">Pending Settlement</option>
-                    <option value="SETTLED">Settled</option>
-                    <option value="APPROVED">Approved</option>
-                    <option value="ACTIVE">Active</option>
+                    <option value="SETTLED_BY_BRANCH">Settled Leads</option>
+                    <option value="APPROVED">Approved Leads</option>
+                    <option value="ACTIVE">Active Loans</option>
                   </>
                 ) : (
                   <>
-                    <option value="ACTIVE">Active</option>
+                    <option value="ACTIVE">Active Loans</option>
                     <option value="COMPLETED">Completed</option>
                     <option value="REJECTED">Rejected</option>
                   </>
@@ -850,16 +958,48 @@ const Leads = ({ leadType: propLeadType, systemTitle: propSystemTitle }) => {
               </button>
             )}
 
-            {/* Export CSV Button */}
-            <button
-              type="button"
-              onClick={exportToCSV}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs font-semibold border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 shadow-2xs transition-colors cursor-pointer"
-              title="Export CSV"
-            >
-              <Download size={14} className="text-gray-500" />
-              <span>Export</span>
-            </button>
+            {/* Export Dropdown */}
+            <div className="relative" ref={exportDropdownRef}>
+              <button
+                type="button"
+                onClick={() => setIsExportOpen(!isExportOpen)}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs font-semibold border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 shadow-2xs transition-colors cursor-pointer"
+                title="Export Options"
+              >
+                <Download size={14} className="text-gray-500" />
+                <span>Export</span>
+                <ChevronDown size={13} className={`transition-transform duration-200 ${isExportOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {isExportOpen && (
+                <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-100 rounded-xl shadow-xl py-2 z-50 animate-in fade-in zoom-in-95 duration-150">
+                  <button
+                    type="button"
+                    onClick={exportToCSV}
+                    className="w-full px-4 py-2 text-left text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2 font-medium cursor-pointer"
+                  >
+                    <Table size={15} className="text-gray-500" />
+                    <span>Export to CSV</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={exportToExcel}
+                    className="w-full px-4 py-2 text-left text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2 font-medium cursor-pointer"
+                  >
+                    <FileSpreadsheet size={15} className="text-emerald-600" />
+                    <span>Export to Excel</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={exportToWord}
+                    className="w-full px-4 py-2 text-left text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2 font-medium border-t border-gray-100 mt-1 pt-1.5 cursor-pointer"
+                  >
+                    <FileText size={15} className="text-blue-600" />
+                    <span>Export to Word</span>
+                  </button>
+                </div>
+              )}
+            </div>
 
             {/* Reset Filters */}
             {(searchTerm || selectedStatus || dateFrom || dateTo) && (
@@ -927,7 +1067,7 @@ const Leads = ({ leadType: propLeadType, systemTitle: propSystemTitle }) => {
                     <th className="py-3.5 px-4 font-semibold">Status</th>
                   </>
                 )}
-                <th className="py-3.5 px-4 font-semibold text-center">Actions</th>
+                <th className="py-3.5 px-4 font-semibold text-center min-w-[210px] whitespace-nowrap">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 text-xs">
@@ -1087,7 +1227,7 @@ const Leads = ({ leadType: propLeadType, systemTitle: propSystemTitle }) => {
                                 <button
                                   type="button"
                                   onClick={() => { setPreviewImage(cust.livePhoto); setPreviewTitle(`${custName} - Live Photo`); }}
-                                  className="w-7 h-7 rounded-lg overflow-hidden border border-emerald-300 hover:scale-110 transition-transform cursor-pointer shadow-2xs relative group"
+                                  className="w-8 h-8 rounded-lg overflow-hidden border border-emerald-300 hover:border-emerald-500 hover:scale-105 transition-all cursor-pointer shadow-2xs relative group shrink-0"
                                   title="View Live Selfie Photo"
                                 >
                                   <img src={cust.livePhoto} alt="Live" className="w-full h-full object-cover" />
@@ -1097,7 +1237,7 @@ const Leads = ({ leadType: propLeadType, systemTitle: propSystemTitle }) => {
                                 <button
                                   type="button"
                                   onClick={() => { setPreviewImage(cust.panImage); setPreviewTitle(`${custName} - PAN Card Image`); }}
-                                  className="px-1.5 py-1 rounded bg-blue-50 text-blue-700 border border-blue-200 text-[10px] font-bold hover:bg-blue-100 transition-colors cursor-pointer"
+                                  className="h-8 px-2 rounded-lg bg-blue-50 text-blue-700 border border-blue-200/80 hover:bg-blue-100 text-[11px] font-bold hover:scale-105 transition-all cursor-pointer inline-flex items-center justify-center shadow-2xs"
                                   title="View PAN Card Image"
                                 >
                                   PAN
@@ -1107,7 +1247,7 @@ const Leads = ({ leadType: propLeadType, systemTitle: propSystemTitle }) => {
                                 <button
                                   type="button"
                                   onClick={() => { setPreviewImage(cust.aadhaarImage); setPreviewTitle(`${custName} - Aadhaar Card Image`); }}
-                                  className="px-1.5 py-1 rounded bg-cyan-50 text-cyan-700 border border-cyan-200 text-[10px] font-bold hover:bg-cyan-100 transition-colors cursor-pointer"
+                                  className="h-8 px-2 rounded-lg bg-cyan-50 text-cyan-700 border border-cyan-200/80 hover:bg-cyan-100 text-[11px] font-bold hover:scale-105 transition-all cursor-pointer inline-flex items-center justify-center shadow-2xs"
                                   title="View Aadhaar Card Image"
                                 >
                                   UID
@@ -1206,26 +1346,28 @@ const Leads = ({ leadType: propLeadType, systemTitle: propSystemTitle }) => {
                       )}
 
                       {/* Actions strictly based on APIs */}
-                      <td className="py-3.5 px-4 text-center">
-                        <div className="flex justify-center items-center gap-1.5 flex-wrap">
+                      <td className="py-3.5 px-4 text-center whitespace-nowrap">
+                        <div className="flex justify-center items-center gap-1.5">
                           {/* 1B & 1C. Approve / Reject Actions for Customer Leads */}
                           {isCustomerSystem && isPendingApproval && (
                             <>
                               <button
                                 type="button"
                                 onClick={() => { setLeadToApprove(lead); setApproveRemarks(""); setIsApproveModalOpen(true); }}
-                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 transition-all cursor-pointer shadow-2xs"
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100/80 border border-emerald-200/80 hover:border-emerald-300 shadow-2xs hover:shadow-xs active:scale-95 transition-all cursor-pointer"
                                 title="Manually Approve Loan Application"
                               >
-                                <CheckCircle2 size={13} /> Approve
+                                <CheckCircle2 size={13} className="text-emerald-600" />
+                                <span>Approve</span>
                               </button>
                               <button
                                 type="button"
                                 onClick={() => { setLeadToReject(lead); setRejectReason(""); setIsRejectModalOpen(true); }}
-                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-300 transition-all cursor-pointer shadow-2xs"
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100/80 border border-rose-200/80 hover:border-rose-300 shadow-2xs hover:shadow-xs active:scale-95 transition-all cursor-pointer"
                                 title="Reject Loan Application"
                               >
-                                <XCircle size={13} /> Reject
+                                <XCircle size={13} className="text-rose-600" />
+                                <span>Reject</span>
                               </button>
                             </>
                           )}
@@ -1235,10 +1377,11 @@ const Leads = ({ leadType: propLeadType, systemTitle: propSystemTitle }) => {
                             <button
                               type="button"
                               onClick={() => { setLeadToSettle(lead); setSettleTxnRef(""); setSettleRemarks(""); setIsSettleModalOpen(true); }}
-                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-300 transition-all cursor-pointer shadow-2xs"
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-purple-700 bg-purple-50 hover:bg-purple-100/80 border border-purple-200/80 hover:border-purple-300 shadow-2xs hover:shadow-xs active:scale-95 transition-all cursor-pointer"
                               title="Execute Next-Day Merchant Settlement"
                             >
-                              <IndianRupee size={13} /> Settle Disbursal
+                              <IndianRupee size={13} className="text-purple-600" />
+                              <span>Settle Disbursal</span>
                             </button>
                           )}
 
@@ -1246,10 +1389,11 @@ const Leads = ({ leadType: propLeadType, systemTitle: propSystemTitle }) => {
                           <button
                             type="button"
                             onClick={() => setQuickDetailLead(lead)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-[#225091] bg-[#EAF2FB] hover:bg-[#d8e8f8] border border-[#225091]/15 transition-all shadow-2xs cursor-pointer"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-[#225091] bg-[#EAF2FB] hover:bg-[#d8e8f8] border border-[#225091]/15 hover:border-[#225091]/30 shadow-2xs hover:shadow-xs active:scale-95 transition-all cursor-pointer"
                             title="Inspect Details"
                           >
-                            <Eye size={13} /> View
+                            <Eye size={13} className="text-[#225091]" />
+                            <span>View</span>
                           </button>
                         </div>
                       </td>
@@ -1553,40 +1697,6 @@ const Leads = ({ leadType: propLeadType, systemTitle: propSystemTitle }) => {
         </div>
       )}
 
-      {/* KYC Photo Preview Modal */}
-      {previewImage && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in">
-          <div className="bg-white rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl animate-in zoom-in-95">
-            <div className="p-4 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
-              <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wider">{previewTitle || "KYC Document Preview"}</h4>
-              <button
-                onClick={() => setPreviewImage(null)}
-                className="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-100 cursor-pointer"
-              >
-                <X size={18} />
-              </button>
-            </div>
-            <div className="p-4 flex items-center justify-center max-h-[70vh] bg-black/5 overflow-auto">
-              <img
-                src={previewImage}
-                alt={previewTitle}
-                className="max-h-[60vh] w-auto object-contain rounded-lg shadow-sm"
-              />
-            </div>
-            <div className="p-3 bg-gray-50 border-t border-gray-100 flex justify-end">
-              <a
-                href={previewImage}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#225091] text-white text-xs font-bold hover:bg-[#163a6c] transition-colors"
-              >
-                <ExternalLink size={13} />
-                <span>Open Full Size</span>
-              </a>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Quick Lead Details Modal */}
       {quickDetailLead && (
@@ -1790,6 +1900,48 @@ const Leads = ({ leadType: propLeadType, systemTitle: propSystemTitle }) => {
               >
                 Close
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* KYC Photo Preview Modal with maximum z-index (sits on top of quickDetailLead and all other modals) */}
+      {previewImage && (
+        <div 
+          onClick={() => setPreviewImage(null)}
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 animate-in fade-in cursor-pointer"
+        >
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl animate-in zoom-in-95 cursor-default relative z-10"
+          >
+            <div className="p-4 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
+              <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wider">{previewTitle || "KYC Document Preview"}</h4>
+              <button
+                type="button"
+                onClick={() => setPreviewImage(null)}
+                className="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-100 cursor-pointer transition-colors"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <div className="p-4 flex items-center justify-center max-h-[70vh] bg-black/5 overflow-auto">
+              <img
+                src={previewImage}
+                alt={previewTitle || "KYC Document Preview"}
+                className="max-h-[60vh] w-auto object-contain rounded-lg shadow-sm"
+              />
+            </div>
+            <div className="p-3 bg-gray-50 border-t border-gray-100 flex justify-end">
+              <a
+                href={previewImage}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#225091] text-white text-xs font-bold hover:bg-[#163a6c] transition-colors shadow-xs"
+              >
+                <ExternalLink size={13} />
+                <span>Open Full Size</span>
+              </a>
             </div>
           </div>
         </div>

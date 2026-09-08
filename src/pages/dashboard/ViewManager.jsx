@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation, useParams, useNavigate } from 'react-router-dom';
+import { useLocation, useParams, useNavigate } from 'react-router-dom';
 import { 
   ChevronRight, 
   Calendar, 
@@ -16,7 +16,6 @@ import {
   AlertCircle, 
   ArrowLeftRight, 
   ArrowLeft,
-  Edit,
   RefreshCw,
   Target,
   TrendingUp,
@@ -183,16 +182,6 @@ const ViewManager = () => {
                 <p className="text-gray-900 font-bold mt-0.5">{job.joiningDate || '2026-01-01'}</p>
               </div>
             </div>
-
-            {targetId && (
-              <Link 
-                to={`/managers/edit/${targetId}`}
-                state={profileData}
-                className="bg-[#225091] hover:bg-[#183d6e] text-white px-4 py-2.5 rounded-xl font-bold text-xs transition-all shadow-sm flex items-center gap-2 cursor-pointer shrink-0"
-              >
-                <Edit size={14} /> Edit HR Settings
-              </Link>
-            )}
           </div>
         </div>
 

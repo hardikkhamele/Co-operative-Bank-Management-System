@@ -23,7 +23,7 @@ import { transferReceiptService } from "../../api/transferReceiptService";
 import useBranchStore from "../../store/branchStore";
 import PageHeader from "../../components/common/PageHeader";
 import { Skeleton, SkeletonTableRow } from "../../components/common/Skeleton";
-import { isBankOwner } from "../../utils/roleUtils";
+import { isBankOwner, canApproveReceipts } from "../../utils/roleUtils";
 import ReceiptImageUpload from "../../components/common/ReceiptImageUpload";
 
 const GL_HEAD_OPTIONS = [
@@ -144,7 +144,8 @@ const Transfer = () => {
 
   const authRole = useAuthStore((state) => state.role);
   const authUser = useAuthStore((state) => state.user);
-  const canApprove = isBankOwner(authRole, authUser);
+  const permissions = useAuthStore((state) => state.permissions) || [];
+  const canApprove = canApproveReceipts(authRole, authUser, permissions);
 
   // Form State for Create
   const todayISO = new Date().toISOString().split("T")[0];
@@ -702,6 +703,8 @@ const Transfer = () => {
           { label: "Receipt Management" },
           { label: "Transfer Receipt" }
         ]}
+        showBack={false}
+        backUrl="/dashboard"
       />
 
       {/* Stats Cards */}
@@ -895,7 +898,7 @@ const Transfer = () => {
             disabled={!selectedState}
             className="px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-sm text-gray-700 min-w-[140px] disabled:bg-gray-100 disabled:text-gray-400"
           >
-            <option value="">All Cities</option>
+            <option value="">{selectedState ? "All Cities" : "Select State first"}</option>
             {availableCities.map((c) => (
               <option key={c} value={c}>
                 {c}
@@ -953,7 +956,7 @@ const Transfer = () => {
 
       {/* Table */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto custom-scrollbar">
           <table
             ref={tableRef}
             className="w-full text-left text-sm whitespace-nowrap"

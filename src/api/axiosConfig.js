@@ -2,8 +2,8 @@ import axios from 'axios';
 import useAuthStore from '../store/authStore';
 import useLoadingStore from '../store/loadingStore';
 
-// Always prefer the relative '/api' proxy for local Vite dev and proxy-enabled deployments.
-// This routes all requests through Vite / Netlify proxy and completely eliminates CORS issues.
+// Use relative '/api' proxy in local development to completely eliminate browser CORS issues.
+// Vite proxy automatically forwards requests to the remote backend server-to-server.
 let apiBaseUrl = '/api';
 
 if (!import.meta.env.DEV) {
@@ -57,9 +57,22 @@ axiosInstance.interceptors.request.use(
       useLoadingStore.getState().showLoader();
     }
 
-    const token = useAuthStore.getState().accessToken;
+    const authState = useAuthStore.getState();
+    const token = authState.accessToken;
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+    }
+
+    const societyId = 
+      authState.user?.societyId || 
+      authState.user?.bankId || 
+      authState.context?.societyId || 
+      authState.context?.bankId || 
+      authState.user?.society?._id || 
+      authState.user?.bank?._id;
+
+    if (societyId && !config.headers['x-society-id']) {
+      config.headers['x-society-id'] = societyId;
     }
     return config;
   },

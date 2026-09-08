@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { toast } from "react-toastify";
 import { Link, useNavigate } from "react-router-dom";
 import {
@@ -70,6 +70,7 @@ const INDIAN_STATES_WITH_CITIES = {
 
 const Employees = () => {
   const navigate = useNavigate();
+  const tableRef = useRef(null);
 
   // Data State
   const [employees, setEmployees] = useState([]);
@@ -213,7 +214,48 @@ const Employees = () => {
     fetchRoles();
   }, []);
 
-  // Fetch Paginated / Filtered Employees & Stats from Backend API
+  // Fetch Persistent Global Stats for the Society (Society-Wide Staff Metrics)
+  const fetchGlobalStats = useCallback(async () => {
+    try {
+      const response = await employeeService.list({
+        page: 1,
+        limit: 1,
+        includeBranchManagers: true,
+        includeStats: true,
+        includeDeleted: true,
+        status: "ALL",
+      });
+      if (response && response.success && response.stats) {
+        const totalEmp = response.stats.totalEmployees ?? response.stats.total ?? 0;
+        const totalAct = response.stats.totalActive ?? response.stats.active ?? 0;
+        const totalInact = response.stats.totalInactive !== undefined 
+          ? response.stats.totalInactive 
+          : Math.max(0, totalEmp - totalAct);
+
+        setOverviewStats({
+          total: totalEmp,
+          active: totalAct,
+          inactive: totalInact,
+          managers: response.stats.totalBranchManagers ?? response.stats.managers ?? 0,
+          softDeleted: response.stats.totalSoftDeleted ?? 0,
+          genderRatio: response.stats.genderRatio || null,
+          newHiresThisMonth: response.stats.newHiresThisMonth ?? 0,
+          upcomingBirthdaysThisMonth: response.stats.upcomingBirthdaysThisMonth ?? 0,
+          departmentWise: response.stats.departmentWise || null,
+          totalMonthlySalaryBudget: response.stats.totalMonthlySalaryBudget ?? 0,
+          averageSalary: response.stats.averageSalary ?? 0
+        });
+      }
+    } catch (err) {
+      console.warn("Failed to fetch global employee stats:", err);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchGlobalStats();
+  }, [fetchGlobalStats]);
+
+  // Fetch Paginated / Filtered Employees from Backend API
   const fetchEmployees = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -221,9 +263,9 @@ const Employees = () => {
       const isFilterDeletedOnly = activeStatCard === "DELETED" || selectedStatus === "DELETED";
 
       const params = {
-        page,
-        limit,
-        includeBranchManagers,
+        page: (activeStatCard === "MANAGERS" || activeStatCard === "DELETED") ? 1 : page,
+        limit: (activeStatCard === "MANAGERS" || activeStatCard === "DELETED") ? 50 : limit,
+        includeBranchManagers: true,
         includeStats: true,
       };
 
@@ -232,72 +274,50 @@ const Employees = () => {
         params.branchId = selectedBranchId;
       }
 
-      if (selectedRoleId) params.roleId = selectedRoleId;
+      if (selectedRoleId && selectedRoleId !== "BRANCH_MANAGER") {
+        params.roleId = selectedRoleId;
+      }
       if (selectedState) params.state = selectedState;
       if (selectedCity) params.city = selectedCity;
 
-      // Handle Deleted and Status filtering precisely according to API specification:
+      // Handle Deleted and Status filtering precisely
       if (isFilterDeletedOnly) {
-        // Exclusively soft-deleted records (Restricted to Bank Owner / Super Admin & Branch Manager)
         params.isDeleted = true;
         params.status = "DELETED";
+        params.includeDeleted = true;
       } else if (includeDeleted || selectedStatus === "ALL") {
-        // Includes both active and deleted records combined
         params.includeDeleted = true;
         if (selectedStatus === "ALL") {
           params.status = "ALL";
         }
       } else if (activeStatCard === "ACTIVE" || selectedStatus === "ACTIVE") {
         params.status = "ACTIVE";
-      } else if (activeStatCard === "INACTIVE" || selectedStatus === "INACTIVE") {
-        params.status = "INACTIVE";
       } else if (selectedStatus) {
         params.status = selectedStatus.toUpperCase();
       }
 
-      // If Branch Managers stat card is active
-      if (activeStatCard === "MANAGERS") {
-        params.includeBranchManagers = true;
-        const managerRole = roleOptions.find(
-          (r) => r.code === "BRANCH_MANAGER" || r.name?.toLowerCase().includes("manager")
-        );
-        if (managerRole?.id) {
-          params.roleId = managerRole.id;
-        }
-      }
-
       const response = await employeeService.list(params);
       if (response && response.success) {
-        // Bind Backend Stats directly
-        if (response.stats) {
-          setOverviewStats(prev => ({
-            ...prev,
-            total: response.stats.totalEmployees ?? response.stats.total ?? prev.total,
-            active: response.stats.totalActive ?? response.stats.active ?? prev.active,
-            inactive: response.stats.totalInactive ?? response.stats.inactive ?? prev.inactive,
-            managers: response.stats.totalBranchManagers ?? response.stats.managers ?? prev.managers,
-            softDeleted: response.stats.totalSoftDeleted ?? prev.softDeleted ?? 0,
-            genderRatio: response.stats.genderRatio || null,
-            newHiresThisMonth: response.stats.newHiresThisMonth ?? 0,
-            upcomingBirthdaysThisMonth: response.stats.upcomingBirthdaysThisMonth ?? 0,
-            departmentWise: response.stats.departmentWise || null,
-            totalMonthlySalaryBudget: response.stats.totalMonthlySalaryBudget ?? 0,
-            averageSalary: response.stats.averageSalary ?? 0
-          }));
-        }
-
         let listData = Array.isArray(response.data)
           ? response.data
           : response.data?.items || response.data?.employees || response.items || [];
 
-        // If filtering by managers card and backend didn't narrow it, filter client-side
-        if (activeStatCard === "MANAGERS" && !params.roleId) {
-          listData = listData.filter(
-            (e) =>
-              e.type === "MANAGER" ||
-              e.role?.code === "BRANCH_MANAGER" ||
-              (e.designation && e.designation.toLowerCase().includes("manager"))
+        // Client-side filtering fallback to guarantee proper rendering on UI
+        if (activeStatCard === "ACTIVE" || selectedStatus === "ACTIVE") {
+          listData = listData.filter(e => !e.isDeleted && !e.deletedAt && (e.status || "ACTIVE").toUpperCase() === "ACTIVE");
+        } else if (activeStatCard === "MANAGERS" || selectedRoleId === "BRANCH_MANAGER") {
+          listData = listData.filter(e =>
+            e.type === "BRANCH_MANAGER" ||
+            e.type === "MANAGER" ||
+            e.isBranchManager ||
+            e.role?.code === "BRANCH_MANAGER" ||
+            e.role?.code === "MANAGER" ||
+            (e.designation && e.designation.toLowerCase().includes("manager")) ||
+            (e.role?.name && e.role.name.toLowerCase().includes("manager"))
           );
+        } else if (activeStatCard === "DELETED" || selectedStatus === "DELETED") {
+          // Backend has already filtered the soft-deleted records. Do not drop records that have status 'INACTIVE'.
+          listData = listData.filter(e => e.isDeleted || e.deletedAt || e.status === "DELETED" || e.status === "INACTIVE" || Boolean(activeStatCard === "DELETED"));
         }
 
         setEmployees(listData);
@@ -309,14 +329,22 @@ const Employees = () => {
           response.data?.pagination ||
           {};
 
-        setTotalPages(meta.totalPages || Math.ceil(listData.length / limit) || 1);
-        setTotalRecords(meta.totalRecords || listData.length);
+        const effectiveTotal = (activeStatCard === "MANAGERS" || activeStatCard === "DELETED")
+          ? listData.length
+          : (meta.totalRecords || listData.length);
+
+        setTotalPages(Math.max(1, Math.ceil(effectiveTotal / limit)));
+        setTotalRecords(effectiveTotal);
       } else {
         setEmployees([]);
       }
     } catch (err) {
       console.error("Failed to fetch employees:", err);
-      setError("Failed to load employees list.");
+      if (err.response?.status === 502) {
+        setError("Backend server is temporarily unreachable (502 Bad Gateway). Please try again shortly.");
+      } else {
+        setError("Failed to load employees list.");
+      }
     } finally {
       setLoading(false);
     }
@@ -366,6 +394,7 @@ const Employees = () => {
       setIsDeleteModalOpen(false);
       setEmployeeToDelete(null);
       fetchEmployees();
+      fetchGlobalStats();
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to deactivate employee");
     } finally {
@@ -383,6 +412,7 @@ const Employees = () => {
       setIsRestoreModalOpen(false);
       setEmployeeToRestore(null);
       fetchEmployees();
+      fetchGlobalStats();
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to restore employee");
     } finally {
@@ -404,6 +434,7 @@ const Employees = () => {
       setIsPermanentDeleteModalOpen(false);
       setEmployeeToPermanentDelete(null);
       fetchEmployees();
+      fetchGlobalStats();
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to permanently delete employee");
     } finally {
@@ -471,6 +502,8 @@ const Employees = () => {
           { label: "HR Management" },
           { label: "Employees" }
         ]}
+        showBack={false}
+        backUrl="/dashboard"
       >
         <Link
           to="/employees/create"
@@ -479,7 +512,6 @@ const Employees = () => {
           + Add Staff
         </Link>
       </PageHeader>
-
       {/* Top Stats Cards Grid (4 Cards: Total, Active, Managers, Soft-Deleted) */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-3.5">
         {/* 1. Total Staff Card */}
@@ -488,79 +520,98 @@ const Employees = () => {
             setActiveStatCard("ALL");
             setSelectedStatus("");
             setSelectedRoleId("");
+            setIncludeDeleted(false);
             setPage(1);
           }}
-          className={`bg-white rounded-xl p-4 border shadow-xs flex flex-col items-center justify-center cursor-pointer transition-all hover:shadow-md ${
+          className={`bg-white rounded-xl p-4 border shadow-xs flex flex-col justify-between cursor-pointer transition-all hover:shadow-md ${
             activeStatCard === "ALL" && !selectedStatus && !selectedRoleId
-              ? "border-[#225091] ring-2 ring-[#225091]/10 bg-blue-50/20"
+              ? "border-[#225091] ring-2 ring-[#225091]/15 bg-blue-50/20 shadow-sm"
               : "border-gray-100 hover:border-gray-200"
           }`}
         >
-          <div className="flex items-center gap-2 text-[#225091] mb-1">
-            <Users size={18} />
-            <span className="text-[24px] font-bold leading-none">
-              {overviewStats.total}
+          <div className="flex items-center justify-between w-full mb-2">
+            <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">
+              Total Staff
             </span>
+            <div className="w-7 h-7 rounded-lg bg-blue-50 text-[#225091] flex items-center justify-center shrink-0">
+              <Users size={16} />
+            </div>
           </div>
-          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider text-center">
-            Total Staff
-          </span>
+          <div className="text-[26px] font-extrabold text-gray-900 leading-none">
+            {overviewStats.total}
+          </div>
         </div>
 
         {/* 2. Active Staff Card */}
         <div
           onClick={() => {
-            setActiveStatCard(activeStatCard === "ACTIVE" ? "ALL" : "ACTIVE");
-            setSelectedStatus("");
+            if (activeStatCard === "ACTIVE") {
+              setActiveStatCard("ALL");
+              setSelectedStatus("");
+            } else {
+              setActiveStatCard("ACTIVE");
+              setSelectedStatus("ACTIVE");
+              setIncludeDeleted(false);
+            }
             setPage(1);
           }}
-          className={`bg-white rounded-xl p-4 border shadow-xs flex flex-col items-center justify-center cursor-pointer transition-all hover:shadow-md ${
+          className={`bg-white rounded-xl p-4 border shadow-xs flex flex-col justify-between cursor-pointer transition-all hover:shadow-md ${
             activeStatCard === "ACTIVE"
-              ? "border-emerald-500 ring-2 ring-emerald-500/10 bg-emerald-50/20"
+              ? "border-emerald-500 ring-2 ring-emerald-500/15 bg-emerald-50/20 shadow-sm"
               : "border-gray-100 hover:border-gray-200"
           }`}
         >
-          <div className="flex items-center gap-2 text-emerald-600 mb-1">
-            <UserCheck size={18} />
-            <span className="text-[24px] font-bold leading-none">
-              {overviewStats.active}
+          <div className="flex items-center justify-between w-full mb-2">
+            <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">
+              Active Staff
             </span>
+            <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+              <UserCheck size={16} />
+            </div>
           </div>
-          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider text-center">
-            Active Staff
-          </span>
+          <div className="text-[26px] font-extrabold text-gray-900 leading-none">
+            {overviewStats.active}
+          </div>
         </div>
 
-        {/* 4. Branch Managers Card */}
+        {/* 3. Branch Managers Card */}
         <div
           onClick={() => {
-            setActiveStatCard(activeStatCard === "MANAGERS" ? "ALL" : "MANAGERS");
-            setSelectedRoleId("");
+            if (activeStatCard === "MANAGERS") {
+              setActiveStatCard("ALL");
+              setSelectedRoleId("");
+            } else {
+              setActiveStatCard("MANAGERS");
+              setSelectedRoleId("");
+            }
             setPage(1);
           }}
-          className={`bg-white rounded-xl p-4 border shadow-xs flex flex-col items-center justify-center cursor-pointer transition-all hover:shadow-md ${
+          className={`bg-white rounded-xl p-4 border shadow-xs flex flex-col justify-between cursor-pointer transition-all hover:shadow-md ${
             activeStatCard === "MANAGERS"
-              ? "border-purple-500 ring-2 ring-purple-500/10 bg-purple-50/20"
+              ? "border-purple-500 ring-2 ring-purple-500/15 bg-purple-50/20 shadow-sm"
               : "border-gray-100 hover:border-gray-200"
           }`}
         >
-          <div className="flex items-center gap-2 text-purple-600 mb-1">
-            <UserCog size={18} />
-            <span className="text-[24px] font-bold leading-none">
-              {overviewStats.managers}
+          <div className="flex items-center justify-between w-full mb-2">
+            <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">
+              Branch Managers
             </span>
+            <div className="w-7 h-7 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
+              <UserCog size={16} />
+            </div>
           </div>
-          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider text-center">
-            Branch Managers
-          </span>
+          <div className="text-[26px] font-extrabold text-gray-900 leading-none">
+            {overviewStats.managers}
+          </div>
         </div>
 
-        {/* 5. Soft-Deleted / Archived Staff Card */}
+        {/* 4. Soft-Deleted / Archived Staff Card */}
         <div
           onClick={() => {
             if (activeStatCard === "DELETED") {
               setActiveStatCard("ALL");
               setSelectedStatus("");
+              setIncludeDeleted(false);
             } else {
               setActiveStatCard("DELETED");
               setSelectedStatus("DELETED");
@@ -568,21 +619,23 @@ const Employees = () => {
             }
             setPage(1);
           }}
-          className={`bg-white rounded-xl p-4 border shadow-xs flex flex-col items-center justify-center cursor-pointer transition-all hover:shadow-md ${
+          className={`bg-white rounded-xl p-4 border shadow-xs flex flex-col justify-between cursor-pointer transition-all hover:shadow-md ${
             activeStatCard === "DELETED" || selectedStatus === "DELETED"
-              ? "border-rose-500 ring-2 ring-rose-500/10 bg-rose-50/20"
+              ? "border-rose-500 ring-2 ring-rose-500/15 bg-rose-50/20 shadow-sm"
               : "border-gray-100 hover:border-gray-200"
           }`}
         >
-          <div className="flex items-center gap-2 text-rose-600 mb-1">
-            <Archive size={18} />
-            <span className="text-[24px] font-bold leading-none">
-              {overviewStats.softDeleted}
+          <div className="flex items-center justify-between w-full mb-2">
+            <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">
+              Soft-Deleted
             </span>
+            <div className="w-7 h-7 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
+              <Archive size={16} />
+            </div>
           </div>
-          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider text-center">
-            Soft-Deleted
-          </span>
+          <div className="text-[26px] font-extrabold text-gray-900 leading-none">
+            {overviewStats.softDeleted}
+          </div>
         </div>
       </div>
 
@@ -664,8 +717,21 @@ const Employees = () => {
               onChange={(e) => {
                 const val = e.target.value;
                 setSelectedStatus(val);
-                if (val === "DELETED") {
+                if (val === "ACTIVE") {
+                  setActiveStatCard("ACTIVE");
+                  setIncludeDeleted(false);
+                } else if (val === "INACTIVE") {
+                  setActiveStatCard("INACTIVE");
+                  setIncludeDeleted(false);
+                } else if (val === "DELETED") {
+                  setActiveStatCard("DELETED");
                   setIncludeDeleted(true);
+                } else if (val === "ALL") {
+                  setActiveStatCard("ALL");
+                  setIncludeDeleted(true);
+                } else {
+                  setActiveStatCard("ALL");
+                  setIncludeDeleted(false);
                 }
                 setPage(1);
               }}
@@ -793,7 +859,7 @@ const Employees = () => {
       {/* Main Employees Table */}
       <div className="bg-white rounded-xl shadow-xs border border-gray-100 overflow-hidden flex flex-col">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse min-w-[880px]">
+          <table ref={tableRef} className="w-full text-left border-collapse min-w-[880px]">
             <thead className="bg-[#F8FAFC] text-gray-600 text-xs uppercase tracking-wider font-semibold border-b border-gray-200/80">
               <tr>
                 <th className="py-3.5 px-5 font-semibold">Sr.No.</th>
@@ -926,7 +992,7 @@ const Employees = () => {
                         <span className="text-gray-800 font-mono font-semibold text-xs bg-gray-100 px-2 py-0.5 rounded border border-gray-200">
                           {formatEmpCode(row.employeeCode || row.employeeId, row.id)}
                         </span>
-                        {row.type === "MANAGER" || row.role?.code === "BRANCH_MANAGER" ? (
+                        {row.type === "BRANCH_MANAGER" || row.type === "MANAGER" || row.role?.code === "BRANCH_MANAGER" || row.role?.code === "MANAGER" ? (
                           <div className="text-[10px] bg-purple-50 border border-purple-200/60 text-purple-700 font-semibold px-2 py-0.5 rounded-full inline-block mt-1">
                             Branch Manager
                           </div>
