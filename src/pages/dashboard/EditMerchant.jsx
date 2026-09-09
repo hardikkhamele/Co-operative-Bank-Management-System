@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ChevronDown, UploadCloud, CheckCircle2, Eye, EyeOff, X, AlertCircle } from 'lucide-react';
+import { Link, useNavigate, useParams, useLocation } from 'react-router-dom';
+import { ChevronDown, UploadCloud, CheckCircle2, Eye, EyeOff, X, AlertCircle, Landmark } from 'lucide-react';
 import { toast } from 'react-toastify';
 import PageHeader from '../../components/common/PageHeader';
 import { SkeletonForm } from '../../components/common/Skeleton';
@@ -112,7 +112,15 @@ const EditMerchant = () => {
     panNumber: '',
     gstinNumber: '',
     password: '',
-    status: 'ACTIVE'
+    status: 'ACTIVE',
+    bankDetails: {
+      accountHolderName: '',
+      accountNumber: '',
+      ifscCode: '',
+      bankName: '',
+      branchName: '',
+      accountType: 'CURRENT'
+    }
   });
 
   const [errors, setErrors] = useState({});
@@ -143,6 +151,39 @@ const EditMerchant = () => {
     fetchBranches();
   }, []);
 
+  const location = useLocation();
+  const passedMerchant = location.state?.merchant || null;
+
+  useEffect(() => {
+    if (passedMerchant) {
+      setMerchant(passedMerchant);
+      const bd = passedMerchant.bankDetails || {};
+      const defaultOwner = passedMerchant.ownerName || passedMerchant.shopOwnerName || '';
+
+      setFormData({
+        shopName: passedMerchant.shopName || '',
+        ownerName: defaultOwner,
+        email: passedMerchant.email || '',
+        phoneNumber: passedMerchant.phoneNumber || passedMerchant.phone || '',
+        branchId: passedMerchant.branchId?._id || passedMerchant.branchId?.id || passedMerchant.branchId || '',
+        aadhaarNumber: passedMerchant.aadhaarNumber || passedMerchant.ownerAadharNumber || '',
+        panNumber: passedMerchant.panNumber || passedMerchant.ownerPanNumber || '',
+        gstinNumber: passedMerchant.gstinNumber || passedMerchant.gstin || '',
+        password: '',
+        status: passedMerchant.status || 'ACTIVE',
+        bankDetails: {
+          accountHolderName: bd.accountHolderName || '',
+          accountNumber: bd.accountNumber || '',
+          ifscCode: bd.ifscCode || '',
+          bankName: bd.bankName || '',
+          branchName: bd.branchName || '',
+          accountType: bd.accountType || 'CURRENT'
+        }
+      });
+      setIsLoading(false);
+    }
+  }, [passedMerchant]);
+
   useEffect(() => {
     const fetchMerchant = async () => {
       try {
@@ -150,9 +191,12 @@ const EditMerchant = () => {
         const data = response?.data || response;
         if (response && (response.success || data)) {
           setMerchant(data);
+          const bd = data.bankDetails || {};
+          const defaultOwner = data.ownerName || data.shopOwnerName || '';
+
           setFormData({
             shopName: data.shopName || '',
-            ownerName: data.ownerName || data.shopOwnerName || '',
+            ownerName: defaultOwner,
             email: data.email || '',
             phoneNumber: data.phoneNumber || data.phone || '',
             branchId: data.branchId?._id || data.branchId?.id || data.branchId || '',
@@ -160,16 +204,26 @@ const EditMerchant = () => {
             panNumber: data.panNumber || data.ownerPanNumber || '',
             gstinNumber: data.gstinNumber || data.gstin || '',
             password: '',
-            status: data.status || 'ACTIVE'
+            status: data.status || 'ACTIVE',
+            bankDetails: {
+              accountHolderName: bd.accountHolderName || '',
+              accountNumber: bd.accountNumber || '',
+              ifscCode: bd.ifscCode || '',
+              bankName: bd.bankName || '',
+              branchName: bd.branchName || '',
+              accountType: bd.accountType || 'CURRENT'
+            }
           });
-        } else {
+        } else if (!passedMerchant) {
           toast.error("Failed to load merchant details.");
           navigate('/merchant');
         }
       } catch (error) {
         console.error("Fetch merchant details failed", error);
-        toast.error("Error loading merchant details.");
-        navigate('/merchant');
+        if (!passedMerchant) {
+          toast.error("Error loading merchant details.");
+          navigate('/merchant');
+        }
       } finally {
         setIsLoading(false);
       }
@@ -178,7 +232,7 @@ const EditMerchant = () => {
     if (id) {
       fetchMerchant();
     }
-  }, [id, navigate]);
+  }, [id, navigate, passedMerchant]);
 
   const validateField = (field, value) => {
     switch (field) {
@@ -236,6 +290,32 @@ const EditMerchant = () => {
     }
   };
 
+  const validateBankField = (field, value) => {
+    const val = (value || '').trim();
+    switch (field) {
+      case 'accountNumber':
+        if (val && (val.length < 6 || val.length > 25)) {
+          return 'Account number must be between 6 and 25 digits.';
+        }
+        if (val && !/^[A-Za-z0-9\-\/]+$/.test(val)) {
+          return 'Account number can only contain letters, numbers, and hyphens.';
+        }
+        return null;
+      case 'ifscCode':
+        if (val && !/^[A-Z]{4}0[A-Z0-9]{6}$/.test(val.toUpperCase())) {
+          return 'Invalid IFSC format (e.g. SBIN0001234, PUNB0123400).';
+        }
+        return null;
+      case 'accountHolderName':
+        if (val && val.length < 2) {
+          return 'Account holder name must be at least 2 characters.';
+        }
+        return null;
+      default:
+        return null;
+    }
+  };
+
   const validateAll = () => {
     const fieldsToValidate = ['shopName', 'ownerName', 'email', 'phoneNumber', 'aadhaarNumber', 'panNumber', 'gstinNumber', 'password'];
     const newErrors = {};
@@ -246,6 +326,25 @@ const EditMerchant = () => {
         newErrors[field] = err;
       }
     });
+
+    // Validate bank details if any bank field is filled
+    const bd = formData.bankDetails || {};
+    const hasAnyBankData = Boolean(
+      (bd.accountHolderName && bd.accountHolderName.trim()) ||
+      (bd.accountNumber && bd.accountNumber.trim()) ||
+      (bd.ifscCode && bd.ifscCode.trim()) ||
+      (bd.bankName && bd.bankName.trim()) ||
+      (bd.branchName && bd.branchName.trim())
+    );
+
+    if (hasAnyBankData) {
+      ['accountHolderName', 'accountNumber', 'ifscCode'].forEach(field => {
+        const err = validateBankField(field, bd[field]);
+        if (err) {
+          newErrors[`bankDetails.${field}`] = err;
+        }
+      });
+    }
 
     setErrors(newErrors);
     return newErrors;
@@ -268,6 +367,24 @@ const EditMerchant = () => {
     }
   };
 
+  const handleBankDetailsChange = (field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      bankDetails: {
+        ...prev.bankDetails,
+        [field]: value
+      }
+    }));
+
+    if (errors[`bankDetails.${field}`]) {
+      setErrors(prev => {
+        const updated = { ...prev };
+        delete updated[`bankDetails.${field}`];
+        return updated;
+      });
+    }
+  };
+
   const handleBlur = (field) => {
     setTouched(prev => ({ ...prev, [field]: true }));
     const err = validateField(field, formData[field]);
@@ -277,6 +394,20 @@ const EditMerchant = () => {
         updated[field] = err;
       } else {
         delete updated[field];
+      }
+      return updated;
+    });
+  };
+
+  const handleBankDetailsBlur = (field) => {
+    setTouched(prev => ({ ...prev, [`bankDetails.${field}`]: true }));
+    const err = validateBankField(field, formData.bankDetails?.[field]);
+    setErrors(prev => {
+      const updated = { ...prev };
+      if (err) {
+        updated[`bankDetails.${field}`] = err;
+      } else {
+        delete updated[`bankDetails.${field}`];
       }
       return updated;
     });
@@ -326,7 +457,13 @@ const EditMerchant = () => {
       aadhaarNumber: true,
       panNumber: true,
       gstinNumber: true,
-      password: true
+      password: true,
+      'bankDetails.accountHolderName': true,
+      'bankDetails.accountNumber': true,
+      'bankDetails.ifscCode': true,
+      'bankDetails.bankName': true,
+      'bankDetails.branchName': true,
+      'bankDetails.accountType': true
     });
 
     const validationErrors = validateAll();
@@ -343,6 +480,16 @@ const EditMerchant = () => {
     }
 
     setIsSubmitting(true);
+
+    const bd = formData.bankDetails || {};
+    const bankDetailsObj = {
+      accountHolderName: (bd.accountHolderName || '').trim(),
+      accountNumber: (bd.accountNumber || '').trim(),
+      ifscCode: (bd.ifscCode || '').trim().toUpperCase(),
+      bankName: (bd.bankName || '').trim(),
+      branchName: (bd.branchName || '').trim(),
+      accountType: bd.accountType || 'CURRENT'
+    };
 
     const submitFormData = new FormData();
     submitFormData.append('shopName', formData.shopName.trim());
@@ -366,6 +513,15 @@ const EditMerchant = () => {
     if (formData.password.trim()) {
       submitFormData.append('password', formData.password.trim());
     }
+
+    // Append bankDetails bracket notation and JSON string
+    submitFormData.append('bankDetails[accountHolderName]', bankDetailsObj.accountHolderName);
+    submitFormData.append('bankDetails[accountNumber]', bankDetailsObj.accountNumber);
+    submitFormData.append('bankDetails[ifscCode]', bankDetailsObj.ifscCode);
+    submitFormData.append('bankDetails[bankName]', bankDetailsObj.bankName);
+    submitFormData.append('bankDetails[branchName]', bankDetailsObj.branchName);
+    submitFormData.append('bankDetails[accountType]', bankDetailsObj.accountType);
+    submitFormData.append('bankDetails', JSON.stringify(bankDetailsObj));
 
     // Append newly selected files
     const fileKeys = ['ownerAadhaar', 'ownerPan', 'shopRegistrationCertificate', 'gstCertificate'];
@@ -731,6 +887,147 @@ const EditMerchant = () => {
                 initialFileUrl={merchant.documents?.gstCertificate?.url}
                 error={fileErrors.gstCertificate}
               />
+            </div>
+          </div>
+
+          {/* Bank Details */}
+          <div className="mt-10 pt-8 border-t border-gray-100">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-xl bg-[#225091]/10 text-[#225091] flex items-center justify-center shrink-0">
+                <Landmark size={20} />
+              </div>
+              <div>
+                <h2 className="text-[22px] font-bold text-[#1b2559]">Bank Details</h2>
+                <p className="text-xs text-gray-500 mt-0.5">Settlement and account details for payouts and transactions</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-8">
+              {/* Account Holder Name */}
+              <div>
+                <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">
+                  Account Holder Name
+                </label>
+                <input 
+                  type="text" 
+                  name="accountHolderName" 
+                  value={formData.bankDetails?.accountHolderName || ''}
+                  onChange={(e) => handleBankDetailsChange('accountHolderName', e.target.value)}
+                  onBlur={() => handleBankDetailsBlur('accountHolderName')}
+                  placeholder="e.g. SHAMSUDDIN ANSARI ANEESUDDIN ANSARI" 
+                  className={`w-full px-4 py-3.5 rounded-xl border transition-all bg-white shadow-sm text-[15px] outline-none ${
+                    errors['bankDetails.accountHolderName'] && touched['bankDetails.accountHolderName']
+                      ? 'border-rose-400 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20' 
+                      : 'border-gray-200 focus:border-[#225091] focus:ring-2 focus:ring-[#225091]/20'
+                  }`} 
+                />
+                {errors['bankDetails.accountHolderName'] && touched['bankDetails.accountHolderName'] && (
+                  <p className="flex items-center gap-1 text-xs text-rose-500 font-medium mt-1.5">
+                    <AlertCircle size={14} /> {errors['bankDetails.accountHolderName']}
+                  </p>
+                )}
+              </div>
+
+              {/* Account Number */}
+              <div>
+                <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">
+                  Account Number
+                </label>
+                <input 
+                  type="text" 
+                  name="accountNumber" 
+                  value={formData.bankDetails?.accountNumber || ''}
+                  onChange={(e) => handleBankDetailsChange('accountNumber', e.target.value)}
+                  onBlur={() => handleBankDetailsBlur('accountNumber')}
+                  placeholder="Enter bank account number" 
+                  className={`w-full px-4 py-3.5 rounded-xl border font-mono transition-all bg-white shadow-sm text-[15px] outline-none ${
+                    errors['bankDetails.accountNumber'] && touched['bankDetails.accountNumber']
+                      ? 'border-rose-400 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20' 
+                      : 'border-gray-200 focus:border-[#225091] focus:ring-2 focus:ring-[#225091]/20'
+                  }`} 
+                />
+                {errors['bankDetails.accountNumber'] && touched['bankDetails.accountNumber'] && (
+                  <p className="flex items-center gap-1 text-xs text-rose-500 font-medium mt-1.5">
+                    <AlertCircle size={14} /> {errors['bankDetails.accountNumber']}
+                  </p>
+                )}
+              </div>
+
+              {/* IFSC Code */}
+              <div>
+                <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">
+                  IFSC Code
+                </label>
+                <input 
+                  type="text" 
+                  name="ifscCode" 
+                  value={formData.bankDetails?.ifscCode || ''}
+                  onChange={(e) => handleBankDetailsChange('ifscCode', e.target.value.toUpperCase())}
+                  onBlur={() => handleBankDetailsBlur('ifscCode')}
+                  placeholder="e.g. SBIN0001234 / PUNB0123400" 
+                  className={`w-full px-4 py-3.5 rounded-xl border font-mono uppercase transition-all bg-white shadow-sm text-[15px] outline-none ${
+                    errors['bankDetails.ifscCode'] && touched['bankDetails.ifscCode']
+                      ? 'border-rose-400 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20' 
+                      : 'border-gray-200 focus:border-[#225091] focus:ring-2 focus:ring-[#225091]/20'
+                  }`} 
+                />
+                {errors['bankDetails.ifscCode'] && touched['bankDetails.ifscCode'] && (
+                  <p className="flex items-center gap-1 text-xs text-rose-500 font-medium mt-1.5">
+                    <AlertCircle size={14} /> {errors['bankDetails.ifscCode']}
+                  </p>
+                )}
+              </div>
+
+              {/* Bank Name */}
+              <div>
+                <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">
+                  Bank Name
+                </label>
+                <input 
+                  type="text" 
+                  name="bankName" 
+                  value={formData.bankDetails?.bankName || ''}
+                  onChange={(e) => handleBankDetailsChange('bankName', e.target.value)}
+                  onBlur={() => handleBankDetailsBlur('bankName')}
+                  placeholder="e.g. State Bank of India" 
+                  className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:border-[#225091] focus:ring-2 focus:ring-[#225091]/20 transition-all bg-white shadow-sm text-[15px] outline-none" 
+                />
+              </div>
+
+              {/* Branch Name */}
+              <div>
+                <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">
+                  Branch Name
+                </label>
+                <input 
+                  type="text" 
+                  name="branchName" 
+                  value={formData.bankDetails?.branchName || ''}
+                  onChange={(e) => handleBankDetailsChange('branchName', e.target.value)}
+                  onBlur={() => handleBankDetailsBlur('branchName')}
+                  placeholder="e.g. Main Branch" 
+                  className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:border-[#225091] focus:ring-2 focus:ring-[#225091]/20 transition-all bg-white shadow-sm text-[15px] outline-none" 
+                />
+              </div>
+
+              {/* Account Type */}
+              <div>
+                <label className="block text-[15px] font-semibold text-gray-800 mb-2.5">
+                  Account Type
+                </label>
+                <div className="relative">
+                  <select 
+                    name="accountType" 
+                    value={formData.bankDetails?.accountType || 'CURRENT'}
+                    onChange={(e) => handleBankDetailsChange('accountType', e.target.value)}
+                    className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all bg-white appearance-none text-gray-800 font-semibold shadow-sm text-[15px] cursor-pointer"
+                  >
+                    <option value="CURRENT">CURRENT</option>
+                    <option value="SAVINGS">SAVINGS</option>
+                  </select>
+                  <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
+                </div>
+              </div>
             </div>
           </div>
 

@@ -5,7 +5,7 @@ import {
   ChevronDown, Download, Table, FileSpreadsheet, FileText, Loader2, 
   Store, UserCheck, Archive, RotateCcw,
   CheckCircle2, AlertTriangle, Clock, XCircle, AlertCircle,
-  Mail, Phone, Building2, MapPin
+  Mail, Phone, Building2, MapPin, Landmark, CreditCard, Calendar
 } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { merchantService } from '../../api/merchantService';
@@ -72,6 +72,8 @@ const Merchants = () => {
   const initialBranchId = searchParams.get('branchId') || '';
   const initialState = searchParams.get('state') || '';
   const initialCity = searchParams.get('city') || '';
+  const initialStartDate = searchParams.get('startDate') || searchParams.get('dateFrom') || searchParams.get('fromDate') || '';
+  const initialEndDate = searchParams.get('endDate') || searchParams.get('dateTo') || searchParams.get('toDate') || '';
   const initialPage = parseInt(searchParams.get('page'), 10) || 1;
 
   const initialStatCard = ['ACTIVE', 'DELETED', 'INACTIVE', 'BLOCKED'].includes(initialStatusParam)
@@ -107,6 +109,8 @@ const Merchants = () => {
   const [selectedBranchId, setSelectedBranchId] = useState(initialBranchId);
   const [selectedState, setSelectedState] = useState(initialState);
   const [selectedCity, setSelectedCity] = useState(initialCity);
+  const [startDate, setStartDate] = useState(initialStartDate);
+  const [endDate, setEndDate] = useState(initialEndDate);
   const [includeDeleted, setIncludeDeleted] = useState(initialIncludeDeleted);
 
   // Permissions & Roles Access Control: Bank Owner, Society Admin, Branch Manager
@@ -189,6 +193,8 @@ const Merchants = () => {
     if (selectedBranchId && selectedBranchId !== globalBranchId) params.branchId = selectedBranchId;
     if (selectedState) params.state = selectedState;
     if (selectedCity) params.city = selectedCity;
+    if (startDate) params.startDate = startDate;
+    if (endDate) params.endDate = endDate;
     if (page > 1) params.page = page.toString();
 
     setSearchParams(params, { replace: true });
@@ -201,6 +207,8 @@ const Merchants = () => {
     globalBranchId,
     selectedState,
     selectedCity,
+    startDate,
+    endDate,
     page,
     setSearchParams,
   ]);
@@ -223,6 +231,10 @@ const Merchants = () => {
     }
     const urlApproval = (searchParams.get('approvalStatus') || '').toUpperCase();
     setSelectedApprovalStatus(prev => prev !== urlApproval ? urlApproval : prev);
+    const urlStartDate = searchParams.get('startDate') || searchParams.get('dateFrom') || searchParams.get('fromDate') || '';
+    setStartDate(prev => prev !== urlStartDate ? urlStartDate : prev);
+    const urlEndDate = searchParams.get('endDate') || searchParams.get('dateTo') || searchParams.get('toDate') || '';
+    setEndDate(prev => prev !== urlEndDate ? urlEndDate : prev);
   }, [searchParams]);
 
   useEffect(() => {
@@ -301,6 +313,21 @@ const Merchants = () => {
       if (selectedState && selectedState !== 'ALL') params.state = selectedState;
       if (selectedCity && selectedCity !== 'ALL') params.city = selectedCity;
 
+      // Creation date range filter
+      if (startDate) {
+        params.startDate = startDate;
+        params.dateFrom = startDate;
+        params.fromDate = startDate;
+      }
+      if (endDate) {
+        params.endDate = endDate;
+        params.dateTo = endDate;
+        params.toDate = endDate;
+      }
+      if (startDate && endDate && startDate === endDate) {
+        params.date = startDate;
+      }
+
       const response = await merchantService.list(params);
       if (response && (response.success || response.data || Array.isArray(response))) {
         const payload = response.data || response;
@@ -348,7 +375,7 @@ const Merchants = () => {
     } finally {
       setLoading(false);
     }
-  }, [page, debouncedSearch, selectedStatus, selectedApprovalStatus, includeDeleted, activeStatCard, selectedBranchId, selectedState, selectedCity]);
+  }, [page, debouncedSearch, selectedStatus, selectedApprovalStatus, includeDeleted, activeStatCard, selectedBranchId, selectedState, selectedCity, startDate, endDate]);
 
   useEffect(() => {
     fetchMerchants(page);
@@ -369,12 +396,14 @@ const Merchants = () => {
     setSelectedBranchId(globalBranchId || '');
     setSelectedState('');
     setSelectedCity('');
+    setStartDate('');
+    setEndDate('');
     setIncludeDeleted(false);
     setActiveStatCard('ALL');
     setPage(1);
   };
 
-  const hasActiveFilters = Boolean(debouncedSearch.trim()) || Boolean(selectedStatus) || Boolean(selectedApprovalStatus) || Boolean(selectedBranchId && selectedBranchId !== globalBranchId) || Boolean(selectedState) || Boolean(selectedCity) || includeDeleted || activeStatCard !== 'ALL';
+  const hasActiveFilters = Boolean(debouncedSearch.trim()) || Boolean(selectedStatus) || Boolean(selectedApprovalStatus) || Boolean(selectedBranchId && selectedBranchId !== globalBranchId) || Boolean(selectedState) || Boolean(selectedCity) || Boolean(startDate) || Boolean(endDate) || includeDeleted || activeStatCard !== 'ALL';
 
   // Lifecycle & Approval Action Handlers
   const handleApproveMerchant = async () => {
@@ -693,8 +722,8 @@ const Merchants = () => {
           </div>
         </div>
 
-        {/* Bottom Inline Filter Controls: Status -> Approval -> Branch -> State -> City */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 pt-2 border-t border-gray-100">
+        {/* Bottom Inline Filter Controls: Status -> Approval -> Branch -> State -> City -> From Date -> To Date */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-2.5 pt-2 border-t border-gray-100">
           {/* 1. Account Status Filter */}
           <div className="relative">
             <select
@@ -780,7 +809,7 @@ const Merchants = () => {
             />
           </div>
 
-          {/* 4. City Filter (Connected to State) */}
+          {/* 5. City Filter (Connected to State) */}
           <div>
             <SearchableSelect
               value={selectedCity}
@@ -798,6 +827,46 @@ const Merchants = () => {
               searchPlaceholder="Search city..."
               className="text-xs"
             />
+          </div>
+
+          {/* 6. From Date Filter */}
+          <div className="relative">
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => {
+                setStartDate(e.target.value);
+                setPage(1);
+              }}
+              max={endDate || undefined}
+              title="Filter from creation date"
+              className="w-full px-2.5 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-xs font-medium text-gray-700 shadow-2xs cursor-pointer"
+            />
+            {!startDate && (
+              <span className="absolute right-7 top-1/2 -translate-y-1/2 text-[10px] text-gray-400 pointer-events-none hidden sm:inline">
+                From Date
+              </span>
+            )}
+          </div>
+
+          {/* 7. To Date Filter */}
+          <div className="relative">
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => {
+                setEndDate(e.target.value);
+                setPage(1);
+              }}
+              min={startDate || undefined}
+              title="Filter to creation date"
+              className="w-full px-2.5 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-xs font-medium text-gray-700 shadow-2xs cursor-pointer"
+            />
+            {!endDate && (
+              <span className="absolute right-7 top-1/2 -translate-y-1/2 text-[10px] text-gray-400 pointer-events-none hidden sm:inline">
+                To Date
+              </span>
+            )}
           </div>
         </div>
 
@@ -846,6 +915,24 @@ const Merchants = () => {
                   </button>
                 </span>
               )}
+              {startDate && (
+                <span className="bg-emerald-50 text-emerald-800 border border-emerald-200 px-2.5 py-0.5 rounded-md text-[11px] font-semibold flex items-center gap-1.5 shadow-2xs">
+                  <Calendar size={12} className="text-emerald-700" />
+                  From: {startDate}
+                  <button onClick={() => { setStartDate(''); setPage(1); }} className="hover:text-red-500 cursor-pointer">
+                    <X size={12} />
+                  </button>
+                </span>
+              )}
+              {endDate && (
+                <span className="bg-emerald-50 text-emerald-800 border border-emerald-200 px-2.5 py-0.5 rounded-md text-[11px] font-semibold flex items-center gap-1.5 shadow-2xs">
+                  <Calendar size={12} className="text-emerald-700" />
+                  To: {endDate}
+                  <button onClick={() => { setEndDate(''); setPage(1); }} className="hover:text-red-500 cursor-pointer">
+                    <X size={12} />
+                  </button>
+                </span>
+              )}
               {includeDeleted && (
                 <span className="bg-rose-50 text-rose-700 border border-rose-200 px-2.5 py-0.5 rounded-md text-[11px] font-semibold flex items-center gap-1.5 shadow-2xs">
                   Showing Deleted
@@ -876,7 +963,7 @@ const Merchants = () => {
       {/* Table Card */}
       <div className="bg-white rounded-2xl shadow-2xs border border-gray-200/80 overflow-hidden flex flex-col">
         <TableWrapper minHeight="360px">
-          <table ref={tableRef} className="w-full text-center text-sm whitespace-nowrap min-w-[1100px]">
+          <table ref={tableRef} className="w-full text-center text-sm whitespace-nowrap min-w-[1550px]">
             <thead>
               <tr className="bg-[#225091] border-b border-[#225091]">
                 <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center w-16">Sr No</th>
@@ -884,9 +971,11 @@ const Merchants = () => {
                 <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center min-w-[180px]">Owner Name</th>
                 <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center min-w-[200px]">Contact Info</th>
                 <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center min-w-[190px]">Branch & Location</th>
+                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center min-w-[210px]">Bank Details</th>
+                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center min-w-[210px]">Society Details</th>
                 <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center min-w-[130px]">Approval</th>
                 <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center min-w-[110px]">Status</th>
-                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider text-center min-w-[220px]">Actions</th>
+                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider text-center min-w-[260px]">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -915,7 +1004,21 @@ const Merchants = () => {
                     <td className="py-4 px-5">
                       <div className="space-y-1.5">
                         <Skeleton className="h-3.5 w-28 rounded" />
+                        <Skeleton className="h-3.5 w-20 rounded" />
+                      </div>
+                    </td>
+                    {/* Bank Details Skeleton */}
+                    <td className="py-4 px-5">
+                      <div className="space-y-1.5">
+                        <Skeleton className="h-4 w-28 rounded" />
                         <Skeleton className="h-3 w-20 rounded" />
+                      </div>
+                    </td>
+                    {/* Society Details Skeleton */}
+                    <td className="py-4 px-5">
+                      <div className="space-y-1.5">
+                        <Skeleton className="h-4 w-32 rounded" />
+                        <Skeleton className="h-3 w-24 rounded" />
                       </div>
                     </td>
                     <td className="py-4 px-5 text-center"><Skeleton className="h-4 w-16 mx-auto rounded" /></td>
@@ -1041,8 +1144,117 @@ const Merchants = () => {
                           ) : null}
                         </div>
                       </td>
+
+                      {/* 6. Bank Details */}
+                      <td className="py-3.5 px-5 text-left">
+                        {(() => {
+                          const bd = row.bankDetails || {};
+                          const accNo = bd.accountNumber;
+                          const holderName = bd.accountHolderName;
+                          const ifsc = bd.ifscCode;
+                          const bankName = bd.bankName;
+                          const branch = bd.branchName || bd.bankBranchName;
+                          const accType = bd.accountType;
+
+                          if (!accNo && !holderName && !ifsc && !bankName) {
+                            return (
+                              <span className="text-[11px] text-gray-400 italic">
+                                —
+                              </span>
+                            );
+                          }
+
+                          return (
+                            <div className="flex flex-col gap-1 text-xs">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                {accNo ? (
+                                  <span 
+                                    className="inline-flex items-center gap-1 text-[11px] font-mono font-bold text-gray-900 bg-gray-100 border border-gray-200 px-1.5 py-0.5 rounded shadow-2xs"
+                                    title={`Bank A/C: ${accNo}`}
+                                  >
+                                    <CreditCard size={11} className="text-gray-500 shrink-0" />
+                                    {accNo}
+                                  </span>
+                                ) : (
+                                  <span className="text-[10px] text-gray-400 italic bg-gray-50 px-1.5 py-0.5 rounded border border-gray-100">
+                                    No A/C No.
+                                  </span>
+                                )}
+
+                                {accType && (
+                                  <span className="text-[9.5px] font-bold text-blue-700 bg-blue-50 border border-blue-200/70 px-1.5 py-0.2 rounded uppercase">
+                                    {accType}
+                                  </span>
+                                )}
+                              </div>
+
+                              {holderName && (
+                                <span className="text-[11px] text-gray-700 font-medium truncate max-w-[190px]" title={`Holder: ${holderName}`}>
+                                  {holderName}
+                                </span>
+                              )}
+
+                              {(bankName || branch || ifsc) && (
+                                <span className="text-[10px] text-gray-500 truncate max-w-[190px]" title={`${bankName || ''} ${branch ? `• ${branch}` : ''} ${ifsc ? `(${ifsc})` : ''}`}>
+                                  {bankName || branch || ''}
+                                  {ifsc ? <span className="font-mono text-gray-400 ml-1 font-normal">({ifsc})</span> : null}
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })()}
+                      </td>
+
+                      {/* 7. Society Details */}
+                      <td className="py-3.5 px-5 text-left">
+                        {(() => {
+                          const sa = row.societyAccount || {};
+                          const socAccNo = sa.societyAccountNumber || sa.accountNumber || row.societyAccountNumber;
+                          const holderName = sa.accountHolderName;
+                          const ifsc = sa.ifscCode;
+                          const branch = sa.bankBranchName || sa.branchName;
+
+                          if (!socAccNo && !holderName && !ifsc) {
+                            return (
+                              <span className="inline-flex items-center gap-1 text-[10.5px] font-medium text-amber-700 bg-amber-50 border border-amber-200/80 px-2 py-0.5 rounded-md">
+                                <AlertTriangle size={11} className="text-amber-500 shrink-0" />
+                                Not Linked
+                              </span>
+                            );
+                          }
+
+                          return (
+                            <div className="flex flex-col gap-1 text-xs">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                {socAccNo ? (
+                                  <span 
+                                    className="inline-flex items-center gap-1 text-[11px] font-mono font-bold text-[#225091] bg-blue-50 border border-blue-200/80 px-1.5 py-0.5 rounded shadow-2xs"
+                                    title={`Society A/C: ${socAccNo}`}
+                                  >
+                                    <Landmark size={11} className="text-[#225091] shrink-0" />
+                                    {socAccNo}
+                                  </span>
+                                ) : null}
+                              </div>
+
+                              {holderName && (
+                                <span className="text-[11px] text-gray-700 font-medium truncate max-w-[190px]" title={`Holder: ${holderName}`}>
+                                  {holderName}
+                                </span>
+                              )}
+
+                              {(branch || ifsc) && (
+                                <span className="text-[10px] text-gray-500 truncate max-w-[190px]" title={`${branch ? `Branch: ${branch}` : ''} ${ifsc ? `(${ifsc})` : ''}`}>
+                                  {branch || 'Society Branch'}
+                                  {ifsc ? <span className="font-mono text-gray-400 ml-1 font-normal">({ifsc})</span> : null}
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })()}
+                      </td>
                       
-                      {/* 6. Approval Status */}
+                      {/* 8. Approval Status */}
                       <td className="py-3.5 px-5 text-center whitespace-nowrap">
                         {approvalStatusUpper === 'APPROVED' ? (
                           <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700">
@@ -1090,19 +1302,15 @@ const Merchants = () => {
                       
                       {/* 8. Action */}
                       <td className="py-3.5 px-5">
-                        <div className="flex items-center justify-center gap-1 whitespace-nowrap">
-                          <div className="relative group/tip">
-                            <Link 
-                              to={`/merchant/${rowId}/view`} 
-                              className="p-1.5 rounded-lg text-[#225091] hover:bg-blue-50 transition-colors cursor-pointer"
-                              title="View"
-                            >
-                              <Eye size={17} />
-                            </Link>
-                            <span className="absolute left-1/2 -translate-x-1/2 -top-8 whitespace-nowrap bg-gray-800 text-white text-xs rounded py-1 px-2 hidden group-hover/tip:block pointer-events-none z-50">
-                              View
-                            </span>
-                          </div>
+                        <div className="flex items-center justify-center gap-1.5 whitespace-nowrap">
+                          <Link 
+                            to={`/merchant/${rowId}/view`} 
+                            state={{ merchant: row }}
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-[#225091] bg-blue-50 hover:bg-blue-100 border border-[#225091]/15 transition-all shadow-2xs" 
+                            title="View Merchant Profile"
+                          >
+                            <Eye size={13} /> View
+                          </Link>
 
                           {!isDeleted ? (
                             <>
@@ -1110,105 +1318,76 @@ const Merchants = () => {
                               {canApproveMerchant && (
                                 <>
                                   {approvalStatusUpper !== 'APPROVED' && (
-                                    <div className="relative group/tip">
-                                      <button 
-                                        onClick={() => {
-                                          setMerchantToApprove(row);
-                                          setIsApproveModalOpen(true);
-                                        }} 
-                                        className="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50 transition-colors cursor-pointer"
-                                        title={approvalStatusUpper === 'REJECTED' ? "Re-Approve" : "Approve"}
-                                      >
-                                        <CheckCircle2 size={17} />
-                                      </button>
-                                      <span className="absolute left-1/2 -translate-x-1/2 -top-8 whitespace-nowrap bg-gray-800 text-white text-xs rounded py-1 px-2 hidden group-hover/tip:block pointer-events-none z-50">
-                                        {approvalStatusUpper === 'REJECTED' ? 'Re-Approve' : 'Approve'}
-                                      </span>
-                                    </div>
+                                    <button 
+                                      onClick={() => {
+                                        setMerchantToApprove(row);
+                                        setIsApproveModalOpen(true);
+                                      }} 
+                                      className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/60 transition-all shadow-2xs cursor-pointer" 
+                                      title={approvalStatusUpper === 'REJECTED' ? "Re-Approve Onboarding" : "Approve Merchant Onboarding"}
+                                    >
+                                      <CheckCircle2 size={13} /> {approvalStatusUpper === 'REJECTED' ? 'Re-Approve' : 'Approve'}
+                                    </button>
                                   )}
 
                                   {approvalStatusUpper !== 'REJECTED' && (
-                                    <div className="relative group/tip">
-                                      <button 
-                                        onClick={() => {
-                                          setMerchantToReject(row);
-                                          setRejectionReason('');
-                                          setRejectReasonError('');
-                                          setIsRejectModalOpen(true);
-                                        }} 
-                                        className="p-1.5 rounded-lg text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
-                                        title="Reject"
-                                      >
-                                        <XCircle size={17} />
-                                      </button>
-                                      <span className="absolute left-1/2 -translate-x-1/2 -top-8 whitespace-nowrap bg-gray-800 text-white text-xs rounded py-1 px-2 hidden group-hover/tip:block pointer-events-none z-50">
-                                        Reject
-                                      </span>
-                                    </div>
+                                    <button 
+                                      onClick={() => {
+                                        setMerchantToReject(row);
+                                        setRejectionReason('');
+                                        setRejectReasonError('');
+                                        setIsRejectModalOpen(true);
+                                      }} 
+                                      className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200/60 transition-all shadow-2xs cursor-pointer" 
+                                      title="Reject Merchant Onboarding"
+                                    >
+                                      <XCircle size={13} /> Reject
+                                    </button>
                                   )}
                                 </>
                               )}
 
-                              <div className="relative group/tip">
-                                <Link 
-                                  to={`/merchant/${rowId}/edit`} 
-                                  className="p-1.5 rounded-lg text-amber-600 hover:bg-amber-50 transition-colors cursor-pointer"
-                                  title="Edit"
-                                >
-                                  <Edit size={17} />
-                                </Link>
-                                <span className="absolute left-1/2 -translate-x-1/2 -top-8 whitespace-nowrap bg-gray-800 text-white text-xs rounded py-1 px-2 hidden group-hover/tip:block pointer-events-none z-50">
-                                  Edit
-                                </span>
-                              </div>
-                              <div className="relative group/tip">
-                                <button 
-                                  onClick={() => {
-                                    setMerchantToDelete(row);
-                                    setIsDeleteModalOpen(true);
-                                  }} 
-                                  className="p-1.5 rounded-lg text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
-                                  title="Delete"
-                                >
-                                  <Trash2 size={17} />
-                                </button>
-                                <span className="absolute left-1/2 -translate-x-1/2 -top-8 whitespace-nowrap bg-gray-800 text-white text-xs rounded py-1 px-2 hidden group-hover/tip:block pointer-events-none z-50">
-                                  Delete
-                                </span>
-                              </div>
+                              <Link 
+                                to={`/merchant/${rowId}/edit`} 
+                                state={{ merchant: row }}
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200/60 transition-all shadow-2xs" 
+                                title="Edit Merchant"
+                              >
+                                <Edit size={13} /> Edit
+                              </Link>
+                              <button 
+                                onClick={() => {
+                                  setMerchantToDelete(row);
+                                  setIsDeleteModalOpen(true);
+                                }} 
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-rose-600 hover:text-rose-700 hover:bg-rose-50 border border-rose-200/60 hover:border-rose-300 transition-all shadow-2xs cursor-pointer" 
+                                title="Delete Merchant"
+                              >
+                                <Trash2 size={13} /> Delete
+                              </button>
                             </>
                           ) : (
                             <>
-                              <div className="relative group/tip">
-                                <button 
-                                  onClick={() => {
-                                    setMerchantToRestore(row);
-                                    setIsRestoreModalOpen(true);
-                                  }} 
-                                  className="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50 transition-colors cursor-pointer"
-                                  title="Restore"
-                                >
-                                  <RotateCcw size={17} />
-                                </button>
-                                <span className="absolute left-1/2 -translate-x-1/2 -top-8 whitespace-nowrap bg-gray-800 text-white text-xs rounded py-1 px-2 hidden group-hover/tip:block pointer-events-none z-50">
-                                  Restore
-                                </span>
-                              </div>
-                              <div className="relative group/tip">
-                                <button 
-                                  onClick={() => {
-                                    setMerchantToPermanent(row);
-                                    setIsPermanentModalOpen(true);
-                                  }} 
-                                  className="p-1.5 rounded-lg text-red-700 hover:bg-red-50 transition-colors cursor-pointer"
-                                  title="Hard Delete"
-                                >
-                                  <AlertTriangle size={17} />
-                                </button>
-                                <span className="absolute left-1/2 -translate-x-1/2 -top-8 whitespace-nowrap bg-gray-800 text-white text-xs rounded py-1 px-2 hidden group-hover/tip:block pointer-events-none z-50">
-                                  Hard Delete
-                                </span>
-                              </div>
+                              <button 
+                                onClick={() => {
+                                  setMerchantToRestore(row);
+                                  setIsRestoreModalOpen(true);
+                                }} 
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/60 transition-all shadow-2xs cursor-pointer" 
+                                title="Restore Merchant Account"
+                              >
+                                <RotateCcw size={13} /> Restore
+                              </button>
+                              <button 
+                                onClick={() => {
+                                  setMerchantToPermanent(row);
+                                  setIsPermanentModalOpen(true);
+                                }} 
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-red-800 bg-red-100 hover:bg-red-200 border border-red-300 transition-all shadow-2xs cursor-pointer" 
+                                title="Permanent Hard Delete"
+                              >
+                                <AlertTriangle size={13} /> Hard Delete
+                              </button>
                             </>
                           )}
                         </div>
