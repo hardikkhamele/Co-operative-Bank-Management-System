@@ -13,13 +13,14 @@ import { branchService } from '../../api/branchService';
 import useBranchStore from '../../store/branchStore';
 import useAuthStore from '../../store/authStore';
 import usePermission from '../../hooks/usePermission';
-import { canApproveMerchantOnboarding, isBankOwner } from '../../utils/roleUtils';
+import { canApproveMerchantOnboarding, canManageMerchantBankDetails, isBankOwner } from '../../utils/roleUtils';
 import PageHeader from '../../components/common/PageHeader';
 import SearchableSelect from '../../components/common/SearchableSelect';
 import { Skeleton } from '../../components/common/Skeleton';
 import TableWrapper from '../../components/common/TableWrapper';
 import StatsCard from '../../components/common/StatsCard';
 import Pagination from '../../components/common/Pagination';
+import LinkMerchantBankModal from '../../components/modals/LinkMerchantBankModal';
 
 // Comprehensive Indian States and Prominent Cities Map for fallback
 const INDIAN_STATES_WITH_CITIES = {
@@ -127,6 +128,10 @@ const Merchants = () => {
     );
   }, [authRole, authUser, authPermissions, hookCanApprove]);
 
+  const canManageBank = useMemo(() => {
+    return canManageMerchantBankDetails(authRole, authUser, authPermissions || []);
+  }, [authRole, authUser, authPermissions]);
+
   const { globalBranchId, branchOptions, fetchBranches } = useBranchStore();
   
   // Locations Data (State and City mapping)
@@ -155,6 +160,10 @@ const Merchants = () => {
   const [merchantToRestore, setMerchantToRestore] = useState(null);
   const [isPermanentModalOpen, setIsPermanentModalOpen] = useState(false);
   const [merchantToPermanent, setMerchantToPermanent] = useState(null);
+
+  // Link Merchant Bank Modal
+  const [isLinkBankModalOpen, setIsLinkBankModalOpen] = useState(false);
+  const [merchantToLinkBank, setMerchantToLinkBank] = useState(null);
 
   // Approval / Rejection Workflow Modals
   const [isApproveModalOpen, setIsApproveModalOpen] = useState(false);
@@ -408,6 +417,25 @@ const Merchants = () => {
   // Lifecycle & Approval Action Handlers
   const handleApproveMerchant = async () => {
     if (!merchantToApprove) return;
+
+    // Verify if society bank account details are linked before approval
+    const hasSocietyAcc = Boolean(
+      merchantToApprove.societyAccount?.societyAccountNumber ||
+      merchantToApprove.societyAccount?.accountNumber ||
+      merchantToApprove.societyAccountNumber ||
+      merchantToApprove.bankDetails?.accountNumber
+    );
+
+    if (!hasSocietyAcc) {
+      toast.warn("Cannot approve Merchant: Society bank account details are missing. Please link account details first.");
+      const m = merchantToApprove;
+      setIsApproveModalOpen(false);
+      setMerchantToApprove(null);
+      setMerchantToLinkBank(m);
+      setIsLinkBankModalOpen(true);
+      return;
+    }
+
     const targetId = merchantToApprove.id || merchantToApprove._id || merchantToApprove.merchantId;
     setActionLoading(true);
     try {
@@ -1216,10 +1244,23 @@ const Merchants = () => {
 
                           if (!socAccNo && !holderName && !ifsc) {
                             return (
-                              <span className="inline-flex items-center gap-1 text-[10.5px] font-medium text-amber-700 bg-amber-50 border border-amber-200/80 px-2 py-0.5 rounded-md">
-                                <AlertTriangle size={11} className="text-amber-500 shrink-0" />
-                                Not Linked
-                              </span>
+                              <div className="inline-flex items-center gap-1.5">
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium">
+                                  <AlertTriangle size={12} className="text-rose-500" /> Missing Link
+                                </span>
+                                {canManageBank && !isDeleted && (
+                                  <button 
+                                    type="button" 
+                                    onClick={() => {
+                                      setMerchantToLinkBank(row);
+                                      setIsLinkBankModalOpen(true);
+                                    }} 
+                                    className="text-xs font-medium text-teal-600 hover:text-teal-800 underline cursor-pointer"
+                                  >
+                                    + Link
+                                  </button>
+                                )}
+                              </div>
                             );
                           }
 
@@ -1345,6 +1386,25 @@ const Merchants = () => {
                                     </button>
                                   )}
                                 </>
+                              )}
+
+                              {/* Link / Update Society Bank Details */}
+                              {canManageBank && (
+                                <button 
+                                  type="button"
+                                  onClick={() => {
+                                    setMerchantToLinkBank(row);
+                                    setIsLinkBankModalOpen(true);
+                                  }} 
+                                  className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-teal-700 bg-teal-50 hover:bg-teal-100 border border-teal-200/60 transition-all shadow-2xs cursor-pointer" 
+                                  title={
+                                    row.societyAccount?.societyAccountNumber || row.societyAccountNumber || row.bankDetails?.accountNumber 
+                                      ? "Update Linked Bank Details" 
+                                      : "Link Society Bank Account"
+                                  }
+                                >
+                                  <Landmark size={13} /> Bank
+                                </button>
                               )}
 
                               <Link 
@@ -1544,6 +1604,46 @@ const Merchants = () => {
             <p className="text-xs text-gray-600 mb-5 leading-relaxed">
               Are you sure you want to approve onboarding for <strong className="text-gray-900 font-bold">{merchantToApprove?.shopName || 'this merchant'}</strong>?
             </p>
+
+            {/* Pre-Approval Bank Account Check Banner */}
+            {(() => {
+              const hasSocAcc = Boolean(
+                merchantToApprove?.societyAccount?.societyAccountNumber ||
+                merchantToApprove?.societyAccount?.accountNumber ||
+                merchantToApprove?.societyAccountNumber ||
+                merchantToApprove?.bankDetails?.accountNumber
+              );
+              if (!hasSocAcc) {
+                return (
+                  <div className="bg-amber-50/90 border border-amber-200 rounded-xl p-3.5 mb-5 text-left text-xs text-amber-900 space-y-2">
+                    <p className="font-semibold flex items-center gap-1.5 text-amber-800">
+                      <AlertTriangle size={15} className="shrink-0 text-amber-600" />
+                      Society Bank Account Missing
+                    </p>
+                    <p className="text-[11px] text-amber-700 leading-relaxed">
+                      This merchant does not have a linked Society Bank Account yet. Please link their internal society bank details before final approval.
+                    </p>
+                    {canManageBank && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const m = merchantToApprove;
+                          setIsApproveModalOpen(false);
+                          setMerchantToApprove(null);
+                          setMerchantToLinkBank(m);
+                          setIsLinkBankModalOpen(true);
+                        }}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white font-semibold rounded-lg text-xs shadow-xs transition-colors cursor-pointer"
+                      >
+                        <Landmark size={13} /> Link Society Bank Account Now
+                      </button>
+                    )}
+                  </div>
+                );
+              }
+              return null;
+            })()}
+
             <div className="bg-emerald-50/70 border border-emerald-100 rounded-xl p-3.5 mb-6 text-left text-xs text-emerald-900 space-y-1.5">
               <p className="font-semibold flex items-center gap-1.5 text-emerald-800">
                 <CheckCircle2 size={14} className="shrink-0" />
@@ -1696,6 +1796,51 @@ const Merchants = () => {
           </div>
         </div>
       )}
+
+      {/* 7. Link / Manage Merchant Bank Modal */}
+      <LinkMerchantBankModal
+        isOpen={isLinkBankModalOpen}
+        merchant={merchantToLinkBank}
+        onClose={() => {
+          setIsLinkBankModalOpen(false);
+          setMerchantToLinkBank(null);
+        }}
+        onSuccess={(targetId, bankPayload) => {
+          // Update merchant in local table state immediately
+          if (targetId && bankPayload) {
+            setMerchants((prev) =>
+              prev.map((m) => {
+                const mid = m.id || m._id || m.merchantId;
+                if (mid === targetId) {
+                  return {
+                    ...m,
+                    bankDetails: {
+                      ...(m.bankDetails || {}),
+                      ...(bankPayload.bankDetails || {}),
+                      accountNumber: bankPayload.accountNumber || bankPayload.societyAccountNumber || m.bankDetails?.accountNumber,
+                      accountHolderName: bankPayload.accountHolderName || m.bankDetails?.accountHolderName,
+                      ifscCode: bankPayload.ifscCode || m.bankDetails?.ifscCode,
+                      bankName: bankPayload.bankName || m.bankDetails?.bankName,
+                      branchName: bankPayload.bankBranchName || bankPayload.branchName || m.bankDetails?.branchName
+                    },
+                    societyAccount: {
+                      ...(m.societyAccount || {}),
+                      ...(bankPayload.societyAccount || {}),
+                      societyAccountNumber: bankPayload.societyAccountNumber || bankPayload.accountNumber || m.societyAccount?.societyAccountNumber,
+                      accountHolderName: bankPayload.accountHolderName || m.societyAccount?.accountHolderName,
+                      ifscCode: bankPayload.ifscCode || m.societyAccount?.ifscCode,
+                      bankBranchName: bankPayload.bankBranchName || bankPayload.branchName || m.societyAccount?.bankBranchName
+                    },
+                    societyAccountNumber: bankPayload.societyAccountNumber || bankPayload.accountNumber || m.societyAccountNumber
+                  };
+                }
+                return m;
+              })
+            );
+          }
+          fetchMerchants(page);
+        }}
+      />
     </div>
   );
 };

@@ -215,7 +215,7 @@ const ViewMerchant = () => {
   const handleApproveMerchant = async () => {
     const merchantId = merchant?.id || merchant?._id || merchant?.merchantId || id;
     
-    // Pre-approval society bank account check per API doc rule #9
+    // Pre-approval society bank account check: bank details must be linked before approval
     const hasSocietyAccount = Boolean(
       merchant?.societyAccount?.societyAccountNumber ||
       merchant?.societyAccount?.accountNumber ||
