@@ -190,7 +190,16 @@ export const canApproveMerchantOnboarding = (role, user, permissions = []) => {
     return true;
   }
 
-  // 4. Fallback check for explicit granular permission
+  // 4. Quality Check (QC) Officers (QC_EMPLOYEE, QUALITY_CHECK, QC)
+  if (
+    roleNormalized.includes('QC') ||
+    roleNormalized.includes('QUALITY_CHECK') ||
+    roleNormalized.includes('QC_EMPLOYEE')
+  ) {
+    return true;
+  }
+
+  // 5. Fallback check for explicit granular permission
   if (Array.isArray(permissions) && permissions.length > 0) {
     const hasPerm = permissions.some((p) => {
       const key = (typeof p === 'string' ? p : p?.key || p?.code || '').toLowerCase().trim();
@@ -208,3 +217,38 @@ export const canApproveMerchantOnboarding = (role, user, permissions = []) => {
 
   return false;
 };
+
+/**
+ * Determines if the current user is Authorized Personnel to link/add/update
+ * Society Bank Account details for a Merchant partner.
+ * 
+ * Authorized roles per API specification:
+ * - Bank Owner / Super Admin / Society Admin
+ * - Branch Manager
+ * - Quality Check (QC) Officers (QC_EMPLOYEE, QUALITY_CHECK)
+ * 
+ * Note: Loan Executives (LOAN_EXECUTIVE) are strictly excluded.
+ * 
+ * @param {object|string} role 
+ * @param {object} user 
+ * @param {Array} permissions 
+ * @returns {boolean}
+ */
+export const canManageMerchantBankDetails = (role, user, permissions = []) => {
+  const roleStr = (
+    (typeof role === "string" ? role : "") ||
+    role?.name ||
+    role?.code ||
+    (typeof user?.role === "string" ? user?.role : "") ||
+    user?.designation ||
+    ""
+  ).toUpperCase().trim();
+
+  // Loan Executives cannot link or add bank details
+  if (roleStr.includes('LOAN_EXECUTIVE') || roleStr.includes('LOAN EXECUTIVE')) {
+    return false;
+  }
+
+  return canApproveMerchantOnboarding(role, user, permissions);
+};
+

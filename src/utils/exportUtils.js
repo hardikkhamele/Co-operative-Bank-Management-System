@@ -194,6 +194,72 @@ export function exportToExcel({ filename = 'export', title = 'Report', columns, 
 }
 
 /**
+ * Export data to Word Document (.doc HTML format)
+ */
+export function exportToWord({ filename = 'export', title = 'Report', columns, data, tableElement }) {
+  let headers = [];
+  let rows = [];
+
+  if (data && columns) {
+    headers = columns.map(c => typeof c === 'string' ? c : c.label || c.key);
+    rows = data.map(item => {
+      return columns.map(col => {
+        const key = typeof col === 'string' ? col : col.key;
+        const val = typeof col.format === 'function' ? col.format(item[key], item) : item[key];
+        return val ?? '';
+      });
+    });
+  } else if (tableElement) {
+    const extracted = extractTableData(tableElement);
+    headers = extracted.headers;
+    rows = extracted.rows;
+  }
+
+  if (headers.length === 0 && rows.length === 0) {
+    throw new Error('No data available to export');
+  }
+
+  let html = `
+    <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+    <head>
+      <meta charset='utf-8'>
+      <title>${escapeXML(title)}</title>
+      <style>
+        body { font-family: Arial, sans-serif; }
+        h2 { color: #225091; font-size: 16pt; margin-bottom: 4px; }
+        .subtitle { font-size: 9pt; color: #666666; margin-bottom: 16px; }
+        table { border-collapse: collapse; width: 100%; }
+        th { background-color: #225091; color: #ffffff; font-size: 10pt; font-weight: bold; padding: 6px 10px; border: 1px solid #1c4278; text-align: left; }
+        td { font-size: 9.5pt; padding: 5px 10px; border: 1px solid #cccccc; }
+        tr:nth-child(even) { background-color: #f8fafc; }
+      </style>
+    </head>
+    <body>
+      <h2>${escapeXML(title)}</h2>
+      <div class="subtitle">Exported on: ${new Date().toLocaleString()} | Advita Co-operative Bank</div>
+      <table>
+        <thead>
+          <tr>
+            ${headers.map(h => `<th>${escapeXML(h)}</th>`).join('')}
+          </tr>
+        </thead>
+        <tbody>
+          ${rows.map(row => `
+            <tr>
+              ${row.map(c => `<td>${escapeXML(String(c ?? ''))}</td>`).join('')}
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </body>
+    </html>
+  `;
+
+  const blob = new Blob([html], { type: 'application/msword;charset=utf-8;' });
+  downloadBlob(blob, `${slugify(filename)}_${formatDateStamp()}.doc`);
+}
+
+/**
  * Universal Print View: Formatted window print for high-quality printing & PDF saving
  */
 export function exportToPrint({ title = 'Report', columns, data, tableElement }) {

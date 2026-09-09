@@ -1,18 +1,19 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useLocation } from 'react-router-dom';
 import { 
   Store, User, Phone, Mail, Building2, FileText, CreditCard, 
   ShieldCheck, Calendar, Copy, CheckCheck, ExternalLink, 
-  Eye, X, FileCheck, MapPin, Hash, RefreshCw,
+  Eye, X, FileCheck, MapPin, Hash, RefreshCw, Landmark, AlertTriangle,
   CheckCircle2, XCircle, Clock, AlertCircle, Loader2
 } from 'lucide-react';
 import { toast } from 'react-toastify';
 import useAuthStore from '../../store/authStore';
 import usePermission from '../../hooks/usePermission';
-import { canApproveMerchantOnboarding, isBankOwner } from '../../utils/roleUtils';
+import { canApproveMerchantOnboarding, canManageMerchantBankDetails, isBankOwner } from '../../utils/roleUtils';
 import PageHeader from '../../components/common/PageHeader';
 import { SkeletonDetailView } from '../../components/common/Skeleton';
 import { merchantService } from '../../api/merchantService';
+import LinkMerchantBankModal from '../../components/modals/LinkMerchantBankModal';
 
 // Reusable Info Card that prevents data collision / overriding
 const InfoFieldCard = ({ icon: Icon, label, value, copyable = false, isMonospace = false, subtitle = null }) => {
@@ -139,8 +140,10 @@ const DocumentCard = ({ label, icon: Icon, documentData, onPreview }) => {
 
 const ViewMerchant = () => {
   const { id } = useParams();
-  const [isLoading, setIsLoading] = useState(true);
-  const [merchant, setMerchant] = useState(null);
+  const location = useLocation();
+  const passedMerchant = location.state?.merchant || null;
+  const [isLoading, setIsLoading] = useState(!passedMerchant);
+  const [merchant, setMerchant] = useState(passedMerchant);
   const [isRestoreModalOpen, setIsRestoreModalOpen] = useState(false);
   const [isApproveModalOpen, setIsApproveModalOpen] = useState(false);
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
@@ -149,7 +152,10 @@ const ViewMerchant = () => {
   const [actionLoading, setActionLoading] = useState(false);
   const [previewDocument, setPreviewDocument] = useState(null);
 
-  // Permissions & Roles Access Control: Bank Owner, Society Admin, Branch Manager
+  // Dedicated Link Society Bank Account Modal
+  const [isLinkBankModalOpen, setIsLinkBankModalOpen] = useState(false);
+
+  // Permissions & Roles Access Control: Bank Owner, Society Admin, Branch Manager, QC
   const authRole = useAuthStore((state) => state.role);
   const authUser = useAuthStore((state) => state.user);
   const authPermissions = useAuthStore((state) => state.permissions);
@@ -163,22 +169,28 @@ const ViewMerchant = () => {
     );
   }, [authRole, authUser, authPermissions, hookCanApprove]);
 
+  const canManageBank = useMemo(() => {
+    return canManageMerchantBankDetails(authRole, authUser, authPermissions || []);
+  }, [authRole, authUser, authPermissions]);
+
   const fetchMerchant = useCallback(async () => {
     if (!id) return;
     try {
       const response = await merchantService.getById(id);
       if (response && (response.success || response.data)) {
         setMerchant(response.data || response);
-      } else {
+      } else if (!passedMerchant) {
         toast.error("Failed to load merchant details.");
       }
     } catch (error) {
       console.error("Fetch merchant details failed", error);
-      toast.error("Error loading merchant details.");
+      if (!passedMerchant) {
+        toast.error(error.response?.data?.message || "Error loading merchant details.");
+      }
     } finally {
       setIsLoading(false);
     }
-  }, [id]);
+  }, [id, passedMerchant]);
 
   useEffect(() => {
     fetchMerchant();
@@ -202,6 +214,22 @@ const ViewMerchant = () => {
 
   const handleApproveMerchant = async () => {
     const merchantId = merchant?.id || merchant?._id || merchant?.merchantId || id;
+    
+    // Pre-approval society bank account check per API doc rule #9
+    const hasSocietyAccount = Boolean(
+      merchant?.societyAccount?.societyAccountNumber ||
+      merchant?.societyAccount?.accountNumber ||
+      merchant?.bankDetails?.accountNumber ||
+      merchant?.societyAccountNumber
+    );
+
+    if (!hasSocietyAccount) {
+      toast.warn("Cannot approve Merchant: Society bank account details are missing. Please link account details first.");
+      setIsApproveModalOpen(false);
+      setIsLinkBankModalOpen(true);
+      return;
+    }
+
     setActionLoading(true);
     try {
       const res = await merchantService.approve(merchantId);
@@ -210,7 +238,12 @@ const ViewMerchant = () => {
       fetchMerchant();
     } catch (error) {
       console.error("Approve failed:", error);
-      toast.error(error.response?.data?.message || "Failed to approve merchant onboarding.");
+      const msg = error.response?.data?.message || "Failed to approve merchant onboarding.";
+      toast.error(msg);
+      if (error.response?.status === 400 && msg.toLowerCase().includes('society account')) {
+        setIsApproveModalOpen(false);
+        setIsLinkBankModalOpen(true);
+      }
     } finally {
       setActionLoading(false);
     }
@@ -628,6 +661,163 @@ const ViewMerchant = () => {
           </div>
         </div>
 
+        {/* Section 3: Society Bank Account & Settlement (Co-operative Bank Standards) */}
+        <div>
+          <div className="flex items-center justify-between gap-4 mb-4 flex-wrap">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-4 bg-[#225091] rounded-full"></div>
+              <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wider">Bank & Society Settlement Accounts</h2>
+            </div>
+            {canManageBank && !isDeleted && (
+              <button
+                type="button"
+                onClick={() => setIsLinkBankModalOpen(true)}
+                className="px-3 py-1.5 rounded-lg bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200 font-bold text-xs transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer"
+              >
+                <Landmark size={14} className="text-teal-700" />
+                {merchant.societyAccount?.societyAccountNumber || merchant.societyAccount?.accountNumber || merchant.bankDetails?.accountNumber || merchant.bankDetails?.accountHolderName ? "Update Linked Bank" : "Link Society Bank Account"}
+              </button>
+            )}
+          </div>
+          
+          {(merchant.societyAccount?.societyAccountNumber || merchant.societyAccount?.accountNumber || merchant.societyAccount?.accountHolderName || merchant.societyAccountNumber || merchant.bankDetails?.accountNumber || merchant.bankDetails?.accountHolderName) ? (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+              {/* Card 1: Society Settlement Account (Internal Co-operative Bank) */}
+              <div className="bg-white rounded-2xl border border-teal-200/80 p-5 shadow-2xs relative overflow-hidden flex flex-col">
+                <div className="flex items-center justify-between gap-3 mb-4 pb-3 border-b border-teal-100">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-lg bg-teal-50 text-teal-700 flex items-center justify-center border border-teal-200/80 shrink-0">
+                      <Landmark size={16} />
+                    </div>
+                    <div>
+                      <h3 className="text-xs font-bold text-gray-900">Society Settlement Account</h3>
+                      <p className="text-[11px] text-gray-500">Internal Co-operative Bank settlement account</p>
+                    </div>
+                  </div>
+                  <span className="text-[10.5px] font-bold text-teal-800 bg-teal-50 border border-teal-200 px-2 py-0.5 rounded-md">
+                    Settlement A/C
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 flex-1">
+                  <InfoFieldCard 
+                    icon={Landmark} 
+                    label="Society Account Number" 
+                    value={merchant.societyAccount?.societyAccountNumber || merchant.societyAccount?.accountNumber || merchant.societyAccountNumber || '—'} 
+                    isMonospace={true}
+                    copyable={Boolean(merchant.societyAccount?.societyAccountNumber || merchant.societyAccount?.accountNumber || merchant.societyAccountNumber)}
+                  />
+                  <InfoFieldCard 
+                    icon={User} 
+                    label="Account Holder Name" 
+                    value={merchant.societyAccount?.accountHolderName || '—'} 
+                  />
+                  <InfoFieldCard 
+                    icon={Hash} 
+                    label="IFSC Code" 
+                    value={merchant.societyAccount?.ifscCode || '—'} 
+                    isMonospace={true}
+                    copyable={Boolean(merchant.societyAccount?.ifscCode)}
+                  />
+                  <InfoFieldCard 
+                    icon={Building2} 
+                    label="Bank Name" 
+                    value={merchant.societyAccount?.bankName || 'Advita Co-operative Bank'} 
+                  />
+                  <InfoFieldCard 
+                    icon={MapPin} 
+                    label="Bank Branch" 
+                    value={merchant.societyAccount?.bankBranchName || merchant.societyAccount?.branchName || merchant.branchName || '—'} 
+                  />
+                  <InfoFieldCard 
+                    icon={MapPin} 
+                    label="Branch Pincode" 
+                    value={merchant.societyAccount?.pincode || '—'} 
+                  />
+                </div>
+              </div>
+
+              {/* Card 2: Merchant Commercial / Payout Bank Details */}
+              <div className="bg-white rounded-2xl border border-blue-200/80 p-5 shadow-2xs relative overflow-hidden flex flex-col">
+                <div className="flex items-center justify-between gap-3 mb-4 pb-3 border-b border-blue-100">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-700 flex items-center justify-center border border-blue-200/80 shrink-0">
+                      <CreditCard size={16} />
+                    </div>
+                    <div>
+                      <h3 className="text-xs font-bold text-gray-900">Merchant Bank Details</h3>
+                      <p className="text-[11px] text-gray-500">Commercial / Business payout account</p>
+                    </div>
+                  </div>
+                  <span className="text-[10.5px] font-bold text-blue-800 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-md uppercase">
+                    {merchant.bankDetails?.accountType || 'CURRENT'}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 flex-1">
+                  <InfoFieldCard 
+                    icon={User} 
+                    label="Account Holder Name" 
+                    value={merchant.bankDetails?.accountHolderName || merchant.ownerName || merchant.shopOwnerName || '—'} 
+                  />
+                  <InfoFieldCard 
+                    icon={Landmark} 
+                    label="Account Number" 
+                    value={merchant.bankDetails?.accountNumber || (merchant.societyAccount?.societyAccountNumber ? 'Same as Society A/C' : '—')} 
+                    isMonospace={Boolean(merchant.bankDetails?.accountNumber)}
+                    copyable={Boolean(merchant.bankDetails?.accountNumber)}
+                  />
+                  <InfoFieldCard 
+                    icon={CreditCard} 
+                    label="Account Type" 
+                    value={merchant.bankDetails?.accountType || 'CURRENT'} 
+                  />
+                  <InfoFieldCard 
+                    icon={Hash} 
+                    label="IFSC Code" 
+                    value={merchant.bankDetails?.ifscCode || merchant.societyAccount?.ifscCode || '—'} 
+                    isMonospace={true}
+                    copyable={Boolean(merchant.bankDetails?.ifscCode || merchant.societyAccount?.ifscCode)}
+                  />
+                  <InfoFieldCard 
+                    icon={Building2} 
+                    label="Bank Name" 
+                    value={merchant.bankDetails?.bankName || '—'} 
+                  />
+                  <InfoFieldCard 
+                    icon={MapPin} 
+                    label="Bank Branch" 
+                    value={merchant.bankDetails?.branchName || merchant.bankDetails?.bankBranchName || '—'} 
+                  />
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="p-5 rounded-2xl bg-amber-50/70 border border-amber-200/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center shrink-0 border border-amber-200">
+                  <AlertTriangle size={20} />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-amber-900">No Society Bank Account Linked</h4>
+                  <p className="text-[11.5px] text-amber-700 mt-0.5">
+                    Co-operative Bank standards require an internal settlement account linked before merchant leads can be approved.
+                  </p>
+                </div>
+              </div>
+              {canManageBank && !isDeleted && (
+                <button
+                  type="button"
+                  onClick={() => setIsLinkBankModalOpen(true)}
+                  className="px-4 py-2 rounded-xl bg-[#225091] hover:bg-[#1a3d6d] text-white font-bold text-xs shadow-2xs transition-all flex items-center gap-1.5 shrink-0 cursor-pointer"
+                >
+                  <Landmark size={14} /> Link Account Now
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+
         {/* Section 3: Location / Address (if available) */}
         {(merchant.address || merchant.city || merchant.state || merchant.pincode) && (
           <div>
@@ -714,20 +904,21 @@ const ViewMerchant = () => {
             {/* Modal Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gray-50/70">
               <div className="min-w-0 flex-1 pr-4">
-                <h3 className="text-sm font-bold text-gray-900 truncate">{previewDocument.title}</h3>
-                <p className="text-xs text-gray-500 truncate">{previewDocument.fileName}</p>
+                <h3 className="text-sm font-bold text-gray-900 truncate">{previewDocument.title || previewDocument.name}</h3>
+                <p className="text-xs text-gray-500 truncate">{previewDocument.fileName || previewDocument.name}</p>
               </div>
               <div className="flex items-center gap-2">
-                <a
-                  href={previewDocument.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  download
-                  className="p-2 text-gray-600 hover:text-[#225091] hover:bg-white rounded-xl border border-gray-200 transition-colors"
-                  title="Open in new window"
-                >
-                  <ExternalLink size={16} />
-                </a>
+                {previewDocument.url && (
+                  <a
+                    href={previewDocument.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-2 text-gray-600 hover:text-[#225091] hover:bg-white rounded-xl border border-gray-200 transition-colors"
+                    title="Open in new window"
+                  >
+                    <ExternalLink size={16} />
+                  </a>
+                )}
                 <button 
                   onClick={() => setPreviewDocument(null)}
                   className="p-2 text-gray-500 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors cursor-pointer"
@@ -740,17 +931,13 @@ const ViewMerchant = () => {
 
             {/* Modal Body */}
             <div className="flex-1 overflow-auto p-4 flex items-center justify-center bg-gray-900/5 min-h-[350px]">
-              {previewDocument.url.match(/\.(jpeg|jpg|png|webp|gif|svg)$/i) ? (
+              {previewDocument.url?.toLowerCase().endsWith('.pdf') ? (
+                <iframe src={previewDocument.url} title={previewDocument.title || previewDocument.name} className="w-full h-[75vh] bg-white rounded-lg border border-gray-200" />
+              ) : (
                 <img 
                   src={previewDocument.url} 
-                  alt={previewDocument.title} 
+                  alt={previewDocument.title || previewDocument.name} 
                   className="max-w-full max-h-[75vh] object-contain rounded-lg shadow-sm"
-                />
-              ) : (
-                <iframe 
-                  src={previewDocument.url} 
-                  className="w-full h-[75vh] bg-white rounded-lg border border-gray-200" 
-                  title={previewDocument.title} 
                 />
               )}
             </div>
@@ -801,17 +988,45 @@ const ViewMerchant = () => {
             <p className="text-xs text-gray-600 mb-5 leading-relaxed">
               Are you sure you want to approve onboarding for <strong className="text-gray-900 font-bold">{merchant.shopName || 'this merchant'}</strong>?
             </p>
-            <div className="bg-emerald-50/70 border border-emerald-100 rounded-xl p-3.5 mb-6 text-left text-xs text-emerald-900 space-y-1.5">
-              <p className="font-semibold flex items-center gap-1.5 text-emerald-800">
-                <CheckCircle2 size={14} className="shrink-0" />
-                This action will:
-              </p>
-              <ul className="list-disc list-inside text-[11px] text-emerald-700 space-y-0.5 ml-1">
-                <li>Update approval status to <strong>APPROVED</strong></li>
-                <li>Set account profile status to <strong>ACTIVE</strong></li>
-                <li>Enable linked user account so the merchant can log in</li>
-              </ul>
-            </div>
+
+            {/* Pre-approval Society Account Warning */}
+            {(!merchant.societyAccount?.societyAccountNumber && !merchant.societyAccount?.accountNumber && !merchant.bankDetails?.accountNumber && !merchant.societyAccountNumber) ? (
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-3.5 mb-5 text-left text-xs text-amber-900 space-y-2">
+                <div className="flex items-start gap-2 text-amber-800 font-bold">
+                  <AlertTriangle size={16} className="shrink-0 mt-0.5 text-amber-600" />
+                  <span>Society Bank Account Not Linked</span>
+                </div>
+                <p className="text-[11.5px] text-amber-700 leading-relaxed">
+                  Under Co-operative Bank standards, a merchant partner cannot be approved without a linked society settlement account. Please link society bank account details first before approval.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsApproveModalOpen(false);
+                    setIsLinkBankModalOpen(true);
+                  }}
+                  className="w-full py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-lg text-xs flex items-center justify-center gap-1.5 transition-colors shadow-2xs cursor-pointer"
+                >
+                  <Landmark size={13} /> Link Society Bank Account Now
+                </button>
+              </div>
+            ) : (
+              <div className="bg-emerald-50/70 border border-emerald-100 rounded-xl p-3.5 mb-6 text-left text-xs text-emerald-900 space-y-1.5">
+                <p className="font-semibold flex items-center gap-1.5 text-emerald-800">
+                  <CheckCircle2 size={14} className="shrink-0" />
+                  This action will:
+                </p>
+                <ul className="list-disc list-inside text-[11px] text-emerald-700 space-y-0.5 ml-1">
+                  <li>Update approval status to <strong>APPROVED</strong></li>
+                  <li>Set account profile status to <strong>ACTIVE</strong></li>
+                  <li>Enable linked user account so the merchant can log in</li>
+                  <li className="font-mono text-emerald-800">
+                    Linked Society A/C: <strong>{merchant.societyAccount?.societyAccountNumber || merchant.societyAccount?.accountNumber || merchant.bankDetails?.accountNumber || merchant.societyAccountNumber}</strong>
+                  </li>
+                </ul>
+              </div>
+            )}
+
             <div className="flex gap-3">
               <button 
                 disabled={actionLoading}
@@ -902,6 +1117,36 @@ const ViewMerchant = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Link Society Bank Account Modal */}
+      {isLinkBankModalOpen && (
+        <LinkMerchantBankModal
+          isOpen={isLinkBankModalOpen}
+          merchant={merchant}
+          onClose={() => setIsLinkBankModalOpen(false)}
+          onSuccess={(targetId, bankPayload) => {
+            setMerchant(prev => ({
+              ...prev,
+              societyAccount: {
+                societyAccountNumber: bankPayload.societyAccountNumber,
+                accountHolderName: bankPayload.accountHolderName,
+                ifscCode: bankPayload.ifscCode,
+                bankName: bankPayload.bankName,
+                bankBranchName: bankPayload.bankBranchName
+              },
+              bankDetails: {
+                accountNumber: bankPayload.accountNumber || bankPayload.societyAccountNumber,
+                accountHolderName: bankPayload.accountHolderName,
+                ifscCode: bankPayload.ifscCode,
+                bankName: bankPayload.bankName,
+                branchName: bankPayload.branchName || bankPayload.bankBranchName,
+                accountType: bankPayload.accountType
+              }
+            }));
+            fetchMerchant();
+          }}
+        />
       )}
     </div>
   );

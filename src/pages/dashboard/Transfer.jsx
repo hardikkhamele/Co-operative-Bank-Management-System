@@ -622,6 +622,19 @@ const Transfer = () => {
   };
   const tableRef = useRef(null);
   const [isExportOpen, setIsExportOpen] = useState(false);
+  const exportDropdownRef = useRef(null);
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (exportDropdownRef.current && !exportDropdownRef.current.contains(event.target)) {
+        setIsExportOpen(false);
+      }
+    }
+    if (isExportOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isExportOpen]);
 
   const getSelectedDataFromTable = () => {
     if (!tableRef.current) return { headers: [], rows: [] };
@@ -790,41 +803,39 @@ const Transfer = () => {
           </div>
           {/* Action Buttons: Export & Create */}
           <div className="flex items-center gap-3">
-            <div className="relative flex-shrink-0">
+            <div className="relative flex-shrink-0" ref={exportDropdownRef}>
               <button
                 onClick={() => setIsExportOpen(!isExportOpen)}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-full font-semibold transition-colors text-sm shadow-sm border bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+                className="flex items-center gap-2 px-3.5 py-2 rounded-xl font-bold transition-colors text-xs shadow-2xs border bg-white text-gray-700 border-gray-200 hover:bg-gray-50 cursor-pointer"
               >
-                <Download size={18} />
-                Export
-                <ChevronDown size={16} />
+                <Download size={15} />
+                <span>Export</span>
+                <ChevronDown size={13} className={`transition-transform duration-200 ${isExportOpen ? "rotate-180" : ""}`} />
               </button>
 
               {isExportOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-100 rounded-xl shadow-lg z-50 overflow-hidden">
-                  <div className="p-1">
-                    <button
-                      onClick={exportToCSV}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors text-left"
-                    >
-                      <Table size={16} className="text-green-600" />
-                      Export to CSV
-                    </button>
-                    <button
-                      onClick={exportToExcel}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors text-left"
-                    >
-                      <FileSpreadsheet size={16} className="text-green-600" />
-                      Export to Excel
-                    </button>
-                    <button
-                      onClick={exportToWord}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors text-left"
-                    >
-                      <FileText size={16} className="text-blue-600" />
-                      Export to Word
-                    </button>
-                  </div>
+                <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-100 rounded-xl shadow-xl py-2 z-50 animate-in fade-in zoom-in-95 duration-150">
+                  <button
+                    onClick={exportToCSV}
+                    className="w-full px-4 py-2 text-left text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2 font-medium cursor-pointer transition-colors"
+                  >
+                    <Table size={15} className="text-gray-500 shrink-0" />
+                    <span>Export to CSV</span>
+                  </button>
+                  <button
+                    onClick={exportToExcel}
+                    className="w-full px-4 py-2 text-left text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2 font-medium cursor-pointer transition-colors"
+                  >
+                    <FileSpreadsheet size={15} className="text-emerald-600 shrink-0" />
+                    <span>Export to Excel</span>
+                  </button>
+                  <button
+                    onClick={exportToWord}
+                    className="w-full px-4 py-2 text-left text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2 font-medium border-t border-gray-100 mt-1 pt-1.5 cursor-pointer transition-colors"
+                  >
+                    <FileText size={15} className="text-blue-600 shrink-0" />
+                    <span>Export to Word</span>
+                  </button>
                 </div>
               )}
             </div>

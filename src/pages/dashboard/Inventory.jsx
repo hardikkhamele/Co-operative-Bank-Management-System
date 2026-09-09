@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { 
   Plus, Edit2, Trash2, Download, Search, CheckCircle, 
@@ -12,6 +12,7 @@ import PageHeader from '../../components/common/PageHeader';
 import TableWrapper from '../../components/common/TableWrapper';
 import StatsCard from '../../components/common/StatsCard';
 import Pagination from '../../components/common/Pagination';
+import ExportDropdown from '../../components/common/ExportDropdown';
 import InventoryModals from './InventoryModals';
 import inventoryService from '../../api/inventoryService';
 import { useInventoryPermissions } from '../../hooks/useInventoryPermissions';
@@ -29,6 +30,8 @@ const SocietyInventorySPA = () => {
   const savedTab = localStorage.getItem('inventory_last_tab');
   const [activeTab, setActiveTab] = useState(() => tab && tab !== 'overview' ? tab : (savedTab || 'master'));
   const [activeSubTab, setActiveSubTab] = useState(subtab || 'categories');
+  const masterTableRef = useRef(null);
+  const auditLogsTableRef = useRef(null);
 
   useEffect(() => {
     if (tab && tab !== activeTab) {
@@ -657,13 +660,13 @@ const SocietyInventorySPA = () => {
           {activeSubTab === 'central_stock' && permissions.canManageCentralWarehouse && (
             <button onClick={() => { setModalType('adjust_stock'); setIsModalOpen(true); }} className="flex items-center gap-1.5 px-3.5 py-2 bg-[#225091] text-white rounded-xl text-xs font-semibold hover:bg-[#193e73] transition-colors cursor-pointer shadow-2xs"><Plus size={15} /> <span>Receive Stock</span></button>
           )}
-          <button className="flex items-center gap-1.5 px-3.5 py-2 border border-gray-200 text-gray-700 rounded-xl text-xs font-semibold hover:bg-gray-50 transition-colors shadow-2xs cursor-pointer"><Download size={14} /> <span>Export</span></button>
+          <ExportDropdown tableRef={masterTableRef} filename={`Inventory-Master-${activeSubTab}`} title={`Inventory Master - ${activeSubTab}`} />
         </div>
       </div>
 
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
         <TableWrapper minHeight="360px">
-          <table className="w-full border-collapse min-w-[800px] text-center text-sm whitespace-nowrap">
+          <table ref={masterTableRef} className="w-full border-collapse min-w-[800px] text-center text-sm whitespace-nowrap">
             <thead className="bg-[#225091] text-white text-xs uppercase tracking-wider font-semibold border-b border-[#225091]">
               <tr>
                 <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Code</th>
@@ -1258,12 +1261,12 @@ const SocietyInventorySPA = () => {
             className="border border-gray-200 bg-gray-50/60 rounded-xl px-3.5 py-2 text-xs font-medium text-gray-700 focus:outline-none focus:bg-white focus:border-[#225091] cursor-pointer" 
           />
         </div>
-        <button className="flex items-center gap-1.5 px-3.5 py-2 border border-gray-200 bg-white text-gray-700 rounded-xl text-xs font-semibold hover:bg-gray-50 transition-colors shadow-2xs cursor-pointer"><Download size={15} /> <span>Export Trail</span></button>
+        <ExportDropdown buttonText="Export Trail" tableRef={auditLogsTableRef} filename="Inventory-Audit-Trail" title="Inventory Audit Trail" />
       </div>
 
       <div className="bg-white rounded-2xl shadow-xs border border-gray-100 overflow-hidden">
         <TableWrapper minHeight="360px">
-          <table className="w-full border-collapse text-sm text-center whitespace-nowrap">
+          <table ref={auditLogsTableRef} className="w-full border-collapse text-sm text-center whitespace-nowrap">
             <thead className="bg-[#225091] text-white text-xs uppercase tracking-wider font-semibold border-b border-[#225091]">
               <tr>
                 <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center text-left">Timestamp</th>

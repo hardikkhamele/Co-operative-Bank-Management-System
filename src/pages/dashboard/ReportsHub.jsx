@@ -4,10 +4,13 @@ import {
   BarChart3, FileSpreadsheet, ArrowRight, Download, Search, 
   Filter, ShieldCheck, CheckCircle2, TrendingUp, Building2, 
   Users, CreditCard, ArrowDownRight, ArrowUpRight, ArrowRightLeft, 
-  Banknote, ClipboardList, Store, Calendar, FileText, X
+  Banknote, ClipboardList, Store, Calendar, FileText, X,
+  LayoutGrid, List
 } from 'lucide-react';
 import { toast } from 'react-toastify';
 import PageHeader from '../../components/common/PageHeader';
+import StatsCard from '../../components/common/StatsCard';
+import TableWrapper from '../../components/common/TableWrapper';
 import { reportService } from '../../api/reportService';
 import usePermission from '../../hooks/usePermission';
 
@@ -191,6 +194,7 @@ const ReportsHub = () => {
   const [catalog, setCatalog] = useState(DEFAULT_CATALOG);
   const [selectedCategory, setSelectedCategory] = useState('All Reports');
   const [searchQuery, setSearchQuery] = useState('');
+  const [viewMode, setViewMode] = useState('grid');
   const [exportingReportId, setExportingReportId] = useState(null);
 
   useEffect(() => {
@@ -216,6 +220,22 @@ const ReportsHub = () => {
     };
     fetchCatalog();
   }, []);
+
+  const categoryCounts = useMemo(() => {
+    const counts = {
+      'All Reports': catalog.length,
+      'Financial & Ledger': 0,
+      'Loans & Business': 0,
+      'HR & Operations': 0,
+      'Credits & Verification': 0
+    };
+    catalog.forEach(item => {
+      if (counts[item.category] !== undefined) {
+        counts[item.category] += 1;
+      }
+    });
+    return counts;
+  }, [catalog]);
 
   const filteredReports = useMemo(() => {
     return catalog.filter(report => {
@@ -251,7 +271,7 @@ const ReportsHub = () => {
   };
 
   return (
-    <div className="flex flex-col gap-6 w-full pb-14">
+    <div className="flex flex-col gap-5 w-full pb-14 max-w-[1600px] mx-auto">
       {/* Header */}
       <PageHeader
         title="Reports & Analytics"
@@ -261,217 +281,305 @@ const ReportsHub = () => {
         ]}
       />
 
-      {/* Top Banner Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-2xs flex items-center justify-between">
-          <div>
-            <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Total Reports</span>
-            <div className="text-2xl font-bold text-gray-900 mt-1">12 Reports</div>
-            <span className="text-[11px] text-emerald-600 font-medium">Ready for generation</span>
-          </div>
-          <div className="w-12 h-12 rounded-2xl bg-blue-50 text-[#225091] flex items-center justify-center border border-blue-100">
-            <BarChart3 size={24} />
-          </div>
-        </div>
-
-        <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-2xs flex items-center justify-between">
-          <div>
-            <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Report Categories</span>
-            <div className="text-2xl font-bold text-gray-900 mt-1">4 Modules</div>
-            <span className="text-[11px] text-gray-500">Finance, Loans, HR & Credits</span>
-          </div>
-          <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-100">
-            <Filter size={24} />
-          </div>
-        </div>
-
-        <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-2xs flex items-center justify-between">
-          <div>
-            <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Export Formats</span>
-            <div className="text-2xl font-bold text-gray-900 mt-1">CSV & PDF</div>
-            <span className="text-[11px] text-[#225091] font-medium">Streamed downloads</span>
-          </div>
-          <div className="w-12 h-12 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center border border-purple-100">
-            <FileSpreadsheet size={24} />
-          </div>
-        </div>
-
-        <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-2xs flex items-center justify-between">
-          <div>
-            <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Access Controls</span>
-            <div className="text-2xl font-bold text-gray-900 mt-1">Branch Isolated</div>
-            <span className="text-[11px] text-emerald-600 font-medium flex items-center gap-1">
-              <CheckCircle2 size={13} /> Strict RBAC Applied
-            </span>
-          </div>
-          <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center border border-amber-100">
-            <ShieldCheck size={24} />
-          </div>
-        </div>
+      {/* Category Stats Cards (Interactive Dashboard Ribbon) */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+        <StatsCard
+          layout="centered"
+          color="blue"
+          label="All Reports"
+          value={categoryCounts['All Reports']}
+          sublabel="Total Catalog"
+          isActive={selectedCategory === 'All Reports'}
+          onClick={() => setSelectedCategory('All Reports')}
+        />
+        <StatsCard
+          layout="centered"
+          color="emerald"
+          label="Financial & Ledger"
+          value={categoryCounts['Financial & Ledger']}
+          sublabel="Cash & Ledger"
+          isActive={selectedCategory === 'Financial & Ledger'}
+          onClick={() => setSelectedCategory('Financial & Ledger')}
+        />
+        <StatsCard
+          layout="centered"
+          color="indigo"
+          label="Loans & Business"
+          value={categoryCounts['Loans & Business']}
+          sublabel="Leads & Merchant"
+          isActive={selectedCategory === 'Loans & Business'}
+          onClick={() => setSelectedCategory('Loans & Business')}
+        />
+        <StatsCard
+          layout="centered"
+          color="purple"
+          label="HR & Operations"
+          value={categoryCounts['HR & Operations']}
+          sublabel="Attendance & Staff"
+          isActive={selectedCategory === 'HR & Operations'}
+          onClick={() => setSelectedCategory('HR & Operations')}
+        />
+        <StatsCard
+          layout="centered"
+          color="amber"
+          label="Credits & Verification"
+          value={categoryCounts['Credits & Verification']}
+          sublabel="Cards & Credits"
+          isActive={selectedCategory === 'Credits & Verification'}
+          onClick={() => setSelectedCategory('Credits & Verification')}
+        />
       </div>
 
-      {/* Filter and Search Bar */}
-      <div className="bg-white rounded-2xl p-4 md:p-5 border border-gray-100 shadow-2xs space-y-4">
-        <div className="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-3">
-          {/* Category Tabs */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 scrollbar-none">
-            {CATEGORIES.map((cat) => {
-              const active = selectedCategory === cat;
-              return (
-                <button
-                  key={cat}
-                  onClick={() => setSelectedCategory(cat)}
-                  className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
-                    active
-                      ? 'bg-[#225091] text-white shadow-xs'
-                      : 'bg-gray-50 text-gray-600 hover:bg-gray-100 hover:text-gray-900 border border-gray-200/60'
-                  }`}
-                >
-                  {cat}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Search Box */}
-          <div className="relative w-full md:w-80">
-            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-            <input
-              type="text"
-              placeholder="Search by report name, code, or description..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-8 py-2 text-xs bg-gray-50 hover:bg-gray-100/70 focus:bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery('')}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-0.5"
-              >
-                <X size={14} />
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Reports Catalog Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-        {filteredReports.map((report) => {
-          const colors = getCategoryColor(report.category);
-          const IconComponent = report.icon || BarChart3;
-          const isExportingCSV = exportingReportId === `${report.id}-csv`;
-          const isExportingPDF = exportingReportId === `${report.id}-pdf`;
-
-          return (
-            <div
-              key={report.id}
-              onClick={() => navigate(`/reports/${report.id}`)}
-              className="bg-white rounded-2xl p-5 border border-gray-100 hover:border-[#225091]/30 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between cursor-pointer group"
+      {/* Search & View Controls */}
+      <div className="bg-white rounded-2xl p-4 shadow-xs border border-gray-100 flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3">
+        <div className="relative w-full sm:w-80">
+          <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+          <input
+            type="text"
+            placeholder="Search report name, code, or description..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-9 pr-8 py-2 text-xs bg-gray-50/70 hover:bg-gray-100/70 focus:bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#225091]/20 focus:border-[#225091] transition-all"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-0.5 cursor-pointer"
             >
-              {/* Card Top */}
-              <div>
-                <div className="flex items-start justify-between gap-3 mb-3">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-11 h-11 rounded-xl ${colors.iconBg} flex items-center justify-center shrink-0 border border-gray-100`}>
-                      <IconComponent size={22} />
+              <X size={14} />
+            </button>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2 self-end sm:self-center">
+          <span className="text-xs font-semibold text-gray-500 mr-1 hidden sm:inline">
+            Showing {filteredReports.length} {filteredReports.length === 1 ? 'report' : 'reports'}
+          </span>
+          <div className="flex items-center bg-gray-100 p-1 rounded-xl border border-gray-200/80">
+            <button
+              type="button"
+              onClick={() => setViewMode('grid')}
+              className={`p-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 transition-all cursor-pointer ${
+                viewMode === 'grid'
+                  ? 'bg-white text-[#225091] shadow-2xs'
+                  : 'text-gray-500 hover:text-gray-800'
+              }`}
+              title="Grid View"
+            >
+              <LayoutGrid size={15} />
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode('table')}
+              className={`p-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 transition-all cursor-pointer ${
+                viewMode === 'table'
+                  ? 'bg-white text-[#225091] shadow-2xs'
+                  : 'text-gray-500 hover:text-gray-800'
+              }`}
+              title="Table View"
+            >
+              <List size={15} />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Grid View */}
+      {viewMode === 'grid' && (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          {filteredReports.map((report) => {
+            const colors = getCategoryColor(report.category);
+            const IconComponent = report.icon || BarChart3;
+            const isExportingCSV = exportingReportId === `${report.id}-csv`;
+            const isExportingPDF = exportingReportId === `${report.id}-pdf`;
+
+            return (
+              <div
+                key={report.id}
+                onClick={() => navigate(`/reports/${report.id}`)}
+                className="bg-white rounded-2xl p-5 border border-gray-100 hover:border-[#225091]/30 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between cursor-pointer group select-none"
+              >
+                <div>
+                  {/* Top Category Badge & Code */}
+                  <div className="flex items-center justify-between gap-2 mb-3">
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10.5px] font-bold ${colors.bg} ${colors.text} border ${colors.border}`}>
+                      {report.category}
+                    </span>
+                    <span className="text-[11px] font-mono text-slate-400 font-bold tracking-tight">
+                      {report.code}
+                    </span>
+                  </div>
+
+                  {/* Title & Icon */}
+                  <div className="flex items-start gap-3 mt-2">
+                    <div className={`w-9 h-9 rounded-xl ${colors.iconBg} flex items-center justify-center shrink-0 border border-gray-100 shadow-2xs`}>
+                      <IconComponent size={18} />
                     </div>
                     <div>
-                      <span className={`inline-block px-2 py-0.5 rounded-md text-[10px] font-bold border ${colors.bg} ${colors.text} ${colors.border}`}>
-                        {report.category}
-                      </span>
-                      <span className="block text-[11px] font-mono text-gray-400 font-semibold mt-0.5">
-                        {report.code}
-                      </span>
+                      <h3 className="text-[14.5px] font-bold text-slate-800 group-hover:text-[#225091] transition-colors leading-snug">
+                        {report.title}
+                      </h3>
+                      <p className="text-xs text-slate-500 mt-1.5 line-clamp-2 leading-relaxed font-normal">
+                        {report.description}
+                      </p>
                     </div>
                   </div>
                 </div>
 
-                <h3 className="text-[15px] font-bold text-gray-900 group-hover:text-[#225091] transition-colors leading-snug">
-                  {report.title}
-                </h3>
-                
-                <p className="text-xs text-gray-500 mt-2 line-clamp-2 leading-relaxed">
-                  {report.description}
-                </p>
+                {/* Bottom Actions */}
+                <div className="flex items-center justify-between gap-2 mt-5 pt-3.5 border-t border-gray-100">
+                  <span className="inline-flex items-center gap-1.5 text-xs font-bold text-[#225091] group-hover:translate-x-0.5 transition-transform">
+                    View Ledger <ArrowRight size={13} />
+                  </span>
 
-                {/* Supported Filter Tags */}
-                {report.supportedFilters && (
-                  <div className="flex items-center gap-1.5 flex-wrap mt-4 pt-3 border-t border-gray-50">
-                    <span className="text-[10px] uppercase font-bold text-gray-400">Filters:</span>
-                    {report.supportedFilters.slice(0, 4).map((f) => (
-                      <span key={f} className="text-[10px] px-2 py-0.5 rounded bg-gray-50 text-gray-600 font-medium border border-gray-100">
-                        {f === 'dateFrom' || f === 'dateTo' ? 'Date Range' : f === 'branchId' ? 'Branch' : f}
-                      </span>
-                    ))}
-                    {report.supportedFilters.length > 4 && (
-                      <span className="text-[10px] text-gray-400 font-semibold">
-                        +{report.supportedFilters.length - 4} more
-                      </span>
-                    )}
-                  </div>
-                )}
+                  {canExport && (
+                    <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+                      <button
+                        type="button"
+                        disabled={isExportingCSV}
+                        onClick={(e) => handleQuickExport(e, report.id, 'csv')}
+                        className="px-2.5 py-1 rounded-lg border border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-[11px] font-bold text-slate-700 hover:text-[#225091] transition-colors flex items-center gap-1 cursor-pointer disabled:opacity-50 shadow-2xs"
+                        title="Quick export CSV"
+                      >
+                        {isExportingCSV ? (
+                          <span className="w-3 h-3 border-2 border-gray-400 border-t-[#225091] rounded-full animate-spin"></span>
+                        ) : (
+                          <>
+                            <Download size={11} /> CSV
+                          </>
+                        )}
+                      </button>
+
+                      <button
+                        type="button"
+                        disabled={isExportingPDF}
+                        onClick={(e) => handleQuickExport(e, report.id, 'pdf')}
+                        className="px-2.5 py-1 rounded-lg border border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-[11px] font-bold text-slate-700 hover:text-rose-600 transition-colors flex items-center gap-1 cursor-pointer disabled:opacity-50 shadow-2xs"
+                        title="Quick export PDF"
+                      >
+                        {isExportingPDF ? (
+                          <span className="w-3 h-3 border-2 border-gray-400 border-t-rose-600 rounded-full animate-spin"></span>
+                        ) : (
+                          <>
+                            <Download size={11} /> PDF
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
+            );
+          })}
+        </div>
+      )}
 
-              {/* Card Bottom Actions */}
-              <div className="flex items-center justify-between gap-2 mt-5 pt-3 border-t border-gray-100">
-                <span className="inline-flex items-center gap-1.5 text-xs font-bold text-[#225091] group-hover:translate-x-1 transition-transform">
-                  Generate Report <ArrowRight size={14} />
-                </span>
+      {/* Table View */}
+      {viewMode === 'table' && (
+        <div className="bg-white rounded-2xl shadow-xs border border-gray-100 overflow-hidden">
+          <TableWrapper minHeight="360px">
+            <table className="w-full text-left border-collapse text-sm">
+              <thead className="bg-slate-50/80 border-b border-gray-200/80 text-[11.5px] font-bold text-slate-500 uppercase tracking-wider select-none whitespace-nowrap">
+                <tr>
+                  <th className="py-3.5 px-4 text-left">Code</th>
+                  <th className="py-3.5 px-4 text-left">Report Title & Description</th>
+                  <th className="py-3.5 px-4 text-left">Category</th>
+                  <th className="py-3.5 px-4 text-center">Formats</th>
+                  <th className="py-3.5 px-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {filteredReports.map((report) => {
+                  const colors = getCategoryColor(report.category);
+                  const isExportingCSV = exportingReportId === `${report.id}-csv`;
+                  const isExportingPDF = exportingReportId === `${report.id}-pdf`;
 
-                {canExport && (
-                  <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
-                    <button
-                      type="button"
-                      disabled={isExportingCSV}
-                      onClick={(e) => handleQuickExport(e, report.id, 'csv')}
-                      className="px-2.5 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 text-[11px] font-bold text-gray-700 hover:text-[#225091] transition-colors flex items-center gap-1"
-                      title="Quick export CSV"
+                  return (
+                    <tr
+                      key={report.id}
+                      onClick={() => navigate(`/reports/${report.id}`)}
+                      className="hover:bg-blue-50/25 transition-colors cursor-pointer group"
                     >
-                      {isExportingCSV ? (
-                        <span className="w-3.5 h-3.5 border-2 border-gray-400 border-t-[#225091] rounded-full animate-spin"></span>
-                      ) : (
-                        <>
-                          <Download size={12} /> CSV
-                        </>
-                      )}
-                    </button>
+                      <td className="py-3.5 px-4 text-[13px] font-mono font-bold text-slate-700 whitespace-nowrap">
+                        {report.code}
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <div className="text-[13px] font-bold text-slate-900 group-hover:text-[#225091] transition-colors whitespace-nowrap">
+                          {report.title}
+                        </div>
+                        <div className="text-xs text-slate-500 mt-0.5 max-w-md truncate">
+                          {report.description}
+                        </div>
+                      </td>
+                      <td className="py-3.5 px-4 whitespace-nowrap">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold ${colors.bg} ${colors.text} border ${colors.border}`}>
+                          {report.category}
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-4 text-center whitespace-nowrap">
+                        <span className="text-[11px] font-semibold text-slate-500">CSV, PDF</span>
+                      </td>
+                      <td className="py-3.5 px-4 text-right space-x-1.5 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                        <button
+                          type="button"
+                          onClick={() => navigate(`/reports/${report.id}`)}
+                          className="px-2.5 py-1 text-xs font-semibold text-[#225091] hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
+                        >
+                          View
+                        </button>
+                        {canExport && (
+                          <>
+                            <button
+                              type="button"
+                              disabled={isExportingCSV}
+                              onClick={(e) => handleQuickExport(e, report.id, 'csv')}
+                              className="px-2 py-1 text-xs font-semibold text-slate-600 hover:text-[#225091] hover:bg-gray-100 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
+                              title="Export CSV"
+                            >
+                              {isExportingCSV ? (
+                                <span className="w-3 h-3 border-2 border-gray-400 border-t-[#225091] rounded-full animate-spin inline-block"></span>
+                              ) : (
+                                'CSV'
+                              )}
+                            </button>
+                            <button
+                              type="button"
+                              disabled={isExportingPDF}
+                              onClick={(e) => handleQuickExport(e, report.id, 'pdf')}
+                              className="px-2 py-1 text-xs font-semibold text-slate-600 hover:text-rose-600 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
+                              title="Export PDF"
+                            >
+                              {isExportingPDF ? (
+                                <span className="w-3 h-3 border-2 border-gray-400 border-t-rose-600 rounded-full animate-spin inline-block"></span>
+                              ) : (
+                                'PDF'
+                              )}
+                            </button>
+                          </>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </TableWrapper>
+        </div>
+      )}
 
-                    <button
-                      type="button"
-                      disabled={isExportingPDF}
-                      onClick={(e) => handleQuickExport(e, report.id, 'pdf')}
-                      className="px-2.5 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 text-[11px] font-bold text-gray-700 hover:text-rose-600 transition-colors flex items-center gap-1"
-                      title="Quick export PDF"
-                    >
-                      {isExportingPDF ? (
-                        <span className="w-3.5 h-3.5 border-2 border-gray-400 border-t-rose-600 rounded-full animate-spin"></span>
-                      ) : (
-                        <>
-                          <Download size={12} /> PDF
-                        </>
-                      )}
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
+      {/* Empty State */}
       {filteredReports.length === 0 && (
         <div className="bg-white rounded-2xl p-12 border border-gray-100 text-center flex flex-col items-center">
-          <div className="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 mb-3">
-            <Search size={24} />
+          <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 mb-3">
+            <Search size={22} />
           </div>
-          <h4 className="text-base font-bold text-gray-800">No reports matched your search</h4>
+          <h4 className="text-sm font-bold text-gray-800">No reports matched your search</h4>
           <p className="text-xs text-gray-500 mt-1 max-w-sm">
             Try adjusting your search query or switch back to "All Reports" to see all available ledgers.
           </p>
           <button
             onClick={() => { setSelectedCategory('All Reports'); setSearchQuery(''); }}
-            className="mt-4 px-4 py-2 rounded-xl bg-[#225091] text-white text-xs font-semibold hover:bg-[#183f72] transition-colors"
+            className="mt-4 px-4 py-2 rounded-xl bg-[#225091] text-white text-xs font-semibold hover:bg-[#183f72] transition-colors cursor-pointer"
           >
             Clear Filters
           </button>

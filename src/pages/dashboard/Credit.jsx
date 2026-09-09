@@ -16,6 +16,7 @@ import {
   FileText,
   CheckCircle,
   XCircle,
+  AlertCircle,
 } from "lucide-react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import useAuthStore from "../../store/authStore";
@@ -184,6 +185,68 @@ const Credit = () => {
     status: "PENDING",
     file: null,
   });
+  const [createErrors, setCreateErrors] = useState({});
+  const [createTouched, setCreateTouched] = useState({});
+
+  const validateCreateField = (name, value) => {
+    const val = String(value || "").trim();
+    switch (name) {
+      case "name":
+        if (!val) return "Customer name is required.";
+        if (val.length < 2) return "Customer name must be at least 2 characters.";
+        if (!/^[A-Za-z\s.'-]+$/.test(val)) return "Customer name can only contain letters and spaces.";
+        return "";
+      case "glHead":
+        if (!val) return "GL Head Code is required.";
+        if (!/^[A-Za-z0-9]{3,10}$/.test(val)) return "GL Head Code must be 3-10 alphanumeric characters.";
+        return "";
+      case "glHeadName":
+        if (!val) return "GL Head Name is required.";
+        return "";
+      case "accountNumber":
+        if (!val) return "Account number is required.";
+        if (val.length < 6 || val.length > 25) return "Account number must be between 6 and 25 characters.";
+        if (!/^[A-Za-z0-9\-\/]+$/.test(val)) return "Account number can only contain letters, numbers, hyphens, and slashes.";
+        return "";
+      case "date":
+        if (!val) return "Receipt date is required.";
+        if (isNaN(new Date(val).getTime())) return "Please select a valid date.";
+        return "";
+      default:
+        return "";
+    }
+  };
+
+  const validateCreateAll = () => {
+    const errors = {
+      name: validateCreateField("name", createForm.name),
+      glHead: validateCreateField("glHead", createForm.glHead),
+      glHeadName: validateCreateField("glHeadName", createForm.glHeadName),
+      accountNumber: validateCreateField("accountNumber", createForm.accountNumber),
+      date: validateCreateField("date", createForm.date),
+    };
+    const active = Object.entries(errors).reduce((acc, [k, v]) => {
+      if (v) acc[k] = v;
+      return acc;
+    }, {});
+    setCreateErrors(active);
+    return active;
+  };
+
+  const handleCreateBlur = (name) => {
+    setCreateTouched((prev) => ({ ...prev, [name]: true }));
+    const err = validateCreateField(name, createForm[name]);
+    setCreateErrors((prev) => ({ ...prev, [name]: err }));
+  };
+
+  const handleCreateChange = (name, rawVal, sanitizer = null) => {
+    const val = sanitizer ? sanitizer(rawVal) : rawVal;
+    setCreateForm((prev) => ({ ...prev, [name]: val }));
+    if (createTouched[name]) {
+      const err = validateCreateField(name, val);
+      setCreateErrors((prev) => ({ ...prev, [name]: err }));
+    }
+  };
 
   // Form State for Edit
   const [editForm, setEditForm] = useState({
@@ -416,12 +479,18 @@ const Credit = () => {
 
   const handleCreateReceipt = async (e) => {
     e.preventDefault();
-    if (!createForm.name.trim()) {
-      toast.error("Please enter customer name");
-      return;
-    }
-    if (!createForm.accountNumber.trim()) {
-      toast.error("Please enter account number");
+    setCreateTouched({
+      name: true,
+      glHead: true,
+      glHeadName: true,
+      accountNumber: true,
+      date: true,
+    });
+
+    const activeErrors = validateCreateAll();
+    const errorKeys = Object.keys(activeErrors);
+    if (errorKeys.length > 0) {
+      toast.error(activeErrors[errorKeys[0]]);
       return;
     }
 
@@ -429,7 +498,7 @@ const Credit = () => {
     try {
       const formData = new FormData();
       formData.append("name", createForm.name.trim());
-      formData.append("glHead", createForm.glHead);
+      formData.append("glHead", createForm.glHead.trim());
       formData.append("glHeadName", createForm.glHeadName);
       formData.append("accountNumber", createForm.accountNumber.trim());
       formData.append("date", createForm.date);
@@ -444,7 +513,7 @@ const Credit = () => {
       const res = await creditReceiptService.create(formData);
       toast.success(res?.message || "Credit Receipt created successfully!");
       setIsCreateModalOpen(false);
-      // Reset form
+      // Reset form & validation
       setCreateForm({
         name: "",
         glHead: "410105",
@@ -454,6 +523,8 @@ const Credit = () => {
         status: "PENDING",
         file: null,
       });
+      setCreateErrors({});
+      setCreateTouched({});
       fetchReceipts();
     } catch (err) {
       toast.error(
@@ -724,6 +795,19 @@ const Credit = () => {
   };
   const tableRef = useRef(null);
   const [isExportOpen, setIsExportOpen] = useState(false);
+  const exportDropdownRef = useRef(null);
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (exportDropdownRef.current && !exportDropdownRef.current.contains(event.target)) {
+        setIsExportOpen(false);
+      }
+    }
+    if (isExportOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isExportOpen]);
 
   const getSelectedDataFromTable = () => {
     if (!tableRef.current) return { headers: [], rows: [] };
@@ -892,41 +976,39 @@ const Credit = () => {
           </div>
           {/* Action Buttons: Export & Create */}
           <div className="flex items-center gap-3">
-            <div className="relative flex-shrink-0">
+            <div className="relative flex-shrink-0" ref={exportDropdownRef}>
               <button
                 onClick={() => setIsExportOpen(!isExportOpen)}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-full font-semibold transition-colors text-sm shadow-sm border bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+                className="flex items-center gap-2 px-3.5 py-2 rounded-xl font-bold transition-colors text-xs shadow-2xs border bg-white text-gray-700 border-gray-200 hover:bg-gray-50 cursor-pointer"
               >
-                <Download size={18} />
-                Export
-                <ChevronDown size={16} />
+                <Download size={15} />
+                <span>Export</span>
+                <ChevronDown size={13} className={`transition-transform duration-200 ${isExportOpen ? "rotate-180" : ""}`} />
               </button>
 
               {isExportOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-100 rounded-xl shadow-lg z-50 overflow-hidden">
-                  <div className="p-1">
-                    <button
-                      onClick={exportToCSV}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors text-left"
-                    >
-                      <Table size={16} className="text-green-600" />
-                      Export to CSV
-                    </button>
-                    <button
-                      onClick={exportToExcel}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors text-left"
-                    >
-                      <FileSpreadsheet size={16} className="text-green-600" />
-                      Export to Excel
-                    </button>
-                    <button
-                      onClick={exportToWord}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors text-left"
-                    >
-                      <FileText size={16} className="text-blue-600" />
-                      Export to Word
-                    </button>
-                  </div>
+                <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-100 rounded-xl shadow-xl py-2 z-50 animate-in fade-in zoom-in-95 duration-150">
+                  <button
+                    onClick={exportToCSV}
+                    className="w-full px-4 py-2 text-left text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2 font-medium cursor-pointer transition-colors"
+                  >
+                    <Table size={15} className="text-gray-500 shrink-0" />
+                    <span>Export to CSV</span>
+                  </button>
+                  <button
+                    onClick={exportToExcel}
+                    className="w-full px-4 py-2 text-left text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2 font-medium cursor-pointer transition-colors"
+                  >
+                    <FileSpreadsheet size={15} className="text-emerald-600 shrink-0" />
+                    <span>Export to Excel</span>
+                  </button>
+                  <button
+                    onClick={exportToWord}
+                    className="w-full px-4 py-2 text-left text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2 font-medium border-t border-gray-100 mt-1 pt-1.5 cursor-pointer transition-colors"
+                  >
+                    <FileText size={15} className="text-blue-600 shrink-0" />
+                    <span>Export to Word</span>
+                  </button>
                 </div>
               )}
             </div>
@@ -939,7 +1021,10 @@ const Credit = () => {
                   accountNumber: "",
                   date: todayISO,
                   status: "PENDING",
+                  file: null,
                 });
+                setCreateErrors({});
+                setCreateTouched({});
                 setIsCreateModalOpen(true);
               }}
               className="bg-[#225091] hover:bg-[#159a9f] text-white px-5 py-2.5 rounded-full font-semibold transition-colors text-sm shadow-sm flex-shrink-0"
@@ -1329,6 +1414,7 @@ const Credit = () => {
             </div>
             <form
               onSubmit={handleCreateReceipt}
+              noValidate
               className="p-6 space-y-4 max-h-[80vh] overflow-y-auto"
             >
               <div>
@@ -1337,14 +1423,22 @@ const Credit = () => {
                 </label>
                 <input
                   type="text"
-                  required
                   placeholder="e.g. Full Name"
                   value={createForm.name}
-                  onChange={(e) =>
-                    setCreateForm({ ...createForm, name: e.target.value })
-                  }
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all bg-white text-[15px] text-gray-800"
+                  onChange={(e) => handleCreateChange("name", e.target.value)}
+                  onBlur={() => handleCreateBlur("name")}
+                  className={`w-full px-4 py-2.5 rounded-xl border transition-all text-[15px] outline-none ${
+                    createTouched.name && createErrors.name
+                      ? "border-rose-400 bg-rose-50/20 text-rose-900 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20"
+                      : "border-gray-200 bg-white text-gray-800 focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091]"
+                  }`}
                 />
+                {createTouched.name && createErrors.name && (
+                  <span className="text-[12px] text-rose-500 font-medium mt-1 flex items-center gap-1">
+                    <AlertCircle size={13} className="shrink-0" />
+                    {createErrors.name}
+                  </span>
+                )}
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1354,14 +1448,24 @@ const Credit = () => {
                   </label>
                   <input
                     type="text"
-                    required
                     placeholder="e.g. 410105"
                     value={createForm.glHead}
                     onChange={(e) =>
-                      setCreateForm({ ...createForm, glHead: e.target.value })
+                      handleCreateChange("glHead", e.target.value.replace(/\s/g, ""))
                     }
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all bg-white text-[15px] text-gray-800"
+                    onBlur={() => handleCreateBlur("glHead")}
+                    className={`w-full px-4 py-2.5 rounded-xl border transition-all text-[15px] outline-none font-mono ${
+                      createTouched.glHead && createErrors.glHead
+                        ? "border-rose-400 bg-rose-50/20 text-rose-900 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20"
+                        : "border-gray-200 bg-white text-gray-800 focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091]"
+                    }`}
                   />
+                  {createTouched.glHead && createErrors.glHead && (
+                    <span className="text-[12px] text-rose-500 font-medium mt-1 flex items-center gap-1">
+                      <AlertCircle size={13} className="shrink-0" />
+                      {createErrors.glHead}
+                    </span>
+                  )}
                 </div>
                 <div>
                   <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">
@@ -1374,15 +1478,22 @@ const Credit = () => {
                         const selectedOption = GL_HEAD_OPTIONS.find(
                           (o) => o.name === e.target.value,
                         );
-                        setCreateForm({
-                          ...createForm,
+                        const newCode = selectedOption
+                          ? selectedOption.code
+                          : createForm.glHead;
+                        setCreateForm((prev) => ({
+                          ...prev,
                           glHeadName: e.target.value,
-                          glHead: selectedOption
-                            ? selectedOption.code
-                            : createForm.glHead,
-                        });
+                          glHead: newCode,
+                        }));
+                        if (createTouched.glHead) {
+                          setCreateErrors((prev) => ({
+                            ...prev,
+                            glHead: validateCreateField("glHead", newCode),
+                          }));
+                        }
                       }}
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all bg-white appearance-none text-[15px] text-gray-800"
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all bg-white appearance-none text-[15px] text-gray-800 cursor-pointer"
                     >
                       {GL_HEAD_OPTIONS.map((opt) => (
                         <option key={opt.code} value={opt.name}>
@@ -1404,17 +1515,26 @@ const Credit = () => {
                 </label>
                 <input
                   type="text"
-                  required
                   placeholder="e.g. 36489745148"
                   value={createForm.accountNumber}
                   onChange={(e) =>
-                    setCreateForm({
-                      ...createForm,
-                      accountNumber: e.target.value,
-                    })
+                    handleCreateChange("accountNumber", e.target.value, (val) =>
+                      val.replace(/\s/g, "").toUpperCase(),
+                    )
                   }
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all bg-white text-[15px] text-gray-800 font-mono"
+                  onBlur={() => handleCreateBlur("accountNumber")}
+                  className={`w-full px-4 py-2.5 rounded-xl border transition-all text-[15px] font-mono outline-none ${
+                    createTouched.accountNumber && createErrors.accountNumber
+                      ? "border-rose-400 bg-rose-50/20 text-rose-900 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20"
+                      : "border-gray-200 bg-white text-gray-800 focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091]"
+                  }`}
                 />
+                {createTouched.accountNumber && createErrors.accountNumber && (
+                  <span className="text-[12px] text-rose-500 font-medium mt-1 flex items-center gap-1">
+                    <AlertCircle size={13} className="shrink-0" />
+                    {createErrors.accountNumber}
+                  </span>
+                )}
               </div>
 
               <div>
@@ -1423,13 +1543,21 @@ const Credit = () => {
                 </label>
                 <input
                   type="date"
-                  required
                   value={createForm.date}
-                  onChange={(e) =>
-                    setCreateForm({ ...createForm, date: e.target.value })
-                  }
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all bg-white text-[15px] text-gray-800"
+                  onChange={(e) => handleCreateChange("date", e.target.value)}
+                  onBlur={() => handleCreateBlur("date")}
+                  className={`w-full px-4 py-2.5 rounded-xl border transition-all text-[15px] outline-none ${
+                    createTouched.date && createErrors.date
+                      ? "border-rose-400 bg-rose-50/20 text-rose-900 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20"
+                      : "border-gray-200 bg-white text-gray-800 focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091]"
+                  }`}
                 />
+                {createTouched.date && createErrors.date && (
+                  <span className="text-[12px] text-rose-500 font-medium mt-1 flex items-center gap-1">
+                    <AlertCircle size={13} className="shrink-0" />
+                    {createErrors.date}
+                  </span>
+                )}
               </div>
 
               <div>

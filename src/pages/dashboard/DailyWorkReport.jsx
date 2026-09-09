@@ -97,6 +97,20 @@ const DailyWorkReport = () => {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(false);
   const [isExportOpen, setIsExportOpen] = useState(false);
+  const exportDropdownRef = useRef(null);
+
+  // Close export dropdown on click outside
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (exportDropdownRef.current && !exportDropdownRef.current.contains(event.target)) {
+        setIsExportOpen(false);
+      }
+    }
+    if (isExportOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isExportOpen]);
   
   // Pagination States
   const [page, setPage] = useState(1);
@@ -472,6 +486,41 @@ const DailyWorkReport = () => {
     setIsExportOpen(false);
   };
 
+  const exportToExcel = () => {
+    const { headers, rows } = getSelectedDataFromTable();
+    const tableHtml = `
+      <table border="1">
+        <thead><tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr></thead>
+        <tbody>${rows.map(row => `<tr>${row.map(c => `<td>${c}</td>`).join('')}</tr>`).join('')}</tbody>
+      </table>
+    `;
+    const blob = new Blob([tableHtml], { type: 'application/vnd.ms-excel' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'Daily_Work_Report.xls';
+    link.click();
+    setIsExportOpen(false);
+  };
+
+  const exportToWord = () => {
+    const { headers, rows } = getSelectedDataFromTable();
+    const tableHtml = `
+      <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+      <head><meta charset='utf-8'><title>Daily Work Report</title></head><body>
+      <table border="1">
+        <thead><tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr></thead>
+        <tbody>${rows.map(row => `<tr>${row.map(c => `<td>${c}</td>`).join('')}</tr>`).join('')}</tbody>
+      </table>
+      </body></html>
+    `;
+    const blob = new Blob([tableHtml], { type: 'application/msword' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'Daily_Work_Report.doc';
+    link.click();
+    setIsExportOpen(false);
+  };
+
   // Calculate Stat Display Values
   const totalReportsCount = stats?.totalWorkReports ?? meta.totalRecords ?? reports.length;
   const totalAmountDisplay = stats?.formattedTotalAmount || (stats?.totalAmount !== undefined ? `₹${Number(stats.totalAmount).toLocaleString('en-IN')}` : '₹0');
@@ -576,7 +625,7 @@ const DailyWorkReport = () => {
             </button>
 
             {/* Export Dropdown */}
-            <div className="relative">
+            <div className="relative" ref={exportDropdownRef}>
               <button 
                 onClick={() => setIsExportOpen(!isExportOpen)}
                 className="flex items-center gap-2 px-3.5 py-2 rounded-xl font-bold transition-colors text-xs shadow-2xs border bg-white text-gray-700 border-gray-200 hover:bg-gray-50 cursor-pointer"
@@ -587,13 +636,27 @@ const DailyWorkReport = () => {
               </button>
 
               {isExportOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-100 rounded-xl shadow-xl py-2 z-50 animate-in fade-in zoom-in-95 duration-150 p-1.5">
+                <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-100 rounded-xl shadow-xl py-2 z-50 animate-in fade-in zoom-in-95 duration-150">
                   <button
                     onClick={exportToCSV}
-                    className="w-full px-3 py-2 text-left text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2 font-medium rounded-lg cursor-pointer"
+                    className="w-full px-4 py-2 text-left text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2 font-medium cursor-pointer transition-colors"
                   >
-                    <Table size={14} className="text-gray-500" />
+                    <Table size={15} className="text-gray-500 shrink-0" />
                     <span>Export to CSV</span>
+                  </button>
+                  <button
+                    onClick={exportToExcel}
+                    className="w-full px-4 py-2 text-left text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2 font-medium cursor-pointer transition-colors"
+                  >
+                    <FileSpreadsheet size={15} className="text-emerald-600 shrink-0" />
+                    <span>Export to Excel</span>
+                  </button>
+                  <button
+                    onClick={exportToWord}
+                    className="w-full px-4 py-2 text-left text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2 font-medium border-t border-gray-100 mt-1 pt-1.5 cursor-pointer transition-colors"
+                  >
+                    <FileText size={15} className="text-blue-600 shrink-0" />
+                    <span>Export to Word</span>
                   </button>
                 </div>
               )}

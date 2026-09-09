@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { 
   Download, RefreshCw, Filter, Search, 
@@ -7,6 +7,7 @@ import {
 import { toast } from 'react-toastify';
 import PageHeader from '../../components/common/PageHeader';
 import Pagination from '../../components/common/Pagination';
+import ExportDropdown from '../../components/common/ExportDropdown';
 import { reportService } from '../../api/reportService';
 import useBranchStore from '../../store/branchStore';
 import usePermission from '../../hooks/usePermission';
@@ -122,6 +123,7 @@ const ReportViewer = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [reportData, setReportData] = useState(null);
   const [exportLoading, setExportLoading] = useState(null); // 'csv' | 'pdf' | null
+  const reportTableRef = useRef(null);
 
   useEffect(() => {
     fetchBranches();
@@ -947,35 +949,13 @@ const ReportViewer = () => {
           </button>
 
           {canExport && (
-            <>
-              <button
-                type="button"
-                disabled={exportLoading === 'csv' || isLoading}
-                onClick={() => handleExport('csv')}
-                className="px-4 py-2.5 rounded-xl border border-gray-200 hover:bg-gray-50 text-xs font-bold text-gray-700 hover:text-[#225091] transition-colors flex items-center gap-1.5 shadow-2xs cursor-pointer disabled:opacity-50"
-              >
-                {exportLoading === 'csv' ? (
-                  <span className="w-4 h-4 border-2 border-gray-400 border-t-[#225091] rounded-full animate-spin"></span>
-                ) : (
-                  <Download size={14} />
-                )}
-                <span>Export CSV</span>
-              </button>
-
-              <button
-                type="button"
-                disabled={exportLoading === 'pdf' || isLoading}
-                onClick={() => handleExport('pdf')}
-                className="px-4 py-2.5 rounded-xl bg-[#225091] hover:bg-[#183f72] text-xs font-bold text-white transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer disabled:opacity-50"
-              >
-                {exportLoading === 'pdf' ? (
-                  <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-                ) : (
-                  <Download size={14} />
-                )}
-                <span>Export PDF</span>
-              </button>
-            </>
+            <ExportDropdown
+              buttonText="Export"
+              tableRef={reportTableRef}
+              filename={`Report-${reportType}`}
+              title={reportTitle || `Report - ${reportType}`}
+              onExportCSV={() => handleExport('csv')}
+            />
           )}
         </div>
       </div>
@@ -1110,7 +1090,7 @@ const ReportViewer = () => {
       {/* Main Report Data Table */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
         <div className="overflow-x-auto">
-          <table className="w-full border-collapse min-w-[900px] text-center text-sm whitespace-nowrap">
+          <table ref={reportTableRef} className="w-full border-collapse min-w-[900px] text-center text-sm whitespace-nowrap">
             <thead className="bg-[#225091] text-white text-xs uppercase tracking-wider font-semibold border-b border-[#225091]">
               {renderTableHeaders()}
             </thead>

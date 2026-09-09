@@ -29,6 +29,7 @@ import { Skeleton, SkeletonTableRow } from '../../components/common/Skeleton';
 import TableWrapper from '../../components/common/TableWrapper';
 import StatsCard from '../../components/common/StatsCard';
 import Pagination from '../../components/common/Pagination';
+import ExportDropdown from '../../components/common/ExportDropdown';
 
 // Comprehensive Indian States and Prominent Cities Map
 const INDIAN_STATES_WITH_CITIES = {
@@ -521,6 +522,14 @@ const CashPayment = () => {
                 <span>Reset</span>
               </button>
             )}
+
+            {/* Export Dropdown */}
+            <ExportDropdown
+              buttonText="Export"
+              onExportCSV={exportToCSV}
+              onExportExcel={exportToExcel}
+              onExportWord={exportToWord}
+            />
           </div>
         </div>
 

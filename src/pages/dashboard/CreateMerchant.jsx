@@ -352,6 +352,19 @@ const CreateMerchant = () => {
         backUrl="/merchant"
       />
 
+      {/* Notice Banner */}
+      <div className="bg-amber-50/90 border border-amber-200 rounded-2xl p-4.5 flex items-start gap-3.5 shadow-2xs">
+        <div className="w-9 h-9 rounded-xl bg-amber-500/15 text-amber-700 flex items-center justify-center shrink-0 mt-0.5">
+          <AlertCircle size={20} />
+        </div>
+        <div>
+          <h3 className="text-sm font-bold text-amber-900">Merchant Onboarding Notice</h3>
+          <p className="text-xs text-amber-800/90 mt-1 leading-relaxed">
+            New merchants must be registered and onboarded directly through the <strong>Advita Merchant Mobile Application</strong> for now. Direct creation from the bank management panel is temporarily disabled.
+          </p>
+        </div>
+      </div>
+
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
         <form onSubmit={handleSubmit} noValidate>
           {/* General Info */}
@@ -627,21 +640,21 @@ const CreateMerchant = () => {
             </div>
           </div>
 
-          <div className="mt-10 flex gap-4">
+          <div className="mt-10 flex flex-wrap items-center gap-4">
             <Link to="/merchant" className="px-6 py-3 rounded-full border border-gray-200 text-gray-700 font-medium hover:bg-gray-50 transition-colors shadow-sm text-[15px]">
-              Cancel
+              Back to Merchants
             </Link>
             <button 
               type="submit" 
-              disabled={isSubmitting} 
-              className="px-8 py-3 rounded-full bg-[#225091] text-white font-medium hover:bg-[#159499] transition-colors shadow-sm text-[15px] disabled:opacity-70 flex items-center justify-center cursor-pointer"
+              disabled={true} 
+              title="Merchant creation is only available via the mobile application"
+              className="px-8 py-3 rounded-full bg-gray-300 text-gray-500 font-medium opacity-60 cursor-not-allowed transition-colors shadow-sm text-[15px] flex items-center justify-center"
             >
-              {isSubmitting ? (
-                 <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-              ) : (
-                 "Save & Create"
-              )}
+              Save & Create
             </button>
+            <span className="text-xs text-amber-800 font-medium bg-amber-50/90 px-3.5 py-2 rounded-xl border border-amber-200">
+              Note: Merchant creation is currently handled through the mobile application.
+            </span>
           </div>
         </form>
       </div>
