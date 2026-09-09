@@ -333,7 +333,7 @@ const EditMerchant = () => {
     const errorKeys = Object.keys(validationErrors);
 
     if (errorKeys.length > 0) {
-      // Focus and smoothly scroll to the first invalid field without toast
+      toast.error(validationErrors[errorKeys[0]]);
       const firstInvalidField = document.querySelector(`[name="${errorKeys[0]}"]`);
       if (firstInvalidField) {
         firstInvalidField.focus();

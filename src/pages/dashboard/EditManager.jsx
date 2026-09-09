@@ -223,6 +223,26 @@ const EditManager = () => {
       toast.error("Manager full name is required.");
       return;
     }
+    const emailErr = validateEmail(personal.email).error;
+    if (emailErr) {
+      setActiveTab('personal');
+      toast.error(emailErr);
+      return;
+    }
+    const phoneErr = validatePhone(personal.phoneNumber).error;
+    if (phoneErr) {
+      setActiveTab('personal');
+      toast.error(phoneErr);
+      return;
+    }
+    if (personal.password) {
+      const passErr = validatePassword(personal.password, { minLength: 6 }).error;
+      if (passErr) {
+        setActiveTab('personal');
+        toast.error(passErr);
+        return;
+      }
+    }
 
     setSaving(true);
     try {

@@ -6,6 +6,7 @@ import loginIllustration from '../../assets/images/login.png';
 import { authService } from '../../api/authService';
 import { AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { validateEmail, validatePassword } from '../../utils/validation';
+import { toast } from 'react-toastify';
 
 const BankLogin = () => {
   const [formData, setFormData] = useState({ 
@@ -30,12 +31,14 @@ const BankLogin = () => {
     const emailCheck = validateEmail(formData.email);
     if (!emailCheck.isValid) {
       setError(emailCheck.error);
+      toast.error(emailCheck.error);
       return;
     }
 
     const passwordCheck = validatePassword(formData.password, { minLength: 6 });
     if (!passwordCheck.isValid) {
       setError(passwordCheck.error);
+      toast.error(passwordCheck.error);
       return;
     }
 

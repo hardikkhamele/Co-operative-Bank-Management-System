@@ -66,7 +66,7 @@ const CreateRole = () => {
   };
 
   const handleCreate = async () => {
-    if (!roleName) {
+    if (!roleName || !roleName.trim()) {
       toast.error("Role Name is required.");
       return;
     }

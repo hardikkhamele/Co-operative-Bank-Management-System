@@ -398,3 +398,16 @@ export const validateEmail = (email, { required = true } = {}) => {
   return validationResult(true, null);
 };
 
+/**
+ * Validates non-empty string or value.
+ * @param {*} value 
+ * @param {string} [fieldName='Field'] 
+ * @returns {{ isValid: boolean, error: string | null }}
+ */
+export const validateRequired = (value, fieldName = 'Field') => {
+  if (value === undefined || value === null || !String(value).trim()) {
+    return validationResult(false, `${fieldName} is required.`);
+  }
+  return validationResult(true, null);
+};
+

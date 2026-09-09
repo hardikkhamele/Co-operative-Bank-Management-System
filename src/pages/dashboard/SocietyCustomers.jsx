@@ -109,14 +109,15 @@ const SocietyCustomers = () => {
 
   // ── Stat Cards Config ──
   const statCards = [
-    { label: 'Total Records', value: stats.totalRecords, icon: Users, color: 'bg-blue-50 text-blue-600 border-blue-200', iconBg: 'bg-blue-100' },
-    { label: 'Total Customers', value: stats.totalCustomers, icon: User, color: 'bg-emerald-50 text-emerald-600 border-emerald-200', iconBg: 'bg-emerald-100' },
-    { label: 'Total Merchants', value: stats.totalMerchants, icon: Store, color: 'bg-purple-50 text-purple-600 border-purple-200', iconBg: 'bg-purple-100' },
-    { label: 'Pigmy Members', value: stats.pigmyCustomersCount, icon: Wallet, color: 'bg-amber-50 text-amber-600 border-amber-200', iconBg: 'bg-amber-100' },
-    { label: 'Loan Members', value: stats.loanCustomersCount, icon: TrendingUp, color: 'bg-rose-50 text-rose-600 border-rose-200', iconBg: 'bg-rose-100' },
-    { label: 'Total Pigmy Accounts', value: stats.totalPigmyCount, icon: Layers, color: 'bg-cyan-50 text-cyan-600 border-cyan-200', iconBg: 'bg-cyan-100' },
-    { label: 'Total Loan Accounts', value: stats.totalLoansCount, icon: Banknote, color: 'bg-orange-50 text-orange-600 border-orange-200', iconBg: 'bg-orange-100' },
+    { label: 'Total Records', value: stats.totalRecords, icon: Users, accent: '#1E3A5F' },
+    { label: 'Total Customers', value: stats.totalCustomers, icon: User, accent: '#1B6B4A' },
+    { label: 'Total Merchants', value: stats.totalMerchants, icon: Store, accent: '#5B2D8E' },
+    { label: 'Pigmy Customers', value: stats.pigmyCustomersCount, icon: Wallet, accent: '#8B6914' },
+    { label: 'Loan Customers', value: stats.loanCustomersCount, icon: TrendingUp, accent: '#9B2C3E' },
+    { label: 'Total Pigmy Accounts', value: stats.totalPigmyCount, icon: Layers, accent: '#1A6B6A' },
+    { label: 'Total Loan Accounts', value: stats.totalLoansCount, icon: Banknote, accent: '#B05C1A' },
   ];
+
 
   const formatDate = (d) => {
     if (!d) return '—';
@@ -133,29 +134,30 @@ const SocietyCustomers = () => {
     <div className="max-w-[1400px] w-full">
       {/* Header / Breadcrumb */}
       <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-6">
-        <h2 className="text-xl font-bold text-[#225091] mb-2">Society Members</h2>
+        <h2 className="text-xl font-bold text-[#225091] mb-2">Society Customers</h2>
         <div className="flex items-center text-sm font-medium text-gray-500">
           <Link to="/dashboard" className="hover:text-gray-800 transition-colors">Dashboard</Link>
           <ChevronRight size={16} className="mx-1 text-gray-400" />
           <span>CRM Management</span>
           <ChevronRight size={16} className="mx-1 text-gray-400" />
-          <span className="text-[#225091]">Society Members</span>
+          <span className="text-[#225091]">Society Customers</span>
         </div>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3 mb-6">
+      <div className="grid grid-cols-7 gap-3 mb-6 w-full">
         {statCards.map((card, idx) => {
           const Icon = card.icon;
           return (
-            <div key={idx} className={`rounded-xl border p-3.5 ${card.color} transition-all`}>
-              <div className="flex items-center gap-2.5 mb-2">
-                <div className={`w-8 h-8 rounded-lg ${card.iconBg} flex items-center justify-center`}>
-                  <Icon size={16} />
-                </div>
-                <span className="text-[11px] font-semibold uppercase tracking-wider opacity-70">{card.label}</span>
+            <div
+              key={idx}
+              className="bg-white rounded-lg py-6 px-3 flex flex-col items-center justify-center text-center border border-gray-100 shadow-sm min-w-0"
+            >
+              <div className="flex items-center justify-center gap-1.5 mb-2.5">
+                <Icon size={16} strokeWidth={1.75} style={{ color: card.accent }} />
+                <span className="text-[11px] font-medium whitespace-nowrap" style={{ color: card.accent }}>{card.label}</span>
               </div>
-              <p className="text-2xl font-extrabold">{card.value}</p>
+              <p className="text-2xl font-semibold leading-none" style={{ color: card.accent }}>{card.value}</p>
             </div>
           );
         })}
@@ -282,10 +284,6 @@ const SocietyCustomers = () => {
             <RefreshCw size={18} className={`text-gray-500 ${loading ? 'animate-spin' : ''}`} />
           </button>
         </div>
-
-        <p className="text-xs text-gray-400 font-medium">
-          Showing {items.length} of {meta.totalRecords} records • Page {meta.page} of {meta.totalPages}
-        </p>
       </div>
 
       {/* ── Data Table ── */}
@@ -294,8 +292,8 @@ const SocietyCustomers = () => {
           <table className="w-full text-sm border-collapse text-center whitespace-nowrap">
             <thead className="bg-[#225091] text-white text-xs uppercase tracking-wider font-semibold">
               <tr>
-                <th className="py-3.5 px-3 font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Sr</th>
-                <th className="py-3.5 px-3 font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Name</th>
+                <th className="py-3.5 px-3 font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Sr No</th>
+                <th className="py-3.5 px-3 font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center min-w-[190px] max-w-[240px]">Name</th>
                 <th className="py-3.5 px-3 font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Type</th>
                 <th className="py-3.5 px-3 font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Phone</th>
                 <th className="py-3.5 px-3 font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Branch</th>
@@ -303,8 +301,8 @@ const SocietyCustomers = () => {
                 <th className="py-3.5 px-3 font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Pigmy</th>
                 <th className="py-3.5 px-3 font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">EMI Card</th>
                 <th className="py-3.5 px-3 font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Account No.</th>
-                <th className="py-3.5 px-3 font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Status</th>
-                <th className="py-3.5 px-3 font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Created By</th>
+                <th className="py-3.5 px-3 font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center max-w-[125px]">Status</th>
+                <th className="py-3.5 px-3 font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center min-w-[140px]">Created By</th>
                 <th className="py-3.5 px-3 font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Onboarding</th>
                 <th className="py-3.5 px-3 font-semibold text-white uppercase tracking-wider text-center">Action</th>
               </tr>
@@ -332,16 +330,16 @@ const SocietyCustomers = () => {
                     <td className="py-3 px-3 text-gray-500 text-xs">{item.srNo || ((meta.page - 1) * meta.limit) + idx + 1}</td>
 
                     {/* Name */}
-                    <td className="py-3 px-3 text-left">
-                      <div className="font-bold text-gray-900 text-xs">{item.name || '—'}</div>
-                      {item.shopName && <div className="text-[10px] text-gray-400">{item.shopName}</div>}
-                      {item.customerId && <div className="text-[10px] text-blue-500 font-mono">{item.customerId}</div>}
+                    <td className="py-3 px-3 text-left whitespace-normal min-w-[190px] max-w-[240px]">
+                      <div className="font-semibold text-gray-900 text-xs break-words">{item.name || '—'}</div>
+                      {item.shopName && <div className="text-[10px] text-gray-400 break-words">{item.shopName}</div>}
+                      {item.customerId && <div className="text-[11px] font-medium text-[#225091]">{item.customerId}</div>}
                     </td>
 
                     {/* Type */}
                     <td className="py-3 px-3">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                        item.entityType === 'CUSTOMER' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-purple-50 text-purple-700 border border-purple-200'
+                      <span className={`text-xs font-medium ${
+                        item.entityType === 'CUSTOMER' ? 'text-emerald-700' : 'text-purple-700'
                       }`}>
                         {item.entityType === 'CUSTOMER' ? 'Customer' : 'Merchant'}
                       </span>
@@ -399,23 +397,24 @@ const SocietyCustomers = () => {
                     </td>
 
                     {/* Status */}
-                    <td className="py-3 px-3">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                        item.status === 'ACTIVE' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
-                        item.status === 'INACTIVE' ? 'bg-gray-100 text-gray-600 border border-gray-200' :
-                        'bg-amber-50 text-amber-700 border border-amber-200'
+                    <td className="py-3 px-3 text-center whitespace-normal max-w-[125px]">
+                      <span className={`inline-block text-xs font-medium leading-tight ${
+                        (item.status === 'ACTIVE' || item.status === 'VERIFIED' || item.status === 'APPROVED') ? 'text-emerald-700' :
+                        item.status === 'INACTIVE' ? 'text-gray-600' :
+                        item.status === 'REJECTED' ? 'text-rose-600' :
+                        'text-amber-700'
                       }`}>
-                        {item.status || '—'}
+                        {item.status ? item.status.replace(/_/g, ' ') : '—'}
                       </span>
                     </td>
 
                     {/* Created By */}
-                    <td className="py-3 px-3 text-xs text-left">
+                    <td className="py-3 px-3 text-xs text-left min-w-[140px]">
                       {item.createdBy ? (
                         <div>
-                          <div className="font-bold text-gray-900 text-[11px]">{item.createdBy.name}</div>
-                          <div className="text-[10px] text-gray-400">{item.createdBy.role}</div>
-                          {item.createdBy.employeeId && <div className="text-[10px] text-blue-500 font-mono">{item.createdBy.employeeId}</div>}
+                          <div className="font-semibold text-gray-900 text-xs">{item.createdBy.name}</div>
+                          <div className="text-[10px] text-gray-400 uppercase tracking-wide">{item.createdBy.role ? item.createdBy.role.replace(/_/g, ' ') : '—'}</div>
+                          {item.createdBy.employeeId && <div className="text-[11px] font-medium text-[#225091]">{item.createdBy.employeeId}</div>}
                         </div>
                       ) : '—'}
                     </td>
@@ -468,8 +467,8 @@ const SocietyCustomers = () => {
                         selectedMember.entityType === 'CUSTOMER' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-purple-50 text-purple-700 border border-purple-200'
                       }`}>{selectedMember.entityType}</span>
                       <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                        selectedMember.status === 'ACTIVE' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-gray-100 text-gray-600 border border-gray-200'
-                      }`}>{selectedMember.status}</span>
+                        (selectedMember.status === 'ACTIVE' || selectedMember.status === 'VERIFIED' || selectedMember.status === 'APPROVED') ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-gray-100 text-gray-600 border border-gray-200'
+                      }`}>{selectedMember.status ? selectedMember.status.replace(/_/g, ' ') : ''}</span>
                       {selectedMember.customerId && <span className="text-[10px] font-mono text-blue-500">{selectedMember.customerId}</span>}
                     </div>
                   </div>

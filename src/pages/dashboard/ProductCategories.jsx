@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Search, Edit, Trash2, ChevronLeft, X, Camera } from 'lucide-react';
+import { toast } from 'react-toastify';
 import PageHeader from '../../components/common/PageHeader';
 import Pagination from '../../components/common/Pagination';
 
@@ -147,13 +148,23 @@ const ProductCategories = () => {
 const CategoryModal = ({ title, submitText, onClose, initialData = null }) => {
   const [categoryName, setCategoryName] = useState(initialData ? initialData.name : '');
 
+  const handleSubmit = (e) => {
+    if (e) e.preventDefault();
+    if (!categoryName.trim()) {
+      toast.error("Category name is required.");
+      return;
+    }
+    toast.success(initialData ? "Category updated successfully!" : "Category created successfully!");
+    onClose();
+  };
+
   return (
     <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
       <div className="bg-[#f4f6fb] rounded-xl shadow-2xl w-full max-w-md overflow-hidden border border-gray-200">
-        <div className="p-6">
+        <form onSubmit={handleSubmit} className="p-6">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-bold text-gray-800">{title}</h2>
-            <button onClick={onClose} className="text-gray-500 hover:text-gray-800 transition-colors">
+            <button type="button" onClick={onClose} className="text-gray-500 hover:text-gray-800 transition-colors cursor-pointer">
               <X size={24} />
             </button>
           </div>
@@ -167,38 +178,40 @@ const CategoryModal = ({ title, submitText, onClose, initialData = null }) => {
                   className="w-full h-full object-cover rounded-full"
                 />
               </div>
-              <button className="absolute bottom-0 right-0 translate-x-1 translate-y-1 bg-[#225091] text-white p-2 rounded-full border-2 border-white hover:bg-[#168f94] transition-colors shadow-md">
+              <button type="button" className="absolute bottom-0 right-0 translate-x-1 translate-y-1 bg-[#225091] text-white p-2 rounded-full border-2 border-white hover:bg-[#168f94] transition-colors shadow-md cursor-pointer">
                 <Camera size={16} />
               </button>
             </div>
           </div>
 
           <div className="mb-8">
-            <label className="block text-sm font-medium text-gray-800 mb-2">Category Name</label>
+            <label className="block text-sm font-medium text-gray-800 mb-2">Category Name *</label>
             <input
               type="text"
               placeholder="Enter category name"
               value={categoryName}
               onChange={(e) => setCategoryName(e.target.value)}
               className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] transition-all bg-white shadow-sm"
+              required
             />
           </div>
 
           <div className="flex justify-end items-center gap-4">
             <button
+              type="button"
               onClick={onClose}
-              className="px-6 py-2.5 rounded-full border border-[#225091] text-[#225091] bg-white hover:bg-teal-50 font-medium transition-colors"
+              className="px-6 py-2.5 rounded-full border border-[#225091] text-[#225091] bg-white hover:bg-teal-50 font-medium transition-colors cursor-pointer"
             >
               Cancel
             </button>
             <button
-              onClick={onClose}
-              className="px-6 py-2.5 rounded-full bg-[#225091] hover:bg-[#168f94] text-white font-medium transition-colors"
+              type="submit"
+              className="px-6 py-2.5 rounded-full bg-[#225091] hover:bg-[#168f94] text-white font-medium transition-colors cursor-pointer"
             >
               {submitText}
             </button>
           </div>
-        </div>
+        </form>
       </div>
     </div>
   );

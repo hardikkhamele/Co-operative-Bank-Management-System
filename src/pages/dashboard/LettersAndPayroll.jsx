@@ -56,6 +56,7 @@ import { employeeService } from '../../api/employeeService';
 import { branchService } from '../../api/branchService';
 import { roleService } from '../../api/roleService';
 import { letterService, DOCUMENT_TYPE_CODES } from '../../api/letterService';
+import { validateEmail, validateAccountNumber, validateRequired } from '../../utils/validation';
 
 const MONTHS_LIST = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -1243,20 +1244,39 @@ const LettersAndPayroll = () => {
           summaryText = `Promoted To: ${promoNewRole}`;
           break;
         case 'Transfer Letter':
+          if (!transferToBranchId) {
+            toast.error('Please select a destination branch.');
+            return;
+          }
           payload = { ...payload, transferToBranchId: transferToBranchId, effectiveDate: transferEffectiveDate, reportingDate: transferReportingDate };
           const destBranch = branches.find(b => (b.id || b._id) === transferToBranchId);
           summaryText = `Transfer To: ${destBranch?.name || 'New Branch'} | Effective: ${transferEffectiveDate}`;
           break;
         case 'Salary Increment':
+          if (!incCurrentCtc || Number(incCurrentCtc) <= 0) {
+            toast.error('Current CTC must be greater than 0.');
+            return;
+          }
           payload = { ...payload, reviewPeriod: incReviewPeriod, effectiveDate: incEffectiveDate, incrementPercentage: Number(incPercentage) || 0, currentCtc: Number(incCurrentCtc) || 0, revisedCtc: Number(incRevisedCtc) || 0 };
           summaryText = `Increment: ${incPercentage}% | Revised CTC: ₹${Number(incRevisedCtc).toLocaleString()}/yr`;
           break;
         case 'Salary Slip':
+          if (salaryAccountNumber && salaryAccountNumber.trim()) {
+            const accCheck = validateAccountNumber(salaryAccountNumber.trim(), { required: false });
+            if (!accCheck.isValid) {
+              toast.error(accCheck.error);
+              return;
+            }
+          }
           payload = { ...payload, salaryDate, payDate, payPeriod, workingDays: Number(salaryWorkingDays), presentDays: Number(salaryPresentDays), paidDays: Number(salaryPaidDays), lopDays: Number(salaryLopDays), accountNumber: salaryAccountNumber, earnings: earnings.filter(e => e.label.trim() !== ''), deductions: deductions.filter(d => d.label.trim() !== ''), employerContributions: employerContributions.filter(c => c.label.trim() !== '') };
           summaryText = `Period: ${payPeriod} | Net: ₹${salaryTotals.netSalary.toLocaleString()}`;
           break;
         case 'Termination Letter':
-          payload = { ...payload, terminationDate: termDate, reason: termReason, noticePeriodDays: Number(termNoticePeriodDays), handoverTo: termHandoverTo };
+          if (!termReason || !termReason.trim()) {
+            toast.error('Termination reason is required.');
+            return;
+          }
+          payload = { ...payload, terminationDate: termDate, reason: termReason.trim(), noticePeriodDays: Number(termNoticePeriodDays), handoverTo: termHandoverTo };
           summaryText = `Exit Date: ${termDate} | Handover: ${termHandoverTo}`;
           break;
       }
@@ -1386,8 +1406,9 @@ const LettersAndPayroll = () => {
 
   const handleSendHistoryEmail = async () => {
     if (!emailModalItem) return;
-    if (!emailModalAddress.trim()) {
-      toast.error("Please enter a valid recipient email address.");
+    const emailCheck = validateEmail(emailModalAddress.trim());
+    if (!emailCheck.isValid) {
+      toast.error(emailCheck.error);
       return;
     }
     setSendingHistoryEmail(true);

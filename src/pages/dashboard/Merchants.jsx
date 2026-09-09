@@ -398,6 +398,7 @@ const Merchants = () => {
   const handleRejectMerchant = async () => {
     if (!merchantToReject) return;
     if (!rejectionReason.trim()) {
+      toast.error('Please provide a reason for rejecting this merchant onboarding.');
       setRejectReasonError('Please provide a reason for rejecting this merchant onboarding.');
       return;
     }
@@ -878,7 +879,7 @@ const Merchants = () => {
           <table ref={tableRef} className="w-full text-center text-sm whitespace-nowrap min-w-[1100px]">
             <thead>
               <tr className="bg-[#225091] border-b border-[#225091]">
-                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center w-14">#</th>
+                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center w-16">Sr No</th>
                 <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center min-w-[230px]">Shop / Business</th>
                 <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center min-w-[180px]">Owner Name</th>
                 <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center min-w-[200px]">Contact Info</th>
@@ -894,12 +895,9 @@ const Merchants = () => {
                   <tr key={rIdx} className="animate-pulse">
                     <td className="py-4 px-4 text-center"><Skeleton className="h-4 w-6 mx-auto rounded" /></td>
                     <td className="py-4 px-5">
-                      <div className="flex items-center gap-3">
-                        <Skeleton className="w-9 h-9 rounded-xl shrink-0" />
-                        <div className="space-y-1.5 flex-1">
-                          <Skeleton className="h-4 w-32 rounded" />
-                          <Skeleton className="h-3 w-20 rounded" />
-                        </div>
+                      <div className="space-y-1.5">
+                        <Skeleton className="h-4 w-32 rounded" />
+                        <Skeleton className="h-3 w-20 rounded" />
                       </div>
                     </td>
                     <td className="py-4 px-5">
@@ -920,8 +918,8 @@ const Merchants = () => {
                         <Skeleton className="h-3 w-20 rounded" />
                       </div>
                     </td>
-                    <td className="py-4 px-5 text-center"><Skeleton className="h-6 w-20 mx-auto rounded-full" /></td>
-                    <td className="py-4 px-5 text-center"><Skeleton className="h-6 w-16 mx-auto rounded-full" /></td>
+                    <td className="py-4 px-5 text-center"><Skeleton className="h-4 w-16 mx-auto rounded" /></td>
+                    <td className="py-4 px-5 text-center"><Skeleton className="h-4 w-14 mx-auto rounded" /></td>
                     <td className="py-4 px-5">
                       <div className="flex items-center justify-center gap-1.5">
                         <Skeleton className="h-7 w-14 rounded-lg" />
@@ -974,32 +972,27 @@ const Merchants = () => {
                   ).toUpperCase();
 
                   return (
-                    <tr key={rowId || idx} className="hover:bg-slate-50/70 transition-colors group">
+                    <tr key={rowId || idx} className="hover:bg-slate-50/70 transition-colors group/row">
                       {/* 1. Sr. No. */}
                       <td className="py-3.5 px-4 text-[13px] text-gray-500 font-medium text-center">{row.srNo || srNo}</td>
                       
                       {/* 2. Shop / Business */}
                       <td className="py-3.5 px-5">
-                        <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-xl bg-blue-50 text-[#225091] flex items-center justify-center font-bold text-xs shrink-0 border border-blue-100 shadow-2xs">
-                            <Store size={18} />
-                          </div>
-                          <div className="min-w-0">
-                            <span className="text-[13.5px] font-bold text-gray-900 block truncate" title={shopName}>
-                              {shopName}
-                            </span>
-                            <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-                              {gstin ? (
-                                <span className="text-[10px] text-gray-600 font-mono bg-gray-100 px-1.5 py-0.5 rounded border border-gray-200/60" title={`GSTIN: ${gstin}`}>
-                                  GST: {gstin}
-                                </span>
-                              ) : null}
-                              {category ? (
-                                <span className="text-[10px] text-blue-700 bg-blue-50/70 font-semibold px-1.5 py-0.5 rounded border border-blue-100">
-                                  {category}
-                                </span>
-                              ) : null}
-                            </div>
+                        <div className="min-w-0">
+                          <span className="text-[13.5px] font-bold text-gray-900 block truncate" title={shopName}>
+                            {shopName}
+                          </span>
+                          <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                            {gstin ? (
+                              <span className="text-[10px] text-gray-600 font-mono bg-gray-100 px-1.5 py-0.5 rounded border border-gray-200/60" title={`GSTIN: ${gstin}`}>
+                                GST: {gstin}
+                              </span>
+                            ) : null}
+                            {category ? (
+                              <span className="text-[10px] text-blue-700 bg-blue-50/70 font-semibold px-1.5 py-0.5 rounded border border-blue-100">
+                                {category}
+                              </span>
+                            ) : null}
                           </div>
                         </div>
                       </td>
@@ -1037,12 +1030,11 @@ const Merchants = () => {
                       {/* 5. Branch & Location */}
                       <td className="py-3.5 px-5">
                         <div className="flex flex-col gap-0.5">
-                          <span className="text-xs font-bold text-gray-800 flex items-center gap-1.5">
-                            <Building2 size={13} className="text-[#225091] shrink-0" />
-                            <span>{branchName}</span>
+                          <span className="text-xs font-bold text-gray-800">
+                            {branchName}
                           </span>
                           {locationStr ? (
-                            <span className="text-[11px] text-gray-500 flex items-center gap-1 ml-4" title={locationStr}>
+                            <span className="text-[11px] text-gray-500 flex items-center gap-1" title={locationStr}>
                               <MapPin size={11} className="text-gray-400 shrink-0" />
                               <span className="truncate max-w-[160px]">{locationStr}</span>
                             </span>
@@ -1053,21 +1045,21 @@ const Merchants = () => {
                       {/* 6. Approval Status */}
                       <td className="py-3.5 px-5 text-center whitespace-nowrap">
                         {approvalStatusUpper === 'APPROVED' ? (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/80 shadow-2xs">
-                            <CheckCircle2 size={13} /> Approved
+                          <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700">
+                            <CheckCircle2 size={14} /> Approved
                           </span>
                         ) : approvalStatusUpper === 'REJECTED' ? (
                           <button
                             type="button"
                             onClick={() => setViewReasonModal({ open: true, merchant: row })}
-                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 transition-colors cursor-pointer shadow-2xs"
+                            className="inline-flex items-center gap-1.5 text-xs font-semibold text-rose-700 hover:underline cursor-pointer"
                             title="Click to view rejection reason"
                           >
-                            <XCircle size={13} /> Rejected
+                            <XCircle size={14} /> Rejected
                           </button>
                         ) : (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200/80 shadow-2xs">
-                            <Clock size={13} className="animate-pulse" /> Pending
+                          <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-700">
+                            <Clock size={14} /> Pending
                           </span>
                         )}
                       </td>
@@ -1075,21 +1067,21 @@ const Merchants = () => {
                       {/* 7. Account Status */}
                       <td className="py-3.5 px-5 text-center whitespace-nowrap">
                         {isDeleted ? (
-                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200/60 uppercase tracking-wider">
+                          <span className="inline-flex items-center text-xs font-semibold text-rose-700">
                             Deleted
                           </span>
                         ) : statusStr === 'ACTIVE' ? (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/60 uppercase tracking-wider">
+                          <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700">
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
                             Active
                           </span>
                         ) : statusStr === 'BLOCKED' ? (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-orange-50 text-orange-700 border border-orange-200/60 uppercase tracking-wider">
+                          <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-orange-700">
                             <span className="w-1.5 h-1.5 rounded-full bg-orange-500"></span>
                             Blocked
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-gray-100 text-gray-700 border border-gray-200 uppercase tracking-wider">
+                          <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-600">
                             <span className="w-1.5 h-1.5 rounded-full bg-gray-400"></span>
                             Inactive
                           </span>
@@ -1098,14 +1090,19 @@ const Merchants = () => {
                       
                       {/* 8. Action */}
                       <td className="py-3.5 px-5">
-                        <div className="flex items-center justify-center gap-1.5 whitespace-nowrap">
-                          <Link 
-                            to={`/merchant/${rowId}/view`} 
-                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-[#225091] bg-blue-50 hover:bg-blue-100 border border-[#225091]/15 transition-all shadow-2xs" 
-                            title="View Merchant Profile"
-                          >
-                            <Eye size={13} /> View
-                          </Link>
+                        <div className="flex items-center justify-center gap-1 whitespace-nowrap">
+                          <div className="relative group/tip">
+                            <Link 
+                              to={`/merchant/${rowId}/view`} 
+                              className="p-1.5 rounded-lg text-[#225091] hover:bg-blue-50 transition-colors cursor-pointer"
+                              title="View"
+                            >
+                              <Eye size={17} />
+                            </Link>
+                            <span className="absolute left-1/2 -translate-x-1/2 -top-8 whitespace-nowrap bg-gray-800 text-white text-xs rounded py-1 px-2 hidden group-hover/tip:block pointer-events-none z-50">
+                              View
+                            </span>
+                          </div>
 
                           {!isDeleted ? (
                             <>
@@ -1113,75 +1110,105 @@ const Merchants = () => {
                               {canApproveMerchant && (
                                 <>
                                   {approvalStatusUpper !== 'APPROVED' && (
-                                    <button 
-                                      onClick={() => {
-                                        setMerchantToApprove(row);
-                                        setIsApproveModalOpen(true);
-                                      }} 
-                                      className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 border border-emerald-600 transition-all shadow-2xs cursor-pointer" 
-                                      title={approvalStatusUpper === 'REJECTED' ? "Re-Approve Merchant Onboarding" : "Approve Merchant Onboarding"}
-                                    >
-                                      <CheckCircle2 size={13} /> {approvalStatusUpper === 'REJECTED' ? 'Re-Approve' : 'Approve'}
-                                    </button>
+                                    <div className="relative group/tip">
+                                      <button 
+                                        onClick={() => {
+                                          setMerchantToApprove(row);
+                                          setIsApproveModalOpen(true);
+                                        }} 
+                                        className="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50 transition-colors cursor-pointer"
+                                        title={approvalStatusUpper === 'REJECTED' ? "Re-Approve" : "Approve"}
+                                      >
+                                        <CheckCircle2 size={17} />
+                                      </button>
+                                      <span className="absolute left-1/2 -translate-x-1/2 -top-8 whitespace-nowrap bg-gray-800 text-white text-xs rounded py-1 px-2 hidden group-hover/tip:block pointer-events-none z-50">
+                                        {approvalStatusUpper === 'REJECTED' ? 'Re-Approve' : 'Approve'}
+                                      </span>
+                                    </div>
                                   )}
 
                                   {approvalStatusUpper !== 'REJECTED' && (
-                                    <button 
-                                      onClick={() => {
-                                        setMerchantToReject(row);
-                                        setRejectionReason('');
-                                        setRejectReasonError('');
-                                        setIsRejectModalOpen(true);
-                                      }} 
-                                      className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 transition-all shadow-2xs cursor-pointer" 
-                                      title="Reject Merchant Onboarding"
-                                    >
-                                      <XCircle size={13} /> Reject
-                                    </button>
+                                    <div className="relative group/tip">
+                                      <button 
+                                        onClick={() => {
+                                          setMerchantToReject(row);
+                                          setRejectionReason('');
+                                          setRejectReasonError('');
+                                          setIsRejectModalOpen(true);
+                                        }} 
+                                        className="p-1.5 rounded-lg text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                                        title="Reject"
+                                      >
+                                        <XCircle size={17} />
+                                      </button>
+                                      <span className="absolute left-1/2 -translate-x-1/2 -top-8 whitespace-nowrap bg-gray-800 text-white text-xs rounded py-1 px-2 hidden group-hover/tip:block pointer-events-none z-50">
+                                        Reject
+                                      </span>
+                                    </div>
                                   )}
                                 </>
                               )}
 
-                              <Link 
-                                to={`/merchant/${rowId}/edit`} 
-                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200/60 transition-all shadow-2xs" 
-                                title="Edit Merchant"
-                              >
-                                <Edit size={13} /> Edit
-                              </Link>
-                              <button 
-                                onClick={() => {
-                                  setMerchantToDelete(row);
-                                  setIsDeleteModalOpen(true);
-                                }} 
-                                className="inline-flex items-center gap-1 p-1.5 rounded-lg text-xs font-semibold text-rose-600 hover:text-rose-700 hover:bg-rose-50 border border-transparent hover:border-rose-200 transition-all shadow-2xs cursor-pointer" 
-                                title="Delete Merchant"
-                              >
-                                <Trash2 size={14} />
-                              </button>
+                              <div className="relative group/tip">
+                                <Link 
+                                  to={`/merchant/${rowId}/edit`} 
+                                  className="p-1.5 rounded-lg text-amber-600 hover:bg-amber-50 transition-colors cursor-pointer"
+                                  title="Edit"
+                                >
+                                  <Edit size={17} />
+                                </Link>
+                                <span className="absolute left-1/2 -translate-x-1/2 -top-8 whitespace-nowrap bg-gray-800 text-white text-xs rounded py-1 px-2 hidden group-hover/tip:block pointer-events-none z-50">
+                                  Edit
+                                </span>
+                              </div>
+                              <div className="relative group/tip">
+                                <button 
+                                  onClick={() => {
+                                    setMerchantToDelete(row);
+                                    setIsDeleteModalOpen(true);
+                                  }} 
+                                  className="p-1.5 rounded-lg text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                                  title="Delete"
+                                >
+                                  <Trash2 size={17} />
+                                </button>
+                                <span className="absolute left-1/2 -translate-x-1/2 -top-8 whitespace-nowrap bg-gray-800 text-white text-xs rounded py-1 px-2 hidden group-hover/tip:block pointer-events-none z-50">
+                                  Delete
+                                </span>
+                              </div>
                             </>
                           ) : (
                             <>
-                              <button 
-                                onClick={() => {
-                                  setMerchantToRestore(row);
-                                  setIsRestoreModalOpen(true);
-                                }} 
-                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/60 transition-all shadow-2xs cursor-pointer" 
-                                title="Restore Merchant Account"
-                              >
-                                <RotateCcw size={13} /> Restore
-                              </button>
-                              <button 
-                                onClick={() => {
-                                  setMerchantToPermanent(row);
-                                  setIsPermanentModalOpen(true);
-                                }} 
-                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-red-800 bg-red-100 hover:bg-red-200 border border-red-300 transition-all shadow-2xs cursor-pointer" 
-                                title="Permanent Hard Delete"
-                              >
-                                <AlertTriangle size={13} /> Hard Delete
-                              </button>
+                              <div className="relative group/tip">
+                                <button 
+                                  onClick={() => {
+                                    setMerchantToRestore(row);
+                                    setIsRestoreModalOpen(true);
+                                  }} 
+                                  className="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50 transition-colors cursor-pointer"
+                                  title="Restore"
+                                >
+                                  <RotateCcw size={17} />
+                                </button>
+                                <span className="absolute left-1/2 -translate-x-1/2 -top-8 whitespace-nowrap bg-gray-800 text-white text-xs rounded py-1 px-2 hidden group-hover/tip:block pointer-events-none z-50">
+                                  Restore
+                                </span>
+                              </div>
+                              <div className="relative group/tip">
+                                <button 
+                                  onClick={() => {
+                                    setMerchantToPermanent(row);
+                                    setIsPermanentModalOpen(true);
+                                  }} 
+                                  className="p-1.5 rounded-lg text-red-700 hover:bg-red-50 transition-colors cursor-pointer"
+                                  title="Hard Delete"
+                                >
+                                  <AlertTriangle size={17} />
+                                </button>
+                                <span className="absolute left-1/2 -translate-x-1/2 -top-8 whitespace-nowrap bg-gray-800 text-white text-xs rounded py-1 px-2 hidden group-hover/tip:block pointer-events-none z-50">
+                                  Hard Delete
+                                </span>
+                              </div>
                             </>
                           )}
                         </div>

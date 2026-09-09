@@ -475,7 +475,7 @@ const Leads = ({ leadType: propLeadType, systemTitle: propSystemTitle }) => {
     if (!leadId) return;
 
     if (!rejectReason.trim()) {
-      toast.warn("Please provide a reason for rejecting this loan request.");
+      toast.error("Please provide a reason for rejecting this loan request.");
       return;
     }
 
@@ -508,7 +508,7 @@ const Leads = ({ leadType: propLeadType, systemTitle: propSystemTitle }) => {
     if (!leadId) return;
 
     if (!settleTxnRef.trim()) {
-      toast.warn("Please enter the Payment Transaction / UTR Reference number.");
+      toast.error("Please enter the Payment Transaction / UTR Reference number.");
       return;
     }
 

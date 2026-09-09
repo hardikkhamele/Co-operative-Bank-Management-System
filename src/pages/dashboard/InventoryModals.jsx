@@ -160,6 +160,11 @@ export default function InventoryModals({ isOpen, onClose, modalType, initialDat
       const entityId = isUpdate ? (initialData._id || initialData.id) : null;
 
       if (modalType === 'vendors') {
+        if (!dataToSubmit.name || !dataToSubmit.name.trim()) {
+          toast.error("Vendor name is required.");
+          setLoading(false);
+          return;
+        }
         if (dataToSubmit.gstNumber) {
           const gstRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
           if (!gstRegex.test(dataToSubmit.gstNumber.toUpperCase())) {
@@ -176,15 +181,45 @@ export default function InventoryModals({ isOpen, onClose, modalType, initialDat
         isUpdate ? await inventoryService.updateVendor(entityId, dataToSubmit) : await inventoryService.createVendor(dataToSubmit);
         toast.success(isUpdate ? "Vendor updated successfully!" : "Vendor created successfully!");
       } else if (modalType === 'categories') {
+        if (!dataToSubmit.name || !dataToSubmit.name.trim()) {
+          toast.error("Category name is required.");
+          setLoading(false);
+          return;
+        }
         isUpdate ? await inventoryService.updateCategory(entityId, dataToSubmit) : await inventoryService.createCategory(dataToSubmit);
         toast.success(isUpdate ? "Category updated successfully!" : "Category created successfully!");
       } else if (modalType === 'subcategories') {
+        if (!dataToSubmit.name || !dataToSubmit.name.trim()) {
+          toast.error("Subcategory name is required.");
+          setLoading(false);
+          return;
+        }
+        if (!dataToSubmit.categoryId) {
+          toast.error("Please select a parent Category.");
+          setLoading(false);
+          return;
+        }
         isUpdate ? await inventoryService.updateSubcategory(entityId, dataToSubmit) : await inventoryService.createSubcategory(dataToSubmit);
         toast.success(isUpdate ? "Subcategory updated successfully!" : "Subcategory created successfully!");
       } else if (modalType === 'central') {
+        if (!dataToSubmit.name || !dataToSubmit.name.trim()) {
+          toast.error("Warehouse name is required.");
+          setLoading(false);
+          return;
+        }
         isUpdate ? await inventoryService.updateCentralWarehouse(entityId, dataToSubmit) : await inventoryService.createCentralWarehouse(dataToSubmit);
         toast.success(isUpdate ? "Central Warehouse updated successfully!" : "Central Warehouse created successfully!");
       } else if (modalType === 'catalog') {
+        if (!dataToSubmit.name || !dataToSubmit.name.trim()) {
+          toast.error("Item name is required.");
+          setLoading(false);
+          return;
+        }
+        if (!dataToSubmit.categoryId) {
+          toast.error("Please select a Category.");
+          setLoading(false);
+          return;
+        }
         const payload = { ...dataToSubmit };
         // Map unit to unitOfMeasure if needed, or strictly enforce unitOfMeasure
         if (payload.unitOfMeasure === undefined && payload.unit !== undefined) {
@@ -200,6 +235,16 @@ export default function InventoryModals({ isOpen, onClose, modalType, initialDat
         isUpdate ? await inventoryService.updateItem(entityId, payload) : await inventoryService.createItem(payload);
         toast.success(isUpdate ? "Catalog Item updated successfully!" : "Catalog Item created successfully!");
       } else if (modalType === 'adjust_stock') {
+        if (!formData.itemMasterId) {
+          toast.error("Please select an item.");
+          setLoading(false);
+          return;
+        }
+        if (formData.quantity === '' || isNaN(Number(formData.quantity)) || Number(formData.quantity) <= 0) {
+          toast.error("Please enter a valid positive quantity.");
+          setLoading(false);
+          return;
+        }
         if (formData.locationType === 'CentralInventory' && formData.adjustmentType === 'ADD') {
           await inventoryService.receiveStock({
             centralInventoryId: formData.locationId,

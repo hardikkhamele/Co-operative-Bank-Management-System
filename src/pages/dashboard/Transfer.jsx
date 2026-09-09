@@ -403,6 +403,15 @@ const Transfer = () => {
     e.preventDefault();
     if (!selectedReceipt) return;
 
+    if (!editForm.name.trim()) {
+      toast.error("Please enter customer name");
+      return;
+    }
+    if (!editForm.accountNumber.trim()) {
+      toast.error("Please enter account number");
+      return;
+    }
+
     setSubmitting(true);
     try {
       const receiptId = selectedReceipt._id || selectedReceipt.id;

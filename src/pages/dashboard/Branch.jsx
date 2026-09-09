@@ -237,56 +237,128 @@ const Branch = () => {
     }));
   };
 
-  const submitCreateBranch = async () => {
-    // Validate Branch Details
-    const branchEmailErr = validateEmail(createForm.branch.email).error;
+  const validateCreateStep1 = () => {
+    const branchName = createForm.branch.name?.trim() || '';
+    if (!branchName) {
+      toast.error('Branch Name is required');
+      return false;
+    }
+    if (branchName.length > 200) {
+      toast.error('Branch Name must not exceed 200 characters');
+      return false;
+    }
+
+    const branchCode = createForm.branch.code?.trim() || '';
+    if (!branchCode) {
+      toast.error('Branch Code is required');
+      return false;
+    }
+    if (branchCode.length > 20) {
+      toast.error('Branch Code must not exceed 20 characters');
+      return false;
+    }
+
+    const branchEmail = createForm.branch.email?.trim() || '';
+    if (!branchEmail) {
+      toast.error('Branch Email is required');
+      return false;
+    }
+    const branchEmailErr = validateEmail(branchEmail).error;
     if (branchEmailErr) {
       toast.error(`Branch Email: ${branchEmailErr}`);
-      setCreateStep(1);
-      return;
+      return false;
     }
 
-    if (!createForm.branch.phoneNumber) {
+    const branchPhone = createForm.branch.phoneNumber?.trim() || '';
+    if (!branchPhone) {
       toast.error('Branch Phone: Phone number is required');
-      setCreateStep(1);
-      return;
+      return false;
     }
-    const branchPhoneErr = validatePhone(createForm.branch.phoneNumber).error;
+    const branchPhoneErr = validatePhone(branchPhone, { fieldName: 'Branch Phone' }).error;
     if (branchPhoneErr) {
-      toast.error(`Branch Phone: ${branchPhoneErr}`);
-      setCreateStep(1);
-      return;
+      toast.error(branchPhoneErr);
+      return false;
     }
 
-    if (createForm.branch.pincode) {
-      const pinErr = validatePincode(createForm.branch.pincode).error;
+    const managerName = createForm.manager.fullName?.trim() || '';
+    if (!managerName) {
+      toast.error('Branch Manager Name is required');
+      return false;
+    }
+    if (managerName.length > 200) {
+      toast.error('Branch Manager Name must not exceed 200 characters');
+      return false;
+    }
+
+    if (!createForm.branch.state?.trim()) {
+      toast.error('State/UT is required');
+      return false;
+    }
+
+    if (createForm.branch.addressLine1 && createForm.branch.addressLine1.length > 200) {
+      toast.error('Address must not exceed 200 characters');
+      return false;
+    }
+
+    if (createForm.branch.pincode && createForm.branch.pincode.trim()) {
+      const pinErr = validatePincode(createForm.branch.pincode, { required: false }).error;
       if (pinErr) {
         toast.error(pinErr);
-        setCreateStep(1);
-        return;
+        return false;
       }
     }
 
-    // Validate Manager Credentials
-    const mgrEmailErr = validateEmail(createForm.manager.email).error;
+    return true;
+  };
+
+  const handleNextCreateStep = () => {
+    if (validateCreateStep1()) {
+      // If manager email is not set, optionally suggest branch email or leave empty
+      if (!createForm.manager.phoneNumber && createForm.branch.phoneNumber) {
+        handleCreateChange('manager', 'phoneNumber', createForm.branch.phoneNumber);
+      }
+      setCreateStep(2);
+    }
+  };
+
+  const submitCreateBranch = async () => {
+    // Validate Step 1 first
+    if (!validateCreateStep1()) {
+      setCreateStep(1);
+      return;
+    }
+
+    // Validate Manager Credentials (Step 2)
+    const mgrEmail = createForm.manager.email?.trim() || '';
+    if (!mgrEmail) {
+      toast.error('Manager Email is required');
+      return;
+    }
+    const mgrEmailErr = validateEmail(mgrEmail).error;
     if (mgrEmailErr) {
       toast.error(`Manager Email: ${mgrEmailErr}`);
       return;
     }
 
-    const passErr = validatePassword(createForm.manager.password, { minLength: 6 }).error;
+    const mgrPassword = createForm.manager.password || '';
+    if (!mgrPassword) {
+      toast.error('Manager Temporary Password is required');
+      return;
+    }
+    const passErr = validatePassword(mgrPassword, { minLength: 6, fieldName: 'Manager Password' }).error;
     if (passErr) {
-      toast.error(`Manager Password: ${passErr}`);
+      toast.error(passErr);
       return;
     }
 
-    if (!createForm.manager.phoneNumber) {
+    const mgrPhone = createForm.manager.phoneNumber?.trim() || '';
+    if (!mgrPhone) {
       toast.error('Manager Phone: Phone number is required');
       return;
     }
-    const mgrPhoneErr = validatePhone(createForm.manager.phoneNumber).error;
+    const mgrPhoneErr = validatePhone(mgrPhone, { fieldName: 'Manager Phone' }).error;
     if (mgrPhoneErr) {
-      toast.error(`Manager Phone: ${mgrPhoneErr}`);
+      toast.error(mgrPhoneErr);
       return;
     }
 
@@ -910,24 +982,47 @@ const Branch = () => {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">Branch Name *</label>
-                      <input type="text" value={createForm.branch.name} onChange={e => handleCreateChange('branch', 'name', e.target.value)} placeholder="e.g. Mumbai Fort" className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#225091] text-sm" />
+                      <input 
+                        type="text" 
+                        value={createForm.branch.name} 
+                        onChange={e => handleCreateChange('branch', 'name', e.target.value.slice(0, 200))} 
+                        placeholder="e.g. Mumbai Fort" 
+                        maxLength={200}
+                        className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#225091] text-sm" 
+                      />
                     </div>
                     <div>
                       <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">Branch Code *</label>
-                      <input type="text" value={createForm.branch.code} onChange={e => handleCreateChange('branch', 'code', e.target.value)} placeholder="e.g. MUM01" className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#225091] text-sm" />
+                      <input 
+                        type="text" 
+                        value={createForm.branch.code} 
+                        onChange={e => handleCreateChange('branch', 'code', e.target.value.toUpperCase().slice(0, 20))} 
+                        placeholder="e.g. MUM01" 
+                        maxLength={20}
+                        className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#225091] text-sm uppercase font-mono" 
+                      />
                     </div>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">Email *</label>
-                      <input type="email" value={createForm.branch.email} onChange={e => handleCreateChange('branch', 'email', e.target.value)} placeholder="Branch Email" className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#225091] text-sm" />
+                      <input 
+                        type="email" 
+                        value={createForm.branch.email} 
+                        onChange={e => handleCreateChange('branch', 'email', e.target.value)} 
+                        placeholder="Branch Email" 
+                        maxLength={100}
+                        className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#225091] text-sm" 
+                      />
                     </div>
                     <div>
                       <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">Phone Number *</label>
                       <input 
                         type="tel" 
+                        inputMode="numeric"
                         value={createForm.branch.phoneNumber} 
                         onChange={e => handleCreateChange('branch', 'phoneNumber', sanitizeDigits(e.target.value, 10))} 
+                        onKeyDown={preventInvalidNumberKeys}
                         placeholder="10-digit Phone" 
                         maxLength={10}
                         className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#225091] text-sm" 
@@ -936,7 +1031,14 @@ const Branch = () => {
                   </div>
                   <div>
                     <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">Branch Manager Name *</label>
-                    <input type="text" value={createForm.manager.fullName} onChange={e => handleCreateChange('manager', 'fullName', e.target.value)} placeholder="Manager Full Name" className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#225091] text-sm" />
+                    <input 
+                      type="text" 
+                      value={createForm.manager.fullName} 
+                      onChange={e => handleCreateChange('manager', 'fullName', e.target.value.slice(0, 200))} 
+                      placeholder="Manager Full Name" 
+                      maxLength={200}
+                      className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#225091] text-sm" 
+                    />
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
@@ -973,8 +1075,9 @@ const Branch = () => {
                     <input 
                       type="text" 
                       value={createForm.branch.addressLine1} 
-                      onChange={e => handleCreateChange('branch', 'addressLine1', e.target.value)} 
+                      onChange={e => handleCreateChange('branch', 'addressLine1', e.target.value.slice(0, 200))} 
                       placeholder="Address Line 1" 
+                      maxLength={200}
                       className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#225091] text-sm" 
                     />
                   </div>
@@ -982,8 +1085,10 @@ const Branch = () => {
                     <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">Pincode</label>
                     <input 
                       type="text" 
+                      inputMode="numeric"
                       value={createForm.branch.pincode} 
                       onChange={e => handleCreateChange('branch', 'pincode', sanitizeDigits(e.target.value, 6))} 
+                      onKeyDown={preventInvalidNumberKeys}
                       placeholder="6-digit Pincode" 
                       maxLength={6}
                       className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#225091] text-sm" 
@@ -997,7 +1102,14 @@ const Branch = () => {
                   </div>
                   <div>
                     <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">Email Address (Login ID) *</label>
-                    <input type="email" value={createForm.manager.email} onChange={e => handleCreateChange('manager', 'email', e.target.value)} placeholder="Manager Email" className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#225091] text-sm" />
+                    <input 
+                      type="email" 
+                      value={createForm.manager.email} 
+                      onChange={e => handleCreateChange('manager', 'email', e.target.value)} 
+                      placeholder="Manager Email" 
+                      maxLength={100}
+                      className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#225091] text-sm" 
+                    />
                   </div>
                   <div>
                     <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">Temporary Password *</label>
@@ -1007,12 +1119,13 @@ const Branch = () => {
                         value={createForm.manager.password} 
                         onChange={e => handleCreateChange('manager', 'password', e.target.value)} 
                         placeholder="Min 6 characters" 
+                        maxLength={50}
                         className="w-full pl-3 pr-10 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#225091] text-sm" 
                       />
                       <button
                         type="button"
                         onClick={() => setShowManagerPassword(!showManagerPassword)}
-                        className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 focus:outline-none"
+                        className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 focus:outline-none cursor-pointer"
                       >
                         {showManagerPassword ? <Eye size={16} /> : <EyeOff size={16} />}
                       </button>
@@ -1022,8 +1135,10 @@ const Branch = () => {
                     <label className="block text-[14px] font-semibold text-[#1b2559] mb-1.5">Phone Number *</label>
                     <input 
                       type="tel" 
+                      inputMode="numeric"
                       value={createForm.manager.phoneNumber} 
                       onChange={e => handleCreateChange('manager', 'phoneNumber', sanitizeDigits(e.target.value, 10))} 
+                      onKeyDown={preventInvalidNumberKeys}
                       placeholder="10-digit Phone" 
                       maxLength={10}
                       className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#225091] text-sm" 
@@ -1036,26 +1151,26 @@ const Branch = () => {
             <div className="flex justify-between items-center p-6 pt-4 border-t border-gray-200 bg-white">
               {createStep === 1 ? (
                 <div className="w-full flex justify-end gap-3">
-                  <button onClick={() => setIsCreateModalOpen(false)} className="px-6 py-2 rounded-full border border-gray-300 text-gray-700 font-semibold hover:bg-gray-50 transition-colors text-sm">Cancel</button>
+                  <button onClick={() => setIsCreateModalOpen(false)} className="px-6 py-2 rounded-full border border-gray-300 text-gray-700 font-semibold hover:bg-gray-50 transition-colors text-sm cursor-pointer">Cancel</button>
                   <button 
-                    onClick={() => setCreateStep(2)} 
+                    onClick={handleNextCreateStep} 
                     disabled={!createForm.branch.name || !createForm.branch.code || !createForm.branch.state || !createForm.branch.email || !createForm.manager.fullName}
-                    className="px-6 py-2 rounded-full bg-[#225091] text-white font-semibold hover:bg-[#168f94] transition-colors shadow-sm text-sm flex items-center gap-2 disabled:opacity-50"
+                    className="px-6 py-2 rounded-full bg-[#225091] text-white font-semibold hover:bg-[#168f94] transition-colors shadow-sm text-sm flex items-center gap-2 disabled:opacity-50 cursor-pointer"
                   >
                     Next Step <ArrowRight size={16} />
                   </button>
                 </div>
               ) : (
                 <div className="w-full flex justify-between">
-                  <button onClick={() => setCreateStep(1)} className="group px-6 py-2 rounded-full border border-gray-300 text-gray-700 font-semibold hover:bg-gray-50 transition-all text-sm flex items-center gap-2 active:scale-[0.98]">
+                  <button onClick={() => setCreateStep(1)} className="group px-6 py-2 rounded-full border border-gray-300 text-gray-700 font-semibold hover:bg-gray-50 transition-all text-sm flex items-center gap-2 active:scale-[0.98] cursor-pointer">
                     <ArrowLeft size={16} className="transition-transform duration-200 group-hover:-translate-x-0.5" /> Back
                   </button>
                   <div className="flex gap-3">
-                    <button onClick={() => setIsCreateModalOpen(false)} className="px-6 py-2 rounded-full border border-gray-300 text-gray-700 font-semibold hover:bg-gray-50 transition-colors text-sm">Cancel</button>
+                    <button onClick={() => setIsCreateModalOpen(false)} className="px-6 py-2 rounded-full border border-gray-300 text-gray-700 font-semibold hover:bg-gray-50 transition-colors text-sm cursor-pointer">Cancel</button>
                     <button 
                       onClick={submitCreateBranch} 
                       disabled={createSubmitting || !createForm.manager.fullName || !createForm.manager.email || !createForm.manager.password}
-                      className="px-6 py-2 rounded-full bg-[#225091] text-white font-semibold hover:bg-[#168f94] transition-colors shadow-sm text-sm disabled:opacity-50 flex items-center"
+                      className="px-6 py-2 rounded-full bg-[#225091] text-white font-semibold hover:bg-[#168f94] transition-colors shadow-sm text-sm disabled:opacity-50 flex items-center cursor-pointer"
                     >
                       {createSubmitting ? 'Creating...' : 'Finish & Create'}
                     </button>

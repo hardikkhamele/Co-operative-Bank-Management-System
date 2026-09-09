@@ -238,7 +238,7 @@ function App() {
 
               {/* Society Members */}
               <Route element={<PermissionRoute anyOf={['customer.view', 'lead.view', 'merchant.view']} />}>
-                <Route path="society-members" element={<SocietyCustomers />} />
+                <Route path="society-customers" element={<SocietyCustomers />} />
               </Route>
 
               <Route element={<PermissionRoute anyOf={['customer.view', 'lead.view']} />}>

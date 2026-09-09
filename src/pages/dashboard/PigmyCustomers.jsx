@@ -1341,6 +1341,7 @@ const PigmyCustomers = () => {
               <thead>
                 <tr className="bg-[#225091] border-b border-[#225091]">
                   <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 w-12 text-center">Sr. No.</th>
+                  <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Date & Time</th>
                   <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Customer Name</th>
                   <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Pigmy Code & Acc No</th>
                   <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Contact & Branch</th>
@@ -1377,6 +1378,18 @@ const PigmyCustomers = () => {
                         <tr key={cId} className="hover:bg-gray-50/60 transition-colors border-b border-gray-100">
                           <td className="py-3.5 px-3 text-center border-r border-gray-100 text-sm font-medium text-gray-600">
                             {(page - 1) * limit + index + 1}
+                          </td>
+                          <td className="py-3.5 px-3 border-r border-gray-100 text-center">
+                            {c.createdAt ? (
+                              <>
+                                <span className="text-[12px] font-semibold text-gray-800 block">
+                                  {new Date(c.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                                </span>
+                                <span className="text-[11px] text-gray-500 block mt-0.5">
+                                  {new Date(c.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true }).toUpperCase()}
+                                </span>
+                              </>
+                            ) : <span className="text-gray-400 text-xs">—</span>}
                           </td>
                           <td className="py-3.5 px-3 border-r border-gray-100 text-center">
                             <div className="flex items-center justify-center gap-1.5">
