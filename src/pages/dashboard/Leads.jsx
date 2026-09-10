@@ -35,6 +35,7 @@ import {
   Building2,
 } from "lucide-react";
 import { leadService } from "../../api/leadService";
+import useLocations from "../../hooks/useLocations";
 import PageHeader from "../../components/common/PageHeader";
 import TableWrapper from "../../components/common/TableWrapper";
 import StatsCard from "../../components/common/StatsCard";
@@ -145,6 +146,8 @@ const Leads = ({ leadType: propLeadType, systemTitle: propSystemTitle }) => {
   const initialStatus = searchParams.get("status") || "";
   const initialDateFrom = searchParams.get("startDate") || searchParams.get("dateFrom") || "";
   const initialDateTo = searchParams.get("endDate") || searchParams.get("dateTo") || "";
+  const initialState = searchParams.get("state") || "";
+  const initialCity = searchParams.get("city") || "";
   const initialPage = parseInt(searchParams.get("page"), 10) || 1;
 
   // Data states
@@ -183,6 +186,9 @@ const Leads = ({ leadType: propLeadType, systemTitle: propSystemTitle }) => {
   const [selectedStatus, setSelectedStatus] = useState(initialStatus);
   const [dateFrom, setDateFrom] = useState(initialDateFrom);
   const [dateTo, setDateTo] = useState(initialDateTo);
+  const [selectedState, setSelectedState] = useState(initialState);
+  const [selectedCity, setSelectedCity] = useState(initialCity);
+  const { states: statesList, availableCities, loading: locationsLoading } = useLocations(selectedState);
 
   // Status Card Click Handler with Toggle
   const handleStatusCardClick = (statusKey) => {
@@ -227,6 +233,8 @@ const Leads = ({ leadType: propLeadType, systemTitle: propSystemTitle }) => {
     if (selectedStatus) params.status = selectedStatus;
     if (dateFrom) params.startDate = dateFrom;
     if (dateTo) params.endDate = dateTo;
+    if (selectedState) params.state = selectedState;
+    if (selectedCity) params.city = selectedCity;
     if (page > 1) params.page = page.toString();
 
     setSearchParams(params, { replace: true });
@@ -235,6 +243,8 @@ const Leads = ({ leadType: propLeadType, systemTitle: propSystemTitle }) => {
     selectedStatus,
     dateFrom,
     dateTo,
+    selectedState,
+    selectedCity,
     page,
     setSearchParams,
   ]);
@@ -245,6 +255,8 @@ const Leads = ({ leadType: propLeadType, systemTitle: propSystemTitle }) => {
     const urlStatus = searchParams.get("status") || "";
     const urlDateFrom = searchParams.get("startDate") || searchParams.get("dateFrom") || "";
     const urlDateTo = searchParams.get("endDate") || searchParams.get("dateTo") || "";
+    const urlState = searchParams.get("state") || "";
+    const urlCity = searchParams.get("city") || "";
     const urlPage = parseInt(searchParams.get("page"), 10) || 1;
 
     if (urlSearch !== debouncedSearch) {
@@ -254,6 +266,8 @@ const Leads = ({ leadType: propLeadType, systemTitle: propSystemTitle }) => {
     if (urlStatus !== selectedStatus) setSelectedStatus(urlStatus);
     if (urlDateFrom !== dateFrom) setDateFrom(urlDateFrom);
     if (urlDateTo !== dateTo) setDateTo(urlDateTo);
+    if (urlState !== selectedState) setSelectedState(urlState);
+    if (urlCity !== selectedCity) setSelectedCity(urlCity);
     if (urlPage !== page) setPage(urlPage);
   }, [searchParams]);
 
@@ -297,6 +311,8 @@ const Leads = ({ leadType: propLeadType, systemTitle: propSystemTitle }) => {
       }
       if (dateFrom) params.startDate = dateFrom;
       if (dateTo) params.endDate = dateTo;
+      if (selectedState) params.state = selectedState;
+      if (selectedCity) params.city = selectedCity;
 
       let res;
       if (isCustomerSystem) {
@@ -431,6 +447,8 @@ const Leads = ({ leadType: propLeadType, systemTitle: propSystemTitle }) => {
     selectedStatus,
     dateFrom,
     dateTo,
+    selectedState,
+    selectedCity,
     isCustomerSystem,
     isMerchantSystem,
     currentLeadType,
@@ -836,7 +854,45 @@ const Leads = ({ leadType: propLeadType, systemTitle: propSystemTitle }) => {
           </div>
 
           {/* Filter Controls Row */}
-          <div className="flex items-center gap-2.5 flex-wrap sm:flex-nowrap">
+          <div className="flex items-center gap-2.5 flex-wrap">
+            {/* State Filter */}
+            <div className="relative">
+              <select
+                value={selectedState}
+                onChange={(e) => {
+                  setSelectedState(e.target.value);
+                  setSelectedCity("");
+                  setPage(1);
+                }}
+                disabled={locationsLoading}
+                className="pl-3 pr-8 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] bg-white text-xs font-semibold text-gray-700 shadow-2xs cursor-pointer appearance-none disabled:bg-gray-50"
+              >
+                <option value="">All States</option>
+                {statesList.map((st) => (
+                  <option key={st} value={st}>{st}</option>
+                ))}
+              </select>
+              <ChevronDown size={13} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+            </div>
+
+            {/* City Filter */}
+            <div className="relative">
+              <select
+                value={selectedCity}
+                onChange={(e) => {
+                  setSelectedCity(e.target.value);
+                  setPage(1);
+                }}
+                className="pl-3 pr-8 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] bg-white text-xs font-semibold text-gray-700 shadow-2xs cursor-pointer appearance-none"
+              >
+                <option value="">All Cities</option>
+                {availableCities.map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+              <ChevronDown size={13} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+            </div>
+
             {/* Status Select */}
             <div className="relative">
               <select
@@ -953,7 +1009,7 @@ const Leads = ({ leadType: propLeadType, systemTitle: propSystemTitle }) => {
             </div>
 
             {/* Reset Filters */}
-            {(searchTerm || selectedStatus || dateFrom || dateTo) && (
+            {(searchTerm || selectedStatus || dateFrom || dateTo || selectedState || selectedCity) && (
               <button
                 type="button"
                 onClick={() => {
@@ -962,6 +1018,8 @@ const Leads = ({ leadType: propLeadType, systemTitle: propSystemTitle }) => {
                   setSelectedStatus("");
                   setDateFrom("");
                   setDateTo("");
+                  setSelectedState("");
+                  setSelectedCity("");
                   setPage(1);
                 }}
                 className="inline-flex items-center gap-1.5 px-3 py-2.5 text-xs font-semibold text-gray-600 hover:text-rose-600 bg-gray-50 hover:bg-rose-50 rounded-xl border border-gray-200 transition-colors cursor-pointer"

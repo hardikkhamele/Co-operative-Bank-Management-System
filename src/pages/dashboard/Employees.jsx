@@ -33,43 +33,7 @@ import TableWrapper from "../../components/common/TableWrapper";
 import StatsCard from "../../components/common/StatsCard";
 import Pagination from "../../components/common/Pagination";
 
-// Comprehensive Indian States and Prominent Cities Map
-const INDIAN_STATES_WITH_CITIES = {
-  "Andhra Pradesh": ["Visakhapatnam", "Vijayawada", "Guntur", "Nellore", "Kurnool", "Rajahmundry", "Tirupati", "Kadapa", "Kakinada", "Anantapur"],
-  "Arunachal Pradesh": ["Itanagar", "Naharlagun", "Pasighat", "Tawang", "Ziro"],
-  "Assam": ["Guwahati", "Silchar", "Dibrugarh", "Jorhat", "Nagaon", "Tinsukia", "Tezpur"],
-  "Bihar": ["Patna", "Gaya", "Bhagalpur", "Muzaffarpur", "Purnia", "Darbhanga", "Bihar Sharif", "Arrah", "Begusarai", "Katihar"],
-  "Chandigarh": ["Chandigarh"],
-  "Chhattisgarh": ["Raipur", "Bhilai", "Bilaspur", "Korba", "Rajnandgaon", "Durg", "Jagdalpur", "Ambikapur"],
-  "Dadra and Nagar Haveli and Daman and Diu": ["Daman", "Diu", "Silvassa"],
-  "Delhi": ["New Delhi", "North Delhi", "South Delhi", "East Delhi", "West Delhi", "Central Delhi", "Dwarka", "Rohini"],
-  "Goa": ["Panaji", "Margao", "Vasco da Gama", "Mapusa", "Ponda"],
-  "Gujarat": ["Ahmedabad", "Surat", "Vadodara", "Rajkot", "Bhavnagar", "Jamnagar", "Junagadh", "Gandhinagar", "Anand", "Navsari", "Morbi", "Bharuch"],
-  "Haryana": ["Gurugram", "Faridabad", "Panipat", "Ambala", "Yamunanagar", "Rohtak", "Hisar", "Karnal", "Sonipat", "Panchkula"],
-  "Himachal Pradesh": ["Shimla", "Dharamshala", "Mandi", "Solan", "Kullu", "Manali", "Baddi"],
-  "Jammu and Kashmir": ["Srinagar", "Jammu", "Anantnag", "Baramulla", "Udhampur", "Kathua"],
-  "Jharkhand": ["Ranchi", "Jamshedpur", "Dhanbad", "Bokaro Steel City", "Deoghar", "Hazaribagh", "Giridih"],
-  "Karnataka": ["Bengaluru", "Mysuru", "Hubballi", "Dharwad", "Mangaluru", "Belagavi", "Davangere", "Ballari", "Kalaburagi", "Shivamogga", "Tumakuru", "Udupi"],
-  "Kerala": ["Thiruvananthapuram", "Kochi", "Kozhikode", "Kollam", "Thrissur", "Kannur", "Alappuzha", "Palakkad", "Kottayam", "Malappuram"],
-  "Ladakh": ["Leh", "Kargil"],
-  "Madhya Pradesh": ["Indore", "Bhopal", "Jabalpur", "Gwalior", "Ujjain", "Sagar", "Dewas", "Satna", "Ratlam", "Rewa"],
-  "Maharashtra": ["Mumbai", "Pune", "Nagpur", "Thane", "Nashik", "Aurangabad", "Solapur", "Amravati", "Kolhapur", "Navi Mumbai", "Akola", "Latur", "Dhule", "Ahmednagar", "Chandrapur", "Parbhani", "Jalgaon", "Nanded", "Satara", "Sangli"],
-  "Manipur": ["Imphal", "Churachandpur", "Thoubal"],
-  "Meghalaya": ["Shillong", "Tura", "Jowai"],
-  "Mizoram": ["Aizawl", "Lunglei", "Champhai"],
-  "Nagaland": ["Kohima", "Dimapur", "Mokokchung"],
-  "Odisha": ["Bhubaneswar", "Cuttack", "Rourkela", "Berhampur", "Sambalpur", "Puri", "Balasore", "Bhadrak", "Baripada"],
-  "Puducherry": ["Puducherry", "Karaikal", "Mahe", "Yanam"],
-  "Punjab": ["Ludhiana", "Amritsar", "Jalandhar", "Patiala", "Bathinda", "Mohali", "Pathankot", "Hoshiarpur", "Batala"],
-  "Rajasthan": ["Jaipur", "Jodhpur", "Kota", "Bikaner", "Ajmer", "Udaipur", "Bhilwara", "Alwar", "Bharatpur", "Sikar", "Pali", "Sri Ganganagar"],
-  "Sikkim": ["Gangtok", "Namchi", "Gyalshing"],
-  "Tamil Nadu": ["Chennai", "Coimbatore", "Madurai", "Tiruchirappalli", "Salem", "Tirunelveli", "Tiruppur", "Vellore", "Erode", "Thoothukudi", "Dindigul", "Thanjavur"],
-  "Telangana": ["Hyderabad", "Warangal", "Nizamabad", "Karimnagar", "Ramagundam", "Khammam", "Mahbubnagar", "Nalgonda", "Adilabad"],
-  "Tripura": ["Agartala", "Udaipur", "Dharmanagar"],
-  "Uttar Pradesh": ["Lucknow", "Kanpur", "Varanasi", "Agra", "Noida", "Greater Noida", "Ghaziabad", "Prayagraj", "Meerut", "Bareilly", "Aligarh", "Moradabad", "Saharanpur", "Gorakhpur", "Jhansi", "Mathura", "Ayodhya"],
-  "Uttarakhand": ["Dehradun", "Haridwar", "Roorkee", "Haldwani", "Rishikesh", "Nainital", "Rudrapur"],
-  "West Bengal": ["Kolkata", "Howrah", "Siliguri", "Durgapur", "Asansol", "Bardhaman", "Kharagpur", "Malda", "Baharampur", "Habra"]
-};
+import useLocations from "../../hooks/useLocations";
 
 const Employees = () => {
   const navigate = useNavigate();
@@ -111,7 +75,6 @@ const Employees = () => {
 
   // Dropdown Options State
   const [roleOptions, setRoleOptions] = useState([]);
-  const [apiLocations, setApiLocations] = useState({ states: [], cities: [], locations: [] });
   const { globalBranchId, branchOptions, fetchBranches } = useBranchStore();
 
   // Modals & Action States
@@ -136,59 +99,8 @@ const Employees = () => {
     setSelectedBranchId(globalBranchId || "");
   }, [globalBranchId]);
 
-  // Fetch Available Cities & States from Backend API
-  useEffect(() => {
-    const fetchLocations = async () => {
-      try {
-        const res = await branchService.getAvailableLocations();
-        if (res && res.success && res.data) {
-          setApiLocations({
-            states: res.data.states || [],
-            cities: res.data.cities || [],
-            locations: res.data.locations || []
-          });
-        }
-      } catch (err) {
-        console.warn("Failed to fetch available locations from API, fallback to branch data:", err);
-      }
-    };
-    fetchLocations();
-  }, []);
-
-  // Compute States list from API locations or fallback to branchOptions
-  const statesList = useMemo(() => {
-    if (apiLocations.states && apiLocations.states.length > 0) {
-      return apiLocations.states;
-    }
-    const statesSet = new Set();
-    (branchOptions || []).forEach((b) => {
-      const bState = (b.state || b.address?.state || b.branchState || "").trim();
-      if (bState) statesSet.add(bState);
-    });
-    return Array.from(statesSet).sort();
-  }, [apiLocations.states, branchOptions]);
-
-  // Available cities for the selected state
-  const availableCities = useMemo(() => {
-    if (selectedState) {
-      const foundLoc = (apiLocations.locations || []).find(
-        (loc) => loc.state?.trim().toLowerCase() === selectedState.trim().toLowerCase()
-      );
-      if (foundLoc && foundLoc.cities && foundLoc.cities.length > 0) {
-        return foundLoc.cities;
-      }
-      const cSet = new Set();
-      (branchOptions || []).forEach((b) => {
-        const bState = (b.state || b.address?.state || b.branchState || "").trim().toLowerCase();
-        const bCity = (b.city || b.address?.city || b.branchCity || "").trim();
-        if (bState === selectedState.trim().toLowerCase() && bCity) {
-          cSet.add(bCity);
-        }
-      });
-      return Array.from(cSet).sort();
-    }
-    return apiLocations.cities || [];
-  }, [selectedState, apiLocations, branchOptions]);
+  // Available locations from /v1/society/credit-receipts/locations
+  const { states: statesList, availableCities } = useLocations(selectedState);
 
   // Debounce search input
   useEffect(() => {
@@ -741,7 +653,6 @@ const Employees = () => {
               value={selectedState}
               onChange={(val) => {
                 setSelectedState(val);
-                setSelectedCity("");
                 setPage(1);
               }}
               options={[
@@ -754,12 +665,10 @@ const Employees = () => {
             />
           </div>
 
-          {/* 5. City Filter (Connected to State) */}
+          {/* 5. City Filter */}
           <div>
             <SearchableSelect
               value={selectedCity}
-              disabled={Boolean(selectedState && availableCities.length === 0)}
-              disabledPlaceholder="No cities available"
               onChange={(val) => {
                 setSelectedCity(val);
                 setPage(1);

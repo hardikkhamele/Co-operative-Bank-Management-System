@@ -49,6 +49,7 @@ import { isBankOwner } from '../../utils/roleUtils';
 import pigmyService from '../../api/pigmyService';
 import sipService from '../../api/sipService';
 import branchService from '../../api/branchService';
+import useLocations from '../../hooks/useLocations';
 
 import PageHeader from '../../components/common/PageHeader';
 import StatsCard from '../../components/common/StatsCard';
@@ -951,6 +952,9 @@ const PigmyCustomers = () => {
   const [selectedBranchId, setSelectedBranchId] = useState(user?.branchId || '');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [selectedState, setSelectedState] = useState('');
+  const [selectedCity, setSelectedCity] = useState('');
+  const { states: statesList, availableCities, loading: locationsLoading } = useLocations(selectedState);
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
   const [meta, setMeta] = useState({ totalRecords: 0, totalPages: 1 });
@@ -1016,6 +1020,8 @@ const PigmyCustomers = () => {
       if (isOwner && selectedBranchId) params.branchId = selectedBranchId;
       if (startDate) params.fromDate = startDate;
       if (endDate) params.toDate = endDate;
+      if (selectedState) params.state = selectedState;
+      if (selectedCity) params.city = selectedCity;
 
       const res = await pigmyService.list(params);
       const items = Array.isArray(res?.data) ? res.data : res?.data?.items || res?.items || [];
@@ -1044,7 +1050,7 @@ const PigmyCustomers = () => {
     } finally {
       setPigmyLoading(false);
     }
-  }, [page, limit, debouncedSearch, customerType, approvalStatus, selectedBranchId, startDate, endDate, isOwner]);
+  }, [page, limit, debouncedSearch, customerType, approvalStatus, selectedBranchId, startDate, endDate, selectedState, selectedCity, isOwner]);
 
   useEffect(() => { fetchCustomers(); }, [fetchCustomers]);
 
@@ -1288,7 +1294,44 @@ const PigmyCustomers = () => {
               </div>
 
               {/* Filter Controls Row */}
-              <div className="flex items-center gap-2.5 flex-wrap sm:flex-nowrap">
+              <div className="flex items-center gap-2.5 flex-wrap">
+                {/* State Filter */}
+                <div className="relative">
+                  <select
+                    value={selectedState}
+                    onChange={(e) => {
+                      setSelectedState(e.target.value);
+                      setPage(1);
+                    }}
+                    disabled={locationsLoading}
+                    className="pl-3 pr-8 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] bg-white text-xs font-semibold text-gray-700 shadow-2xs cursor-pointer appearance-none disabled:bg-gray-50"
+                  >
+                    <option value="">All States</option>
+                    {statesList.map(st => (
+                      <option key={st} value={st}>{st}</option>
+                    ))}
+                  </select>
+                  <Filter size={13} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                </div>
+
+                {/* City Filter */}
+                <div className="relative">
+                  <select
+                    value={selectedCity}
+                    onChange={(e) => {
+                      setSelectedCity(e.target.value);
+                      setPage(1);
+                    }}
+                    className="pl-3 pr-8 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] bg-white text-xs font-semibold text-gray-700 shadow-2xs cursor-pointer appearance-none"
+                  >
+                    <option value="">All Cities</option>
+                    {availableCities.map(c => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
+                  <Filter size={13} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                </div>
+
                 <div className="relative">
                   <select value={customerType} onChange={(e) => { setCustomerType(e.target.value); setPage(1); }} className="pl-3 pr-8 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] bg-white text-xs font-semibold text-gray-700 shadow-2xs cursor-pointer appearance-none">
                     <option value="ALL">All Types</option>
@@ -1326,8 +1369,8 @@ const PigmyCustomers = () => {
                   <input type="date" value={endDate} onChange={(e) => { setEndDate(e.target.value); setPage(1); }} title="To Date" className="pl-8 pr-3 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] bg-white text-xs font-semibold text-gray-700 shadow-2xs cursor-pointer hover:bg-gray-50/50 transition-all" />
                   <Calendar size={13} className="absolute left-2.5 text-gray-400 pointer-events-none" />
                 </div>
-                {(startDate || endDate) && (
-                  <button type="button" onClick={() => { setStartDate(""); setEndDate(""); setPage(1); }} title="Clear Dates" className="p-2 rounded-xl text-gray-400 hover:text-rose-600 hover:bg-rose-50 border border-gray-200 transition-colors cursor-pointer">
+                {(startDate || endDate || selectedState || selectedCity) && (
+                  <button type="button" onClick={() => { setStartDate(""); setEndDate(""); setSelectedState(""); setSelectedCity(""); setPage(1); }} title="Clear Filters" className="p-2 rounded-xl text-gray-400 hover:text-rose-600 hover:bg-rose-50 border border-gray-200 transition-colors cursor-pointer">
                     <X size={14} />
                   </button>
                 )}

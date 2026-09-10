@@ -73,7 +73,9 @@ const BankDashboardLayout = () => {
       >
         <div className="w-64 h-full flex flex-col shrink-0">
           <div className="p-5 border-b border-gray-100 flex items-center justify-between">
-            <h1 className="text-xl font-bold text-[#225091] whitespace-nowrap">Co-Op Bank</h1>
+            <Link to="/bank/dashboard" onClick={() => setIsMobileOpen(false)} className="hover:opacity-85 transition-opacity">
+              <h1 className="text-xl font-bold text-[#225091] whitespace-nowrap">Co-Op Bank</h1>
+            </Link>
             <button
               type="button"
               onClick={() => setIsMobileOpen(false)}

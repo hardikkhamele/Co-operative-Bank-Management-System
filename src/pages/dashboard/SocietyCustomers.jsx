@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { societyCustomerService } from '../../api/societyCustomerService';
+import useLocations from '../../hooks/useLocations';
 import Pagination from '../../components/common/Pagination';
 
 const SocietyCustomers = () => {
@@ -30,6 +31,9 @@ const SocietyCustomers = () => {
   const [hasLoans, setHasLoans] = useState('');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
+  const [selectedState, setSelectedState] = useState('');
+  const [selectedCity, setSelectedCity] = useState('');
+  const { states: statesList, availableCities, loading: locationsLoading } = useLocations(selectedState);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   // Detail modal
@@ -49,6 +53,8 @@ const SocietyCustomers = () => {
       if (hasLoans) params.hasLoans = hasLoans;
       if (dateFrom) params.dateFrom = dateFrom;
       if (dateTo) params.dateTo = dateTo;
+      if (selectedState) params.state = selectedState;
+      if (selectedCity) params.city = selectedCity;
 
       const res = await societyCustomerService.list(params);
       if (res?.success && res.data) {
@@ -62,7 +68,7 @@ const SocietyCustomers = () => {
     } finally {
       setLoading(false);
     }
-  }, [page, limit, searchTerm, typeFilter, statusFilter, productFilter, hasPigmy, hasLoans, dateFrom, dateTo]);
+  }, [page, limit, searchTerm, typeFilter, statusFilter, productFilter, hasPigmy, hasLoans, dateFrom, dateTo, selectedState, selectedCity]);
 
   useEffect(() => { fetchList(); }, [fetchList]);
 
@@ -103,6 +109,8 @@ const SocietyCustomers = () => {
     setHasLoans('');
     setDateFrom('');
     setDateTo('');
+    setSelectedState('');
+    setSelectedCity('');
     setSearchTerm('');
     setPage(1);
   };
@@ -209,6 +217,43 @@ const SocietyCustomers = () => {
                 <div className="flex items-center justify-between mb-2">
                   <h4 className="text-sm font-bold text-gray-900">Filters</h4>
                   <button onClick={() => setIsFilterOpen(false)} className="text-gray-400 hover:text-gray-600 cursor-pointer"><X size={18} /></button>
+                </div>
+
+                {/* State Filter */}
+                <div>
+                  <label className="text-xs font-semibold text-gray-600 mb-1 block">State</label>
+                  <select
+                    value={selectedState}
+                    onChange={(e) => {
+                      setSelectedState(e.target.value);
+                      setPage(1);
+                    }}
+                    disabled={locationsLoading}
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-[#225091] focus:border-[#225091] disabled:bg-gray-50 cursor-pointer"
+                  >
+                    <option value="">All States</option>
+                    {statesList.map(st => (
+                      <option key={st} value={st}>{st}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* City Filter */}
+                <div>
+                  <label className="text-xs font-semibold text-gray-600 mb-1 block">City</label>
+                  <select
+                    value={selectedCity}
+                    onChange={(e) => {
+                      setSelectedCity(e.target.value);
+                      setPage(1);
+                    }}
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-[#225091] focus:border-[#225091] cursor-pointer"
+                  >
+                    <option value="">All Cities</option>
+                    {availableCities.map(c => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
                 </div>
 
                 {/* Status */}

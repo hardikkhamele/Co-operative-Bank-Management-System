@@ -39,14 +39,7 @@ import useBranchStore from '../../store/branchStore';
 import { Skeleton, SkeletonAvatar } from '../../components/common/Skeleton';
 import { ALL_KPA_PRODUCTS } from '../../utils/kpaConstants';
 
-const INDIAN_STATES = [
-  'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh', 
-  'Delhi', 'Goa', 'Gujarat', 'Haryana', 'Himachal Pradesh', 'Jharkhand', 
-  'Karnataka', 'Kerala', 'Madhya Pradesh', 'Maharashtra', 'Manipur', 
-  'Meghalaya', 'Mizoram', 'Nagaland', 'Odisha', 'Punjab', 'Rajasthan', 
-  'Sikkim', 'Tamil Nadu', 'Telangana', 'Tripura', 'Uttar Pradesh', 
-  'Uttarakhand', 'West Bengal'
-];
+import useLocations from '../../hooks/useLocations';
 
 const DEFAULT_DESIGNATIONS = [
   'Branch Manager', 'Assistant Branch Manager', 'Loan Executive',
@@ -164,6 +157,7 @@ const DailyWorkReport = () => {
   const [appliedFilters, setAppliedFilters] = useState({
     designations: '',
     states: '',
+    city: '',
     branchIds: '',
     branchId: '',
     employeeId: '',
@@ -176,6 +170,7 @@ const DailyWorkReport = () => {
   const [tempFilters, setTempFilters] = useState({
     designations: '',
     states: '',
+    city: '',
     branchIds: '',
     branchId: '',
     employeeId: '',
@@ -183,6 +178,8 @@ const DailyWorkReport = () => {
     endDate: '',
     date: '',
   });
+
+  const { states: statesList, availableCities, loading: locationsLoading } = useLocations(appliedFilters.states);
 
   // Debounce search input (500ms)
   useEffect(() => {
@@ -293,6 +290,9 @@ const DailyWorkReport = () => {
       if (appliedFilters.states) {
         params.states = appliedFilters.states;
       }
+      if (appliedFilters.city) {
+        params.city = appliedFilters.city;
+      }
       if (appliedFilters.date) {
         params.date = appliedFilters.date;
       }
@@ -366,6 +366,7 @@ const DailyWorkReport = () => {
     const reset = {
       designations: '',
       states: '',
+      city: '',
       branchIds: '',
       branchId: '',
       employeeId: '',
@@ -385,6 +386,7 @@ const DailyWorkReport = () => {
     let count = 0;
     if (appliedFilters.designations) count++;
     if (appliedFilters.states) count++;
+    if (appliedFilters.city) count++;
     if (appliedFilters.branchIds || appliedFilters.branchId) count++;
     if (appliedFilters.employeeId) count++;
     if (appliedFilters.startDate) count++;
@@ -673,9 +675,46 @@ const DailyWorkReport = () => {
           </div>
         </div>
 
-        {/* Bottom Inline Filter Controls: Branch -> Employee -> Designation -> Start Date -> End Date */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 pt-2 border-t border-gray-100">
-          {/* 1. Branch */}
+        {/* Bottom Inline Filter Controls: State -> City -> Branch -> Employee -> Designation -> Start Date -> End Date */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3 pt-2 border-t border-gray-100">
+          {/* 1. State Filter */}
+          <div className="relative">
+            <select
+              value={appliedFilters.states || ''}
+              onChange={(e) => {
+                setAppliedFilters(prev => ({ ...prev, states: e.target.value }));
+                setPage(1);
+              }}
+              disabled={locationsLoading}
+              className="w-full pl-3 pr-8 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-xs font-medium text-gray-700 shadow-2xs appearance-none cursor-pointer disabled:bg-gray-50"
+            >
+              <option value="">All States</option>
+              {statesList.map(st => (
+                <option key={st} value={st}>{st}</option>
+              ))}
+            </select>
+            <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+          </div>
+
+          {/* 2. City Filter */}
+          <div className="relative">
+            <select
+              value={appliedFilters.city || ''}
+              onChange={(e) => {
+                setAppliedFilters(prev => ({ ...prev, city: e.target.value }));
+                setPage(1);
+              }}
+              className="w-full pl-3 pr-8 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-xs font-medium text-gray-700 shadow-2xs appearance-none cursor-pointer"
+            >
+              <option value="">All Cities</option>
+              {availableCities.map(c => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+            <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+          </div>
+
+          {/* 3. Branch */}
           <div className="relative">
             <select
               value={appliedFilters.branchId || appliedFilters.branchIds || ''}
@@ -695,7 +734,7 @@ const DailyWorkReport = () => {
             <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
           </div>
 
-          {/* 2. Employee */}
+          {/* 4. Employee */}
           <div className="relative">
             <select
               value={appliedFilters.employeeId || ''}
@@ -715,7 +754,7 @@ const DailyWorkReport = () => {
             <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
           </div>
 
-          {/* 3. Designation */}
+          {/* 5. Designation */}
           <div className="relative">
             <select
               value={appliedFilters.designations || ''}
@@ -741,7 +780,7 @@ const DailyWorkReport = () => {
             <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
           </div>
 
-          {/* 4. Start Date */}
+          {/* 6. Start Date */}
           <div className="relative">
             <input
               type="date"
@@ -755,7 +794,7 @@ const DailyWorkReport = () => {
             />
           </div>
 
-          {/* 5. End Date */}
+          {/* 7. End Date */}
           <div className="relative">
             <input
               type="date"
@@ -776,6 +815,24 @@ const DailyWorkReport = () => {
             <span className="font-bold text-gray-500 uppercase tracking-wider text-[10px] flex items-center gap-1 mr-1">
               Active:
             </span>
+
+            {appliedFilters.states && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-blue-50 text-[#225091] border border-blue-200 text-[11px] font-semibold">
+                <span>State: {appliedFilters.states}</span>
+                <button onClick={() => setAppliedFilters(prev => ({ ...prev, states: '', city: '' }))} className="hover:text-rose-600 cursor-pointer">
+                  <X size={11} />
+                </button>
+              </span>
+            )}
+
+            {appliedFilters.city && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-sky-50 text-sky-800 border border-sky-200 text-[11px] font-semibold">
+                <span>City: {appliedFilters.city}</span>
+                <button onClick={() => setAppliedFilters(prev => ({ ...prev, city: '' }))} className="hover:text-rose-600 cursor-pointer">
+                  <X size={11} />
+                </button>
+              </span>
+            )}
 
             {(appliedFilters.branchId || appliedFilters.branchIds) && (
               <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-indigo-50 text-indigo-800 border border-indigo-200 text-[11px] font-semibold">
@@ -826,7 +883,7 @@ const DailyWorkReport = () => {
               onClick={handleResetFilter}
               className="text-xs text-rose-600 hover:text-rose-800 font-bold ml-auto hover:underline cursor-pointer"
             >
-              Clear All
+              Clear all
             </button>
           </div>
         )}

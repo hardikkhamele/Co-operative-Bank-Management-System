@@ -22,6 +22,8 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import useAuthStore from "../../store/authStore";
 import { toast } from "react-toastify";
 import { creditReceiptService } from "../../api/creditReceiptService";
+import { locationService } from "../../api/locationService";
+import useLocations from "../../hooks/useLocations";
 import useBranchStore from "../../store/branchStore";
 import PageHeader from "../../components/common/PageHeader";
 import { Skeleton, SkeletonTableRow } from "../../components/common/Skeleton";
@@ -86,13 +88,9 @@ const Credit = () => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [openFilterDropdown, setOpenFilterDropdown] = useState(null);
   const [selectedStatus, setSelectedStatus] = useState(initialStatus);
-  const [locationsData, setLocationsData] = useState({
-    states: [],
-    stateCityMap: {},
-  });
   const [selectedState, setSelectedState] = useState(initialState);
   const [selectedCity, setSelectedCity] = useState(initialCity);
-  const [availableCities, setAvailableCities] = useState([]);
+  const { states: statesList, availableCities, loading: locationsLoading } = useLocations(selectedState);
   const globalBranchId = useBranchStore((state) => state.globalBranchId);
   const [dateFrom, setDateFrom] = useState(initialDateFrom);
   const [dateTo, setDateTo] = useState(initialDateTo);
@@ -258,29 +256,6 @@ const Credit = () => {
     status: "NEW",
     file: null,
   });
-
-  useEffect(() => {
-    const fetchLocations = async () => {
-      try {
-        const res = await creditReceiptService.getLocations();
-        const data = res.data || res;
-        const states = data.states || data.availableStates || [];
-        const stateCityMap = data.stateCitiesMap || {};
-        setLocationsData({ states, stateCityMap });
-      } catch (err) {
-        console.warn("Failed to fetch locations:", err);
-      }
-    };
-    fetchLocations();
-  }, []);
-
-  useEffect(() => {
-    if (selectedState && locationsData.stateCityMap[selectedState]) {
-      setAvailableCities(locationsData.stateCityMap[selectedState]);
-    } else {
-      setAvailableCities([]);
-    }
-  }, [selectedState, locationsData]);
 
   // Debounce search
   useEffect(() => {
@@ -1066,7 +1041,7 @@ const Credit = () => {
             className="px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-sm text-gray-700 min-w-[140px]"
           >
             <option value="">All States</option>
-            {locationsData.states.map((s) => (
+            {statesList.map((s) => (
               <option key={s} value={s}>
                 {s}
               </option>
@@ -1079,10 +1054,9 @@ const Credit = () => {
               setSelectedCity(e.target.value);
               setPage(1);
             }}
-            disabled={!selectedState}
-            className="px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-sm text-gray-700 min-w-[140px] disabled:bg-gray-100 disabled:text-gray-400"
+            className="px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-sm text-gray-700 min-w-[140px] cursor-pointer"
           >
-            <option value="">{selectedState ? "All Cities" : "Select State first"}</option>
+            <option value="">All Cities</option>
             {availableCities.map((c) => (
               <option key={c} value={c}>
                 {c}

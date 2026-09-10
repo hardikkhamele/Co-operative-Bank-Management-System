@@ -22,45 +22,7 @@ import StatsCard from '../../components/common/StatsCard';
 import Pagination from '../../components/common/Pagination';
 import LinkMerchantBankModal from '../../components/modals/LinkMerchantBankModal';
 
-// Comprehensive Indian States and Prominent Cities Map for fallback
-const INDIAN_STATES_WITH_CITIES = {
-  "Andhra Pradesh": ["Visakhapatnam", "Vijayawada", "Guntur", "Nellore", "Kurnool", "Rajahmundry", "Tirupati", "Kadapa", "Kakinada", "Anantapur"],
-  "Arunachal Pradesh": ["Itanagar", "Naharlagun", "Pasighat", "Tawang", "Ziro"],
-  "Assam": ["Guwahati", "Silchar", "Dibrugarh", "Jorhat", "Nagaon", "Tinsukia", "Tezpur"],
-  "Bihar": ["Patna", "Gaya", "Bhagalpur", "Muzaffarpur", "Purnia", "Darbhanga", "Bihar Sharif", "Arrah", "Begusarai", "Katihar"],
-  "Chandigarh": ["Chandigarh"],
-  "Chhattisgarh": ["Raipur", "Bhilai", "Bilaspur", "Korba", "Rajnandgaon", "Durg", "Jagdalpur", "Ambikapur"],
-  "Dadra and Nagar Haveli and Daman and Diu": ["Daman", "Diu", "Silvassa"],
-  "Delhi": ["New Delhi", "North Delhi", "South Delhi", "East Delhi", "West Delhi", "Central Delhi", "Dwarka", "Rohini"],
-  "Goa": ["Panaji", "Margao", "Vasco da Gama", "Mapusa", "Ponda"],
-  "Gujarat": ["Ahmedabad", "Surat", "Vadodara", "Rajkot", "Bhavnagar", "Jamnagar", "Junagadh", "Gandhinagar", "Anand", "Navsari", "Morbi", "Bharuch"],
-  "Haryana": ["Gurugram", "Faridabad", "Panipat", "Ambala", "Yamunanagar", "Rohtak", "Hisar", "Karnal", "Sonipat", "Panchkula"],
-  "Himachal Pradesh": ["Shimla", "Dharamshala", "Mandi", "Solan", "Kullu", "Manali", "Baddi"],
-  "Jammu and Kashmir": ["Srinagar", "Jammu", "Anantnag", "Baramulla", "Udhampur", "Kathua"],
-  "Jharkhand": ["Ranchi", "Jamshedpur", "Dhanbad", "Bokaro Steel City", "Deoghar", "Hazaribagh", "Giridih"],
-  "Karnataka": ["Bengaluru", "Mysuru", "Hubballi", "Dharwad", "Mangaluru", "Belagavi", "Davangere", "Ballari", "Kalaburagi", "Shivamogga", "Tumakuru", "Udupi"],
-  "Kerala": ["Thiruvananthapuram", "Kochi", "Kozhikode", "Kollam", "Thrissur", "Kannur", "Alappuzha", "Palakkad", "Kottayam", "Malappuram"],
-  "Ladakh": ["Leh", "Kargil"],
-  "Madhya Pradesh": ["Indore", "Bhopal", "Jabalpur", "Gwalior", "Ujjain", "Sagar", "Dewas", "Satna", "Ratlam", "Rewa"],
-  "Maharashtra": ["Mumbai", "Pune", "Nagpur", "Thane", "Nashik", "Aurangabad", "Solapur", "Amravati", "Kolhapur", "Navi Mumbai", "Akola", "Latur", "Dhule", "Ahmednagar", "Chandrapur", "Parbhani", "Jalgaon", "Nanded", "Satara", "Sangli"],
-  "Manipur": ["Imphal", "Churachandpur", "Thoubal"],
-  "Meghalaya": ["Shillong", "Tura", "Jowai"],
-  "Mizoram": ["Aizawl", "Lunglei", "Champhai"],
-  "Nagaland": ["Kohima", "Dimapur", "Mokokchung"],
-  "Odisha": ["Bhubaneswar", "Cuttack", "Rourkela", "Berhampur", "Sambalpur", "Puri", "Balasore", "Bhadrak", "Baripada"],
-  "Puducherry": ["Puducherry", "Karaikal", "Mahe", "Yanam"],
-  "Punjab": ["Ludhiana", "Amritsar", "Jalandhar", "Patiala", "Bathinda", "Mohali", "Pathankot", "Hoshiarpur", "Batala"],
-  "Rajasthan": ["Jaipur", "Jodhpur", "Kota", "Bikaner", "Ajmer", "Udaipur", "Bhilwara", "Alwar", "Bharatpur", "Sikar", "Pali", "Sri Ganganagar"],
-  "Sikkim": ["Gangtok", "Namchi", "Gyalshing"],
-  "Tamil Nadu": ["Chennai", "Coimbatore", "Madurai", "Tiruchirappalli", "Salem", "Tirunelveli", "Tiruppur", "Vellore", "Erode", "Thoothukudi", "Dindigul", "Thanjavur"],
-  "Telangana": ["Hyderabad", "Warangal", "Nizamabad", "Karimnagar", "Ramagundam", "Khammam", "Mahbubnagar", "Nalgonda", "Adilabad"],
-  "Tripura": ["Agartala", "Udaipur", "Dharmanagar"],
-  "Uttar Pradesh": ["Lucknow", "Kanpur", "Varanasi", "Agra", "Noida", "Greater Noida", "Ghaziabad", "Prayagraj", "Meerut", "Bareilly", "Aligarh", "Moradabad", "Saharanpur", "Gorakhpur", "Jhansi", "Mathura", "Ayodhya"],
-  "Uttarakhand": ["Dehradun", "Haridwar", "Roorkee", "Haldwani", "Rishikesh", "Nainital", "Rudrapur"],
-  "West Bengal": ["Kolkata", "Howrah", "Siliguri", "Durgapur", "Asansol", "Bardhaman", "Kharagpur", "Malda", "Baharampur", "Habra"]
-};
-
-const ALL_INDIAN_STATES = Object.keys(INDIAN_STATES_WITH_CITIES).sort((a, b) => a.localeCompare(b));
+import useLocations from '../../hooks/useLocations';
 
 const Merchants = () => {
   const tableRef = useRef(null);
@@ -134,12 +96,6 @@ const Merchants = () => {
 
   const { globalBranchId, branchOptions, fetchBranches } = useBranchStore();
   
-  // Locations Data (State and City mapping)
-  const [locationsData, setLocationsData] = useState({
-    states: ALL_INDIAN_STATES,
-    cities: [],
-    stateCitiesMap: {}
-  });
 
   // Pagination State
   const [page, setPage] = useState(initialPage);
@@ -246,46 +202,8 @@ const Merchants = () => {
     setEndDate(prev => prev !== urlEndDate ? urlEndDate : prev);
   }, [searchParams]);
 
-  useEffect(() => {
-    const fetchLocations = async () => {
-      try {
-        const res = await branchService.getAvailableLocations();
-        const data = res?.data || res || {};
-        const apiStates = Array.isArray(data?.states) ? data.states : (Array.isArray(data?.availableStates) ? data.availableStates : []);
-        const apiCities = Array.isArray(data?.cities) ? data.cities : [];
-        const rawMap = data?.stateCitiesMap || data?.stateCityMap || {};
-        const stateCityMap = (typeof rawMap === 'object' && rawMap !== null) ? rawMap : {};
-        const combinedStates = Array.from(new Set([...apiStates, ...ALL_INDIAN_STATES])).sort((a, b) => a.localeCompare(b));
-        setLocationsData({ 
-          states: combinedStates.length > 0 ? combinedStates : ALL_INDIAN_STATES, 
-          cities: apiCities,
-          stateCitiesMap: stateCityMap 
-        });
-      } catch (err) {
-        console.warn("Failed to fetch locations:", err);
-      }
-    };
-    fetchLocations();
-  }, []);
-
-  // States List
-  const statesList = useMemo(() => {
-    if (locationsData.states && locationsData.states.length > 0) {
-      return locationsData.states;
-    }
-    return ALL_INDIAN_STATES;
-  }, [locationsData.states]);
-
-  // Cascading Available Cities for the Selected State
-  const availableCities = useMemo(() => {
-    if (!selectedState) {
-      return [];
-    }
-    const fromDictionary = INDIAN_STATES_WITH_CITIES[selectedState] || [];
-    const fromApi = (locationsData.stateCitiesMap && locationsData.stateCitiesMap[selectedState]) || [];
-    const combined = Array.from(new Set([...fromDictionary, ...fromApi])).sort((a, b) => a.localeCompare(b));
-    return combined;
-  }, [selectedState, locationsData]);
+  // Available locations from /v1/society/credit-receipts/locations
+  const { states: statesList, availableCities } = useLocations(selectedState);
 
   // Debounce search
   useEffect(() => {
@@ -837,12 +755,10 @@ const Merchants = () => {
             />
           </div>
 
-          {/* 5. City Filter (Connected to State) */}
+          {/* 5. City Filter */}
           <div>
             <SearchableSelect
               value={selectedCity}
-              disabled={!selectedState || availableCities.length === 0}
-              disabledPlaceholder={!selectedState ? "Select State first" : "No cities available"}
               onChange={(val) => {
                 setSelectedCity(val);
                 setPage(1);
@@ -851,7 +767,7 @@ const Merchants = () => {
                 { value: '', label: selectedState ? `All Cities in ${selectedState}` : 'All Cities' },
                 ...availableCities.map((ct) => ({ value: ct, label: ct }))
               ]}
-              placeholder={selectedState ? `All Cities in ${selectedState}` : 'Select State first'}
+              placeholder={selectedState ? `All Cities in ${selectedState}` : 'All Cities'}
               searchPlaceholder="Search city..."
               className="text-xs"
             />

@@ -27,6 +27,7 @@ import {
   Percent,
   CalendarDays
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import PageHeader from '../../components/common/PageHeader';
 import TableWrapper from '../../components/common/TableWrapper';
@@ -36,8 +37,13 @@ import SearchableSelect from '../../components/common/SearchableSelect';
 import { branchService } from '../../api/branchService';
 import { attendanceService } from '../../api/attendanceService';
 import { getCurrentPosition } from '../../utils/geolocation';
+import { formatPunchTime, renderPunchCell } from '../../utils/formatUtils';
 import useBranchStore from '../../store/branchStore';
 import { Skeleton, SkeletonTableRow } from '../../components/common/Skeleton';
+import { locationService } from '../../api/locationService';
+import useLocations from '../../hooks/useLocations';
+import SinglePersonAttendanceModal from '../../components/modals/SinglePersonAttendanceModal';
+import ApplyLeaveModal from '../../components/modals/ApplyLeaveModal';
 
 const ALL_INDIAN_STATES = [
   'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh', 
@@ -123,9 +129,53 @@ const LegendItem = ({ status, label }) => (
 );
 
 const AttendanceReport = () => {
+  const navigate = useNavigate();
   const tableRef = useRef(null);
   // Navigation Tabs: 'daily' | 'monthly' | 'yearly'
   const [activeTab, setActiveTab] = useState('daily');
+
+  // Modals state
+  const [isSingleReportModalOpen, setIsSingleReportModalOpen] = useState(false);
+  const [selectedEmployeeForReport, setSelectedEmployeeForReport] = useState(null);
+  const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false);
+
+  // Navigate to Geo-Tagging page with target employee pre-focused
+  const handleViewOnMap = (emp, punchType = 'IN') => {
+    const isOut = punchType === 'OUT';
+    const locObj = isOut ? emp.punchOutLocation : emp.punchInLocation;
+    const lat = locObj?.latitude ?? (isOut ? emp.punchOutLatitude : emp.punchInLatitude);
+    const lng = locObj?.longitude ?? (isOut ? emp.punchOutLongitude : emp.punchInLongitude);
+    const address = locObj?.address ?? (isOut ? emp.punchOutAddress : emp.punchInAddress) ?? (emp.branchName ? `${emp.branchName} Branch` : '');
+
+    navigate('/geo-tagging', {
+      state: {
+        employeeId: emp.id || emp._id,
+        employeeName: emp.name || emp.employeeName,
+        punchLat: lat,
+        punchLng: lng,
+        punchAddress: address,
+        from: '/attendance-report'
+      }
+    });
+  };
+
+  // Open single person 12-month matrix and monthly sheet report
+  const handleOpenSingleReport = (emp) => {
+    setSelectedEmployeeForReport({
+      id: emp.id || emp._id || emp.employeeId,
+      employeeId: emp.id || emp._id || emp.employeeId,
+      employeeName: emp.name || emp.employeeName || emp.fullName,
+      employeeCode: emp.employeeCode || '',
+      designation: emp.designation || 'Staff',
+      department: emp.department || 'Operations',
+      branchName: emp.branchName || emp.branch?.name || 'Main Branch',
+      branchCode: emp.branchCode || emp.branch?.code || '',
+      profileImage: emp.profileImage || null,
+      email: emp.email || '',
+      phoneNumber: emp.phoneNumber || emp.phone || ''
+    });
+    setIsSingleReportModalOpen(true);
+  };
 
   // Today's Live Attendance & Shift Snapshot State
   const [todayData, setTodayData] = useState({
@@ -168,9 +218,12 @@ const AttendanceReport = () => {
   const [apiStates, setApiStates] = useState([]);
   const [apiBranches, setApiBranches] = useState([]);
   const [selectedState, setSelectedState] = useState('');
+  const [selectedCity, setSelectedCity] = useState('');
   const [selectedBranch, setSelectedBranch] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
+
+  const { states: locStates, availableCities } = useLocations(selectedState);
   
   // Date State for Daily Tab
   const todayISO = new Date().toISOString().split('T')[0];
@@ -314,15 +367,28 @@ const AttendanceReport = () => {
       if (selectedState) {
         params.state = selectedState;
       }
-      const res = await attendanceService.getReportFilters(params);
-      if (res && (res.success || res.statusCode === 200)) {
-        const data = res.data || {};
+      const [res, locRes] = await Promise.allSettled([
+        attendanceService.getReportFilters(params),
+        locationService.getLocations(),
+      ]);
+
+      let states = [];
+      if (locRes.status === 'fulfilled' && locRes.value?.states?.length > 0) {
+        states = locRes.value.states;
+      }
+
+      if (res.status === 'fulfilled' && res.value && (res.value.success || res.value.statusCode === 200)) {
+        const data = res.value.data || {};
         if (Array.isArray(data.states) && data.states.length > 0) {
-          setApiStates(data.states);
+          states = Array.from(new Set([...states, ...data.states])).sort((a, b) => a.localeCompare(b));
         }
         if (Array.isArray(data.branches)) {
           setApiBranches(data.branches);
         }
+      }
+
+      if (states.length > 0) {
+        setApiStates(states);
       }
     } catch (err) {
       console.warn("Could not load filters from attendance-report/filters API; falling back to branch service list.", err);
@@ -353,6 +419,7 @@ const AttendanceReport = () => {
       };
 
       if (selectedState) params.state = selectedState;
+      if (selectedCity) params.city = selectedCity;
       const activeBranch = selectedBranch || globalBranchId;
       if (activeBranch) params.branchId = activeBranch;
       if (debouncedSearch.trim()) params.search = debouncedSearch.trim();
@@ -393,7 +460,7 @@ const AttendanceReport = () => {
     } finally {
       setLoadingReportData(false);
     }
-  }, [activeTab, page, limit, selectedState, selectedBranch, globalBranchId, debouncedSearch, referenceDate]);
+  }, [activeTab, page, limit, selectedState, selectedCity, selectedBranch, globalBranchId, debouncedSearch, referenceDate]);
 
   // 5. Section 5: Fetch All Employee Monthly Attendance Sheet Data
   const fetchMonthlySheet = useCallback(async () => {
@@ -408,6 +475,7 @@ const AttendanceReport = () => {
       };
 
       if (selectedState) params.state = selectedState;
+      if (selectedCity) params.city = selectedCity;
       const activeBranch = selectedBranch || globalBranchId;
       if (activeBranch) params.branchId = activeBranch;
       if (debouncedSearch.trim()) params.search = debouncedSearch.trim();
@@ -458,7 +526,7 @@ const AttendanceReport = () => {
     } finally {
       setLoadingMonthlySheet(false);
     }
-  }, [activeTab, selectedMonth, selectedYear, monthlyPage, selectedState, selectedBranch, globalBranchId, debouncedSearch]);
+  }, [activeTab, selectedMonth, selectedYear, monthlyPage, selectedState, selectedCity, selectedBranch, globalBranchId, debouncedSearch]);
 
   // 6. Section 6: Fetch All Employee Yearly Attendance Matrix Data
   const fetchYearlyMatrix = useCallback(async () => {
@@ -475,6 +543,7 @@ const AttendanceReport = () => {
         params.month = Number(yearlyMonthFilter);
       }
       if (selectedState) params.state = selectedState;
+      if (selectedCity) params.city = selectedCity;
       const activeBranch = selectedBranch || globalBranchId;
       if (activeBranch) params.branchId = activeBranch;
       if (debouncedSearch.trim()) params.search = debouncedSearch.trim();
@@ -524,7 +593,7 @@ const AttendanceReport = () => {
     } finally {
       setLoadingYearlyMatrix(false);
     }
-  }, [activeTab, selectedYear, yearlyMonthFilter, yearlyPage, selectedState, selectedBranch, globalBranchId, debouncedSearch]);
+  }, [activeTab, selectedYear, yearlyMonthFilter, yearlyPage, selectedState, selectedCity, selectedBranch, globalBranchId, debouncedSearch]);
 
   // Initial and reactive effects
   useEffect(() => {
@@ -622,9 +691,10 @@ const AttendanceReport = () => {
 
   // Combined States List
   const mergedStatesList = useMemo(() => {
+    if (locStates.length > 0) return locStates;
     if (apiStates.length > 0) return apiStates;
     return ALL_INDIAN_STATES;
-  }, [apiStates]);
+  }, [locStates, apiStates]);
 
   const getSelectedMonthName = (monthNum) => MONTH_NAMES[monthNum - 1] || 'Current Month';
 
@@ -639,7 +709,18 @@ const AttendanceReport = () => {
         ]}
         showBack={false}
         backUrl="/dashboard"
-      />
+      >
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setIsLeaveModalOpen(true)}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-white bg-[#225091] hover:bg-[#193d6e] active:scale-95 transition-all shadow-2xs cursor-pointer"
+          >
+            <Calendar size={14} />
+            <span>Apply Leave</span>
+          </button>
+        </div>
+      </PageHeader>
 
       {/* ========================================================= */}
       {/* 1. TOP QUICK PUNCH & LIVE SHIFT SNAPSHOT CARD */}
@@ -681,13 +762,13 @@ const AttendanceReport = () => {
               <div className="flex items-center gap-1.5 bg-black/20 px-3 py-1.5 rounded-xl border border-white/10">
                 <LogIn size={14} className="text-emerald-400" />
                 <span>Punch-In:</span>
-                <strong className="text-white font-mono">{todayData.today?.punchIn || 'Not Recorded'}</strong>
+                <strong className="text-white font-mono">{formatPunchTime(todayData.today?.punchIn, 'Not Recorded')}</strong>
               </div>
 
               <div className="flex items-center gap-1.5 bg-black/20 px-3 py-1.5 rounded-xl border border-white/10">
                 <LogOut size={14} className="text-amber-400" />
                 <span>Punch-Out:</span>
-                <strong className="text-white font-mono">{todayData.today?.punchOut || 'Not Recorded'}</strong>
+                <strong className="text-white font-mono">{formatPunchTime(todayData.today?.punchOut, 'Not Recorded')}</strong>
               </div>
 
               {todayData.today?.isLate && (
@@ -907,8 +988,8 @@ const AttendanceReport = () => {
           )}
         </div>
 
-        {/* Section 1.1 Filter Controls Toolbar (State, Branch, Search, Date/Period) */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 pt-1">
+        {/* Section 1.1 Filter Controls Toolbar (State, City, Branch, Search, Date/Period) */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 pt-1">
           {/* Search Input */}
           <div className="relative">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={15} />
@@ -935,6 +1016,7 @@ const AttendanceReport = () => {
               value={selectedState}
               onChange={(val) => { 
                 setSelectedState(val); 
+                setSelectedCity('');
                 setSelectedBranch(''); 
                 setPage(1); 
                 setMonthlyPage(1);
@@ -942,10 +1024,30 @@ const AttendanceReport = () => {
               }}
               options={[
                 { value: '', label: 'All States / Regions' },
-                ...mergedStatesList.map(s => ({ value: s, label: s }))
+                ...locStates.map(s => ({ value: s, label: s }))
               ]}
               placeholder="All States / Regions"
               searchPlaceholder="Search state..."
+              className="text-xs"
+            />
+          </div>
+
+          {/* City Filter */}
+          <div>
+            <SearchableSelect
+              value={selectedCity}
+              onChange={(val) => { 
+                setSelectedCity(val); 
+                setPage(1); 
+                setMonthlyPage(1);
+                setYearlyPage(1);
+              }}
+              options={[
+                { value: '', label: selectedState ? `All Cities in ${selectedState}` : 'All Cities' },
+                ...availableCities.map(c => ({ value: c, label: c }))
+              ]}
+              placeholder={selectedState ? `All Cities in ${selectedState}` : 'All Cities'}
+              searchPlaceholder="Search city..."
               className="text-xs"
             />
           </div>
@@ -1131,14 +1233,16 @@ const AttendanceReport = () => {
           <TableWrapper minHeight="360px">
             {/* TAB 1: DAILY LOGS (Section 1.2) */}
             {activeTab === 'daily' && (
-              <table ref={tableRef} className="w-full text-xs border-collapse min-w-[800px] text-center text-sm whitespace-nowrap">
+              <table ref={tableRef} className="w-full text-xs border-collapse min-w-[1100px] text-center text-sm whitespace-nowrap">
                 <thead className="bg-[#225091] text-white text-xs uppercase tracking-wider font-semibold border-b border-[#225091]">
                   <tr>
                     <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center w-14">SR.NO.</th>
                     <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">EMPLOYEE</th>
                     <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">DESIGNATION</th>
                     <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">CHECK-IN</th>
+                    <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center min-w-[160px]">PUNCH IN LOCATION</th>
                     <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">CHECK-OUT</th>
+                    <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center min-w-[160px]">PUNCH OUT LOCATION</th>
                     <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">WORKING HRS</th>
                     <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">STATUS</th>
                   </tr>
@@ -1146,11 +1250,11 @@ const AttendanceReport = () => {
                 <tbody className="divide-y divide-gray-100 font-medium">
                   {loadingReportData ? (
                     Array.from({ length: 5 }).map((_, idx) => (
-                      <SkeletonTableRow key={idx} columns={7} />
+                      <SkeletonTableRow key={idx} columns={9} />
                     ))
                   ) : reportItems.length === 0 ? (
                     <tr>
-                      <td colSpan="7" className="py-12 text-center text-gray-400">
+                      <td colSpan="9" className="py-12 text-center text-gray-400">
                         <div className="flex flex-col items-center justify-center gap-2">
                           <Users size={32} className="text-gray-300 stroke-[1.5]" />
                           <span className="text-sm font-medium text-gray-500">No attendance records found</span>
@@ -1166,6 +1270,17 @@ const AttendanceReport = () => {
                       const empTotalHrs = emp.totalHrs || (empPunchIn && empPunchOut ? '8 hrs' : empPunchIn ? 'On Shift' : null);
                       const empStatus = (emp.status || (empPunchIn ? 'P' : 'A')).toUpperCase();
 
+                      // Location & Coordinates parsing
+                      const empPunchInLoc = emp.punchInLocation || {};
+                      const inLat = empPunchInLoc.latitude ?? emp.punchInLatitude ?? null;
+                      const inLng = empPunchInLoc.longitude ?? emp.punchInLongitude ?? null;
+                      const inAddr = empPunchInLoc.address || emp.punchInAddress || '';
+
+                      const empPunchOutLoc = emp.punchOutLocation || {};
+                      const outLat = empPunchOutLoc.latitude ?? emp.punchOutLatitude ?? null;
+                      const outLng = empPunchOutLoc.longitude ?? emp.punchOutLongitude ?? null;
+                      const outAddr = empPunchOutLoc.address || emp.punchOutAddress || '';
+
                       return (
                         <tr key={emp.id || emp._id || idx} className="hover:bg-slate-50/60 transition-colors">
                           <td className="py-3.5 px-4 text-center font-bold text-gray-500">
@@ -1177,15 +1292,22 @@ const AttendanceReport = () => {
                                 <img 
                                   src={emp.profileImage} 
                                   alt={emp.name} 
-                                  className="w-8 h-8 rounded-full object-cover border border-gray-200" 
+                                  className="w-8 h-8 rounded-full object-cover border border-gray-200 shrink-0" 
                                 />
                               ) : (
                                 <div className="w-8 h-8 rounded-full bg-blue-50 text-[#225091] font-bold text-xs flex items-center justify-center uppercase shrink-0 border border-blue-100">
                                   {(emp.name || 'E').slice(0, 2)}
                                 </div>
                               )}
-                              <div>
-                                <div className="font-bold text-gray-900">{emp.name}</div>
+                              <div className="text-left">
+                                <button
+                                  type="button"
+                                  onClick={() => handleOpenSingleReport(emp)}
+                                  className="font-bold text-gray-900 hover:text-[#225091] hover:underline transition-colors text-left cursor-pointer flex items-center gap-1"
+                                  title="View Single Person Attendance Report"
+                                >
+                                  <span>{emp.name}</span>
+                                </button>
                                 {emp.id && (
                                   <div className="text-[10px] text-gray-400 font-mono">ID: {emp.id.slice(-6)}</div>
                                 )}
@@ -1195,12 +1317,71 @@ const AttendanceReport = () => {
                           <td className="py-3.5 px-5 text-gray-600 font-semibold">
                             {emp.designation || 'Staff'}
                           </td>
-                          <td className="py-3.5 px-5 font-semibold text-gray-800 font-mono">
-                            {empPunchIn || '—'}
+
+                          {/* CHECK-IN Time only */}
+                          <td className="py-3.5 px-4 text-center font-semibold text-gray-800 font-mono">
+                            {renderPunchCell(empPunchIn)}
                           </td>
-                          <td className="py-3.5 px-5 font-semibold text-gray-800 font-mono">
-                            {empPunchOut || '—'}
+
+                          {/* PUNCH IN LOCATION — separate column */}
+                          <td className="py-3.5 px-3 text-center">
+                            {inLat && inLng ? (
+                              <button
+                                type="button"
+                                onClick={() => handleViewOnMap(emp, 'IN')}
+                                className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-blue-50 text-[#225091] hover:bg-blue-100 border border-blue-200/70 text-[10px] font-semibold transition-all max-w-[180px] cursor-pointer shadow-2xs group"
+                                title={`${inAddr || `${inLat}, ${inLng}`}\nClick to view on Geo-Tagging Map`}
+                              >
+                                <MapPin size={11} className="text-[#225091] shrink-0 group-hover:scale-110 transition-transform" />
+                                <span className="truncate">{inAddr ? inAddr.split(',')[0] : `${Number(inLat).toFixed(4)}, ${Number(inLng).toFixed(4)}`}</span>
+                              </button>
+                            ) : inAddr ? (
+                              <button
+                                type="button"
+                                onClick={() => handleViewOnMap(emp, 'IN')}
+                                className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-gray-50 text-gray-600 hover:bg-gray-100 border border-gray-200 text-[10px] font-medium transition-all max-w-[180px] truncate cursor-pointer"
+                                title={inAddr}
+                              >
+                                <MapPin size={11} className="text-gray-400 shrink-0" />
+                                <span className="truncate">{inAddr.split(',')[0]}</span>
+                              </button>
+                            ) : (
+                              <span className="text-gray-300 text-[11px]">—</span>
+                            )}
                           </td>
+
+                          {/* CHECK-OUT Time only */}
+                          <td className="py-3.5 px-4 text-center font-semibold text-gray-800 font-mono">
+                            {renderPunchCell(empPunchOut)}
+                          </td>
+
+                          {/* PUNCH OUT LOCATION — separate column */}
+                          <td className="py-3.5 px-3 text-center">
+                            {outLat && outLng ? (
+                              <button
+                                type="button"
+                                onClick={() => handleViewOnMap(emp, 'OUT')}
+                                className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-amber-50 text-amber-800 hover:bg-amber-100 border border-amber-200/70 text-[10px] font-semibold transition-all max-w-[180px] cursor-pointer shadow-2xs group"
+                                title={`${outAddr || `${outLat}, ${outLng}`}\nClick to view on Geo-Tagging Map`}
+                              >
+                                <MapPin size={11} className="text-amber-700 shrink-0 group-hover:scale-110 transition-transform" />
+                                <span className="truncate">{outAddr ? outAddr.split(',')[0] : `${Number(outLat).toFixed(4)}, ${Number(outLng).toFixed(4)}`}</span>
+                              </button>
+                            ) : outAddr ? (
+                              <button
+                                type="button"
+                                onClick={() => handleViewOnMap(emp, 'OUT')}
+                                className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-gray-50 text-gray-600 hover:bg-gray-100 border border-gray-200 text-[10px] font-medium transition-all max-w-[180px] truncate cursor-pointer"
+                                title={outAddr}
+                              >
+                                <MapPin size={11} className="text-gray-400 shrink-0" />
+                                <span className="truncate">{outAddr.split(',')[0]}</span>
+                              </button>
+                            ) : (
+                              <span className="text-gray-300 text-[11px]">—</span>
+                            )}
+                          </td>
+
                           <td className="py-3.5 px-5 text-gray-700 font-semibold">
                             {empTotalHrs || '—'}
                           </td>
@@ -1219,6 +1400,7 @@ const AttendanceReport = () => {
                               </span>
                             )}
                           </td>
+
                         </tr>
                       );
                     })
@@ -1278,8 +1460,15 @@ const AttendanceReport = () => {
                         <tr key={emp.id || emp._id || idx} className="hover:bg-slate-50/60 transition-colors">
                           {/* Employee Info Sticky Column */}
                           <td className="py-3 px-4 font-bold text-gray-900 sticky left-0 bg-white hover:bg-slate-50/90 transition-colors z-10 shadow-xs">
-                            <div className="flex flex-col">
-                              <span className="line-clamp-1 text-gray-900 font-bold">{emp.employeeName || emp.name}</span>
+                            <div className="flex flex-col text-left">
+                              <button
+                                type="button"
+                                onClick={() => handleOpenSingleReport(emp)}
+                                className="line-clamp-1 text-gray-900 font-bold hover:text-[#225091] hover:underline text-left cursor-pointer"
+                                title="Click to view Single Person Attendance Report"
+                              >
+                                {emp.employeeName || emp.name}
+                              </button>
                               <span className="text-[10px] text-gray-400 font-normal">{emp.employeeCode || emp.designation || 'Staff'}</span>
                             </div>
                           </td>
@@ -1391,9 +1580,14 @@ const AttendanceReport = () => {
                                 {(emp.employeeName || emp.name || 'E').slice(0, 2)}
                               </div>
                               <div className="flex flex-col min-w-0">
-                                <span className="text-gray-900 font-bold truncate max-w-[140px] text-xs">
+                                <button
+                                  type="button"
+                                  onClick={() => handleOpenSingleReport(emp)}
+                                  className="text-gray-900 font-bold truncate max-w-[140px] text-xs hover:text-[#225091] hover:underline text-left cursor-pointer"
+                                  title="Click to view Single Person Attendance Report"
+                                >
                                   {emp.employeeName || emp.name}
-                                </span>
+                                </button>
                                 <div className="flex items-center gap-1.5 text-[10px] text-gray-400 font-normal">
                                   {emp.employeeCode && (
                                     <span className="font-mono text-gray-500 bg-gray-100 px-1 rounded-xs">{emp.employeeCode}</span>
@@ -1496,6 +1690,44 @@ const AttendanceReport = () => {
           )}
         </div>
       </div>
+
+      {/* Single Person Attendance Report Modal */}
+      <SinglePersonAttendanceModal
+        isOpen={isSingleReportModalOpen}
+        onClose={() => {
+          setIsSingleReportModalOpen(false);
+          setSelectedEmployeeForReport(null);
+        }}
+        employee={selectedEmployeeForReport}
+        initialMonth={selectedMonth}
+        initialYear={selectedYear}
+        onViewOnMap={(mapData) => {
+          setIsSingleReportModalOpen(false);
+          navigate('/geo-tagging', {
+            state: {
+              employeeId: mapData.employeeId || selectedEmployeeForReport?.id,
+              employeeName: mapData.employeeName || selectedEmployeeForReport?.employeeName,
+              punchLat: mapData.punchLat,
+              punchLng: mapData.punchLng,
+              punchAddress: mapData.punchAddress,
+              from: '/attendance-report'
+            }
+          });
+        }}
+      />
+
+      {/* Apply Leave Modal */}
+      <ApplyLeaveModal
+        isOpen={isLeaveModalOpen}
+        onClose={() => setIsLeaveModalOpen(false)}
+        onSuccess={() => {
+          fetchTodayStatus();
+          fetchMonthlyReport();
+          if (activeTab === 'daily') fetchDailyAttendanceReport();
+          if (activeTab === 'monthly') fetchMonthlySheet();
+          if (activeTab === 'yearly') fetchYearlyMatrix();
+        }}
+      />
     </div>
   );
 };

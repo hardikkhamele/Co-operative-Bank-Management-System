@@ -22,38 +22,7 @@ import PageHeader from '../../components/common/PageHeader';
 import Pagination from '../../components/common/Pagination';
 import { roleService } from '../../api/roleService';
 import useBranchStore from '../../store/branchStore';
-
-const INDIAN_STATES = [
-  'Andhra Pradesh',
-  'Arunachal Pradesh',
-  'Assam',
-  'Bihar',
-  'Chhattisgarh',
-  'Delhi',
-  'Goa',
-  'Gujarat',
-  'Haryana',
-  'Himachal Pradesh',
-  'Jharkhand',
-  'Karnataka',
-  'Kerala',
-  'Madhya Pradesh',
-  'Maharashtra',
-  'Manipur',
-  'Meghalaya',
-  'Mizoram',
-  'Nagaland',
-  'Odisha',
-  'Punjab',
-  'Rajasthan',
-  'Sikkim',
-  'Tamil Nadu',
-  'Telangana',
-  'Tripura',
-  'Uttar Pradesh',
-  'Uttarakhand',
-  'West Bengal',
-];
+import useLocations from '../../hooks/useLocations';
 
 const AVAILABLE_MONTHS = [
   { label: 'All Months', value: '' },
@@ -99,6 +68,7 @@ const ImportantDates = () => {
     date: '',
     designation: '',
     state: '',
+    city: '',
     branchId: '',
   });
   const [tempFilters, setTempFilters] = useState({
@@ -106,8 +76,11 @@ const ImportantDates = () => {
     date: '',
     designation: '',
     state: '',
+    city: '',
     branchId: '',
   });
+
+  const { states: statesList, availableCities } = useLocations(tempFilters.state);
 
   // Dropdown Lists
   const [branches, setBranches] = useState([]);
@@ -165,6 +138,7 @@ const ImportantDates = () => {
       if (appliedFilters.date) params.date = appliedFilters.date;
       if (appliedFilters.designation) params.designation = appliedFilters.designation;
       if (appliedFilters.state) params.state = appliedFilters.state;
+      if (appliedFilters.city) params.city = appliedFilters.city;
       if (appliedFilters.branchId) params.branchId = appliedFilters.branchId;
       else if (globalBranchId) params.branchId = globalBranchId;
 
@@ -198,6 +172,7 @@ const ImportantDates = () => {
       const branch = (item.branch || item.branchName || '').toLowerCase();
       const desig = (item.designation || item.type || item.role || '').toLowerCase();
       const state = (item.state || '').toLowerCase();
+      const city = (item.city || '').toLowerCase();
       const celebration = (item.celebration || item.event || item.typeOfEvent || '').toLowerCase();
 
       return (
@@ -205,6 +180,7 @@ const ImportantDates = () => {
         branch.includes(query) ||
         desig.includes(query) ||
         state.includes(query) ||
+        city.includes(query) ||
         celebration.includes(query)
       );
     });
@@ -234,6 +210,7 @@ const ImportantDates = () => {
       date: '',
       designation: '',
       state: '',
+      city: '',
       branchId: '',
     };
     setTempFilters(reset);
@@ -248,6 +225,7 @@ const ImportantDates = () => {
     if (appliedFilters.date) count++;
     if (appliedFilters.designation) count++;
     if (appliedFilters.state) count++;
+    if (appliedFilters.city) count++;
     if (appliedFilters.branchId) count++;
     return count;
   }, [appliedFilters]);
@@ -613,12 +591,27 @@ const ImportantDates = () => {
                 <label className="text-[13px] font-semibold text-gray-700">State / UT</label>
                 <select 
                   value={tempFilters.state}
-                  onChange={(e) => setTempFilters(prev => ({ ...prev, state: e.target.value }))}
+                  onChange={(e) => setTempFilters(prev => ({ ...prev, state: e.target.value, city: '' }))}
                   className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#225091] bg-white"
                 >
                   <option value="">All States</option>
-                  {INDIAN_STATES.map((st) => (
+                  {statesList.map((st) => (
                     <option key={st} value={st}>{st}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* City Filter */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[13px] font-semibold text-gray-700">City</label>
+                <select 
+                  value={tempFilters.city || ''}
+                  onChange={(e) => setTempFilters(prev => ({ ...prev, city: e.target.value }))}
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-700 focus:outline-none focus:border-[#225091] bg-white"
+                >
+                  <option value="">All Cities</option>
+                  {availableCities.map((ct) => (
+                    <option key={ct} value={ct}>{ct}</option>
                   ))}
                 </select>
               </div>

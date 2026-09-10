@@ -274,9 +274,14 @@ const DashboardLayout = () => {
         <div className="w-[260px] h-full flex flex-col shrink-0 min-h-0">
           {/* Logo Area */}
         <div className="h-[76px] flex items-center justify-between px-4 border-b border-border-divider shrink-0 overflow-hidden">
-          <div className="flex items-center gap-3">
+          <Link 
+            to="/dashboard"
+            onClick={() => setIsMobileMenuOpen(false)}
+            className="flex items-center gap-3 hover:opacity-90 transition-opacity cursor-pointer group"
+            title="Go to Dashboard"
+          >
             {/* Logo Icon Box */}
-            <div className="bg-white rounded-lg shadow-sm flex flex-col items-center justify-center shrink-0 w-11 h-11 p-1">
+            <div className="bg-white rounded-lg shadow-sm flex flex-col items-center justify-center shrink-0 w-11 h-11 p-1 group-hover:shadow-md transition-shadow">
               <svg viewBox="0 0 200 180" className="w-6 h-6">
                 <polygon points="30,100 80,100 110,160 60,160" fill="#ef3b3a" />
                 <polygon points="100,10 180,160 130,160 90,80" fill="#1b58a6" />
@@ -288,7 +293,7 @@ const DashboardLayout = () => {
               <span className="font-extrabold text-[17px] leading-tight tracking-wide whitespace-nowrap">ADVITA CREDIT</span>
               <span className="font-bold text-[10px] leading-tight tracking-wide whitespace-nowrap">INFO PRIVATE LIMITED</span>
             </div>
-          </div>
+          </Link>
           {/* Mobile-Only Close Button */}
           <button
             type="button"

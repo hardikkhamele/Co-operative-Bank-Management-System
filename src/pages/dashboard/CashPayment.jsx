@@ -31,46 +31,7 @@ import StatsCard from '../../components/common/StatsCard';
 import Pagination from '../../components/common/Pagination';
 import ExportDropdown from '../../components/common/ExportDropdown';
 
-// Comprehensive Indian States and Prominent Cities Map
-const INDIAN_STATES_WITH_CITIES = {
-  "Andhra Pradesh": ["Visakhapatnam", "Vijayawada", "Guntur", "Nellore", "Kurnool", "Rajahmundry", "Tirupati", "Kadapa", "Kakinada", "Anantapur"],
-  "Arunachal Pradesh": ["Itanagar", "Naharlagun", "Pasighat", "Tawang", "Ziro"],
-  "Assam": ["Guwahati", "Silchar", "Dibrugarh", "Jorhat", "Nagaon", "Tinsukia", "Tezpur"],
-  "Bihar": ["Patna", "Gaya", "Bhagalpur", "Muzaffarpur", "Purnia", "Darbhanga", "Bihar Sharif", "Arrah", "Begusarai", "Katihar"],
-  "Chandigarh": ["Chandigarh"],
-  "Chhattisgarh": ["Raipur", "Bhilai", "Bilaspur", "Korba", "Rajnandgaon", "Durg", "Jagdalpur", "Ambikapur"],
-  "Dadra and Nagar Haveli and Daman and Diu": ["Daman", "Diu", "Silvassa"],
-  "Delhi": ["New Delhi", "North Delhi", "South Delhi", "East Delhi", "West Delhi", "Central Delhi"],
-  "Goa": ["Panaji", "Margao", "Vasco da Gama", "Mapusa", "Ponda"],
-  "Gujarat": ["Ahmedabad", "Surat", "Vadodara", "Rajkot", "Bhavnagar", "Jamnagar", "Junagadh", "Gandhinagar", "Anand", "Navsari", "Morbi", "Bharuch"],
-  "Haryana": ["Faridabad", "Gurugram", "Panipat", "Ambala", "Yamunanagar", "Rohtak", "Hisar", "Karnal", "Sonipat", "Panchkula"],
-  "Himachal Pradesh": ["Shimla", "Dharamshala", "Mandi", "Solan", "Kullu", "Manali", "Baddi"],
-  "Jammu and Kashmir": ["Srinagar", "Jammu", "Anantnag", "Baramulla", "Kathua", "Udhampur", "Sopore"],
-  "Jharkhand": ["Ranchi", "Jamshedpur", "Dhanbad", "Bokaro", "Deoghar", "Hazaribagh", "Giridih", "Ramgarh"],
-  "Karnataka": ["Bengaluru", "Mysuru", "Hubballi", "Mangaluru", "Belagavi", "Davanagere", "Ballari", "Vijayapura", "Shivamogga", "Tumakuru", "Kalaburagi"],
-  "Kerala": ["Thiruvananthapuram", "Kochi", "Kozhikode", "Kollam", "Thrissur", "Kannur", "Alappuzha", "Kottayam", "Palakkad", "Malappuram"],
-  "Ladakh": ["Leh", "Kargil"],
-  "Lakshadweep": ["Kavaratti", "Agatti", "Andrott"],
-  "Madhya Pradesh": ["Indore", "Bhopal", "Jabalpur", "Gwalior", "Ujjain", "Sagar", "Dewas", "Satna", "Ratlam", "Rewa"],
-  "Maharashtra": ["Mumbai", "Pune", "Nagpur", "Thane", "Nashik", "Kalyan-Dombivli", "Vasai-Virar", "Aurangabad", "Navi Mumbai", "Solapur", "Mira-Bhayandar", "Amravati", "Kolhapur", "Nanded", "Sangli", "Jalgaon", "Akola", "Latur", "Dhule", "Ahmednagar", "Chandrapur", "Parbhani", "Panvel"],
-  "Manipur": ["Imphal", "Churachandpur", "Thoubal", "Kakching"],
-  "Meghalaya": ["Shillong", "Tura", "Jowai", "Nongpoh"],
-  "Mizoram": ["Aizawl", "Lunglei", "Saiha", "Champhai"],
-  "Nagaland": ["Kohima", "Dimapur", "Mokokchung", "Tuensang", "Wokha"],
-  "Odisha": ["Bhubaneswar", "Cuttack", "Rourkela", "Berhampur", "Sambalpur", "Puri", "Balasore", "Bhadrak", "Baripada", "Jharsuguda"],
-  "Puducherry": ["Puducherry", "Karaikal", "Mahe", "Yanam"],
-  "Punjab": ["Ludhiana", "Amritsar", "Jalandhar", "Patiala", "Bathinda", "Mohali", "Hoshiarpur", "Batala", "Pathankot", "Moga"],
-  "Rajasthan": ["Jaipur", "Jodhpur", "Kota", "Bikaner", "Ajmer", "Udaipur", "Bhilwara", "Alwar", "Bharatpur", "Sikar", "Pali", "Sri Ganganagar"],
-  "Sikkim": ["Gangtok", "Namchi", "Gyalshing", "Mangan"],
-  "Tamil Nadu": ["Chennai", "Coimbatore", "Madurai", "Tiruchirappalli", "Salem", "Tiruppur", "Erode", "Vellore", "Thoothukudi", "Dindigul", "Thanjavur", "Nagercoil"],
-  "Telangana": ["Hyderabad", "Warangal", "Nizamabad", "Khammam", "Karimnagar", "Ramagundam", "Mahbubnagar", "Nalgonda", "Adilabad", "Suryapet"],
-  "Tripura": ["Agartala", "Udaipur", "Dharmanagar", "Kailashahar", "Belonia"],
-  "Uttar Pradesh": ["Lucknow", "Kanpur", "Ghaziabad", "Agra", "Meerut", "Varanasi", "Prayagraj", "Bareilly", "Aligarh", "Moradabad", "Saharanpur", "Gorakhpur", "Noida", "Firozabad", "Jhansi", "Muzaffarnagar", "Mathura", "Ayodhya"],
-  "Uttarakhand": ["Dehradun", "Haridwar", "Roorkee", "Haldwani", "Rudrapur", "Kashipur", "Rishikesh", "Nainital"],
-  "West Bengal": ["Kolkata", "Howrah", "Asansol", "Siliguri", "Durgapur", "Bardhaman", "Malda", "Baharampur", "Habra", "Kharagpur", "Shantipur", "Dankuni"]
-};
-
-const statesList = Object.keys(INDIAN_STATES_WITH_CITIES).sort((a, b) => a.localeCompare(b));
+import useLocations from '../../hooks/useLocations';
 
 const CashPayment = () => {
   const navigate = useNavigate();
@@ -123,11 +84,8 @@ const CashPayment = () => {
   const tableRef = useRef(null);
   const [isExportOpen, setIsExportOpen] = useState(false);
 
-  // Available cities for selected state
-  const availableCities = useMemo(() => {
-    if (!selectedState) return [];
-    return INDIAN_STATES_WITH_CITIES[selectedState] || [];
-  }, [selectedState]);
+  // Available locations from /v1/society/credit-receipts/locations
+  const { states: statesList, availableCities } = useLocations(selectedState);
 
   // Check if any filter is active
   const hasActiveFilters = Boolean(
@@ -574,12 +532,10 @@ const CashPayment = () => {
             />
           </div>
 
-          {/* 3. City Filter (Cascading) */}
+          {/* 3. City Filter */}
           <div>
             <SearchableSelect
               value={selectedCity}
-              disabled={!selectedState || availableCities.length === 0}
-              disabledPlaceholder={!selectedState ? "Select State first" : "No cities available"}
               onChange={(val) => {
                 setSelectedCity(val);
                 setPage(1);
@@ -588,7 +544,7 @@ const CashPayment = () => {
                 { value: '', label: selectedState ? `All Cities in ${selectedState}` : 'All Cities' },
                 ...availableCities.map((ct) => ({ value: ct, label: ct }))
               ]}
-              placeholder={selectedState ? `All Cities in ${selectedState}` : 'Select State first'}
+              placeholder={selectedState ? `All Cities in ${selectedState}` : 'All Cities'}
               searchPlaceholder="Search city..."
               className="text-xs"
             />

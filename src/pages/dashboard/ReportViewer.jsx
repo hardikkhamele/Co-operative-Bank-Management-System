@@ -12,19 +12,27 @@ import { reportService } from '../../api/reportService';
 import useBranchStore from '../../store/branchStore';
 import usePermission from '../../hooks/usePermission';
 
+import ErrorBoundary from '../../components/common/ErrorBoundary';
+import { renderPunchCell, formatDuration, safeString } from '../../utils/formatUtils';
+
 // Helper to format ISO date into user-friendly Indian format (DD Mon YYYY)
 const formatDate = (isoString) => {
   if (!isoString) return '—';
+  let val = isoString;
+  if (typeof isoString === 'object') {
+    val = isoString.date || isoString.time || isoString.createdAt || null;
+    if (!val) return '—';
+  }
   try {
-    const d = new Date(isoString);
-    if (isNaN(d.getTime())) return String(isoString);
+    const d = new Date(val);
+    if (isNaN(d.getTime())) return String(val);
     return d.toLocaleDateString('en-IN', {
       day: '2-digit',
       month: 'short',
       year: 'numeric'
     });
   } catch {
-    return String(isoString);
+    return String(val);
   }
 };
 
@@ -481,13 +489,13 @@ const ReportViewer = () => {
             return (
               <tr key={row.id || idx} className="hover:bg-slate-50/70 transition-colors">
                 <td className="py-3.5 px-4 text-gray-500 font-medium">{row.srNo || srNo}</td>
-                <td className="py-3.5 px-4 font-mono font-bold text-gray-800">{row.employeeCode || '—'}</td>
-                <td className="py-3.5 px-4 font-bold text-gray-900">{row.employeeName || row.name || '—'}</td>
-                <td className="py-3.5 px-4 text-gray-600">{row.branchName || '—'}</td>
+                <td className="py-3.5 px-4 font-mono font-bold text-gray-800">{safeString(row.employeeCode)}</td>
+                <td className="py-3.5 px-4 font-bold text-gray-900">{safeString(row.employeeName || row.name)}</td>
+                <td className="py-3.5 px-4 text-gray-600">{safeString(row.branchName)}</td>
                 <td className="py-3.5 px-4 text-gray-600">{formatDate(row.date)}</td>
-                <td className="py-3.5 px-4 text-gray-700 font-mono">{row.punchIn || row.inTime || '—'}</td>
-                <td className="py-3.5 px-4 text-gray-700 font-mono">{row.punchOut || row.outTime || '—'}</td>
-                <td className="py-3.5 px-4 font-semibold text-gray-800">{row.workingHours || row.totalHours || '—'}</td>
+                <td className="py-3.5 px-4">{renderPunchCell(row.punchIn || row.inTime)}</td>
+                <td className="py-3.5 px-4">{renderPunchCell(row.punchOut || row.outTime)}</td>
+                <td className="py-3.5 px-4 font-semibold text-gray-800">{formatDuration(row.workingHours || row.totalHours)}</td>
                 <td className="py-3.5 px-4 text-center">{getStatusBadge(row.status || (row.isPresent ? 'PRESENT' : 'ABSENT'))}</td>
               </tr>
             );
@@ -666,14 +674,14 @@ const ReportViewer = () => {
       <tbody className="divide-y divide-gray-100 text-xs">
         {items.map((row, idx) => {
           const srNo = (pagination.page - 1) * pagination.limit + idx + 1;
-          const refCode = row.receiptNo || row.voucherNo || row.code || row.leadNo || row.employeeCode || row.id || '—';
+          const refCode = safeString(row.receiptNo || row.voucherNo || row.code || row.leadNo || row.employeeCode || row.id);
           const rowDate = row.date || row.createdAt || row.punchTime;
-          const entityName = row.name || row.customerName || row.employeeName || row.merchantName || row.fullName || '—';
-          const accountOrHead = row.glHeadName || row.glCode || row.accountNumber || row.department || row.role || '—';
-          const branchName = row.branchName || row.branchCode || '—';
+          const entityName = safeString(row.name || row.customerName || row.employeeName || row.merchantName || row.fullName);
+          const accountOrHead = safeString(row.glHeadName || row.glCode || row.accountNumber || row.department || row.role);
+          const branchName = safeString(row.branchName || row.branchCode);
           const rowAmount = row.formattedAmount || (row.amount !== undefined ? formatCurrency(row.amount) : (row.principalAmount ? formatCurrency(row.principalAmount) : (row.score ?? '—')));
-          const rowStatus = row.status || row.kycStatus || row.riskCategory || '';
-          const auditInfo = row.approvedBy || row.createdBy || row.checker || '—';
+          const rowStatus = typeof row.status === 'object' ? (row.status?.name || '') : (row.status || row.kycStatus || row.riskCategory || '');
+          const auditInfo = safeString(row.approvedBy || row.createdBy || row.checker);
 
           return (
             <tr key={row.id || row._id || idx} className="hover:bg-slate-50/70 transition-colors">
@@ -1088,27 +1096,29 @@ const ReportViewer = () => {
       </div>
 
       {/* Main Report Data Table */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
-        <div className="overflow-x-auto">
-          <table ref={reportTableRef} className="w-full border-collapse min-w-[900px] text-center text-sm whitespace-nowrap">
-            <thead className="bg-[#225091] text-white text-xs uppercase tracking-wider font-semibold border-b border-[#225091]">
-              {renderTableHeaders()}
-            </thead>
-            {renderTableContent()}
-          </table>
-        </div>
+      <ErrorBoundary onReset={loadReport} title="Error Displaying Report Data">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
+          <div className="overflow-x-auto">
+            <table ref={reportTableRef} className="w-full border-collapse min-w-[900px] text-center text-sm whitespace-nowrap">
+              <thead className="bg-[#225091] text-white text-xs uppercase tracking-wider font-semibold border-b border-[#225091]">
+                {renderTableHeaders()}
+              </thead>
+              {renderTableContent()}
+            </table>
+          </div>
 
-        {/* Table Footer with Pagination */}
-        <Pagination
-          page={page}
-          totalPages={pagination.totalPages || 1}
-          totalRecords={pagination.totalRecords || items.length}
-          limit={limit}
-          onPageChange={setPage}
-          onLimitChange={setLimit}
-          disabled={isLoading}
-        />
-      </div>
+          {/* Table Footer with Pagination */}
+          <Pagination
+            page={page}
+            totalPages={pagination.totalPages || 1}
+            totalRecords={pagination.totalRecords || items.length}
+            limit={limit}
+            onPageChange={setPage}
+            onLimitChange={setLimit}
+            disabled={isLoading}
+          />
+        </div>
+      </ErrorBoundary>
     </div>
   );
 };

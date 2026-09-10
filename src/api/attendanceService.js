@@ -21,7 +21,12 @@ export const attendanceService = {
    */
   punchIn: async (data) => {
     try {
-      const response = await axiosInstance.post('/v1/society/attendance/punch-in', data);
+      const payload = {
+        latitude: data?.latitude ?? data?.latitute ?? data?.lat ?? data?.location?.latitude,
+        longitude: data?.longitude ?? data?.langitute ?? data?.lng ?? data?.location?.longitude,
+        address: data?.address ?? data?.location?.address ?? ''
+      };
+      const response = await axiosInstance.post('/v1/society/attendance/punch-in', payload);
       return response.data;
     } catch (error) {
       throw error;
@@ -35,7 +40,12 @@ export const attendanceService = {
    */
   punchOut: async (data) => {
     try {
-      const response = await axiosInstance.post('/v1/society/attendance/punch-out', data);
+      const payload = {
+        latitude: data?.latitude ?? data?.latitute ?? data?.lat ?? data?.location?.latitude,
+        longitude: data?.longitude ?? data?.langitute ?? data?.lng ?? data?.location?.longitude,
+        address: data?.address ?? data?.location?.address ?? ''
+      };
+      const response = await axiosInstance.post('/v1/society/attendance/punch-out', payload);
       return response.data;
     } catch (error) {
       throw error;
@@ -277,6 +287,51 @@ export const attendanceService = {
         }
       }
     };
+  },
+
+  /**
+   * 10. Get Single Person Attendance Report (Monthly Sheet & 12-Month Matrix with Punch Locations)
+   * GET /api/v1/society/attendance/single-report?employeeId=...&month=...&year=...
+   * Fallback endpoints:
+   * 1. /v1/society/attendance/single-report
+   * 2. /v1/society/attendance/employee/:id/report
+   * 3. /v1/society/attendance-report/single-person
+   * 4. /v1/society/attendance-report/employee/:id
+   * @param {Object} params { employeeId, id, userId, month, year }
+   */
+  getSinglePersonReport: async (params = {}) => {
+    const empId = params.employeeId || params.id || params.userId;
+    const month = params.month || (new Date().getMonth() + 1);
+    const year = params.year || new Date().getFullYear();
+
+    const queryParams = {
+      ...(empId ? { employeeId: empId, id: empId, userId: empId } : {}),
+      month: Number(month),
+      year: Number(year)
+    };
+
+    const candidateUrls = [
+      { url: '/v1/society/attendance/single-report', params: queryParams },
+      ...(empId ? [{ url: `/v1/society/attendance/employee/${empId}/report`, params: { month: Number(month), year: Number(year) } }] : []),
+      { url: '/v1/society/attendance-report/single-person', params: queryParams },
+      ...(empId ? [{ url: `/v1/society/attendance-report/employee/${empId}`, params: { month: Number(month), year: Number(year) } }] : [])
+    ];
+
+    for (const candidate of candidateUrls) {
+      try {
+        const response = await axiosInstance.get(candidate.url, { params: candidate.params });
+        if (response.status === 200 && response.data) {
+          return response.data;
+        }
+      } catch (err) {
+        if (err.response?.status === 404) {
+          continue;
+        }
+        throw err;
+      }
+    }
+
+    throw new Error('Single person attendance report endpoint not available.');
   }
 };
 

@@ -145,22 +145,11 @@ export const branchService = {
   getAvailableLocations: async () => {
     try {
       try {
-        const response = await axiosInstance.get('/v1/society/branches/available-locations');
+        const response = await axiosInstance.get('/v1/society/credit-receipts/locations');
         return response.data;
       } catch (err) {
-        if (err.response?.status === 404) {
-          try {
-            const response = await axiosInstance.get('/v1/society/branches/cities-states');
-            return response.data;
-          } catch (err2) {
-            if (err2.response?.status === 404) {
-              const response = await axiosInstance.get('/v1/society/branches/locations');
-              return response.data;
-            }
-            throw err2;
-          }
-        }
-        throw err;
+        const response = await axiosInstance.get('/v1/society/branches/available-locations');
+        return response.data;
       }
     } catch (error) {
       throw error;

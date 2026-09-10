@@ -35,38 +35,7 @@ import { Skeleton, SkeletonAvatar } from '../../components/common/Skeleton';
 import TableWrapper from '../../components/common/TableWrapper';
 import StatsCard from '../../components/common/StatsCard';
 import Pagination from '../../components/common/Pagination';
-
-const INDIAN_STATES = [
-  'Andhra Pradesh',
-  'Arunachal Pradesh',
-  'Assam',
-  'Bihar',
-  'Chhattisgarh',
-  'Delhi',
-  'Goa',
-  'Gujarat',
-  'Haryana',
-  'Himachal Pradesh',
-  'Jharkhand',
-  'Karnataka',
-  'Kerala',
-  'Madhya Pradesh',
-  'Maharashtra',
-  'Manipur',
-  'Meghalaya',
-  'Mizoram',
-  'Nagaland',
-  'Odisha',
-  'Punjab',
-  'Rajasthan',
-  'Sikkim',
-  'Tamil Nadu',
-  'Telangana',
-  'Tripura',
-  'Uttar Pradesh',
-  'Uttarakhand',
-  'West Bengal',
-];
+import useLocations from '../../hooks/useLocations';
 
 const DEFAULT_DESIGNATIONS = [
   'Branch Manager',
@@ -206,6 +175,7 @@ const KPAReport = () => {
   const [appliedFilters, setAppliedFilters] = useState({
     designations: '',
     states: '',
+    city: '',
     branchIds: '',
     date: '',
   });
@@ -214,9 +184,12 @@ const KPAReport = () => {
   const [tempFilters, setTempFilters] = useState({
     designations: '',
     states: '',
+    city: '',
     branchIds: '',
     date: '',
   });
+
+  const { states: statesList, availableCities } = useLocations(appliedFilters.states);
 
   // Fetch Universal Product Incentives
   const fetchProductIncentives = async () => {
@@ -426,6 +399,9 @@ const KPAReport = () => {
       if (appliedFilters.states) {
         params.states = appliedFilters.states;
       }
+      if (appliedFilters.city) {
+        params.city = appliedFilters.city;
+      }
       if (appliedFilters.branchIds) {
         params.branchIds = appliedFilters.branchIds;
       } else if (globalBranchId) {
@@ -484,7 +460,7 @@ const KPAReport = () => {
   // Trigger data fetch on page, search, or applied filter change
   useEffect(() => {
     fetchKpaReports();
-  }, [page, debouncedSearch, appliedFilters, globalBranchId]);
+  }, [page, limit, debouncedSearch, appliedFilters, globalBranchId]);
 
   // Open Filter modal and sync temp filters
   const handleOpenFilterModal = () => {
@@ -504,6 +480,7 @@ const KPAReport = () => {
     const reset = {
       designations: '',
       states: '',
+      city: '',
       branchIds: '',
       date: '',
     };
@@ -519,6 +496,7 @@ const KPAReport = () => {
     let count = 0;
     if (appliedFilters.designations) count++;
     if (appliedFilters.states) count++;
+    if (appliedFilters.city) count++;
     if (appliedFilters.branchIds) count++;
     if (appliedFilters.date) count++;
     return count;
@@ -537,6 +515,7 @@ const KPAReport = () => {
       if (debouncedSearch.trim()) params.search = debouncedSearch.trim();
       if (appliedFilters.designations) params.designations = appliedFilters.designations;
       if (appliedFilters.states) params.states = appliedFilters.states;
+      if (appliedFilters.city) params.city = appliedFilters.city;
       if (appliedFilters.branchIds) params.branchIds = appliedFilters.branchIds;
       else if (globalBranchId) params.branchId = globalBranchId;
       if (appliedFilters.date) params.date = appliedFilters.date;
@@ -882,8 +861,8 @@ const KPAReport = () => {
               </div>
             </div>
 
-            {/* Bottom Inline Filter Controls: Branch -> Designation -> State / UT -> Date */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 pt-2 border-t border-gray-100">
+            {/* Bottom Inline Filter Controls: Branch -> Designation -> State / UT -> City -> Date */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 pt-2 border-t border-gray-100">
               {/* 1. Branch */}
               <div className="relative">
                 <select
@@ -941,14 +920,32 @@ const KPAReport = () => {
                   className="w-full pl-3 pr-8 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-xs font-medium text-gray-700 shadow-2xs appearance-none cursor-pointer"
                 >
                   <option value="">All States / UT</option>
-                  {INDIAN_STATES.map((state) => (
+                  {statesList.map((state) => (
                     <option key={state} value={state}>{state}</option>
                   ))}
                 </select>
                 <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
               </div>
 
-              {/* 4. Date */}
+              {/* 4. City */}
+              <div className="relative">
+                <select
+                  value={appliedFilters.city || ''}
+                  onChange={(e) => {
+                    setAppliedFilters(prev => ({ ...prev, city: e.target.value }));
+                    setPage(1);
+                  }}
+                  className="w-full pl-3 pr-8 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-xs font-medium text-gray-700 shadow-2xs appearance-none cursor-pointer"
+                >
+                  <option value="">All Cities</option>
+                  {availableCities.map((c) => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
+                <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+              </div>
+
+              {/* 5. Date */}
               <div className="relative">
                 <input
                   type="date"
@@ -991,7 +988,19 @@ const KPAReport = () => {
                 {appliedFilters.states && (
                   <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200 text-[11px] font-semibold">
                     <span>State: {appliedFilters.states}</span>
-                    <button onClick={() => handleRemoveFilterTag('states')} className="hover:text-rose-600 cursor-pointer">
+                    <button onClick={() => {
+                      setAppliedFilters(prev => ({ ...prev, states: '', city: '' }));
+                      setPage(1);
+                    }} className="hover:text-rose-600 cursor-pointer">
+                      <X size={11} />
+                    </button>
+                  </span>
+                )}
+
+                {appliedFilters.city && (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-teal-50 text-teal-800 border border-teal-200 text-[11px] font-semibold">
+                    <span>City: {appliedFilters.city}</span>
+                    <button onClick={() => handleRemoveFilterTag('city')} className="hover:text-rose-600 cursor-pointer">
                       <X size={11} />
                     </button>
                   </span>

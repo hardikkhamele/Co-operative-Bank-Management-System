@@ -2,11 +2,16 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronRight, Search, ChevronDown, Eye, Edit, Trash2, X, SlidersHorizontal, Calendar, Mail, Phone, MapPin, User, Camera } from 'lucide-react';
 import Pagination from '../../components/common/Pagination';
+import useLocations from '../../hooks/useLocations';
 
 const mockCustomers = [];
 
 const Customers = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedState, setSelectedState] = useState('');
+  const [selectedCity, setSelectedCity] = useState('');
+  const [genderFilter, setGenderFilter] = useState('');
+  const { states: statesList, availableCities, loading: locationsLoading } = useLocations(selectedState);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -89,10 +94,47 @@ const Customers = () => {
                 </div>
 
                 <div className="space-y-4 mb-6">
+                  {/* State Filter */}
+                  <div className="relative">
+                    <select
+                      value={selectedState}
+                      onChange={(e) => {
+                        setSelectedState(e.target.value);
+                      }}
+                      disabled={locationsLoading}
+                      className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] focus:border-[#225091] bg-white text-[13px] appearance-none text-gray-700 shadow-sm cursor-pointer disabled:bg-gray-50"
+                    >
+                      <option value="">All States</option>
+                      {statesList.map((st) => (
+                        <option key={st} value={st}>{st}</option>
+                      ))}
+                    </select>
+                    <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                  </div>
+
+                  {/* City Filter */}
+                  <div className="relative">
+                    <select
+                      value={selectedCity}
+                      onChange={(e) => setSelectedCity(e.target.value)}
+                      className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] focus:border-[#225091] bg-white text-[13px] appearance-none text-gray-700 shadow-sm cursor-pointer"
+                    >
+                      <option value="">All Cities</option>
+                      {availableCities.map((c) => (
+                        <option key={c} value={c}>{c}</option>
+                      ))}
+                    </select>
+                    <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                  </div>
+
                   {/* Gender Filter */}
                   <div className="relative">
-                    <select className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] focus:border-[#225091] bg-white text-[13px] appearance-none text-gray-500 shadow-sm">
-                      <option value="" disabled selected>Gender</option>
+                    <select
+                      value={genderFilter}
+                      onChange={(e) => setGenderFilter(e.target.value)}
+                      className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] focus:border-[#225091] bg-white text-[13px] appearance-none text-gray-700 shadow-sm cursor-pointer"
+                    >
+                      <option value="">All Genders</option>
                       <option value="male">Male</option>
                       <option value="female">Female</option>
                       <option value="other">Other</option>
@@ -103,13 +145,18 @@ const Customers = () => {
 
                 <div className="flex gap-3">
                   <button 
-                    className="flex-1 py-2 rounded-full border-2 border-[#225091] text-[#225091] font-semibold hover:bg-teal-50 transition-colors focus:outline-none text-xs"
-                    onClick={() => setIsFilterOpen(false)}
+                    className="flex-1 py-2 rounded-full border-2 border-[#225091] text-[#225091] font-semibold hover:bg-teal-50 transition-colors focus:outline-none text-xs cursor-pointer"
+                    onClick={() => {
+                      setSelectedState('');
+                      setSelectedCity('');
+                      setGenderFilter('');
+                      setIsFilterOpen(false);
+                    }}
                   >
                     Reset Filter
                   </button>
                   <button 
-                    className="flex-1 py-2 rounded-full bg-[#225091] text-white font-semibold hover:bg-[#159a9f] transition-colors focus:outline-none text-xs shadow-sm"
+                    className="flex-1 py-2 rounded-full bg-[#225091] text-white font-semibold hover:bg-[#159a9f] transition-colors focus:outline-none text-xs shadow-sm cursor-pointer"
                     onClick={() => setIsFilterOpen(false)}
                   >
                     Set Filter

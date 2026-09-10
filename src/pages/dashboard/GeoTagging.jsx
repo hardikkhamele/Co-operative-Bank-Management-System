@@ -26,7 +26,7 @@ import { employeeService } from '../../api/employeeService';
 import { branchService } from '../../api/branchService';
 import useBranchStore from '../../store/branchStore';
 import { toast } from 'react-toastify';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useLocation, useNavigate } from 'react-router-dom';
 
 // Haversine formula to compute distance in meters
 const calculateDistanceInMeters = (lat1, lon1, lat2, lon2) => {
@@ -59,9 +59,20 @@ const VALID_STATUSES = ['ALL', 'IN_BRANCH', 'OUT_OF_GEOFENCE', 'GPS_INACTIVE'];
 
 const GeoTagging = () => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // Navigation state passed from Attendance Report or other pages
+  const navState = location.state || {};
+  const targetEmployeeId = navState.employeeId || navState.id || null;
+  const targetEmployeeName = navState.employeeName || navState.name || '';
+  const targetPunchLat = navState.punchLat || navState.latitude || null;
+  const targetPunchLng = navState.punchLng || navState.longitude || null;
+  const targetPunchAddress = navState.punchAddress || navState.address || '';
+  const navFrom = navState.from || null;
 
   // Read initial filter values from URL
-  const initialStatusParam = (searchParams.get('status') || searchParams.get('filter') || 'ALL').toUpperCase();
+  const initialStatusParam = (searchParams.get('status') || searchParams.get('filter') || (targetEmployeeId ? 'ALL' : 'ALL')).toUpperCase();
   const initialStatus = VALID_STATUSES.includes(initialStatusParam) ? initialStatusParam : 'ALL';
   const initialBranchFilter = searchParams.get('branch') || 'ALL';
   const initialSearch = searchParams.get('search') || '';
@@ -78,7 +89,7 @@ const GeoTagging = () => {
   const [zeroGpsModalRecord, setZeroGpsModalRecord] = useState(null);
   const [showMapAnyway, setShowMapAnyway] = useState(false);
   const locationCache = useRef(new Map());
-  const selectedRecordIdRef = useRef(null);
+  const selectedRecordIdRef = useRef(targetEmployeeId || null);
 
   // Sync state changes to URL search params
   useEffect(() => {
@@ -260,7 +271,7 @@ const GeoTagging = () => {
         }
       }
 
-      const recordsData = empList.map((emp, idx) => {
+      let recordsData = empList.map((emp, idx) => {
         // Find the actual branch object from the global store to get its coordinates
         const realBranch = storeBranches.find(b => (b.id || b._id) === emp.branch?.id) || {};
         
@@ -308,6 +319,53 @@ const GeoTagging = () => {
           isLiveGps: Boolean(valid && emp.location?.lastUpdatedAt)
         };
       });
+
+      // If navigated with a target employee from attendance report, merge or prepend target record
+      if (targetEmployeeId) {
+        const foundIdx = recordsData.findIndex(r => r.id === targetEmployeeId || r.employeeId === targetEmployeeId || (targetEmployeeName && r.employeeName?.toLowerCase() === targetEmployeeName.toLowerCase()));
+        if (foundIdx !== -1) {
+          const targetRec = { ...recordsData[foundIdx] };
+          if (hasValidCoordinates(targetPunchLat, targetPunchLng)) {
+            targetRec.punchLat = Number(targetPunchLat);
+            targetRec.punchLng = Number(targetPunchLng);
+            targetRec.punchAddress = targetPunchAddress || targetRec.punchAddress;
+            targetRec.isZeroCoords = false;
+            targetRec.distanceMeters = calculateDistanceInMeters(targetRec.branchLat, targetRec.branchLng, Number(targetPunchLat), Number(targetPunchLng));
+            targetRec.geofenceStatus = targetRec.distanceMeters <= 100 ? 'IN_BRANCH' : 'OUT_OF_GEOFENCE';
+          }
+          recordsData[foundIdx] = targetRec;
+          selectedRecordIdRef.current = targetRec.id;
+        } else if (targetEmployeeName || targetEmployeeId) {
+          const hasCoords = hasValidCoordinates(targetPunchLat, targetPunchLng);
+          const bLat = 21.1458;
+          const bLng = 79.0882;
+          const dist = hasCoords ? calculateDistanceInMeters(bLat, bLng, Number(targetPunchLat), Number(targetPunchLng)) : null;
+          const syntheticRec = {
+            id: targetEmployeeId,
+            employeeId: targetEmployeeId,
+            employeeCode: '',
+            employeeName: targetEmployeeName || 'Employee',
+            phone: '',
+            designation: 'Staff',
+            department: 'Operations',
+            branchName: 'Main Branch',
+            branchLat: bLat,
+            branchLng: bLng,
+            branchAddress: 'Nagpur',
+            punchInTime: new Date().toISOString(),
+            punchOutTime: null,
+            punchLat: hasCoords ? Number(targetPunchLat) : 0,
+            punchLng: hasCoords ? Number(targetPunchLng) : 0,
+            punchAddress: targetPunchAddress || 'Punched Location',
+            distanceMeters: dist,
+            geofenceStatus: hasCoords ? (dist <= 100 ? 'IN_BRANCH' : 'OUT_OF_GEOFENCE') : 'GPS_INACTIVE',
+            isZeroCoords: !hasCoords,
+            isLiveGps: false
+          };
+          recordsData = [syntheticRec, ...recordsData];
+          selectedRecordIdRef.current = syntheticRec.id;
+        }
+      }
 
       // 3. Immediately render records and clear loading spinner - 0 blocking lag!
       setRecords(recordsData);
@@ -440,12 +498,16 @@ const GeoTagging = () => {
       {/* 1. Header with minimal essential actions */}
       <PageHeader
         title="Geo Tagging"
-        breadcrumbs={[
+        breadcrumbs={navFrom ? [
+          { label: 'Dashboard', to: '/dashboard' },
+          { label: 'Attendance Report', to: navFrom },
+          { label: 'Geo Tagging' }
+        ] : [
           { label: 'Dashboard', to: '/dashboard' },
           { label: 'Geo Tagging' }
         ]}
-        showBack={false}
-        backUrl="/dashboard"
+        showBack={Boolean(navFrom)}
+        backUrl={navFrom || '/attendance-report'}
       >
         <div className="flex items-center gap-2">
           <button

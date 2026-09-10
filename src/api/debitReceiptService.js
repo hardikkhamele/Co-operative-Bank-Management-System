@@ -4,7 +4,7 @@ export const debitReceiptService = {
 
   getLocations: async () => {
     try {
-      const response = await axiosInstance.get('/v1/society/debit-receipts/locations');
+      const response = await axiosInstance.get('/v1/society/credit-receipts/locations');
       return response.data;
     } catch (error) {
       throw error;

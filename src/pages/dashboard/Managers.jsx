@@ -6,6 +6,7 @@ import PageHeader from '../../components/common/PageHeader';
 import { branchService } from '../../api/branchService';
 import { Skeleton } from '../../components/common/Skeleton';
 import Pagination from '../../components/common/Pagination';
+import useLocations from '../../hooks/useLocations';
 
 const Managers = () => {
   const [managers, setManagers] = useState([]);
@@ -16,8 +17,9 @@ const Managers = () => {
   // Filter States
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [selectedState, setSelectedState] = useState('');
+  const [selectedCity, setSelectedCity] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('');
-  const [availableLocations, setAvailableLocations] = useState({ states: [], cities: [] });
+  const { states, availableCities } = useLocations(selectedState);
 
   // Pagination States
   const [page, setPage] = useState(1);
@@ -43,23 +45,7 @@ const Managers = () => {
     return () => clearTimeout(handler);
   }, [searchTerm]);
 
-  // Load Filter Dropdowns
-  useEffect(() => {
-    const loadLocations = async () => {
-      try {
-        const res = await branchService.getAvailableLocations();
-        if (res && res.data) {
-          setAvailableLocations({
-            states: Array.isArray(res.data.states) ? res.data.states : [],
-            cities: Array.isArray(res.data.cities) ? res.data.cities : []
-          });
-        }
-      } catch (err) {
-        console.error("Failed to load locations for manager filter:", err);
-      }
-    };
-    loadLocations();
-  }, []);
+
 
   // Fetch Managers from Branch API
   const fetchManagers = useCallback(async () => {
@@ -71,6 +57,7 @@ const Managers = () => {
       };
       if (debouncedSearch.trim()) params.search = debouncedSearch.trim();
       if (selectedState) params.state = selectedState;
+      if (selectedCity) params.city = selectedCity;
       if (selectedStatus) params.status = selectedStatus;
 
       const res = await branchService.list(params);
@@ -127,7 +114,7 @@ const Managers = () => {
     } finally {
       setLoading(false);
     }
-  }, [page, limit, debouncedSearch, selectedState, selectedStatus]);
+  }, [page, limit, debouncedSearch, selectedState, selectedCity, selectedStatus]);
 
   useEffect(() => {
     fetchManagers();
@@ -155,7 +142,7 @@ const Managers = () => {
     }
   };
 
-  const activeFilterCount = (selectedState ? 1 : 0) + (selectedStatus ? 1 : 0);
+  const activeFilterCount = (selectedState ? 1 : 0) + (selectedCity ? 1 : 0) + (selectedStatus ? 1 : 0);
 
   return (
     <div className="h-full flex flex-col gap-6">
@@ -222,12 +209,33 @@ const Managers = () => {
                     <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">State / Region</label>
                     <select
                       value={selectedState}
-                      onChange={(e) => setSelectedState(e.target.value)}
+                      onChange={(e) => {
+                        setSelectedState(e.target.value);
+                        setSelectedCity('');
+                        setPage(1);
+                      }}
                       className="w-full px-3.5 py-2 rounded-lg border border-gray-200 text-xs text-gray-700 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white cursor-pointer"
                     >
                       <option value="">All States</option>
-                      {availableLocations.states.map((st, i) => (
+                      {states.map((st, i) => (
                         <option key={i} value={st}>{st}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">City</label>
+                    <select
+                      value={selectedCity}
+                      onChange={(e) => {
+                        setSelectedCity(e.target.value);
+                        setPage(1);
+                      }}
+                      className="w-full px-3.5 py-2 rounded-lg border border-gray-200 text-xs text-gray-700 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white cursor-pointer"
+                    >
+                      <option value="">All Cities</option>
+                      {availableCities.map((ct, i) => (
+                        <option key={i} value={ct}>{ct}</option>
                       ))}
                     </select>
                   </div>
@@ -250,6 +258,7 @@ const Managers = () => {
                   <button 
                     onClick={() => {
                       setSelectedState('');
+                      setSelectedCity('');
                       setSelectedStatus('');
                       setPage(1);
                     }}

@@ -27,6 +27,7 @@ import { Skeleton, SkeletonTable } from '../../components/common/Skeleton';
 import TableWrapper from '../../components/common/TableWrapper';
 import StatsCard from '../../components/common/StatsCard';
 import Pagination from '../../components/common/Pagination';
+import useLocations from '../../hooks/useLocations';
 import { validateEmail, validatePhone, validatePassword, validatePincode, sanitizeDigits, preventInvalidNumberKeys } from '../../utils/validation';
 
 const INDIAN_STATES_WITH_CITIES = {
@@ -84,6 +85,9 @@ const Branch = () => {
   // Search & Filter State
   const [selectedState, setSelectedState] = useState('');
   const [selectedCity, setSelectedCity] = useState('');
+
+  // Location data from dedicated credit-receipts locations API for filter
+  const { states: filterStates, availableCities: filterCities } = useLocations(selectedState);
   
   // Modals state
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -756,7 +760,7 @@ const Branch = () => {
               }}
               options={[
                 { value: '', label: 'All States / Regions' },
-                ...statesList.map((st) => ({ value: st, label: st }))
+                ...filterStates.map((st) => ({ value: st, label: st }))
               ]}
               placeholder="All States / Regions"
               searchPlaceholder="Search state or region..."
@@ -764,21 +768,19 @@ const Branch = () => {
             />
           </div>
 
-          {/* 2. City Filter (Connected to State) */}
+          {/* 2. City Filter */}
           <div>
             <SearchableSelect
               value={selectedCity}
-              disabled={!selectedState || availableCities.length === 0}
-              disabledPlaceholder={!selectedState ? "Select State first" : "No cities available"}
               onChange={(val) => {
                 setSelectedCity(val);
                 setPage(1);
               }}
               options={[
                 { value: '', label: selectedState ? `All Cities in ${selectedState}` : 'All Cities' },
-                ...availableCities.map((ct) => ({ value: ct, label: ct }))
+                ...filterCities.map((ct) => ({ value: ct, label: ct }))
               ]}
-              placeholder={selectedState ? `All Cities in ${selectedState}` : 'Select State first'}
+              placeholder={selectedState ? `All Cities in ${selectedState}` : 'All Cities'}
               searchPlaceholder="Search city..."
               className="text-xs"
             />

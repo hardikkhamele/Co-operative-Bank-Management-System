@@ -4,7 +4,7 @@ export const transferReceiptService = {
 
   getLocations: async () => {
     try {
-      const response = await axiosInstance.get('/v1/society/transfer-receipts/locations');
+      const response = await axiosInstance.get('/v1/society/credit-receipts/locations');
       return response.data;
     } catch (error) {
       throw error;
