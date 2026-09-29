@@ -1,16 +1,71 @@
-# React + Vite
+# Co-operative Bank Management System
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+A modern, responsive, and feature-rich administrative management dashboard designed specifically for **Co-operative Banks**. This system streamlines bank branch administration, customer account tracking, merchant management, employee handling, and financial analytics into a centralized web portal.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## 🎯 Purpose of the Project
 
-## React Compiler
+Co-operative banks require efficient tools to manage daily deposit schemes, daily/monthly customer transactions, field agent (pigmy collector) activities, branch workflows, and customer inquiries. 
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+The **Co-operative Bank Management System** bridges these operational needs by providing an intuitive dashboard that empowers administrators and branch managers to monitor key performance indicators, onboard customers and merchants, generate reports, and deliver timely support.
 
-## Expanding the Oxlint configuration
+---
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+## ✨ Key Features
+
+- 🏛️ **Branch Management**: Create, edit, and monitor status across all bank branches.
+- 👥 **Society Customer Management**: Track society accounts, member details, deposits, and account activities.
+- 🐷 **Pigmy (Daily Deposit) Customer Tracking**: Detailed monitoring for pigmy deposit scheme collectors, daily ledger balance, and customer profiles.
+- 🏪 **Merchant & Vendor Panel**: Manage associated merchants, payment collection points, and merchant transactions.
+- 👔 **Employee & Staff Directory**: Oversee bank staff, assign branch roles, and track operational activities.
+- 🎯 **Lead Management**: Track potential banking clients, loan leads, and account conversion statuses.
+- 📊 **Analytics & Financial Reports**: Visual charts (built with Recharts) for deposits, withdrawals, branch performance, and data exports (CSV, Excel, PDF, Print).
+- 💬 **Help & Support Ticket System**: Handle customer queries, issue tracking, and support resolutions efficiently.
+
+---
+
+## 🛠️ Tech Stack
+
+- **Frontend Core**: React 19, Vite, React Router v7
+- **Styling & UI**: Tailwind CSS, Lucide Icons, Custom CSS
+- **State & Data Handling**: Zustand, TanStack React Query, Axios
+- **Visualization & Export**: Recharts, Custom Export Components (CSV, Excel, PDF, Print)
+- **Notification**: React Toastify
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+- Node.js (v18 or higher recommended)
+- npm or yarn
+
+### Installation
+
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/hardikkhamele/Co-operative-Bank-Management-System.git
+   cd Co-operative-Bank-Management-System
+   ```
+
+2. **Install dependencies**:
+   ```bash
+   npm install
+   ```
+
+3. **Start the development server**:
+   ```bash
+   npm run dev
+   ```
+
+4. **Build for production**:
+   ```bash
+   npm run build
+   ```
+
+---
+
+## 📄 License
+
+This project is open-source and available under the [MIT License](LICENSE).

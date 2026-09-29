@@ -1,6 +1,8 @@
 import React, { useRef, useState, useEffect, useCallback } from "react";
 import { Link, useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { toast } from "react-toastify";
+import ExportDropdown from "../../components/common/ExportDropdown";
+
 import {
   ChevronRight,
   Search,
@@ -932,27 +934,30 @@ const Leads = ({ leadType: propLeadType, systemTitle: propSystemTitle }) => {
 
             {/* From Date Filter */}
             <div className="relative flex items-center">
+              <span className="text-xs font-semibold text-gray-500 mr-1.5 shrink-0">From:</span>
               <input
                 type="date"
                 value={dateFrom}
                 onChange={(e) => { setDateFrom(e.target.value); setPage(1); }}
                 title="From Date (Start Date)"
-                className="pl-8 pr-3 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] bg-white text-xs font-semibold text-gray-700 shadow-2xs cursor-pointer hover:bg-gray-50/50 transition-all"
+                placeholder="From Date (Start Date)"
+                className="px-3 py-2 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] bg-white text-xs font-semibold text-gray-700 shadow-2xs cursor-pointer hover:bg-gray-50/50 transition-all"
               />
-              <Calendar size={13} className="absolute left-2.5 text-gray-400 pointer-events-none" />
             </div>
 
             {/* To Date Filter */}
             <div className="relative flex items-center">
+              <span className="text-xs font-semibold text-gray-500 mr-1.5 shrink-0">To:</span>
               <input
                 type="date"
                 value={dateTo}
                 onChange={(e) => { setDateTo(e.target.value); setPage(1); }}
                 title="To Date (End Date)"
-                className="pl-8 pr-3 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] bg-white text-xs font-semibold text-gray-700 shadow-2xs cursor-pointer hover:bg-gray-50/50 transition-all"
+                placeholder="To Date (End Date)"
+                className="px-3 py-2 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] bg-white text-xs font-semibold text-gray-700 shadow-2xs cursor-pointer hover:bg-gray-50/50 transition-all"
               />
-              <Calendar size={13} className="absolute left-2.5 text-gray-400 pointer-events-none" />
             </div>
+
 
             {(dateFrom || dateTo) && (
               <button
@@ -965,48 +970,6 @@ const Leads = ({ leadType: propLeadType, systemTitle: propSystemTitle }) => {
               </button>
             )}
 
-            {/* Export Dropdown */}
-            <div className="relative" ref={exportDropdownRef}>
-              <button
-                type="button"
-                onClick={() => setIsExportOpen(!isExportOpen)}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs font-semibold border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 shadow-2xs transition-colors cursor-pointer"
-                title="Export Options"
-              >
-                <Download size={14} className="text-gray-500" />
-                <span>Export</span>
-                <ChevronDown size={13} className={`transition-transform duration-200 ${isExportOpen ? 'rotate-180' : ''}`} />
-              </button>
-
-              {isExportOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-100 rounded-xl shadow-xl py-2 z-50 animate-in fade-in zoom-in-95 duration-150">
-                  <button
-                    type="button"
-                    onClick={exportToCSV}
-                    className="w-full px-4 py-2 text-left text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2 font-medium cursor-pointer"
-                  >
-                    <Table size={15} className="text-gray-500" />
-                    <span>Export to CSV</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={exportToExcel}
-                    className="w-full px-4 py-2 text-left text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2 font-medium cursor-pointer"
-                  >
-                    <FileSpreadsheet size={15} className="text-emerald-600" />
-                    <span>Export to Excel</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={exportToWord}
-                    className="w-full px-4 py-2 text-left text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2 font-medium border-t border-gray-100 mt-1 pt-1.5 cursor-pointer"
-                  >
-                    <FileText size={15} className="text-blue-600" />
-                    <span>Export to Word</span>
-                  </button>
-                </div>
-              )}
-            </div>
 
             {/* Reset Filters */}
             {(searchTerm || selectedStatus || dateFrom || dateTo || selectedState || selectedCity) && (
@@ -1040,21 +1003,31 @@ const Leads = ({ leadType: propLeadType, systemTitle: propSystemTitle }) => {
             >
               <RefreshCw size={15} className={loading ? "animate-spin text-[#225091]" : ""} />
             </button>
+
+            {/* Export Dropdown (Extreme Right) */}
+            <ExportDropdown
+              title={resolvedTitle || 'Leads'}
+              filename="leads_export"
+              tableRef={tableRef}
+            />
           </div>
         </div>
       </div>
+
 
       {/* Main Table Card */}
       <div className="bg-white rounded-2xl shadow-2xs border border-gray-200/80 overflow-hidden">
         <TableWrapper minHeight="360px">
           <table
             ref={tableRef}
-            className="w-full text-center text-sm whitespace-nowrap min-w-[1000px]"
+            className="w-full text-center text-sm min-w-[1000px]"
           >
+
             <thead>
               <tr className="bg-[#225091] border-b border-[#225091]">
                 <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center w-16">Sr.No.</th>
                 <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Application / Loan ID</th>
+                <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Date & Time</th>
                 <th className="py-3.5 px-3 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Customer & Contact</th>
                 {isMerchantSystem ? (
                   <>
@@ -1082,7 +1055,7 @@ const Leads = ({ leadType: propLeadType, systemTitle: propSystemTitle }) => {
             <tbody className="divide-y divide-gray-100">
               {loading ? (
                 <tr>
-                  <td colSpan={isCustomerSystem || isMerchantSystem ? "8" : "5"} className="py-16 text-center text-gray-500">
+                  <td colSpan={isCustomerSystem || isMerchantSystem ? "9" : "6"} className="py-16 text-center text-gray-500">
                     <div className="flex flex-col items-center justify-center gap-3">
                       <Loader2
                         size={28}
@@ -1099,7 +1072,9 @@ const Leads = ({ leadType: propLeadType, systemTitle: propSystemTitle }) => {
                   const displaySrNo = (meta.page - 1) * meta.limit + idx + 1;
                   const leadId = lead.loanId || lead.id || lead._id;
                   const appId = lead.applicationId || lead.applicationNumber || (leadId ? `ADV-LN-${leadId.slice(-5).toUpperCase()}` : "—");
-                  const createdDate = lead.createdAt ? new Date(lead.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : null;
+                  const createdObj = lead.createdAt ? new Date(lead.createdAt) : null;
+                  const createdDate = createdObj ? createdObj.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
+                  const createdTime = createdObj ? createdObj.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true }) : '';
                   
                   // Extract Customer details from API
                   const cust = lead.customerDetails || lead.customer || {};
@@ -1153,85 +1128,98 @@ const Leads = ({ leadType: propLeadType, systemTitle: propSystemTitle }) => {
                       </td>
 
                       {/* Application / Loan ID */}
-                      <td className="py-3.5 px-4">
-                        <div>
-                          <span className="font-mono font-bold text-gray-900 block text-xs">
+                      <td className="py-3.5 px-4 text-left">
+                        <div className="flex flex-col gap-1">
+                          <span className="font-mono font-bold text-gray-900 text-sm sm:text-base tracking-tight">
                             {appId}
                           </span>
                           {lead.loanId && (
-                            <span className="text-[10px] font-mono text-gray-400 block truncate max-w-[130px]" title={lead.loanId}>
+                            <span className="text-xs font-mono text-gray-500 truncate max-w-[160px]" title={lead.loanId}>
                               ID: {lead.loanId}
                             </span>
                           )}
-                          {createdDate && (
-                            <span className="inline-flex items-center gap-1 text-[10px] font-medium text-gray-500 bg-gray-50 px-1.5 py-0.5 rounded border border-gray-200/60 mt-1">
-                              <Calendar size={10} className="text-gray-400" />
-                              {createdDate}
+                        </div>
+                      </td>
+
+                      {/* Date & Time */}
+                      <td className="py-3.5 px-4 text-center">
+                        <div className="flex flex-col items-center justify-center gap-0.5">
+                          <span className="font-semibold text-gray-900 text-xs sm:text-[13px] flex items-center gap-1.5">
+                            <Calendar size={13} className="text-[#225091]" />
+                            {createdDate}
+                          </span>
+                          {createdTime && (
+                            <span className="font-semibold text-gray-500 text-xs sm:text-[13px] tracking-wide">
+                              {createdTime}
                             </span>
                           )}
                         </div>
                       </td>
 
                       {/* Customer & Contact */}
-                      <td className="py-3.5 px-4">
-                        <div className="flex items-center gap-2.5">
-                          <div className="w-8 h-8 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center text-xs font-bold text-[#225091] shrink-0">
-                            {getInitials(custName)}
-                          </div>
-                          <div>
-                            <span className="font-bold text-gray-900 block text-xs">
-                              {custName}
+                      <td className="py-3 px-3 text-left min-w-[190px] max-w-[240px]">
+                        <div className="flex flex-col justify-center gap-0.5">
+                          <span className="font-bold text-gray-900 text-[11px] sm:text-xs leading-tight whitespace-normal break-words">
+                            {custName}
+                          </span>
+                          <span className="text-[11px] font-mono text-gray-600 font-medium">
+                            {custPhone}
+                          </span>
+                          {custPan !== "—" && (
+                            <span className="text-[10px] font-mono text-gray-500">
+                              PAN: <span className="text-gray-700 font-semibold">{custPan}</span>
                             </span>
-                            <span className="text-[11px] font-mono text-gray-500 block">
-                              {custPhone}
-                            </span>
-                            {custPan !== "—" && (
-                              <span className="text-[10px] font-mono text-gray-400">
-                                PAN: {custPan}
-                              </span>
-                            )}
-                          </div>
+                          )}
                         </div>
                       </td>
+
+
+
+
 
                       {/* Customer System Columns */}
                       {isCustomerSystem && (
                         <>
                           {/* Product & IMEI */}
-                          <td className="py-3.5 px-4">
-                            <div>
-                              <span className="font-semibold text-gray-900 block text-xs">
+                          <td className="py-3 px-3 text-left max-w-[200px]">
+                            <div className="flex flex-col gap-0.5 justify-center">
+                              <span className="font-semibold text-gray-900 text-[11px] sm:text-xs leading-tight whitespace-normal break-words">
                                 {prodBrand !== "—" ? `${prodBrand} ` : ""}{prodModel}
                               </span>
-                              <span className="text-[11px] font-mono text-gray-500 block">
-                                IMEI: {prodImei}
+                              <span className="text-[10px] font-mono text-gray-500">
+                                IMEI: <span className="text-gray-700">{prodImei}</span>
                               </span>
-                              <span className="text-[10px] font-bold text-emerald-700 block">
+                              <span className="text-xs font-bold text-emerald-700">
                                 ₹{Number(prodPrice).toLocaleString('en-IN')}
                               </span>
                             </div>
                           </td>
 
+
                           {/* Financials & EMI */}
-                          <td className="py-3.5 px-4">
-                            <div>
-                              <span className="font-bold text-gray-900 block text-xs">
-                                ₹{Number(totalLoan).toLocaleString('en-IN')} <span className="text-[10px] font-normal text-gray-400">Loan</span>
-                              </span>
-                              <span className="text-[11px] text-gray-600 block">
-                                EMI: <strong className="text-gray-900">₹{Number(monthlyEmi).toLocaleString('en-IN')}</strong>/mo ({tenure}m)
+                          <td className="py-3.5 px-4 text-left">
+                            <div className="flex flex-col gap-0.5">
+                              <div className="flex items-baseline gap-1">
+                                <span className="font-bold text-gray-900 text-xs">
+                                  ₹{Number(totalLoan).toLocaleString('en-IN')}
+                                </span>
+                                <span className="text-[11px] font-medium text-gray-500">Loan</span>
+                              </div>
+                              <span className="text-xs text-gray-700 font-medium">
+                                EMI: <strong className="text-gray-900 font-bold">₹{Number(monthlyEmi).toLocaleString('en-IN')}</strong><span className="text-gray-500 text-[11px]">/mo ({tenure}m)</span>
                               </span>
                               {downPay > 0 && (
-                                <span className="text-[10px] text-gray-400 block">
-                                  DP: ₹{Number(downPay).toLocaleString('en-IN')}
+                                <span className="text-[11px] text-gray-500">
+                                  DP: <span className="text-gray-700 font-medium">₹{Number(downPay).toLocaleString('en-IN')}</span>
                                 </span>
                               )}
                             </div>
                           </td>
 
                           {/* KYC Photos */}
-                          <td className="py-3.5 px-4">
-                            <div className="flex items-center gap-1.5">
+                          <td className="py-3 px-3 text-center">
+                            <div className="flex items-center justify-center gap-1.5 flex-nowrap shrink-0">
+
                               {cust.livePhoto && (
                                 <button
                                   type="button"
@@ -1269,8 +1257,8 @@ const Leads = ({ leadType: propLeadType, systemTitle: propSystemTitle }) => {
                           </td>
 
                           {/* Status */}
-                          <td className="py-3.5 px-4">
-                            <div className="flex flex-col gap-1 items-start">
+                          <td className="py-3.5 px-4 text-center">
+                            <div className="flex flex-col gap-1 items-center justify-center">
                               {getStatusBadge(statusVal)}
                               {isAutoApproved && (
                                 <span className="inline-flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-200">

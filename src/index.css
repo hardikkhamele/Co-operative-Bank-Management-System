@@ -48,6 +48,28 @@
     letter-spacing: -0.02em;
   }
 
+  table, th, td {
+    font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+
+  /* Clean table cell structure with single line text & ellipsis */
+  table td, table th {
+    white-space: nowrap;
+  }
+
+  /* Global removal of duplicate/default native calendar icons on date inputs */
+  input[type="date"]::-webkit-calendar-picker-indicator,
+  input[type="date"]::-webkit-inner-spin-button,
+  input[type="date"]::-webkit-clear-button {
+    display: none !important;
+    -webkit-appearance: none !important;
+  }
+
+
+
+
+
+
   /* Restore cursor pointer for interactive elements (Tailwind v4 default change) */
   button,
   [role="button"],

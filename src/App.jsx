@@ -52,6 +52,7 @@ const LoanDetails = lazy(() => import('./pages/dashboard/LoanDetails'));
 const SelectLeadSystem = lazy(() => import('./pages/dashboard/SelectLeadSystem'));
 const Leads = lazy(() => import('./pages/dashboard/Leads'));
 const PigmyCustomers = lazy(() => import('./pages/dashboard/PigmyCustomers'));
+const ViewPigmyCustomer = lazy(() => import('./pages/dashboard/ViewPigmyCustomer'));
 const CreateLead = lazy(() => import('./pages/dashboard/CreateLead'));
 const EditLead = lazy(() => import('./pages/dashboard/EditLead'));
 const ViewLead = lazy(() => import('./pages/dashboard/ViewLead'));
@@ -250,6 +251,7 @@ function App() {
               {/* Pigmy Deposit Management V2 */}
               <Route element={<PermissionRoute anyOf={['pigmy.view', 'lead.view', 'customer.view']} />}>
                 <Route path="pigmy" element={<PigmyCustomers />} />
+                <Route path="pigmy/view/:id" element={<ViewPigmyCustomer />} />
                 <Route path="leads/pigmy" element={<PigmyCustomers />} />
               </Route>
 

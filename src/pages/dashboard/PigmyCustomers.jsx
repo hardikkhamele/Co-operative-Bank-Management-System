@@ -71,7 +71,7 @@ import {
 // 1. ADD / LINK SOCIETY ACCOUNT MODAL
 // POST /api/v1/society/pigmy-customers/:id/society-account
 // =========================================================================
-const AddSocietyAccountModal = ({ isOpen, customer, onClose, onSuccess }) => {
+export const AddSocietyAccountModal = ({ isOpen, customer, onClose, onSuccess }) => {
   const [submitting, setSubmitting] = useState(false);
   const [societyAccountNumber, setSocietyAccountNumber] = useState('');
   const [ifscCode, setIfscCode] = useState('');
@@ -291,7 +291,7 @@ const AddSocietyAccountModal = ({ isOpen, customer, onClose, onSuccess }) => {
 // 2. APPROVE MODAL (With Mandatory Society Account Guardrail)
 // POST /api/v1/society/pigmy-customers/:id/approve
 // =========================================================================
-const ApproveCustomerModal = ({ isOpen, customer, onClose, onSuccess, onOpenAddAccount }) => {
+export const ApproveCustomerModal = ({ isOpen, customer, onClose, onSuccess, onOpenAddAccount }) => {
   const [remarks, setRemarks] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
@@ -455,7 +455,7 @@ const ApproveCustomerModal = ({ isOpen, customer, onClose, onSuccess, onOpenAddA
 // =========================================================================
 // 3. REJECT MODAL (POST /api/v1/society/pigmy-customers/:id/reject)
 // =========================================================================
-const RejectCustomerModal = ({ isOpen, customer, onClose, onSuccess }) => {
+export const RejectCustomerModal = ({ isOpen, customer, onClose, onSuccess }) => {
   const [reason, setReason] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
@@ -1000,8 +1000,8 @@ const PigmyCustomers = () => {
   useEffect(() => {
     (async () => {
       try {
-        const res = await branchService.list({ limit: 100 });
-        const list = Array.isArray(res?.data) ? res.data : res?.data?.branches || res?.branches || [];
+        const res = await branchService.getDropdownList();
+        const list = Array.isArray(res?.data) ? res.data : (Array.isArray(res) ? res : res?.branches || []);
         setBranches(list);
       } catch (err) {
         console.warn('Could not load branches:', err);
@@ -1117,7 +1117,7 @@ const PigmyCustomers = () => {
   const handleApproveClick = (customer) => { setCustomerToApprove(customer); setIsApproveOpen(true); };
   const handleOpenAddAccount = (customer) => { setCustomerToAddAccount(customer); setIsAddAccountOpen(true); };
   const handleOpenReject = (customer) => { setCustomerToReject(customer); setIsRejectOpen(true); };
-  const handleOpenDetails = (customer) => { setDetailsCustomerId(customer._id || customer.id || customer.pigmyCustomerId); setIsDetailsOpen(true); };
+  const handleOpenDetails = (customer) => { const cId = customer._id || customer.id || customer.pigmyCustomerId; navigate(`/pigmy/view/${cId}`); };
 
   // ---- SIP HANDLERS ----
   const handleToggleStatus = async (scheme) => {
@@ -1361,13 +1361,19 @@ const PigmyCustomers = () => {
                   </div>
                 )}
 
-                <div className="relative flex items-center">
-                  <input type="date" value={startDate} onChange={(e) => { setStartDate(e.target.value); setPage(1); }} title="From Date" className="pl-8 pr-3 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] bg-white text-xs font-semibold text-gray-700 shadow-2xs cursor-pointer hover:bg-gray-50/50 transition-all" />
-                  <Calendar size={13} className="absolute left-2.5 text-gray-400 pointer-events-none" />
+                <div className="relative flex items-center gap-1.5">
+                  <span className="text-xs font-medium text-gray-500">From:</span>
+                  <div className="relative">
+                    <input type="date" value={startDate} onChange={(e) => { setStartDate(e.target.value); setPage(1); }} title="From Date" className="pl-8 pr-3 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] bg-white text-xs font-semibold text-gray-700 shadow-2xs cursor-pointer hover:bg-gray-50/50 transition-all" />
+                    <Calendar size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                  </div>
                 </div>
-                <div className="relative flex items-center">
-                  <input type="date" value={endDate} onChange={(e) => { setEndDate(e.target.value); setPage(1); }} title="To Date" className="pl-8 pr-3 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] bg-white text-xs font-semibold text-gray-700 shadow-2xs cursor-pointer hover:bg-gray-50/50 transition-all" />
-                  <Calendar size={13} className="absolute left-2.5 text-gray-400 pointer-events-none" />
+                <div className="relative flex items-center gap-1.5">
+                  <span className="text-xs font-medium text-gray-500">To:</span>
+                  <div className="relative">
+                    <input type="date" value={endDate} onChange={(e) => { setEndDate(e.target.value); setPage(1); }} title="To Date" className="pl-8 pr-3 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#225091]/20 focus:border-[#225091] bg-white text-xs font-semibold text-gray-700 shadow-2xs cursor-pointer hover:bg-gray-50/50 transition-all" />
+                    <Calendar size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                  </div>
                 </div>
                 {(startDate || endDate || selectedState || selectedCity) && (
                   <button type="button" onClick={() => { setStartDate(""); setEndDate(""); setSelectedState(""); setSelectedCity(""); setPage(1); }} title="Clear Filters" className="p-2 rounded-xl text-gray-400 hover:text-rose-600 hover:bg-rose-50 border border-gray-200 transition-colors cursor-pointer">
@@ -1490,7 +1496,7 @@ const PigmyCustomers = () => {
                                 <button type="button" onClick={() => handleOpenAddAccount(c)} className="p-1.5 rounded-lg text-[#225091] hover:bg-[#EAF2FB] transition-colors cursor-pointer" title="Add / Link Society Account">
                                   <Landmark size={16} />
                                 </button>
-                                <button type="button" onClick={() => handleOpenDetails(c)} className="p-1.5 rounded-lg text-gray-500 hover:text-[#225091] hover:bg-[#EAF2FB] transition-colors cursor-pointer" title="Inspect Details">
+                                <button type="button" onClick={() => navigate(`/pigmy/view/${cId}`)} className="p-1.5 rounded-lg text-gray-500 hover:text-[#225091] hover:bg-[#EAF2FB] transition-colors cursor-pointer" title="View Customer Profile">
                                   <Eye size={16} />
                                 </button>
                               </div>

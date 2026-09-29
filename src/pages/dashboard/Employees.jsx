@@ -822,38 +822,25 @@ const Employees = () => {
 
                       {/* Employee Profile */}
                       <td className="py-3.5 px-5">
-                        <div className="flex items-center gap-3">
-                          <div className={`w-9 h-9 rounded-full border flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs ${
-                            isSoftDeleted
-                              ? "bg-rose-50 border-rose-200 text-rose-600"
-                              : "bg-blue-50 border-blue-100 text-[#225091]"
-                          }`}>
-                            {getInitials(row.fullName)}
-                          </div>
-                          <div className="flex flex-col">
-                            <span className="font-semibold text-gray-900 text-sm">
-                              {formatName(row.fullName)}
-                            </span>
-                            <span className="text-xs text-gray-500">
-                              {row.email || "-"}
-                            </span>
-                            <span className="text-[11px] text-gray-400">
-                              {row.phoneNumber || ""}
-                            </span>
-                          </div>
+                        <div className="flex flex-col">
+                          <span className="font-semibold text-gray-900 text-sm">
+                            {formatName(row.fullName)}
+                          </span>
+                          <span className="text-xs text-gray-500">
+                            {row.email || "-"}
+                          </span>
+                          <span className="text-[11px] text-gray-400">
+                            {row.phoneNumber || ""}
+                          </span>
                         </div>
                       </td>
 
-                      {/* Employee Code & Badge */}
+
+                      {/* Employee Code */}
                       <td className="py-3.5 px-5">
-                        <span className="text-gray-800 font-mono font-semibold text-xs bg-gray-100 px-2 py-0.5 rounded border border-gray-200">
+                        <span className="font-bold text-gray-900 text-sm">
                           {formatEmpCode(row.employeeCode || row.employeeId, row.id)}
                         </span>
-                        {row.type === "BRANCH_MANAGER" || row.type === "MANAGER" || row.role?.code === "BRANCH_MANAGER" || row.role?.code === "MANAGER" ? (
-                          <div className="text-[10px] bg-purple-50 border border-purple-200/60 text-purple-700 font-semibold px-2 py-0.5 rounded-full inline-block mt-1">
-                            Branch Manager
-                          </div>
-                        ) : null}
                       </td>
 
                       {/* Designation / Department */}

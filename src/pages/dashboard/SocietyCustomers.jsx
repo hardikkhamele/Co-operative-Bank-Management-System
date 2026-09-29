@@ -1,5 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
+import ExportDropdown from '../../components/common/ExportDropdown';
+
 import {
   ChevronRight, Search, SlidersHorizontal, X, Eye, Users, Store,
   Wallet, TrendingUp, CreditCard, Phone, Mail, Calendar, Building,
@@ -12,7 +14,11 @@ import useLocations from '../../hooks/useLocations';
 import Pagination from '../../components/common/Pagination';
 
 const SocietyCustomers = () => {
-  // ── State ──
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tableRef = useRef(null);
+
+
+  // ── State (initialized from URL search params) ──
   const [items, setItems] = useState([]);
   const [stats, setStats] = useState({
     totalRecords: 0, totalCustomers: 0, totalMerchants: 0,
@@ -21,18 +27,20 @@ const SocietyCustomers = () => {
   });
   const [meta, setMeta] = useState({ totalRecords: 0, limit: 10, page: 1, totalPages: 1, hasNextPage: false, hasPrevPage: false });
   const [loading, setLoading] = useState(false);
-  const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [typeFilter, setTypeFilter] = useState('ALL');
-  const [statusFilter, setStatusFilter] = useState('');
-  const [productFilter, setProductFilter] = useState('');
-  const [hasPigmy, setHasPigmy] = useState('');
-  const [hasLoans, setHasLoans] = useState('');
-  const [dateFrom, setDateFrom] = useState('');
-  const [dateTo, setDateTo] = useState('');
-  const [selectedState, setSelectedState] = useState('');
-  const [selectedCity, setSelectedCity] = useState('');
+  const [page, setPage] = useState(() => Number(searchParams.get('page')) || 1);
+  const [limit, setLimit] = useState(() => Number(searchParams.get('limit')) || 10);
+  const [searchTerm, setSearchTerm] = useState(() => searchParams.get('search') || '');
+  const [typeFilter, setTypeFilter] = useState(() => searchParams.get('type') || 'ALL');
+  const [statusFilter, setStatusFilter] = useState(() => searchParams.get('status') || '');
+  const [productFilter, setProductFilter] = useState(() => searchParams.get('product') || '');
+  const [hasPigmy, setHasPigmy] = useState(() => searchParams.get('hasPigmy') || '');
+  const [hasLoans, setHasLoans] = useState(() => searchParams.get('hasLoans') || '');
+  const [dateFrom, setDateFrom] = useState(() => searchParams.get('dateFrom') || '');
+  const [dateTo, setDateTo] = useState(() => searchParams.get('dateTo') || '');
+  const [selectedState, setSelectedState] = useState(() => searchParams.get('state') || '');
+  const [selectedCity, setSelectedCity] = useState(() => searchParams.get('city') || '');
+  const [activeStatCard, setActiveStatCard] = useState(() => searchParams.get('statCard') || '');
+
   const { states: statesList, availableCities, loading: locationsLoading } = useLocations(selectedState);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
@@ -40,6 +48,26 @@ const SocietyCustomers = () => {
   const [selectedMember, setSelectedMember] = useState(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
+
+  // Sync state to URL params
+  useEffect(() => {
+    const params = {};
+    if (page > 1) params.page = page.toString();
+    if (limit !== 10) params.limit = limit.toString();
+    if (searchTerm.trim()) params.search = searchTerm.trim();
+    if (typeFilter && typeFilter !== 'ALL') params.type = typeFilter;
+    if (statusFilter) params.status = statusFilter;
+    if (productFilter) params.product = productFilter;
+    if (hasPigmy) params.hasPigmy = hasPigmy;
+    if (hasLoans) params.hasLoans = hasLoans;
+    if (dateFrom) params.dateFrom = dateFrom;
+    if (dateTo) params.dateTo = dateTo;
+    if (selectedState) params.state = selectedState;
+    if (selectedCity) params.city = selectedCity;
+    if (activeStatCard) params.statCard = activeStatCard;
+
+    setSearchParams(params, { replace: true });
+  }, [page, limit, searchTerm, typeFilter, statusFilter, productFilter, hasPigmy, hasLoans, dateFrom, dateTo, selectedState, selectedCity, activeStatCard, setSearchParams]);
 
   // ── Fetch list ──
   const fetchList = useCallback(async () => {
@@ -112,26 +140,167 @@ const SocietyCustomers = () => {
     setSelectedState('');
     setSelectedCity('');
     setSearchTerm('');
+    setActiveStatCard('');
     setPage(1);
   };
 
   // ── Stat Cards Config ──
   const statCards = [
-    { label: 'Total Records', value: stats.totalRecords, icon: Users, accent: '#1E3A5F' },
-    { label: 'Total Customers', value: stats.totalCustomers, icon: User, accent: '#1B6B4A' },
-    { label: 'Total Merchants', value: stats.totalMerchants, icon: Store, accent: '#5B2D8E' },
-    { label: 'Pigmy Customers', value: stats.pigmyCustomersCount, icon: Wallet, accent: '#8B6914' },
-    { label: 'Loan Customers', value: stats.loanCustomersCount, icon: TrendingUp, accent: '#9B2C3E' },
-    { label: 'Total Pigmy Accounts', value: stats.totalPigmyCount, icon: Layers, accent: '#1A6B6A' },
-    { label: 'Total Loan Accounts', value: stats.totalLoansCount, icon: Banknote, accent: '#B05C1A' },
+    { id: 'totalRecords', label: 'Total Records', value: stats.totalRecords, icon: Users, accent: '#1E3A5F' },
+    { id: 'totalCustomers', label: 'Total Customers', value: stats.totalCustomers, icon: User, accent: '#1B6B4A' },
+    { id: 'totalMerchants', label: 'Total Merchants', value: stats.totalMerchants, icon: Store, accent: '#5B2D8E' },
+    { id: 'pigmyCustomers', label: 'Pigmy Customers', value: stats.pigmyCustomersCount, icon: Wallet, accent: '#8B6914' },
+    { id: 'loanCustomers', label: 'Loan Customers', value: stats.loanCustomersCount, icon: TrendingUp, accent: '#9B2C3E' },
+    { id: 'totalPigmyAccounts', label: 'Total Pigmy Accounts', value: stats.totalPigmyCount, icon: Layers, accent: '#1A6B6A' },
+    { id: 'totalLoanAccounts', label: 'Total Loan Accounts', value: stats.totalLoansCount, icon: Banknote, accent: '#B05C1A' },
   ];
 
+  // Handler for stat card click
+  const handleStatCardClick = (cardId) => {
+    if (activeStatCard === cardId) {
+      // Toggle off if already active
+      setActiveStatCard('');
+      setTypeFilter('ALL');
+      setProductFilter('');
+      setHasPigmy('');
+      setHasLoans('');
+    } else {
+      setActiveStatCard(cardId);
+      setPage(1);
+      switch (cardId) {
+        case 'totalRecords':
+          setTypeFilter('ALL');
+          setProductFilter('');
+          setHasPigmy('');
+          setHasLoans('');
+          break;
+        case 'totalCustomers':
+          setTypeFilter('CUSTOMER');
+          break;
+        case 'totalMerchants':
+          setTypeFilter('MERCHANT');
+          break;
+        case 'pigmyCustomers':
+          setProductFilter('PIGMY');
+          setHasPigmy('true');
+          break;
+        case 'loanCustomers':
+          setProductFilter('LOAN');
+          setHasLoans('true');
+          break;
+        case 'totalPigmyAccounts':
+          setHasPigmy('true');
+          break;
+        case 'totalLoanAccounts':
+          setHasLoans('true');
+          break;
+        default:
+          break;
+      }
+    }
+  };
+
+  // Helper to build list of active filter chips
+  const getActiveChips = () => {
+    const chips = [];
+    if (activeStatCard) {
+      const card = statCards.find(c => c.id === activeStatCard);
+      if (card) {
+        chips.push({
+          key: 'statCard',
+          label: `Stat: ${card.label}`,
+          clear: () => {
+            setActiveStatCard('');
+          }
+        });
+      }
+    }
+    if (searchTerm) {
+      chips.push({
+        key: 'search',
+        label: `Search: ${searchTerm}`,
+        clear: () => { setSearchTerm(''); setPage(1); }
+      });
+    }
+    if (typeFilter && typeFilter !== 'ALL') {
+      chips.push({
+        key: 'type',
+        label: `Type: ${typeFilter === 'CUSTOMER' ? 'Customers' : 'Merchants'}`,
+        clear: () => { setTypeFilter('ALL'); setPage(1); if (['totalCustomers', 'totalMerchants'].includes(activeStatCard)) setActiveStatCard(''); }
+      });
+    }
+    if (statusFilter) {
+      chips.push({
+        key: 'status',
+        label: `Status: ${statusFilter}`,
+        clear: () => { setStatusFilter(''); setPage(1); }
+      });
+    }
+    if (productFilter) {
+      chips.push({
+        key: 'product',
+        label: `Product: ${productFilter}`,
+        clear: () => { setProductFilter(''); setPage(1); if (['pigmyCustomers', 'loanCustomers'].includes(activeStatCard)) setActiveStatCard(''); }
+      });
+    }
+    if (hasPigmy) {
+      chips.push({
+        key: 'hasPigmy',
+        label: `Has Pigmy: ${hasPigmy === 'true' ? 'Yes' : 'No'}`,
+        clear: () => { setHasPigmy(''); setPage(1); if (['pigmyCustomers', 'totalPigmyAccounts'].includes(activeStatCard)) setActiveStatCard(''); }
+      });
+    }
+    if (hasLoans) {
+      chips.push({
+        key: 'hasLoans',
+        label: `Has Loans: ${hasLoans === 'true' ? 'Yes' : 'No'}`,
+        clear: () => { setHasLoans(''); setPage(1); if (['loanCustomers', 'totalLoanAccounts'].includes(activeStatCard)) setActiveStatCard(''); }
+      });
+    }
+    if (selectedState) {
+      chips.push({
+        key: 'state',
+        label: `State: ${selectedState}`,
+        clear: () => { setSelectedState(''); setSelectedCity(''); setPage(1); }
+      });
+    }
+    if (selectedCity) {
+      chips.push({
+        key: 'city',
+        label: `City: ${selectedCity}`,
+        clear: () => { setSelectedCity(''); setPage(1); }
+      });
+    }
+    if (dateFrom || dateTo) {
+      chips.push({
+        key: 'dateRange',
+        label: `Date: ${dateFrom || 'Start'} to ${dateTo || 'End'}`,
+        clear: () => { setDateFrom(''); setDateTo(''); setPage(1); }
+      });
+    }
+    return chips;
+  };
+
+  const activeChips = getActiveChips();
 
   const formatDate = (d) => {
     if (!d) return '—';
     try { return new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }); }
     catch { return '—'; }
   };
+
+  const formatDateTime = (d) => {
+    if (!d) return { date: '—', time: '' };
+    try {
+      const dateObj = new Date(d);
+      const date = dateObj.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+      const time = dateObj.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
+      return { date, time };
+    } catch {
+      return { date: '—', time: '' };
+    }
+  };
+
 
   const formatCurrency = (v) => {
     if (v === null || v === undefined) return '₹0';
@@ -154,12 +323,16 @@ const SocietyCustomers = () => {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-7 gap-3 mb-6 w-full">
-        {statCards.map((card, idx) => {
+        {statCards.map((card) => {
           const Icon = card.icon;
+          const isActive = activeStatCard === card.id;
           return (
             <div
-              key={idx}
-              className="bg-white rounded-lg py-6 px-3 flex flex-col items-center justify-center text-center border border-gray-100 shadow-sm min-w-0"
+              key={card.id}
+              onClick={() => handleStatCardClick(card.id)}
+              className={`bg-white rounded-lg py-6 px-3 flex flex-col items-center justify-center text-center border transition-all cursor-pointer hover:shadow-md hover:border-[#225091] min-w-0 select-none ${
+                isActive ? 'ring-2 ring-[#225091] border-[#225091] shadow-md bg-blue-50/20' : 'border-gray-100 shadow-sm'
+              }`}
             >
               <div className="flex items-center justify-center gap-1.5 mb-2.5">
                 <Icon size={16} strokeWidth={1.75} style={{ color: card.accent }} />
@@ -171,9 +344,37 @@ const SocietyCustomers = () => {
         })}
       </div>
 
-      {/* Toolbar: Search + Filters + Refresh */}
+      {/* Active Filter Chips */}
+      {activeChips.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2 mb-4 bg-gray-50 p-3 rounded-xl border border-gray-100">
+          <span className="text-xs font-semibold text-gray-500 mr-1">Active Filters:</span>
+          {activeChips.map((chip) => (
+            <span
+              key={chip.key}
+              className="inline-flex items-center gap-1.5 px-3 py-1 bg-white border border-gray-200 rounded-full text-xs font-medium text-gray-700 shadow-xs"
+            >
+              {chip.label}
+              <button
+                onClick={chip.clear}
+                className="text-gray-400 hover:text-gray-600 rounded-full p-0.5 transition-colors cursor-pointer"
+                title="Remove filter"
+              >
+                <X size={12} />
+              </button>
+            </span>
+          ))}
+          <button
+            onClick={clearFilters}
+            className="text-xs font-semibold text-rose-600 hover:text-rose-800 ml-auto cursor-pointer"
+          >
+            Clear All
+          </button>
+        </div>
+      )}
+
+      {/* Toolbar: Search + Filters + Refresh (Left) & Export (Extreme Right) */}
       <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
-        <div className="flex items-center gap-3 w-full md:w-auto">
+        <div className="flex items-center gap-3 w-full md:w-auto flex-wrap">
           {/* Search */}
           <div className="relative w-full md:w-80">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -193,7 +394,12 @@ const SocietyCustomers = () => {
             {['ALL', 'CUSTOMER', 'MERCHANT'].map(t => (
               <button
                 key={t}
-                onClick={() => { setTypeFilter(t); setPage(1); }}
+                onClick={() => {
+                  setTypeFilter(t);
+                  setPage(1);
+                  if (activeStatCard === 'totalCustomers' && t !== 'CUSTOMER') setActiveStatCard('');
+                  if (activeStatCard === 'totalMerchants' && t !== 'MERCHANT') setActiveStatCard('');
+                }}
                 className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all cursor-pointer ${
                   typeFilter === t ? 'bg-[#225091] text-white shadow-sm' : 'text-gray-500 hover:text-gray-800'
                 }`}
@@ -260,7 +466,7 @@ const SocietyCustomers = () => {
                 <div>
                   <label className="text-xs font-semibold text-gray-600 mb-1 block">Status</label>
                   <select value={statusFilter} onChange={e => { setStatusFilter(e.target.value); setPage(1); }}
-                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-[#225091] focus:border-[#225091]">
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-[#225091] focus:border-[#225091] cursor-pointer">
                     <option value="">All Statuses</option>
                     <option value="ACTIVE">Active</option>
                     <option value="INACTIVE">Inactive</option>
@@ -272,7 +478,7 @@ const SocietyCustomers = () => {
                 <div>
                   <label className="text-xs font-semibold text-gray-600 mb-1 block">Product</label>
                   <select value={productFilter} onChange={e => { setProductFilter(e.target.value); setPage(1); }}
-                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-[#225091] focus:border-[#225091]">
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-[#225091] focus:border-[#225091] cursor-pointer">
                     <option value="">All Products</option>
                     <option value="PIGMY">Pigmy Only</option>
                     <option value="LOAN">Loan Only</option>
@@ -285,7 +491,7 @@ const SocietyCustomers = () => {
                 <div>
                   <label className="text-xs font-semibold text-gray-600 mb-1 block">Has Pigmy</label>
                   <select value={hasPigmy} onChange={e => { setHasPigmy(e.target.value); setPage(1); }}
-                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-[#225091] focus:border-[#225091]">
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-[#225091] focus:border-[#225091] cursor-pointer">
                     <option value="">Any</option>
                     <option value="true">Yes</option>
                     <option value="false">No</option>
@@ -296,7 +502,7 @@ const SocietyCustomers = () => {
                 <div>
                   <label className="text-xs font-semibold text-gray-600 mb-1 block">Has Loans</label>
                   <select value={hasLoans} onChange={e => { setHasLoans(e.target.value); setPage(1); }}
-                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-[#225091] focus:border-[#225091]">
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-[#225091] focus:border-[#225091] cursor-pointer">
                     <option value="">Any</option>
                     <option value="true">Yes</option>
                     <option value="false">No</option>
@@ -329,12 +535,24 @@ const SocietyCustomers = () => {
             <RefreshCw size={18} className={`text-gray-500 ${loading ? 'animate-spin' : ''}`} />
           </button>
         </div>
+
+        {/* Export Dropdown pushed to extreme right edge */}
+        <div className="ml-auto">
+          <ExportDropdown
+            title="Society Customers"
+            filename="society_customers"
+            tableRef={tableRef}
+          />
+        </div>
       </div>
+
+
 
       {/* ── Data Table ── */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-6">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm border-collapse text-center whitespace-nowrap">
+          <table ref={tableRef} className="w-full text-sm border-collapse text-center whitespace-nowrap">
+
             <thead className="bg-[#225091] text-white text-xs uppercase tracking-wider font-semibold">
               <tr>
                 <th className="py-3.5 px-3 font-semibold text-white uppercase tracking-wider border-r border-white/20 text-center">Sr No</th>
@@ -433,13 +651,19 @@ const SocietyCustomers = () => {
 
                     {/* Account No */}
                     <td className="py-3 px-3 text-xs">
-                      {item.societyAccountDetails ? (
+                      {item.societyAccountDetails?.accountNumber ? (
                         <div>
-                          <div className="font-mono font-bold text-[#225091] text-[11px]">{item.societyAccountDetails.accountNumber}</div>
-                          <div className="text-[10px] text-gray-400">{item.societyAccountDetails.bankName}</div>
+                          <div className="font-mono font-extrabold text-[#225091] text-xs sm:text-sm tracking-tight">
+                            A/C {item.societyAccountDetails.accountNumber}
+                          </div>
+                          {item.societyAccountDetails.bankName && (
+                            <div className="text-[11px] font-medium text-gray-500">{item.societyAccountDetails.bankName}</div>
+                          )}
                         </div>
                       ) : '—'}
                     </td>
+
+
 
                     {/* Status */}
                     <td className="py-3 px-3 text-center whitespace-normal max-w-[125px]">
@@ -464,8 +688,26 @@ const SocietyCustomers = () => {
                       ) : '—'}
                     </td>
 
-                    {/* Onboarding Date */}
-                    <td className="py-3 px-3 text-xs text-gray-500">{formatDate(item.createdAt)}</td>
+                    {/* Onboarding Date & Time */}
+                    <td className="py-3 px-3 text-xs text-center">
+                      {(() => {
+                        const { date, time } = formatDateTime(item.createdAt);
+                        return (
+                          <div className="flex flex-col items-center justify-center gap-0.5">
+                            <span className="font-semibold text-gray-800 text-xs flex items-center gap-1">
+                              <Calendar size={12} className="text-[#225091]" />
+                              {date}
+                            </span>
+                            {time && (
+                              <span className="font-semibold text-gray-500 text-[11px] tracking-wide">
+                                {time}
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })()}
+                    </td>
+
 
                     {/* Action */}
                     <td className="py-3 px-3">

@@ -7,7 +7,20 @@ import useBranchStore from '../../store/branchStore';
 import usePermission from '../../hooks/usePermission';
 import GlobalLoader from '../GlobalLoader';
 
+const WhatsAppIcon = ({ size = 20, className = "" }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    className={className}
+  >
+    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.197 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.572-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c-.001 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+  </svg>
+);
+
 const flattenChildren = (children) => {
+
   const result = [];
   Children.forEach(children, (child) => {
     if (!child) return;
@@ -237,6 +250,27 @@ const DashboardLayout = () => {
     }`;
   };
 
+  const topNavLinkClass = (propsOrTo, explicitTo) => {
+    let isActive = false;
+    let targetTo = explicitTo;
+
+    if (typeof propsOrTo === 'string') {
+      targetTo = propsOrTo;
+    } else if (propsOrTo && typeof propsOrTo === 'object') {
+      isActive = propsOrTo.isActive;
+    }
+
+    const isNestedActive = targetTo
+      ? location.pathname === targetTo || location.pathname.startsWith(targetTo + '/')
+      : false;
+
+    return `flex items-center gap-2.5 px-4.5 py-3 text-[14px] font-semibold border-l-4 transition-colors ${
+      isActive || isNestedActive
+        ? 'border-brand-primary text-brand-primary bg-brand-light'
+        : 'border-transparent text-text-body hover:bg-brand-surface hover:text-text-heading'
+    }`;
+  };
+
   // Check if any "Show More" section has visible items
   const hasShowMoreItems = 
     hasAnyPermission(['upi_autopay.view', 'upi.view']) ||
@@ -321,24 +355,24 @@ const DashboardLayout = () => {
             )}
 
           {/* Branch Management */}
-          <SidebarGroup title="Branch Management" icon={MapPin}>
-            {hasPermission('branch.view') && (
-              <NavLink to="/branch" className={subNavLinkClass}>
+          {hasPermission('branch.view') && (
+            <div className="mb-1">
+              <NavLink to="/branch" className={(props) => topNavLinkClass(props, '/branch')}>
                 <MapPin size={20} className="shrink-0" />
-                <span>Branch</span>
+                <span className="whitespace-nowrap">Branch Management</span>
               </NavLink>
-            )}
-          </SidebarGroup>
+            </div>
+          )}
 
           {/* Partner Management */}
-          <SidebarGroup title="Partner Management" icon={Store}>
-            {hasPermission('merchant.view') && (
-              <NavLink to="/merchant" className={subNavLinkClass}>
+          {hasPermission('merchant.view') && (
+            <div className="mb-1">
+              <NavLink to="/merchant" className={(props) => topNavLinkClass(props, '/merchant')}>
                 <Store size={20} className="shrink-0" />
-                <span>Merchant</span>
+                <span className="whitespace-nowrap">Merchant Management</span>
               </NavLink>
-            )}
-          </SidebarGroup>
+            </div>
+          )}
 
           {/* HR Management */}
           <SidebarGroup title="HR Management" icon={UserCheck}>
@@ -435,93 +469,88 @@ const DashboardLayout = () => {
               </>
             )}
           </SidebarGroup>
-
           {/* Payment */}
-          <SidebarGroup title="Payment" icon={Banknote}>
-            {hasPermission('cash_payment.view') && (
-              <NavLink to="/cash-payment" className={subNavLinkClass}>
+          {hasPermission('cash_payment.view') && (
+            <div className="mb-1">
+              <NavLink to="/cash-payment" className={(props) => topNavLinkClass(props, '/cash-payment')}>
                 <Banknote size={20} className="shrink-0" />
-                <span>Cash Payment</span>
+                <span className="whitespace-nowrap">Cash Payment</span>
               </NavLink>
-            )}
-          </SidebarGroup>
+            </div>
+          )}
 
           {/* Cards & Credit */}
-          <SidebarGroup title="Cards & Credit" icon={CreditCard}>
-            {hasAnyPermission(['cards_credit.view', 'card_credit.view', 'emi_card.view', 'card.view']) && (
-              <NavLink to="/cards-credit" className={subNavLinkClass}>
+          {hasAnyPermission(['cards_credit.view', 'card_credit.view', 'emi_card.view', 'card.view']) && (
+            <div className="mb-1">
+              <NavLink to="/cards-credit" className={(props) => topNavLinkClass(props, '/cards-credit')}>
                 <CreditCard size={20} className="shrink-0" />
-                <span>Cards & Credit</span>
+                <span className="whitespace-nowrap">Cards & Credit</span>
               </NavLink>
-            )}
-          </SidebarGroup>
+            </div>
+          )}
 
           {/* Reports & Analytics */}
-          <SidebarGroup title="Reports & Analytics" icon={BarChart3}>
-            {hasAnyPermission(['report.view', 'report.export']) && (
-              <NavLink to="/reports" className={(props) => subNavLinkClass(props, '/reports')}>
-                <BarChart3 size={18} /> Reports & Analytics
+          {hasAnyPermission(['report.view', 'report.export']) && (
+            <div className="mb-1">
+              <NavLink to="/reports" className={(props) => topNavLinkClass(props, '/reports')}>
+                <BarChart3 size={20} className="shrink-0" />
+                <span className="whitespace-nowrap">Reports & Analytics</span>
               </NavLink>
-            )}
-          </SidebarGroup>
+            </div>
+          )}
 
           {/* Geo Tagging */}
-          <SidebarGroup title="Geo Tagging" icon={MapPin}>
-            {hasAnyPermission(['geotagging.view', 'geo_tagging.view', 'geo.view', 'tracking.view']) && (
-              <NavLink to="/geo-tagging" className={subNavLinkClass}>
+          {hasAnyPermission(['geotagging.view', 'geo_tagging.view', 'geo.view', 'tracking.view']) && (
+            <div className="mb-1">
+              <NavLink to="/geo-tagging" className={(props) => topNavLinkClass(props, '/geo-tagging')}>
                 <MapPin size={20} className="shrink-0" />
-                <span>Geo Tagging</span>
+                <span className="whitespace-nowrap">Geo Tagging</span>
               </NavLink>
-            )}
-          </SidebarGroup>
+            </div>
+          )}
 
           <div className={`sidebar-accordion-grid ${showMore ? 'open' : ''}`}>
             <div className="sidebar-accordion-content">
-              <div className="sidebar-accordion-inner space-y-1">
-                <SidebarGroup title="UPI Smart" icon={Smartphone}>
-                  {hasAnyPermission(['upi_autopay.view', 'upi.view']) && (
-                    <NavLink to="/upi-autopay" className={subNavLinkClass}>
-                      <Smartphone size={20} className="shrink-0" />
-                      <span>UPI Autopay</span>
-                    </NavLink>
-                  )}
-                </SidebarGroup>
+              <div className="sidebar-accordion-inner py-2 space-y-1">
+                {/* UPI Smart */}
+                {hasAnyPermission(['upi_autopay.view', 'upi.view']) && (
+                  <NavLink to="/upi-autopay" className={(props) => topNavLinkClass(props, '/upi-autopay')}>
+                    <Smartphone size={20} className="shrink-0" />
+                    <span className="whitespace-nowrap">UPI Autopay</span>
+                  </NavLink>
+                )}
 
-                <SidebarGroup title="WhatsApp Marketing" icon={MessageCircle}>
-                  {hasAnyPermission(['whatsapp_banking.view', 'whatsapp.view']) && (
-                    <NavLink to="/whatsapp-banking" className={subNavLinkClass}>
-                      <MessageCircle size={20} className="shrink-0" />
-                      <span>WhatsApp Banking</span>
-                    </NavLink>
-                  )}
-                </SidebarGroup>
+                {/* WhatsApp Marketing */}
+                {hasAnyPermission(['whatsapp_banking.view', 'whatsapp.view']) && (
+                  <NavLink to="/whatsapp-banking" className={(props) => topNavLinkClass(props, '/whatsapp-banking')}>
+                    <WhatsAppIcon size={20} className="shrink-0" />
+                    <span className="whitespace-nowrap">WhatsApp Banking</span>
+                  </NavLink>
+                )}
 
-                <SidebarGroup title="Biomatrix Integration" icon={Fingerprint}>
-                  {hasPermission('biomatrix.view') && (
-                    <NavLink to="/biomatrix-integration" className={subNavLinkClass}>
-                      <Fingerprint size={20} className="shrink-0" />
-                      <span>Biomatrix Integration</span>
-                    </NavLink>
-                  )}
-                </SidebarGroup>
+                {/* Biomatrix Integration */}
+                {hasPermission('biomatrix.view') && (
+                  <NavLink to="/biomatrix-integration" className={(props) => topNavLinkClass(props, '/biomatrix-integration')}>
+                    <Fingerprint size={20} className="shrink-0" />
+                    <span className="whitespace-nowrap">Biomatrix Integration</span>
+                  </NavLink>
+                )}
 
-                <SidebarGroup title="Roles & Permissions" icon={UserCog}>
-                  {hasAnyPermission(['role.view', 'roles_permissions.view', 'role.create']) && (
-                    <NavLink to="/roles-permissions" className={subNavLinkClass}>
-                      <UserCog size={20} className="shrink-0" />
-                      <span>Roles & Permissions</span>
-                    </NavLink>
-                  )}
-                </SidebarGroup>
+                {/* Roles & Permissions */}
+                {hasAnyPermission(['role.view', 'roles_permissions.view', 'role.create']) && (
+                  <NavLink to="/roles-permissions" className={(props) => topNavLinkClass(props, '/roles-permissions')}>
+                    <UserCog size={20} className="shrink-0" />
+                    <span className="whitespace-nowrap">Roles & Permissions</span>
+                  </NavLink>
+                )}
 
-                <SidebarGroup title="Settings" icon={MoreHorizontal}>
-                  {hasAnyPermission(['help_support.view', 'settings.view']) && (
-                    <NavLink to="/settings/help" className={subNavLinkClass}>
-                      <Headphones size={20} className="shrink-0" />
-                      <span>Help & Support</span>
-                    </NavLink>
-                  )}
-                </SidebarGroup>
+                {/* Settings */}
+                {hasAnyPermission(['help_support.view', 'settings.view']) && (
+                  <NavLink to="/settings/help" className={(props) => topNavLinkClass(props, '/settings/help')}>
+                    <Headphones size={20} className="shrink-0" />
+                    <span className="whitespace-nowrap">Help & Support</span>
+                  </NavLink>
+                )}
               </div>
             </div>
           </div>

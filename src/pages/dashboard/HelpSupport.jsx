@@ -21,7 +21,7 @@ const HelpSupport = () => {
           Don't hesitate to contact us whether you have a suggestion on our improvement, a complain to discuss or an issue to solve.
         </p>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
           {/* Call Us Card */}
           <div className="bg-[#eefceb] rounded-2xl p-8 flex flex-col items-center text-center">
             <div className="w-12 h-12 bg-[#225091] rounded-xl flex items-center justify-center text-white mb-6 shadow-sm">
@@ -51,15 +51,13 @@ const HelpSupport = () => {
               Mon-Fri &bull; 10-8
             </div>
           </div>
-        </div>
 
-        {/* Chat Support Card - Centered below */}
-        <div className="mt-8 flex justify-center">
-          <div className="bg-[#eefceb] rounded-2xl p-8 flex flex-col items-center text-center w-full max-w-xl">
-            <div className="w-12 h-12 bg-[#225091] rounded-xl flex items-center justify-center text-white mb-4 shadow-sm">
+          {/* Chat Support Card */}
+          <div className="bg-[#eefceb] rounded-2xl p-8 flex flex-col items-center text-center">
+            <div className="w-12 h-12 bg-[#225091] rounded-xl flex items-center justify-center text-white mb-6 shadow-sm">
               <MessageSquare size={24} />
             </div>
-            <div className="text-gray-600 font-medium text-sm mb-3">
+            <div className="text-gray-700 font-medium mb-4">
               Chat Support
             </div>
             <h3 className="text-2xl font-bold text-[#225091] mb-6">Chat With Admin</h3>

@@ -774,7 +774,8 @@ const Merchants = () => {
           </div>
 
           {/* 6. From Date Filter */}
-          <div className="relative">
+          <div className="relative flex items-center">
+            <span className="text-xs font-semibold text-gray-500 mr-1 shrink-0">From:</span>
             <input
               type="date"
               value={startDate}
@@ -783,18 +784,14 @@ const Merchants = () => {
                 setPage(1);
               }}
               max={endDate || undefined}
-              title="Filter from creation date"
-              className="w-full px-2.5 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-xs font-medium text-gray-700 shadow-2xs cursor-pointer"
+              title="From Date (Start Date)"
+              className="w-full px-2 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-xs font-medium text-gray-700 shadow-2xs cursor-pointer"
             />
-            {!startDate && (
-              <span className="absolute right-7 top-1/2 -translate-y-1/2 text-[10px] text-gray-400 pointer-events-none hidden sm:inline">
-                From Date
-              </span>
-            )}
           </div>
 
           {/* 7. To Date Filter */}
-          <div className="relative">
+          <div className="relative flex items-center">
+            <span className="text-xs font-semibold text-gray-500 mr-1 shrink-0">To:</span>
             <input
               type="date"
               value={endDate}
@@ -803,15 +800,11 @@ const Merchants = () => {
                 setPage(1);
               }}
               min={startDate || undefined}
-              title="Filter to creation date"
-              className="w-full px-2.5 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-xs font-medium text-gray-700 shadow-2xs cursor-pointer"
+              title="To Date (End Date)"
+              className="w-full px-2 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#225091] bg-white text-xs font-medium text-gray-700 shadow-2xs cursor-pointer"
             />
-            {!endDate && (
-              <span className="absolute right-7 top-1/2 -translate-y-1/2 text-[10px] text-gray-400 pointer-events-none hidden sm:inline">
-                To Date
-              </span>
-            )}
           </div>
+
         </div>
 
         {/* Active Filter Chips Bar */}

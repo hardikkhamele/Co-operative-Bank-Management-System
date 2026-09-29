@@ -22,7 +22,9 @@ import {
 import { Link } from 'react-router-dom';
 import { branchService } from '../../api/branchService';
 import PageHeader from '../../components/common/PageHeader';
+import ExportDropdown from '../../components/common/ExportDropdown';
 import SearchableSelect from '../../components/common/SearchableSelect';
+
 import { Skeleton, SkeletonTable } from '../../components/common/Skeleton';
 import TableWrapper from '../../components/common/TableWrapper';
 import StatsCard from '../../components/common/StatsCard';
@@ -738,6 +740,12 @@ const Branch = () => {
               </button>
             )}
 
+            <ExportDropdown
+              title="Branch Directory"
+              filename="branch_directory"
+              tableRef={tableRef}
+            />
+
             <button
               onClick={() => { setCreateStep(1); setIsCreateModalOpen(true); }}
               className="bg-[#225091] hover:bg-[#183f72] text-white px-4.5 py-2.5 rounded-xl font-bold transition-all text-xs shadow-2xs flex-shrink-0 cursor-pointer"
@@ -745,6 +753,7 @@ const Branch = () => {
               + Create Branch
             </button>
           </div>
+
         </div>
 
         {/* Bottom Inline Filter Controls: State -> City */}
@@ -891,17 +900,13 @@ const Branch = () => {
                           <Link 
                             to={`/managers/view/${bId}`}
                             state={{ branch, manager: managerData }}
-                            className="flex items-center gap-2.5 hover:opacity-80 transition-opacity group cursor-pointer"
+                            className="flex flex-col hover:opacity-80 transition-opacity group cursor-pointer"
                             title="View Branch Manager Profile"
                           >
-                            <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs shrink-0 bg-blue-50 text-[#225091] font-bold border border-blue-100 shadow-2xs group-hover:scale-105 transition-transform">
-                              {getInitials(mName || mEmail)}
-                            </div>
-                            <div className="flex flex-col">
-                              <span className="text-gray-900 font-semibold text-xs group-hover:text-[#225091] transition-colors">{mName || 'Unnamed Manager'}</span>
-                              <span className="text-[11px] text-gray-500">{mEmail || ''}</span>
-                            </div>
+                            <span className="text-gray-900 font-semibold text-xs group-hover:text-[#225091] transition-colors">{mName || 'Unnamed Manager'}</span>
+                            <span className="text-[11px] text-gray-500">{mEmail || ''}</span>
                           </Link>
+
                         ) : (
                           <button
                             type="button"
